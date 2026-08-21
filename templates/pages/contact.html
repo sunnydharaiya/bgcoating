@@ -1,0 +1,259 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<main id="spaMain" role="main">
+  <section class="spa-page" id="page-contact" data-page="contact" style="display:block;" aria-label="Contact">
+
+    <!-- ======================= FORM + INFO ======================= -->
+    <section class="section-light grid-bg" id="enquiry">
+      <div class="wrap">
+        <div class="section-head rv">
+          <p class="eyebrow">Start The Conversation</p>
+          <h2 class="h-section">Request A Technical Consultation</h2>
+          <p class="lead">Tell us about your project — coating survey, site visit, inspection or a full solution. We'll respond promptly.</p>
+        </div>
+
+        <div class="contact-split">
+          <!-- FORM -->
+          <div class="form-card rv">
+            <div id="formInner">
+              <h2>Send Us Your Enquiry</h2>
+              <p class="fc-sub">We typically respond within one business day</p>
+              <div class="form-progress"><i id="formBar"></i></div>
+              <form id="enquiryForm" novalidate="">
+                <div class="ffield row2">
+                  <div class="ffield"><input type="text" id="f_name" placeholder=" " required=""><label for="f_name">Full Name *</label><span class="err">Required</span></div>
+                  <div class="ffield"><input type="text" id="f_company" placeholder=" "><label for="f_company">Company</label></div>
+                </div>
+                <div class="ffield row2">
+                  <div class="ffield"><input type="email" id="f_email" placeholder=" " required=""><label for="f_email">Email *</label><span class="err">Valid email required</span></div>
+                  <div class="ffield"><input type="tel" id="f_phone" placeholder=" " required=""><label for="f_phone">Phone *</label><span class="err">Required</span></div>
+                </div>
+                <div class="ffield"><select id="f_service">
+                    <option value="" selected="" disabled="" hidden=""></option>
+                    <option value="Coating Survey &amp; Corrosion Assessment">Coating Survey &amp; Corrosion Assessment</option>
+                    <option value="On-Site Coating Experts (Freelancing)">On-Site Coating Experts (Freelancing)</option>
+                    <option value="Floor Coating Solutions">Floor Coating Solutions</option>
+                    <option value="Refinery Equipment Coating">Refinery Equipment Coating</option>
+                    <option value="Coating Process Consultancy">Coating Process Consultancy</option>
+                    <option value="Customized Paint">Customized Paint</option>
+                    <option value="Coating Training &amp; Certification">Coating Training &amp; Certification</option>
+                    <option value="Maintenance Coating">Maintenance Coating</option>
+                    <option value="Coating Procedure / Specification / SOP">Coating Procedure / Specification / SOP</option>
+                    <option value="Digital Coating Solution">Digital Coating Solution</option>
+                    <option value="Booth Blasting &amp; Painting">Booth Blasting &amp; Painting</option>
+                    <option value="Specialized Application (TSA/PFP/FRE)">Specialized Application (TSA/PFP/FRE)</option>
+                    <option value="General Enquiry">General Enquiry</option>
+                  </select><label for="f_service">Service Of Interest</label></div>
+                <div class="ffield"><textarea id="f_msg" placeholder=" " required=""></textarea><label for="f_msg">Project Details / Message *</label><span class="err">Please add a message</span></div>
+                <button type="submit" class="btn btn-primary" id="submitBtn" style="width:100%">Submit Enquiry <span class="arr">→</span></button>
+              </form>
+            </div>
+            <div class="form-success" id="formSuccess">
+              <div class="tick">✓</div>
+              <h2>Thank You!</h2>
+              <p class="fc-sub" style="color:var(--txt-lo)">Your enquiry is ready to send</p>
+              <p style="color:var(--txt-lo);max-width:44ch;margin:0 auto 1.5rem">We've prepared your message. Click below to send it via your email app, or reach us directly on WhatsApp for an instant response.</p>
+              <div class="hero-ctas" style="justify-content:center">
+                <a class="btn btn-primary" id="mailtoLink" href="{% url 'home' %}">Open Email App <span class="arr">→</span></a>
+                <a class="btn btn-ghost" href="https://wa.me/919925810408" target="_blank" rel="noopener">WhatsApp Instead</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- INFO -->
+          <div class="info-stack rv rv-d1" id="cnt-info">
+            <div class="info-block">
+              <h3><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <path d="M12 6v6l4 2"></path>
+                </svg> Business Hours</h3>
+              <div class="hours-row"><span>Monday – Saturday</span><b>09:00 – 18:00</b></div>
+              <div class="hours-row"><span>Sunday</span><b>Closed</b></div>
+              <div class="hours-row"><span>Emergency Support</span><b>On Request</b></div>
+            </div>
+            <div class="info-block">
+              <h3><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                  <path d="m22 6-10 7L2 6"></path>
+                </svg> Email</h3>
+              <div class="hours-row"><span>Enquiries</span><b><a href="mailto:inquiry.bggroup@gmail.com?subject=Consultation%20Request&amp;body=Hello%20BG%20Group%2C%0A%0AI%20need%20consultation%20regarding...%0A%0AName%3A%0ACompany%3A%0APhone%3A%0A" style="color:var(--accent-2)">inquiry.bggroup@gmail.com</a></b></div>
+              <div class="hours-row"><span>Support</span><b><a href="mailto:support@bgcoating.com?subject=Consultation%20Request&amp;body=Hello%20BG%20Group%2C%0A%0AI%20need%20consultation%20regarding...%0A%0AName%3A%0ACompany%3A%0APhone%3A%0A" style="color:var(--accent-2)">support@bgcoating.com</a></b></div>
+            </div>
+            <div class="info-block">
+              <h3><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                  <circle cx="12" cy="10" r="3"></circle>
+                </svg> Office</h3>
+              <p style="font-size:.85rem;color:var(--txt-mut);line-height:1.7;margin:0">BG Group Of Paint &amp; Coatings Consultant<br>Akash Echo Point, E103, Bhimrad<br>Surat, Gujarat 395007, India</p>
+            </div>
+            <div class="info-block">
+              <h3>Connect</h3>
+              <div class="social-row">
+                <a href="https://wa.me/919925810408" target="_blank" rel="noopener" aria-label="WhatsApp"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-4-1L3 20l1-5.5a8.5 8.5 0 0 1-1-4A8.38 8.38 0 0 1 11.5 2 8.5 8.5 0 0 1 21 11.5z"></path>
+                  </svg></a>
+                <a href="{% url 'home' %}" aria-label="LinkedIn"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M4.98 3.5A2.5 2.5 0 1 1 0 3.5a2.5 2.5 0 0 1 4.98 0zM.5 8h4V24h-4zM8 8h3.8v2.2h.05c.53-1 1.83-2.2 3.77-2.2 4 0 4.75 2.65 4.75 6.1V24h-4v-7c0-1.67-.03-3.8-2.32-3.8-2.32 0-2.68 1.8-2.68 3.68V24H8z"></path>
+                  </svg></a>
+                <a href="{% url 'home' %}" aria-label="YouTube"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M23 7.5a3 3 0 0 0-2.1-2.1C19 5 12 5 12 5s-7 0-8.9.4A3 3 0 0 0 1 7.5 31 31 0 0 0 .5 12 31 31 0 0 0 1 16.5a3 3 0 0 0 2.1 2.1C5 19 12 19 12 19s7 0 8.9-.4a3 3 0 0 0 2.1-2.1A31 31 0 0 0 23.5 12 31 31 0 0 0 23 7.5zM9.75 15.5v-7l6 3.5z"></path>
+                  </svg></a>
+                <a href="{% url 'home' %}" aria-label="Instagram"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <rect x="2" y="2" width="20" height="20" rx="5"></rect>
+                    <circle cx="12" cy="12" r="4"></circle>
+                    <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"></circle>
+                  </svg></a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================= MAP ======================= -->
+    <section class="grid-bg hex-bg" id="map" style="background:#FFFFFF">
+      <div class="wrap">
+        <div class="section-head rv">
+          <p class="eyebrow">Find Us</p>
+          <h2 class="h-section">Visit Our Office</h2>
+        </div>
+        <div class="map-wrap rv">
+          <div class="map-overlay">
+            <h3>BG Group Of Paint &amp; Coatings Consultant</h3>
+            <p>Akash Echo Point, E103, Bhimrad<br>Surat, Gujarat 395007, India</p>
+            <div class="hours-row" style="border:0;padding:.1rem 0 .9rem"><span>Mon – Sat</span><b>09:00 AM – 06:00 PM</b></div>
+            <a class="btn btn-primary" href="https://www.google.com/maps/dir//BG+Group+of+Paint+and+Coating+Consultant,+Akash+Echo+Point,+E103,+Bhimrad,+Surat,+Gujarat+395007/" target="_blank" rel="noopener" style="width:100%">Open In Google Maps <span class="arr">→</span></a>
+          </div>
+          <iframe title="BG Group of Paint and Coating Consultant — Bhimrad, Surat" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3721.247671378345!2d72.7845!3d21.1425!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjHCsDA4JzMzLjAiTiA3MsKwNDcnMDQuMiJF!5e0!3m2!1sen!2sin!4v1600000000000!5m2!1sen!2sin"></iframe>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================= INDUSTRIES SERVED ======================= -->
+    <section class="section-light grid-bg">
+      <div class="wrap">
+        <div class="section-head rv">
+          <p class="eyebrow">Who We Work With</p>
+          <h2 class="h-section">Industries We Serve</h2>
+        </div>
+        <div class="ind-grid">
+          <div class="ind rv">
+            <div class="ind-ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2 3 7v6c0 5 4 8 9 9 5-1 9-4 9-9V7z"></path>
+              </svg></div>
+            <h4>Oil &amp; Gas</h4>
+          </div>
+          <div class="ind rv rv-d1">
+            <div class="ind-ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 21V9l4 3V9l4 3V6h3v15zM19 21V3h2v18"></path>
+              </svg></div>
+            <h4>Refinery</h4>
+          </div>
+          <div class="ind rv rv-d2">
+            <div class="ind-ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 17c1.5 1.5 3 1.5 4.5 0s3-1.5 4.5 0 3 1.5 4.5 0"></path>
+                <path d="M4 14 5 7h6l1 3h6l-1.5 4"></path>
+              </svg></div>
+            <h4>Marine</h4>
+          </div>
+          <div class="ind rv rv-d3">
+            <div class="ind-ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="6" cy="6" r="3"></circle>
+                <circle cx="18" cy="8" r="3"></circle>
+                <circle cx="12" cy="17" r="3"></circle>
+              </svg></div>
+            <h4>Petrochemical</h4>
+          </div>
+          <div class="ind rv">
+            <div class="ind-ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M13 2 3 14h7l-1 8 10-12h-7z"></path>
+              </svg></div>
+            <h4>Power</h4>
+          </div>
+          <div class="ind rv rv-d1">
+            <div class="ind-ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 20h20M4 20V10l8-6 8 6v10"></path>
+              </svg></div>
+            <h4>Infrastructure</h4>
+          </div>
+          <div class="ind rv rv-d2">
+            <div class="ind-ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M12 2v3M12 19v3M2 12h3M19 12h3"></path>
+              </svg></div>
+            <h4>Heavy Engineering</h4>
+          </div>
+          <div class="ind rv rv-d3">
+            <div class="ind-ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 12v9M12 12 5 6M12 12l7-6"></path>
+              </svg></div>
+            <h4>Renewables</h4>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================= WHY CONTACT / TRUST ======================= -->
+    <section class="grid-bg hex-bg" style="background:#F3F5F8">
+      <div class="wrap">
+        <div class="section-head rv">
+          <p class="eyebrow">Why Contact BG Group</p>
+          <h2 class="h-section">A Partner You Can Trust</h2>
+        </div>
+        <div class="trust-grid">
+          <div class="trust rv">
+            <div class="tn">22+</div>
+            <h4>Years Experience</h4>
+            <p>Hands-on refinery, oil &amp; gas and industrial coating expertise.</p>
+          </div>
+          <div class="trust rv rv-d1">
+            <div class="tn">ISO</div>
+            <h4>International Standards</h4>
+            <p>ISO 12944, NACE, AMPP, SSPC and ASTM aligned delivery.</p>
+          </div>
+          <div class="trust rv rv-d2">
+            <div class="tn">24h</div>
+            <h4>Fast Response</h4>
+            <p>We typically reply to enquiries within one business day.</p>
+          </div>
+          <div class="trust rv rv-d3">
+            <div class="tn">100%</div>
+            <h4>Customized Solutions</h4>
+            <p>Every coating system engineered for your exact service environment.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================= CTA BAND ======================= -->
+    <section class="cta-band">
+      <div class="wrap">
+        <div class="cta-inner rv">
+          <div>
+            <p class="eyebrow">Start a Conversation</p>
+            <h2 class="h-section" style="margin:1rem 0">Your Assets Deserve <span style="background:var(--grad-accent);-webkit-background-clip:text;background-clip:text;color:transparent">Expert Protection.</span></h2>
+            <p class="lead">From a single inspection to a full digital coating program — talk to a consultant with 22+ years of hands-on refinery and oil &amp; gas experience.</p>
+          </div>
+          <div class="cta-actions">
+            <a class="cta-phone" href="tel:+919925810408">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"></path>
+              </svg>
+              +91-99258-10408
+            </a>
+            <a class="btn btn-primary" href="{% url 'contact' %}" data-route="" data-anchor="enquiry">Request a Consultation <span class="arr">→</span></a>
+            <a class="btn btn-ghost" href="https://wa.me/919925810408" target="_blank" rel="noopener">WhatsApp Us</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+
+  </section>
+
+  <!-- ======================= BOARD TEAM ======================= -->
+</main>
+{% endblock %}

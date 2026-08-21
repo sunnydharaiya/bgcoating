@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{title}} | BG Coating Admin Panel</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#fff8f0',
+              100: '#ffeedb',
+              300: '#ffc24b',
+              500: '#F7941E',
+              600: '#D96F00',
+              cyan: '#37B7E8',
+            },
+            slate: {
+              950: '#0A111F',
+              900: '#101A2E',
+              800: '#16233C',
+              700: '#20304D',
+              600: '#2E4369',
+              500: '#48628A',
+              400: '#9AA7BD',
+              300: '#CBD5E1',
+              200: '#E2E8F0',
+              100: '#EDF2FA',
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="h-full bg-[#0A111F] text-[#EDF2FA] flex flex-col font-sans antialiased overflow-x-hidden">
+
+  <!-- Mobile Overlay Backdrop -->
+  <div id="drawerBackdrop" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-30 hidden lg:hidden transition-opacity"></div>
+
+  <!-- Reusable Sidebar -->
+  {{> sidebar}}
+
+  <!-- Main Content Wrapper -->
+  <div class="lg:pl-64 flex flex-col flex-1 min-h-screen">
+    <!-- Reusable Topbar Header -->
+    {{> header}}
+
+    <!-- Main Dynamic Content Area -->
+    <main class="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-6">
+      {{{body}}}
+    </main>
+
+    <!-- Admin Footer -->
+    <footer class="py-4 px-6 border-t border-slate-800 text-center text-xs text-slate-500">
+      <span>BG Group of Paint &amp; Coatings Consultant · CMS Admin Panel</span>
+    </footer>
+  </div>
+
+  <!-- Reusable App-Wide Data Components -->
+  {{> toast}}
+  {{> modal}}
+  {{> rich_text_editor}}
+
+  <script>
+    // Mobile Drawer Toggle Logic
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+    const sidebarNav = document.getElementById('sidebarNav');
+    const drawerBackdrop = document.getElementById('drawerBackdrop');
+
+    function toggleDrawer() {
+      sidebarNav.classList.toggle('-translate-x-full');
+      drawerBackdrop.classList.toggle('hidden');
+    }
+
+    if (mobileMenuBtn) {
+      mobileMenuBtn.addEventListener('click', toggleDrawer);
+    }
+    if (drawerBackdrop) {
+      drawerBackdrop.addEventListener('click', toggleDrawer);
+    }
+
+    // Image File & URL Live Preview Helpers
+    function previewImageFile(fileInput, previewImgId, placeholderId, urlInputId) {
+      const file = fileInput.files ? fileInput.files[0] : null;
+      const previewImg = document.getElementById(previewImgId);
+      const placeholder = document.getElementById(placeholderId);
+      const urlInput = document.getElementById(urlInputId);
+
+      if (file && previewImg) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          previewImg.src = e.target.result;
+          previewImg.classList.remove('hidden');
+          if (placeholder) placeholder.classList.add('hidden');
+        };
+        reader.readAsDataURL(file);
+        if (urlInput) urlInput.value = '';
+      }
+    }
+
+    function previewImageUrl(url, previewImgId, placeholderId) {
+      const previewImg = document.getElementById(previewImgId);
+      const placeholder = document.getElementById(placeholderId);
+
+      if (url && url.trim() && previewImg) {
+        previewImg.src = url.trim();
+        previewImg.classList.remove('hidden');
+        if (placeholder) placeholder.classList.add('hidden');
+      } else if (previewImg) {
+        previewImg.src = '';
+        previewImg.classList.add('hidden');
+        if (placeholder) placeholder.classList.remove('hidden');
+      }
+    }
+  </script>
+</body>
+</html>

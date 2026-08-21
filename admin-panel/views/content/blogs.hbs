@@ -1,0 +1,294 @@
+<div class="space-y-6">
+  <!-- Section Header Banner -->
+  <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
+    <div>
+      <div class="text-xs font-mono font-semibold text-sky-400 uppercase tracking-wider">Content &amp; Insights</div>
+      <h2 class="text-xl font-bold text-white mt-1">Technical Blog Articles</h2>
+      <p class="text-xs text-slate-400">Publish technical insights, coating standards guides, case studies, and industry articles.</p>
+    </div>
+    <button onclick="openBlogModal()" class="px-4 py-2.5 bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs rounded-xl shadow-lg shadow-sky-600/20 transition flex items-center gap-2 shrink-0">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+      <span>Create Blog Article</span>
+    </button>
+  </div>
+
+  <!-- Search & Filter Toolbar -->
+  <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
+    <form action="/admin/content/blogs" method="GET" class="w-full sm:w-auto flex flex-col sm:flex-row items-center gap-3">
+      <div class="relative w-full sm:w-72">
+        <input type="text" name="search" value="{{search}}" placeholder="Search by title or keywords..." class="w-full pl-9 pr-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-sky-500 transition text-xs">
+        <svg class="w-4 h-4 text-slate-500 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      </div>
+      <select name="category" onchange="this.form.submit()" class="w-full sm:w-auto px-3.5 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition text-xs">
+        <option value="">All Categories</option>
+        <option value="Surface Preparation" {{#if (eq categoryFilter "Surface Preparation")}}selected{{/if}}>Surface Preparation</option>
+        <option value="Coating Inspection" {{#if (eq categoryFilter "Coating Inspection")}}selected{{/if}}>Coating Inspection</option>
+        <option value="Corrosion Control" {{#if (eq categoryFilter "Corrosion Control")}}selected{{/if}}>Corrosion Control</option>
+        <option value="Quality Assurance" {{#if (eq categoryFilter "Quality Assurance")}}selected{{/if}}>Quality Assurance</option>
+      </select>
+      <button type="submit" class="w-full sm:w-auto px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-xl border border-slate-700 transition">Filter</button>
+      {{#if (or search categoryFilter)}}
+      <a href="/admin/content/blogs" class="text-xs text-rose-400 hover:underline">Clear Filters</a>
+      {{/if}}
+    </form>
+    <div class="text-slate-400 text-xs">
+      Total <span class="font-bold text-white">{{blogs.length}}</span> articles
+    </div>
+  </div>
+
+  <!-- Articles Table -->
+  <div class="bg-slate-900/80 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs">
+        <thead class="bg-slate-950/80 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
+          <tr>
+            <th class="px-4 py-3.5">Publish Date</th>
+            <th class="px-4 py-3.5">Article Title</th>
+            <th class="px-4 py-3.5">Category</th>
+            <th class="px-4 py-3.5">Read Time</th>
+            <th class="px-4 py-3.5">Status</th>
+            <th class="px-4 py-3.5 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-800/60 text-slate-300">
+          {{#each blogs}}
+          <tr class="hover:bg-slate-800/40 transition">
+            <td class="px-4 py-3.5 font-mono text-slate-400 whitespace-nowrap">{{formatDate this.publish_date}}</td>
+            <td class="px-4 py-3.5 font-semibold text-white max-w-md">
+              <div class="flex items-center gap-3">
+                {{#if this.featured_image}}
+                <img src="{{this.featured_image}}" alt="{{this.title}}" class="w-10 h-10 rounded-lg object-cover border border-slate-800 shrink-0">
+                {{else}}
+                <div class="w-10 h-10 rounded-lg bg-sky-500/10 text-sky-400 border border-sky-500/20 flex items-center justify-center shrink-0 font-bold">
+                  BG
+                </div>
+                {{/if}}
+                <div class="truncate">
+                  <div class="font-bold text-white truncate">{{this.title}}</div>
+                  <div class="text-[10px] text-slate-500 font-mono truncate">/blog/{{this.slug}}/</div>
+                </div>
+              </div>
+            </td>
+            <td class="px-4 py-3.5">
+              <span class="px-2.5 py-1 rounded-lg bg-sky-500/10 text-sky-400 border border-sky-500/20 font-mono text-[10px] font-semibold">
+                {{this.category_name}}
+              </span>
+            </td>
+            <td class="px-4 py-3.5 font-mono text-slate-400 whitespace-nowrap">{{this.read_time_minutes}} min read</td>
+            <td class="px-4 py-3.5 whitespace-nowrap">
+              {{#if this.is_featured}}
+              <span class="px-2 py-0.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-bold">★ Editor's Choice</span>
+              {{else}}
+              <span class="px-2 py-0.5 rounded-lg bg-slate-800 text-slate-500 border border-slate-700 text-[10px] font-medium">Published</span>
+              {{/if}}
+            </td>
+            <td class="px-4 py-3.5 text-right space-x-1 whitespace-nowrap">
+              <a 
+                href="{{../websiteUrl}}/blog/{{this.slug}}/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-sky-400 rounded-lg text-[11px] font-medium border border-slate-700 transition inline-flex items-center gap-1"
+              >
+                <span>View Live</span>
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+              </a>
+              <button 
+                onclick="editBlogModal({{json this}})"
+                class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-[11px] font-medium border border-slate-700 transition"
+              >
+                Edit
+              </button>
+              <button 
+                onclick="openConfirmModal({
+                  title: 'Delete Blog Article',
+                  description: 'Are you sure you want to delete article &quot;{{this.title}}&quot;? This action cannot be undone.',
+                  confirmActionUrl: '/admin/content/blogs/{{#if this.slug}}{{this.slug}}{{else}}{{this.id}}{{/if}}/delete',
+                  confirmText: 'Delete Article'
+                })"
+                class="px-2.5 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg text-[11px] font-medium border border-rose-500/20 transition"
+              >
+                Delete
+              </button>
+            </td>
+          </tr>
+          {{else}}
+          <tr>
+            <td colspan="6" class="p-0">
+              {{> empty_state emptyTitle="No Blog Articles Found" emptyDescription="No articles matching your query were found in the database." createUrl="javascript:openBlogModal()" createText="Publish First Article"}}
+            </td>
+          </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Form for Create / Edit Blog Article -->
+<div id="blogModalBackdrop" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden transition-opacity flex items-center justify-center p-4">
+  <div id="blogModalCard" class="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-3xl w-full p-6 space-y-6 transform scale-95 transition-all max-h-[90vh] overflow-y-auto custom-scrollbar">
+    <div class="flex items-start justify-between gap-4 border-b border-slate-800 pb-4">
+      <div>
+        <h3 id="blogModalHeading" class="text-base font-bold text-white">Create Blog Article</h3>
+        <p class="text-xs text-slate-400 mt-0.5">Publish technical guides, surface treatment articles, and industry insights.</p>
+      </div>
+      <button onclick="closeBlogModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <form id="blogItemForm" method="POST" action="/admin/content/blogs" enctype="multipart/form-data" class="space-y-4 text-xs">
+      <div>
+        <label class="block font-medium text-slate-300 mb-1">Article Title *</label>
+        <input type="text" id="blogTitle" name="title" required placeholder="e.g. Surface Preparation Standards ISO 8501 vs SSPC" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition" oninput="autoSlugifyBlog(this.value)">
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label class="block font-medium text-slate-300 mb-1">URL Slug</label>
+          <input type="text" id="blogSlug" name="slug" placeholder="surface-preparation-standards" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition font-mono">
+        </div>
+        <div>
+          <label class="block font-medium text-slate-300 mb-1">Category *</label>
+          <input type="text" id="blogCategory" name="category_name" list="blogCategoriesList" required placeholder="Surface Preparation" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition">
+          <datalist id="blogCategoriesList">
+            <option value="Surface Preparation"></option>
+            <option value="Coating Inspection"></option>
+            <option value="Corrosion Control"></option>
+            <option value="Quality Assurance"></option>
+            <option value="Training & Certification"></option>
+          </datalist>
+        </div>
+        <div>
+          <label class="block font-medium text-slate-300 mb-1">Publish Date</label>
+          <input type="date" id="blogPublishDate" name="publish_date" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition font-mono">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block font-medium text-slate-300 mb-1">Read Time (Minutes)</label>
+          <input type="number" id="blogReadTime" name="read_time_minutes" value="5" min="1" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition">
+        </div>
+        <div>
+          {{> file_uploader fieldId="blogImage" fieldName="featured_image" label="Featured Hero Image"}}
+        </div>
+      </div>
+
+      <div>
+        <label class="block font-medium text-slate-300 mb-1">Article Excerpt Summary *</label>
+        <textarea id="blogExcerpt" name="excerpt" rows="2" required placeholder="Brief 1-2 sentence overview of this technical insight..." class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition"></textarea>
+      </div>
+
+      <div>
+        <label class="block font-medium text-slate-300 mb-1">Article Full Content (Rich Text) *</label>
+        <textarea id="blogContent" name="content" rows="6" placeholder="Full technical article content, standards comparisons, case studies, and recommendations..." class="rich-text-editor w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition"></textarea>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block font-medium text-slate-300 mb-1">SEO Search Keywords</label>
+          <input type="text" id="blogKeywords" name="search_keywords" placeholder="ISO 8501, surface prep, abrasive blasting" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition font-mono">
+        </div>
+        <div>
+          <label class="block font-medium text-slate-300 mb-1">External Resource URL (Optional)</label>
+          <input type="text" id="blogExternal" name="external_url" placeholder="https://ampp.org/standards/..." class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition font-mono">
+        </div>
+      </div>
+
+      <div class="pt-2 border-t border-slate-800">
+        <label class="flex items-center gap-2 p-3 bg-slate-950/60 border border-slate-800 rounded-xl cursor-pointer hover:border-slate-700 transition">
+          <input type="checkbox" id="blogFeatured" name="is_featured" class="rounded border-slate-700 text-sky-500 focus:ring-0">
+          <span class="text-slate-200 font-medium">Highlight as Featured Main Article on Blog Index</span>
+        </label>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
+        <button type="button" onclick="closeBlogModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl border border-slate-700 transition">
+          Cancel
+        </button>
+        <button type="submit" class="px-5 py-2 bg-sky-600 hover:bg-sky-500 text-white font-semibold rounded-xl shadow-lg shadow-sky-600/20 transition flex items-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          <span id="blogSubmitText">Publish Article</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function autoSlugifyBlog(val) {
+    const slugInput = document.getElementById('blogSlug');
+    if (!slugInput.dataset.custom) {
+      slugInput.value = val.toLowerCase().replace(/[^\w ]+/g, '').replace(/ +/g, '-');
+    }
+  }
+
+  function openBlogModal() {
+    const form = document.getElementById('blogItemForm');
+    form.action = '/admin/content/blogs';
+    document.getElementById('blogModalHeading').textContent = 'Create Blog Article';
+    document.getElementById('blogSubmitText').textContent = 'Publish Article';
+    document.getElementById('blogTitle').value = '';
+    document.getElementById('blogSlug').value = '';
+    document.getElementById('blogSlug').dataset.custom = '';
+    document.getElementById('blogCategory').value = 'Surface Preparation';
+    document.getElementById('blogPublishDate').value = new Date().toISOString().split('T')[0];
+    document.getElementById('blogReadTime').value = '5';
+    previewImageUrl('', 'blogImage_preview_img', 'blogImage_placeholder');
+    document.getElementById('blogExcerpt').value = '';
+    setRichTextData('blogContent', '');
+    document.getElementById('blogKeywords').value = '';
+    document.getElementById('blogExternal').value = '';
+    document.getElementById('blogFeatured').checked = false;
+
+    const backdrop = document.getElementById('blogModalBackdrop');
+    const card = document.getElementById('blogModalCard');
+    backdrop.classList.remove('hidden');
+    setTimeout(() => {
+      card.classList.remove('scale-95');
+      card.classList.add('scale-100');
+      if (window.initRichTextEditors) window.initRichTextEditors();
+    }, 10);
+  }
+
+  function editBlogModal(item) {
+    const identifier = item.slug || item.id;
+    const form = document.getElementById('blogItemForm');
+    form.action = '/admin/content/blogs/' + identifier + '/edit';
+    document.getElementById('blogModalHeading').textContent = 'Edit Blog Article';
+    document.getElementById('blogSubmitText').textContent = 'Update Article';
+    document.getElementById('blogTitle').value = item.title || '';
+    document.getElementById('blogSlug').value = item.slug || '';
+    document.getElementById('blogSlug').dataset.custom = 'true';
+    document.getElementById('blogCategory').value = item.category_name || 'General';
+    document.getElementById('blogPublishDate').value = item.publish_date || new Date().toISOString().split('T')[0];
+    document.getElementById('blogReadTime').value = item.read_time_minutes ?? 5;
+    previewImageUrl(item.featured_image || '', 'blogImage_preview_img', 'blogImage_placeholder');
+    if (document.getElementById('blogImage_url')) document.getElementById('blogImage_url').value = item.featured_image || '';
+    document.getElementById('blogExcerpt').value = item.excerpt || '';
+    setRichTextData('blogContent', item.content || '');
+    document.getElementById('blogKeywords').value = item.search_keywords || '';
+    document.getElementById('blogExternal').value = item.external_url || '';
+    document.getElementById('blogFeatured').checked = Boolean(item.is_featured);
+
+    const backdrop = document.getElementById('blogModalBackdrop');
+    const card = document.getElementById('blogModalCard');
+    backdrop.classList.remove('hidden');
+    setTimeout(() => {
+      card.classList.remove('scale-95');
+      card.classList.add('scale-100');
+      if (window.initRichTextEditors) window.initRichTextEditors();
+    }, 10);
+  }
+
+  function closeBlogModal() {
+    const backdrop = document.getElementById('blogModalBackdrop');
+    const card = document.getElementById('blogModalCard');
+    card.classList.remove('scale-100');
+    card.classList.add('scale-95');
+    setTimeout(() => {
+      backdrop.classList.add('hidden');
+    }, 150);
+  }
+</script>

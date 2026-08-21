@@ -1,0 +1,93 @@
+<!-- Reusable CKEditor 5 Integration Partial Component -->
+<script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js"></script>
+
+<style>
+  /* CKEditor Dark Theme Overrides */
+  .ck.ck-editor__main>.ck-editor__editable {
+    background-color: #020617 !important;
+    color: #f8fafc !important;
+    border-color: #1e293b !important;
+    min-height: 180px;
+    border-bottom-left-radius: 0.75rem !important;
+    border-bottom-right-radius: 0.75rem !important;
+  }
+  .ck.ck-toolbar {
+    background-color: #0f172a !important;
+    border-color: #1e293b !important;
+    border-top-left-radius: 0.75rem !important;
+    border-top-right-radius: 0.75rem !important;
+  }
+  .ck.ck-toolbar .ck-button, .ck.ck-dropdown__button {
+    color: #94a3b8 !important;
+  }
+  .ck.ck-toolbar .ck-button:hover, .ck.ck-button.ck-on {
+    color: #38bdf8 !important;
+    background-color: #1e293b !important;
+  }
+  .ck.ck-list {
+    background-color: #0f172a !important;
+    border-color: #1e293b !important;
+  }
+  .ck.ck-list__item .ck-button {
+    color: #cbd5e1 !important;
+  }
+  .ck.ck-list__item .ck-button:hover {
+    background-color: #1e293b !important;
+    color: #38bdf8 !important;
+  }
+</style>
+
+<script>
+  window.richTextInstances = window.richTextInstances || {};
+
+  window.initRichTextEditors = function() {
+    if (typeof ClassicEditor === 'undefined') return;
+
+    document.querySelectorAll('textarea.rich-text-editor').forEach((textarea) => {
+      if (textarea.dataset.ckeditorInitialized) return;
+      textarea.dataset.ckeditorInitialized = 'true';
+
+      ClassicEditor
+        .create(textarea, {
+          toolbar: [
+            'heading', '|', 
+            'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote', '|', 
+            'undo', 'redo'
+          ]
+        })
+        .then(editor => {
+          const key = textarea.id || textarea.name;
+          window.richTextInstances[key] = editor;
+
+          // Auto sync editor data back to original textarea
+          editor.model.document.on('change:data', () => {
+            textarea.value = editor.getData();
+          });
+
+          // Form submit listener sync
+          const form = textarea.closest('form');
+          if (form) {
+            form.addEventListener('submit', () => {
+              textarea.value = editor.getData();
+            });
+          }
+        })
+        .catch(error => {
+          console.error('CKEditor initialization failed:', error);
+        });
+    });
+  };
+
+  window.setRichTextData = function(fieldId, data) {
+    if (window.richTextInstances && window.richTextInstances[fieldId]) {
+      window.richTextInstances[fieldId].setData(data || '');
+    } else {
+      const el = document.getElementById(fieldId);
+      if (el) el.value = data || '';
+    }
+  };
+
+  document.addEventListener('DOMContentLoaded', () => {
+    window.initRichTextEditors();
+  });
+</script>

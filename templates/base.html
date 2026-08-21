@@ -1,0 +1,41 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" style="--rail-top: 121px; scroll-behavior: smooth;">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}{{ page_title|default:site_settings.site_name }}{% endblock %}</title>
+<meta name="description" content="{% block meta_desc %}{{ page_desc|default:site_settings.tagline }}{% endblock %}">
+<meta name="keywords" content="protective coatings, industrial painting, surface preparation, corrosion protection, corrosion assessment, NACE inspection, AMPP coating inspection, painting consultancy">
+<meta name="author" content="{{ site_settings.site_name|default:'BG Group Of Paint &amp; Coatings Consultant' }}">
+<meta name="robots" content="{{ page_seo.robots|default:'index, follow' }}">
+<link rel="canonical" href="{{ page_canonical|default:request.path }}">
+{% if page_seo and page_seo.og_image %}
+<meta property="og:image" content="{{ page_seo.og_image.url }}">
+{% endif %}
+{% if site_settings and site_settings.logo %}
+<link rel="icon" href="{{ site_settings.logo.url }}" type="image/png">
+{% else %}
+<link rel="icon" href="{% static 'assets/images/logo-2.png' %}" type="image/png">
+{% endif %}
+<link rel="preconnect" href="https://fonts.googleapis.com/">
+<link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'css/styles.css' %}">
+
+{% block extra_css %}{% endblock %}
+</head>
+<body class="rail-push rail-open" data-page="{{ current_page }}">
+
+{% include 'includes/header.html' %}
+
+{% include 'includes/sidebar.html' %}
+
+{% block content %}{% endblock %}
+
+{% include 'includes/footer.html' %}
+
+<script src="{% static 'js/main.js' %}"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

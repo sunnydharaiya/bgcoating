@@ -1,0 +1,71 @@
+{% load static %}
+<div id="spaFade" aria-hidden="true"></div>
+<div id="spaFade" aria-hidden="true"></div>
+<div class="topbar">
+  <div class="wrap tb-in">
+    <span class="tb-msg">Welcome to {{ site_settings.site_name|default:"BG Group Of Paint &amp; Coatings Consultant" }}</span>
+    <div class="tb-social">
+      <a href="https://wa.me/{{ site_settings.whatsapp_number|default:'919925810408' }}" aria-label="WhatsApp" target="_blank" rel="noopener">WA</a>
+      <a href="{{ site_settings.facebook_url|default:'https://www.facebook.com/bggroupcoatingsolutions' }}" aria-label="Facebook" target="_blank" rel="noopener">FB</a>
+      <a href="{{ site_settings.instagram_url|default:'https://www.instagram.com/bggroupcoatingsolutions/' }}" aria-label="Instagram" target="_blank" rel="noopener">IG</a>
+      <a href="{{ site_settings.youtube_url|default:'https://www.youtube.com/@bggroupcoatingconsultant' }}" aria-label="YouTube" target="_blank" rel="noopener">YT</a>
+      <a href="{{ site_settings.linkedin_url|default:'https://www.linkedin.com/company/bggroupofpaintandcoatingconsultant/' }}" aria-label="LinkedIn" target="_blank" rel="noopener">IN</a>
+    </div>
+  </div>
+</div>
+
+<header class="site" id="siteHeader">
+  <div class="wrap nav">
+    <a class="brand" href="{% url 'home' %}" data-route="" aria-label="BG Group home">
+      {% if site_settings and site_settings.logo %}
+      <img src="{{ site_settings.logo.url }}" alt="{{ site_settings.site_name }} logo">
+      {% else %}
+      <img src="{% static 'assets/images/logo-2.png' %}" alt="BG Group of Paint &amp; Coatings Consultant logo">
+      {% endif %}
+      <span class="brand-name">BG GROUP<small>Paint &amp; Coatings Consultant</small></span>
+    </a>
+    <nav aria-label="Primary">
+      <ul class="menu">
+        {% if header_navigation %}
+          {% for item in header_navigation %}
+          <li><a href="{{ item.url }}" data-route="" {% if item.is_external %}target="_blank" rel="noopener noreferrer"{% endif %}>{{ item.title }}</a></li>
+          {% endfor %}
+        {% else %}
+          <li><a href="{% url 'home' %}" data-route="" class="{% if current_page == 'home' %}active{% endif %}" {% if current_page == 'home' %}aria-current="page"{% endif %}>Home</a></li>
+          <li><a href="{% url 'about' %}" data-route="" class="{% if current_page == 'about' %}active{% endif %}">About</a></li>
+          <li><a href="{% url 'board' %}" data-route="" class="{% if current_page == 'board' %}active{% endif %}">Board Team</a></li>
+          <li><a href="{% url 'services' %}" data-route="" class="{% if current_page == 'services' %}active{% endif %}">Services</a></li>
+          <li><a href="{% url 'gallery' %}" data-route="" class="{% if current_page == 'gallery' %}active{% endif %}">Gallery</a></li>
+          <li><a href="{% url 'blog' %}" data-route="" class="{% if current_page == 'blog' %}active{% endif %}">Blog</a></li>
+          <li><a href="{{ site_settings.career_form_url|default:'https://forms.gle/v6kCBLKYeeUtMPky8' }}" target="_blank" rel="noopener noreferrer">Career</a></li>
+          <li><a href="{% url 'contact' %}" data-route="" class="{% if current_page == 'contact' %}active{% endif %}">Contact</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+    <div class="nav-cta">
+      <a class="btn btn-primary" href="{% url 'contact' %}" data-route="">Get a Consultation <span class="arr">→</span></a>
+      <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</header>
+
+<div class="drawer" id="drawer">
+  <p class="grp">Navigation</p>
+  {% if header_navigation %}
+    {% for item in header_navigation %}
+    <a href="{{ item.url }}" data-route="" {% if item.is_external %}target="_blank" rel="noopener noreferrer"{% endif %}>{{ item.title }}</a>
+    {% endfor %}
+  {% else %}
+    <a href="{% url 'home' %}" data-route="" class="{% if current_page == 'home' %}active{% endif %}">Home</a>
+    <a href="{% url 'about' %}" data-route="" class="{% if current_page == 'about' %}active{% endif %}">About Us</a>
+    <a href="{% url 'board' %}" data-route="" class="{% if current_page == 'board' %}active{% endif %}">Board Team</a>
+    <a href="{% url 'services' %}" data-route="" class="{% if current_page == 'services' %}active{% endif %}">Services</a>
+    <a href="{% url 'gallery' %}" data-route="" class="{% if current_page == 'gallery' %}active{% endif %}">Gallery</a>
+    <a href="{% url 'blog' %}" data-route="" class="{% if current_page == 'blog' %}active{% endif %}">Blog &amp; Insights</a>
+    <a href="{{ site_settings.career_form_url|default:'https://forms.gle/v6kCBLKYeeUtMPky8' }}" target="_blank" rel="noopener noreferrer">Career</a>
+    <a href="{% url 'contact' %}" data-route="" class="{% if current_page == 'contact' %}active{% endif %}">Contact Us</a>
+  {% endif %}
+  <div style="margin-top:2rem">
+    <a class="btn btn-primary" href="{% url 'contact' %}" data-route="" style="width:100%;justify-content:center">Get a Consultation <span class="arr">→</span></a>
+  </div>
+</div>

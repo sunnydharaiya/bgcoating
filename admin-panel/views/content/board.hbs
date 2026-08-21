@@ -1,0 +1,197 @@
+<div class="space-y-6">
+  <!-- Section Header Banner -->
+  <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
+    <div>
+      <div class="text-xs font-mono font-semibold text-sky-400 uppercase tracking-wider">Content &amp; Insights</div>
+      <h2 class="text-xl font-bold text-white mt-1">Board Members &amp; Leadership</h2>
+      <p class="text-xs text-slate-400">Manage technical leadership team profiles, NACE/AMPP certifications, display order, and executive bios.</p>
+    </div>
+    <button onclick="openBoardModal()" class="px-4 py-2.5 bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs rounded-xl shadow-lg shadow-sky-600/20 transition flex items-center gap-2 shrink-0">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+      <span>Add Board Member</span>
+    </button>
+  </div>
+
+  <!-- Board Members Profile Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {{#each members}}
+    <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl hover:border-sky-500/40 transition flex flex-col justify-between space-y-4">
+      <div class="space-y-4">
+        <div class="flex items-start justify-between gap-4">
+          <div class="flex items-center gap-3">
+            {{#if this.photo}}
+            <img src="{{this.photo}}" alt="{{this.name}}" class="w-14 h-14 rounded-2xl object-cover border-2 border-slate-800 shrink-0">
+            {{else}}
+            <div class="w-14 h-14 rounded-2xl bg-sky-500/10 text-sky-400 border border-sky-500/20 flex items-center justify-center font-bold text-lg shrink-0">
+              {{this.name.[0]}}
+            </div>
+            {{/if}}
+            <div>
+              <h3 class="text-base font-bold text-white leading-tight">{{this.name}}</h3>
+              <p class="text-xs text-slate-400 font-medium mt-0.5">{{this.role}}</p>
+            </div>
+          </div>
+          <span class="px-2.5 py-1 rounded-lg bg-slate-950 text-slate-400 border border-slate-800 font-mono text-xs font-semibold shrink-0">
+            #{{this.display_order}}
+          </span>
+        </div>
+
+        {{#if this.certification}}
+        <div>
+          <span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono text-[10px] font-bold">
+            ★ {{this.certification}}
+          </span>
+        </div>
+        {{/if}}
+
+        <p class="text-xs text-slate-400 line-clamp-3 leading-relaxed">
+          {{#if this.bio}}{{this.bio}}{{else}}<span class="italic text-slate-600">No biography provided</span>{{/if}}
+        </p>
+      </div>
+
+      <div class="pt-4 border-t border-slate-800/80 flex items-center justify-end gap-2 text-xs">
+        <button 
+          onclick="editBoardModal({{json this}})"
+          class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg font-medium border border-slate-700 transition"
+        >
+          Edit
+        </button>
+        <button 
+          onclick="openConfirmModal({
+            title: 'Delete Board Member',
+            description: 'Are you sure you want to delete board profile &quot;{{this.name}}&quot;? This action cannot be undone.',
+            confirmActionUrl: '/admin/content/board/{{this.id}}/delete',
+            confirmText: 'Delete Member'
+          })"
+          class="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg font-medium border border-rose-500/20 transition"
+        >
+          Delete
+        </button>
+      </div>
+    </div>
+    {{else}}
+    <div class="col-span-full">
+      {{> empty_state emptyTitle="No Board Members" emptyDescription="No leadership profiles have been added to the board team yet." createUrl="javascript:openBoardModal()" createText="Add First Board Member"}}
+    </div>
+    {{/each}}
+  </div>
+</div>
+
+<!-- Modal Form for Create / Edit Board Member -->
+<div id="boardModalBackdrop" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden transition-opacity flex items-center justify-center p-4">
+  <div id="boardModalCard" class="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-6 transform scale-95 transition-all max-h-[90vh] overflow-y-auto custom-scrollbar">
+    <div class="flex items-start justify-between gap-4 border-b border-slate-800 pb-4">
+      <div>
+        <h3 id="boardModalHeading" class="text-base font-bold text-white">Add Board Member</h3>
+        <p class="text-xs text-slate-400 mt-0.5">Configure name, role, NACE/AMPP certifications, photo, and bio.</p>
+      </div>
+      <button onclick="closeBoardModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <form id="boardItemForm" method="POST" action="/admin/content/board" enctype="multipart/form-data" class="space-y-4 text-xs">
+      <div>
+        <label class="block font-medium text-slate-300 mb-1">Full Name *</label>
+        <input type="text" id="bmName" name="name" required placeholder="e.g. Er. B.G. Patel" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition">
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="md:col-span-2">
+          <label class="block font-medium text-slate-300 mb-1">Role / Position *</label>
+          <input type="text" id="bmRole" name="role" required placeholder="Managing Director & Principal Specialist" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition">
+        </div>
+        <div>
+          <label class="block font-medium text-slate-300 mb-1">Display Order</label>
+          <input type="number" id="bmOrder" name="display_order" value="0" min="0" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition">
+        </div>
+      </div>
+
+      <div>
+        <label class="block font-medium text-slate-300 mb-1">Certifications (e.g. NACE Level 3 / AMPP)</label>
+        <input type="text" id="bmCert" name="certification" placeholder="NACE Level 3 Inspector #9842 / AMPP Certified" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition font-mono">
+      </div>
+
+      {{> file_uploader fieldId="bmPhoto" fieldName="photo" label="Profile Photo"}}
+
+      <div>
+        <label class="block font-medium text-slate-300 mb-1">Executive Bio</label>
+        <textarea id="bmBio" name="bio" rows="4" placeholder="Over 25 years of experience in protective coatings, refinery corrosion surveys, and ISO 12944 compliance..." class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition"></textarea>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
+        <button type="button" onclick="closeBoardModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl border border-slate-700 transition">
+          Cancel
+        </button>
+        <button type="submit" class="px-5 py-2 bg-sky-600 hover:bg-sky-500 text-white font-semibold rounded-xl shadow-lg shadow-sky-600/20 transition flex items-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          <span id="bmSubmitText">Save Board Member</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function selectPortraitPhoto(type) {
+    const urlInput = document.getElementById('bmPhoto_url');
+    let val = '';
+    if (type === 'executive') val = 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=400&q=80';
+    if (type === 'engineer') val = 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80';
+    if (urlInput) urlInput.value = val;
+    previewImageUrl(val, 'bmPhoto_preview_img', 'bmPhoto_placeholder');
+  }
+
+  function openBoardModal() {
+    const form = document.getElementById('boardItemForm');
+    form.action = '/admin/content/board';
+    document.getElementById('boardModalHeading').textContent = 'Add Board Member';
+    document.getElementById('bmSubmitText').textContent = 'Save Board Member';
+    document.getElementById('bmName').value = '';
+    document.getElementById('bmRole').value = '';
+    document.getElementById('bmCert').value = 'NACE Level 3 / AMPP Certified';
+    previewImageUrl('', 'bmPhoto_preview_img', 'bmPhoto_placeholder');
+    document.getElementById('bmBio').value = '';
+    document.getElementById('bmOrder').value = '0';
+
+    const backdrop = document.getElementById('boardModalBackdrop');
+    const card = document.getElementById('boardModalCard');
+    backdrop.classList.remove('hidden');
+    setTimeout(() => {
+      card.classList.remove('scale-95');
+      card.classList.add('scale-100');
+    }, 10);
+  }
+
+  function editBoardModal(item) {
+    const form = document.getElementById('boardItemForm');
+    form.action = '/admin/content/board/' + item.id + '/edit';
+    document.getElementById('boardModalHeading').textContent = 'Edit Board Member Profile';
+    document.getElementById('bmSubmitText').textContent = 'Update Profile';
+    document.getElementById('bmName').value = item.name || '';
+    document.getElementById('bmRole').value = item.role || '';
+    document.getElementById('bmCert').value = item.certification || '';
+    previewImageUrl(item.photo || '', 'bmPhoto_preview_img', 'bmPhoto_placeholder');
+    if (document.getElementById('bmPhoto_url')) document.getElementById('bmPhoto_url').value = item.photo || '';
+    document.getElementById('bmBio').value = item.bio || '';
+    document.getElementById('bmOrder').value = item.display_order ?? 0;
+
+    const backdrop = document.getElementById('boardModalBackdrop');
+    const card = document.getElementById('boardModalCard');
+    backdrop.classList.remove('hidden');
+    setTimeout(() => {
+      card.classList.remove('scale-95');
+      card.classList.add('scale-100');
+    }, 10);
+  }
+
+  function closeBoardModal() {
+    const backdrop = document.getElementById('boardModalBackdrop');
+    const card = document.getElementById('boardModalCard');
+    card.classList.remove('scale-100');
+    card.classList.add('scale-95');
+    setTimeout(() => {
+      backdrop.classList.add('hidden');
+    }, 150);
+  }
+</script>

@@ -1,0 +1,218 @@
+<div class="space-y-6">
+  <!-- Section Header Banner -->
+  <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
+    <div>
+      <div class="text-xs font-mono font-semibold text-sky-400 uppercase tracking-wider">Website Management</div>
+      <h2 class="text-xl font-bold text-white mt-1">Navigation Menu Items</h2>
+      <p class="text-xs text-slate-400">Configure header links, mobile drawer items, and footer navigation links.</p>
+    </div>
+    <button onclick="openNavModal()" class="px-4 py-2.5 bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs rounded-xl shadow-lg shadow-sky-600/20 transition flex items-center gap-2 shrink-0">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+      <span>Add Navigation Item</span>
+    </button>
+  </div>
+
+  <!-- Navigation Data Table -->
+  <div class="bg-slate-900/80 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs">
+        <thead class="bg-slate-950/80 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
+          <tr>
+            <th class="px-4 py-3.5 w-16">Order</th>
+            <th class="px-4 py-3.5">Menu Title</th>
+            <th class="px-4 py-3.5">Target URL Path</th>
+            <th class="px-4 py-3.5">Placements</th>
+            <th class="px-4 py-3.5">Link Type</th>
+            <th class="px-4 py-3.5 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-800/60 text-slate-300">
+          {{#each items}}
+          <tr class="hover:bg-slate-800/40 transition">
+            <td class="px-4 py-3.5 font-mono text-slate-400 font-semibold">{{this.order}}</td>
+            <td class="px-4 py-3.5 font-semibold text-white">
+              <div class="flex items-center gap-2">
+                {{#if this.parent}}
+                <span class="text-slate-500 font-mono text-[10px]">↳</span>
+                {{/if}}
+                <span>{{this.title}}</span>
+              </div>
+            </td>
+            <td class="px-4 py-3.5 font-mono text-sky-400">{{this.url}}</td>
+            <td class="px-4 py-3.5">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                {{#if this.is_header}}
+                <span class="px-2 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-medium">Header</span>
+                {{/if}}
+                {{#if this.is_footer}}
+                <span class="px-2 py-0.5 rounded-lg bg-sky-500/10 text-sky-400 border border-sky-500/20 text-[10px] font-medium">Footer</span>
+                {{/if}}
+              </div>
+            </td>
+            <td class="px-4 py-3.5">
+              {{#if this.is_external}}
+              <span class="px-2 py-0.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-medium">External</span>
+              {{else}}
+              <span class="px-2 py-0.5 rounded-lg bg-slate-800 text-slate-400 border border-slate-700 text-[10px] font-medium">Internal Route</span>
+              {{/if}}
+            </td>
+            <td class="px-4 py-3.5 text-right space-x-1">
+              <button 
+                onclick="editNavModal({{json this}})"
+                class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-[11px] font-medium border border-slate-700 transition"
+              >
+                Edit
+              </button>
+              <button 
+                onclick="openConfirmModal({
+                  title: 'Delete Navigation Link',
+                  description: 'Are you sure you want to delete menu item &quot;{{this.title}}&quot;? This action cannot be undone.',
+                  confirmActionUrl: '/admin/website/navigation/{{this.id}}/delete',
+                  confirmText: 'Delete Menu Link'
+                })"
+                class="px-2.5 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg text-[11px] font-medium border border-rose-500/20 transition"
+              >
+                Delete
+              </button>
+            </td>
+          </tr>
+          {{else}}
+          <tr>
+            <td colspan="6" class="p-0">
+              {{> empty_state emptyTitle="No Navigation Items" emptyDescription="No navigation menu links have been created yet." createUrl="javascript:openNavModal()" createText="Add First Menu Link"}}
+            </td>
+          </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Form for Create / Edit Navigation Item -->
+<div id="navModalBackdrop" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden transition-opacity flex items-center justify-center p-4">
+  <div id="navModalCard" class="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-6 transform scale-95 transition-all">
+    <div class="flex items-start justify-between gap-4 border-b border-slate-800 pb-4">
+      <div>
+        <h3 id="navModalHeading" class="text-base font-bold text-white">Add Navigation Item</h3>
+        <p class="text-xs text-slate-400 mt-0.5">Configure menu item title, URL path, placement, and display order.</p>
+      </div>
+      <button onclick="closeNavModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <form id="navItemForm" method="POST" action="/admin/website/navigation" class="space-y-4 text-xs">
+      <div>
+        <label class="block font-medium text-slate-300 mb-1">Menu Title *</label>
+        <input type="text" id="navTitle" name="title" required placeholder="e.g. Services, About Us, Contact" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition">
+      </div>
+
+      <div>
+        <label class="block font-medium text-slate-300 mb-1">Target URL Path *</label>
+        <input type="text" id="navUrl" name="url" required placeholder="e.g. /services/ or https://example.com" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition">
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block font-medium text-slate-300 mb-1">Display Order</label>
+          <input type="number" id="navOrder" name="order" value="0" min="0" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition">
+        </div>
+        <div>
+          <label class="block font-medium text-slate-300 mb-1">Parent Menu Item</label>
+          <select id="navParent" name="parent" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition">
+            <option value="">None (Top Level Item)</option>
+            {{#each items}}
+            <option value="{{this.id}}">{{this.title}}</option>
+            {{/each}}
+          </select>
+        </div>
+      </div>
+
+      <!-- Placements Checkboxes -->
+      <div class="pt-2 border-t border-slate-800/80 space-y-2">
+        <label class="block font-medium text-slate-300 mb-1">Placement Options</label>
+        <div class="grid grid-cols-3 gap-3">
+          <label class="flex items-center gap-2 p-2.5 bg-slate-950/60 border border-slate-800 rounded-xl cursor-pointer hover:border-slate-700 transition">
+            <input type="checkbox" id="navHeader" name="is_header" checked class="rounded border-slate-700 text-sky-500 focus:ring-0">
+            <span class="text-slate-300">Header</span>
+          </label>
+          <label class="flex items-center gap-2 p-2.5 bg-slate-950/60 border border-slate-800 rounded-xl cursor-pointer hover:border-slate-700 transition">
+            <input type="checkbox" id="navFooter" name="is_footer" checked class="rounded border-slate-700 text-sky-500 focus:ring-0">
+            <span class="text-slate-300">Footer</span>
+          </label>
+          <label class="flex items-center gap-2 p-2.5 bg-slate-950/60 border border-slate-800 rounded-xl cursor-pointer hover:border-slate-700 transition">
+            <input type="checkbox" id="navExternal" name="is_external" class="rounded border-slate-700 text-sky-500 focus:ring-0">
+            <span class="text-slate-300">External Link</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
+        <button type="button" onclick="closeNavModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl border border-slate-700 transition">
+          Cancel
+        </button>
+        <button type="submit" class="px-5 py-2 bg-sky-600 hover:bg-sky-500 text-white font-semibold rounded-xl shadow-lg shadow-sky-600/20 transition flex items-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          <span id="navSubmitText">Save Item</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openNavModal() {
+    const form = document.getElementById('navItemForm');
+    form.action = '/admin/website/navigation';
+    document.getElementById('navModalHeading').textContent = 'Add Navigation Item';
+    document.getElementById('navSubmitText').textContent = 'Save Navigation Item';
+    document.getElementById('navTitle').value = '';
+    document.getElementById('navUrl').value = '';
+    document.getElementById('navOrder').value = '0';
+    document.getElementById('navParent').value = '';
+    document.getElementById('navHeader').checked = true;
+    document.getElementById('navFooter').checked = true;
+    document.getElementById('navExternal').checked = false;
+
+    const backdrop = document.getElementById('navModalBackdrop');
+    const card = document.getElementById('navModalCard');
+    backdrop.classList.remove('hidden');
+    setTimeout(() => {
+      card.classList.remove('scale-95');
+      card.classList.add('scale-100');
+    }, 10);
+  }
+
+  function editNavModal(item) {
+    const form = document.getElementById('navItemForm');
+    form.action = '/admin/website/navigation/' + item.id + '/edit';
+    document.getElementById('navModalHeading').textContent = 'Edit Navigation Item';
+    document.getElementById('navSubmitText').textContent = 'Update Item';
+    document.getElementById('navTitle').value = item.title || '';
+    document.getElementById('navUrl').value = item.url || '';
+    document.getElementById('navOrder').value = item.order ?? 0;
+    document.getElementById('navParent').value = item.parent || '';
+    document.getElementById('navHeader').checked = Boolean(item.is_header);
+    document.getElementById('navFooter').checked = Boolean(item.is_footer);
+    document.getElementById('navExternal').checked = Boolean(item.is_external);
+
+    const backdrop = document.getElementById('navModalBackdrop');
+    const card = document.getElementById('navModalCard');
+    backdrop.classList.remove('hidden');
+    setTimeout(() => {
+      card.classList.remove('scale-95');
+      card.classList.add('scale-100');
+    }, 10);
+  }
+
+  function closeNavModal() {
+    const backdrop = document.getElementById('navModalBackdrop');
+    const card = document.getElementById('navModalCard');
+    card.classList.remove('scale-100');
+    card.classList.add('scale-95');
+    setTimeout(() => {
+      backdrop.classList.add('hidden');
+    }, 150);
+  }
+</script>

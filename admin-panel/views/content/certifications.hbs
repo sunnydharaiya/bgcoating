@@ -1,0 +1,213 @@
+<div class="space-y-6">
+  <!-- Section Header Banner -->
+  <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
+    <div>
+      <div class="text-xs font-mono font-semibold text-amber-400 uppercase tracking-wider">Credentials &amp; Gallery</div>
+      <h2 class="text-xl font-bold text-white mt-1">Certifications Gallery</h2>
+      <p class="text-xs text-slate-400">Manage NACE/AMPP, BGAS-CSWIP, ISO, and technical qualification credentials displayed on the board page.</p>
+    </div>
+    <button onclick="openCertModal()" class="px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs rounded-xl shadow-lg shadow-amber-500/20 transition flex items-center gap-2 shrink-0">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+      <span>Add Certification</span>
+    </button>
+  </div>
+
+  <!-- Certifications Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {{#each items}}
+    <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl hover:border-amber-500/40 transition flex flex-col justify-between space-y-4">
+      <div class="space-y-3">
+        <div class="flex items-start justify-between gap-3">
+          <div class="flex items-center gap-3">
+            {{#if this.certificate_image}}
+            <img src="{{this.certificate_image}}" alt="{{this.title}}" class="w-14 h-14 rounded-xl object-cover border border-slate-800 shrink-0">
+            {{else}}
+            <div class="w-14 h-14 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center font-bold text-sm shrink-0">
+              CERT
+            </div>
+            {{/if}}
+            <div>
+              <h3 class="text-sm font-bold text-white leading-tight line-clamp-1">{{this.title}}</h3>
+              <p class="text-xs text-slate-400 mt-0.5">{{this.issuing_org}}</p>
+            </div>
+          </div>
+          <span class="px-2 py-0.5 rounded-lg bg-slate-950 text-slate-400 border border-slate-800 font-mono text-[10px] font-semibold shrink-0">
+            #{{this.order}}
+          </span>
+        </div>
+
+        <div class="flex items-center gap-2 flex-wrap">
+          {{#if this.category_badge}}
+          <span class="px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono text-[10px] font-bold">
+            {{this.category_badge}}
+          </span>
+          {{/if}}
+          {{#if this.validity_date}}
+          <span class="text-[11px] text-slate-400 font-mono">
+            {{this.validity_date}}
+          </span>
+          {{/if}}
+        </div>
+
+        {{#if this.description}}
+        <p class="text-xs text-slate-400 line-clamp-3 leading-relaxed">
+          {{this.description}}
+        </p>
+        {{/if}}
+      </div>
+
+      <div class="pt-4 border-t border-slate-800/80 flex items-center justify-end gap-2 text-xs">
+        <button 
+          onclick="editCertModal({{json this}})"
+          class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg font-medium border border-slate-700 transition"
+        >
+          Edit
+        </button>
+        <button 
+          onclick="openConfirmModal({
+            title: 'Delete Certification',
+            description: 'Are you sure you want to delete credential &quot;{{this.title}}&quot;? This action cannot be undone.',
+            confirmActionUrl: '/admin/content/certifications/{{this.id}}/delete',
+            confirmText: 'Delete Certification'
+          })"
+          class="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg font-medium border border-rose-500/20 transition"
+        >
+          Delete
+        </button>
+      </div>
+    </div>
+    {{else}}
+    <div class="col-span-full">
+      {{> empty_state emptyTitle="No Certifications Found" emptyDescription="No qualification credentials have been added to the certification gallery yet." createUrl="javascript:openCertModal()" createText="Add First Certification"}}
+    </div>
+    {{/each}}
+  </div>
+</div>
+
+<!-- Modal Form for Create / Edit Certification Item -->
+<div id="certModalBackdrop" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden transition-opacity flex items-center justify-center p-4">
+  <div id="certModalCard" class="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-6 transform scale-95 transition-all max-h-[90vh] overflow-y-auto custom-scrollbar">
+    <div class="flex items-start justify-between gap-4 border-b border-slate-800 pb-4">
+      <div>
+        <h3 id="certModalHeading" class="text-base font-bold text-white">Add Certification Credential</h3>
+        <p class="text-xs text-slate-400 mt-0.5">Configure title, issuing organization, validity details, badge tier, and certificate image.</p>
+      </div>
+      <button onclick="closeCertModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <form id="certItemForm" method="POST" action="/admin/content/certifications" enctype="multipart/form-data" class="space-y-4 text-xs">
+      <div>
+        <label class="block font-medium text-slate-300 mb-1">Certification Title *</label>
+        <input type="text" id="certTitle" name="title" required placeholder="e.g. NACE Coating Inspector Level 2" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-amber-500 transition">
+      </div>
+
+      <div>
+        <label class="block font-medium text-slate-300 mb-1">Issuing Organization *</label>
+        <input type="text" id="certOrg" name="issuing_org" required placeholder="e.g. NACE International Institute" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-amber-500 transition">
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block font-medium text-slate-300 mb-1">Category Badge / Tier</label>
+          <input type="text" id="certBadge" name="category_badge" placeholder="e.g. International, Specialist, Digital" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-amber-500 transition">
+        </div>
+        <div>
+          <label class="block font-medium text-slate-300 mb-1">Display / Sort Order</label>
+          <input type="number" id="certOrder" name="order" value="0" min="0" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-amber-500 transition">
+        </div>
+      </div>
+
+      <div>
+        <label class="block font-medium text-slate-300 mb-1">Validity &amp; Certificate Meta Text</label>
+        <input type="text" id="certValidity" name="validity_date" placeholder="e.g. Cert No. 20438 · Expires August 2, 2028" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-amber-500 transition">
+      </div>
+
+      <div>
+        <label class="block font-medium text-slate-300 mb-1">Description Paragraph</label>
+        <textarea id="certDesc" name="description" rows="3" placeholder="Overview of scope, skills tested, or qualification relevance..." class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-amber-500 transition custom-scrollbar"></textarea>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block font-medium text-slate-300 mb-1">Upload Scan/Image</label>
+          <input type="file" id="certImageFile" name="certificate_image" accept="image/*" class="w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-amber-500/10 file:text-amber-400 hover:file:bg-amber-500/20 cursor-pointer">
+        </div>
+        <div>
+          <label class="block font-medium text-slate-300 mb-1">Or Image URL</label>
+          <input type="text" id="certImageUrl" name="certificate_image_url" placeholder="https://..." class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-amber-500 transition">
+        </div>
+      </div>
+
+      <div>
+        <label class="block font-medium text-slate-300 mb-1">Lightbox Image Key</label>
+        <input type="text" id="certImgKey" name="img_key" placeholder="e.g. cert_nace2" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-amber-500 transition">
+      </div>
+
+      <div class="pt-4 border-t border-slate-800 flex items-center justify-end gap-3">
+        <button type="button" onclick="closeCertModal()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium rounded-xl border border-slate-700 transition">
+          Cancel
+        </button>
+        <button type="submit" id="certSubmitBtn" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl shadow-lg shadow-amber-500/20 transition">
+          Save Certification
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openCertModal() {
+  document.getElementById('certModalHeading').innerText = 'Add Certification Credential';
+  document.getElementById('certItemForm').action = '/admin/content/certifications';
+  document.getElementById('certTitle').value = '';
+  document.getElementById('certOrg').value = '';
+  document.getElementById('certBadge').value = '';
+  document.getElementById('certOrder').value = '0';
+  document.getElementById('certValidity').value = '';
+  document.getElementById('certDesc').value = '';
+  document.getElementById('certImageFile').value = '';
+  document.getElementById('certImageUrl').value = '';
+  document.getElementById('certImgKey').value = '';
+  document.getElementById('certSubmitBtn').innerText = 'Save Certification';
+
+  const modal = document.getElementById('certModalBackdrop');
+  modal.classList.remove('hidden');
+  setTimeout(() => {
+    document.getElementById('certModalCard').classList.remove('scale-95');
+    document.getElementById('certModalCard').classList.add('scale-100');
+  }, 10);
+}
+
+function editCertModal(item) {
+  document.getElementById('certModalHeading').innerText = 'Edit Certification Credential';
+  document.getElementById('certItemForm').action = `/admin/content/certifications/${item.id}/edit`;
+  document.getElementById('certTitle').value = item.title || '';
+  document.getElementById('certOrg').value = item.issuing_org || '';
+  document.getElementById('certBadge').value = item.category_badge || '';
+  document.getElementById('certOrder').value = item.order || '0';
+  document.getElementById('certValidity').value = item.validity_date || '';
+  document.getElementById('certDesc').value = item.description || '';
+  document.getElementById('certImageFile').value = '';
+  document.getElementById('certImageUrl').value = item.certificate_image || '';
+  document.getElementById('certImgKey').value = item.img_key || '';
+  document.getElementById('certSubmitBtn').innerText = 'Update Certification';
+
+  const modal = document.getElementById('certModalBackdrop');
+  modal.classList.remove('hidden');
+  setTimeout(() => {
+    document.getElementById('certModalCard').classList.remove('scale-95');
+    document.getElementById('certModalCard').classList.add('scale-100');
+  }, 10);
+}
+
+function closeCertModal() {
+  const card = document.getElementById('certModalCard');
+  card.classList.remove('scale-100');
+  card.classList.add('scale-95');
+  setTimeout(() => {
+    document.getElementById('certModalBackdrop').classList.add('hidden');
+  }, 150);
+}
+</script>

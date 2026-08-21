@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==========================================================================
+   BG CoatingOS™ — White Enterprise Theme CSS Tokens & Variables
+   Bright, clean, engineering-focused layout system matching HTML design reference.
+   ========================================================================== */
+:root {
+  /* Surfaces */
+  --paper: #ffffff;
+  --mist: #f7f8fa;
+  --ws: #f3f5f8;
+  --card: #ffffff;
+  --card-2: #f7f8fa;
+  
+  /* Corporate Palette */
+  --accent: #F7941D;          /* BG Corporate Orange */
+  --accent-2: #FFB347;        /* Secondary Orange */
+  --accent-deep: #D97706;     /* Deep Orange (Hover) */
+  --accent-soft: #FFF4E3;     /* Light Orange Tint */
+  --crimson: #A41E22;         /* Deep Maroon */
+  --charcoal: #2B2B2B;        /* Ink Text */
+  --txt-hi: #1E293B;
+  --txt-lo: #475569;
+  --txt-mut: #64748B;
+  --line: #E2E8F0;
+  --line-strong: #CBD5E1;
+  
+  /* Sidebar Rail — Charcoal Blue */
+  --sb-bg: #2B303A;
+  --sb-bg-top: #343A45;
+  --sb-bg-bot: #22262E;
+  --sb-line: rgba(255, 255, 255, 0.09);
+  --sb-hover: rgba(255, 255, 255, 0.06);
+  --sb-txt: rgba(255, 255, 255, 0.74);
+  --sb-txt-hi: #ffffff;
+  --sb-active: rgba(247, 148, 29, 0.16);
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background-color: var(--ws);
+  color: var(--txt-hi);
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.03);
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}

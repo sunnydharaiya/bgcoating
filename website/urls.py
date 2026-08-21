@@ -1,0 +1,69 @@
+from django.urls import path, include, re_path
+from rest_framework.routers import DefaultRouter
+from . import views
+from . import api_views
+
+router = DefaultRouter()
+router.register('site-settings', api_views.SiteSettingsViewSet, basename='sitesettings')
+router.register('seo-metadata', api_views.PageSEOViewSet, basename='pageseo')
+router.register('navigation', api_views.NavigationItemViewSet, basename='navigationitem')
+router.register('service-categories', api_views.ServiceCategoryViewSet, basename='servicecategory')
+router.register('services', api_views.ServiceViewSet, basename='service')
+router.register('blog-posts', api_views.BlogPostViewSet, basename='blogpost')
+router.register('gallery', api_views.ProjectGalleryViewSet, basename='projectgallery')
+router.register('board-members', api_views.BoardMemberViewSet, basename='boardmember')
+router.register('education', api_views.EducationItemViewSet, basename='educationitem')
+router.register('certifications', api_views.CertificationItemViewSet, basename='certificationitem')
+router.register('testimonials', api_views.ClientTestimonialViewSet, basename='clienttestimonial')
+router.register('standards', api_views.TechnicalStandardViewSet, basename='technicalstandard')
+router.register('industries', api_views.IndustryViewSet, basename='industry')
+router.register('contact-submissions', api_views.ContactSubmissionViewSet, basename='contactsubmission')
+router.register('calculator/projects', api_views.UserProjectViewSet, basename='userproject')
+router.register('calculator/logs', api_views.CalculationLogViewSet, basename='calculationlog')
+router.register('calculator/products', api_views.PaintProductViewSet, basename='paintproduct')
+
+urlpatterns = [
+    path('api/v1/auth/login/', api_views.api_login, name='api_login'),
+    path('api/v1/calculator/calculate/', api_views.api_calculate, name='api_calculate'),
+    path('api/v1/', include(router.urls)),
+    path('', views.home, name='home'),
+    path('index.html', views.home, name='home_html'),
+    path('index.php', views.home, name='home_php'),
+    path('about/', views.about, name='about'),
+    path('about.php', views.about, name='about_php'),
+    path('services/', views.services, name='services'),
+    path('services.php', views.services, name='services_php'),
+    path('services/<slug:slug>/', views.service_detail, name='service_detail'),
+    path('blog/', views.blog, name='blog'),
+    path('blog.php', views.blog, name='blog_php'),
+    path('blog/<slug:slug>/', views.blog_detail, name='blog_detail'),
+    path('gallery/', views.gallery, name='gallery'),
+    path('gallery.php', views.gallery, name='gallery_php'),
+    path('contact/', views.contact, name='contact'),
+    path('contact.php', views.contact, name='contact_php'),
+    path('board/', views.board, name='board'),
+    path('board.php', views.board, name='board_php'),
+    path('calculator/', views.calculator_dashboard, name='calculator'),
+    path('calculator.html', views.calculator_dashboard, name='calculator_html'),
+    path('calculator/dashboard/', views.calculator_dashboard, name='calculator_dashboard'),
+    path('calculator/dashboard.html', views.calculator_dashboard, name='calculator_dashboard_html'),
+    path('calculator/coating-calculator/', views.calculator_suite, name='calculator_suite'),
+    path('calculator/coating-calculator.html', views.calculator_suite, name='calculator_suite_html'),
+    path('calculator/specification-reading/', views.calculator_specification_reading, name='calculator_spec_reading'),
+    path('calculator/specification-reading.html', views.calculator_specification_reading, name='calculator_spec_reading_html'),
+    path('calculator/knowledge/', views.calculator_knowledge, name='calculator_knowledge'),
+    path('calculator/knowledge.html', views.calculator_knowledge, name='calculator_knowledge_html'),
+    path('calculator/support/', views.calculator_support, name='calculator_support'),
+    path('calculator/support.html', views.calculator_support, name='calculator_support_html'),
+    path('calculator/settings/', views.calculator_settings, name='calculator_settings'),
+    path('calculator/settings.html', views.calculator_settings, name='calculator_settings_html'),
+    re_path(r'^calculator/.*dashboard.*', views.calculator_dashboard),
+    re_path(r'^calculator/.*coating-calculator.*', views.calculator_suite),
+    re_path(r'^calculator/.*specification-reading.*', views.calculator_specification_reading),
+    re_path(r'^calculator/.*knowledge.*', views.calculator_knowledge),
+    re_path(r'^calculator/.*support.*', views.calculator_support),
+    re_path(r'^calculator/.*settings.*', views.calculator_settings),
+    path('board-frame/', views.board_frame, name='board_frame'),
+    path('board_frame.html', views.board_frame, name='board_frame_html'),
+]
+

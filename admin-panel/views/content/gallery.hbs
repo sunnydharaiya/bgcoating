@@ -1,0 +1,247 @@
+<div class="space-y-6">
+  <!-- Section Header Banner -->
+  <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
+    <div>
+      <div class="text-xs font-mono font-semibold text-sky-400 uppercase tracking-wider">Content &amp; Insights</div>
+      <h2 class="text-xl font-bold text-white mt-1">Project Gallery &amp; Visual Standards</h2>
+      <p class="text-xs text-slate-400">Manage project reference photos, surface preparation visual standards, and site inspection benchmarks.</p>
+    </div>
+    <button onclick="openGalleryModal()" class="px-4 py-2.5 bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs rounded-xl shadow-lg shadow-sky-600/20 transition flex items-center gap-2 shrink-0">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+      <span>Add Gallery Item</span>
+    </button>
+  </div>
+
+  <!-- Tag Filter Toolbar -->
+  <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
+    <div class="flex items-center gap-2 w-full sm:w-auto flex-wrap">
+      <span class="text-slate-400 font-medium shrink-0">Filter Tag:</span>
+      <a href="/admin/content/gallery" class="px-3 py-1.5 rounded-xl text-xs font-semibold border transition {{#unless tagFilter}}bg-sky-600 text-white border-sky-500 shadow-md{{else}}bg-slate-950/80 text-slate-400 border-slate-800 hover:border-slate-700{{/unless}}">
+        All Items
+      </a>
+      <a href="?tag=surface-prep" class="px-3 py-1.5 rounded-xl text-xs font-semibold border transition {{#if (eq tagFilter "surface-prep")}}bg-sky-600 text-white border-sky-500 shadow-md{{else}}bg-slate-950/80 text-slate-400 border-slate-800 hover:border-slate-700{{/if}}">
+        Surface Prep
+      </a>
+      <a href="?tag=inspection" class="px-3 py-1.5 rounded-xl text-xs font-semibold border transition {{#if (eq tagFilter "inspection")}}bg-sky-600 text-white border-sky-500 shadow-md{{else}}bg-slate-950/80 text-slate-400 border-slate-800 hover:border-slate-700{{/if}}">
+        Inspection
+      </a>
+      <a href="?tag=failure-analysis" class="px-3 py-1.5 rounded-xl text-xs font-semibold border transition {{#if (eq tagFilter "failure-analysis")}}bg-sky-600 text-white border-sky-500 shadow-md{{else}}bg-slate-950/80 text-slate-400 border-slate-800 hover:border-slate-700{{/if}}">
+        Failure Analysis
+      </a>
+      <a href="?tag=standards" class="px-3 py-1.5 rounded-xl text-xs font-semibold border transition {{#if (eq tagFilter "standards")}}bg-sky-600 text-white border-sky-500 shadow-md{{else}}bg-slate-950/80 text-slate-400 border-slate-800 hover:border-slate-700{{/if}}">
+        Standards
+      </a>
+      <a href="?tag=refinery" class="px-3 py-1.5 rounded-xl text-xs font-semibold border transition {{#if (eq tagFilter "refinery")}}bg-sky-600 text-white border-sky-500 shadow-md{{else}}bg-slate-950/80 text-slate-400 border-slate-800 hover:border-slate-700{{/if}}">
+        Refinery
+      </a>
+    </div>
+    <div class="text-slate-400 text-xs">
+      Total <span class="font-bold text-white">{{gallery.length}}</span> items
+    </div>
+  </div>
+
+  <!-- Responsive Visual Gallery Grid -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    {{#each gallery}}
+    <div class="bg-slate-900/80 border border-slate-800 rounded-2xl overflow-hidden shadow-xl hover:border-sky-500/40 transition group flex flex-col justify-between">
+      <div>
+        <div class="relative h-48 bg-slate-950 overflow-hidden">
+          {{#if this.image}}
+          <img src="{{this.image}}" alt="{{this.title}}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
+          {{else}}
+          <div class="w-full h-full flex items-center justify-center bg-slate-950 text-slate-600 font-mono text-xs">No Image</div>
+          {{/if}}
+          <div class="absolute top-3 right-3">
+            <span class="px-2.5 py-1 rounded-lg bg-slate-950/90 text-sky-400 border border-sky-500/30 text-[10px] font-mono font-bold backdrop-blur-md uppercase">
+              {{this.filter_tag}}
+            </span>
+          </div>
+        </div>
+
+        <div class="p-5 space-y-3">
+          <div>
+            <h3 class="text-sm font-bold text-white group-hover:text-sky-400 transition leading-snug">{{this.title}}</h3>
+            <p class="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-slate-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              <span>{{this.location_name}}</span>
+            </p>
+          </div>
+
+          <div class="flex items-center gap-2 flex-wrap text-xs pt-1">
+            <span class="px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-[10px] font-medium">
+              {{this.client_category}}
+            </span>
+            {{#if this.standard_code}}
+            <span class="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-bold font-mono">
+              {{this.standard_code}}
+            </span>
+            {{/if}}
+          </div>
+        </div>
+      </div>
+
+      <div class="p-4 bg-slate-950/60 border-t border-slate-800/80 flex items-center justify-between text-xs">
+        <span class="text-[11px] text-slate-500">{{this.service_type}}</span>
+        <div class="space-x-1">
+          <button 
+            onclick="editGalleryModal({{json this}})"
+            class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-[11px] font-medium border border-slate-700 transition"
+          >
+            Edit
+          </button>
+          <button 
+            onclick="openConfirmModal({
+              title: 'Delete Gallery Item',
+              description: 'Are you sure you want to delete gallery item &quot;{{this.title}}&quot;? This action cannot be undone.',
+              confirmActionUrl: '/admin/content/gallery/{{this.id}}/delete',
+              confirmText: 'Delete Item'
+            })"
+            class="px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg text-[11px] font-medium border border-rose-500/20 transition"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+    {{else}}
+    <div class="col-span-full">
+      {{> empty_state emptyTitle="No Gallery Items" emptyDescription="No gallery portfolio items matching your tag filter were found." createUrl="javascript:openGalleryModal()" createText="Add First Gallery Item"}}
+    </div>
+    {{/each}}
+  </div>
+</div>
+
+<!-- Modal Form for Create / Edit Gallery Item -->
+<div id="galleryModalBackdrop" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden transition-opacity flex items-center justify-center p-4">
+  <div id="galleryModalCard" class="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-xl w-full p-6 space-y-6 transform scale-95 transition-all max-h-[90vh] overflow-y-auto custom-scrollbar">
+    <div class="flex items-start justify-between gap-4 border-b border-slate-800 pb-4">
+      <div>
+        <h3 id="galleryModalHeading" class="text-base font-bold text-white">Add Project Gallery Item</h3>
+        <p class="text-xs text-slate-400 mt-0.5">Configure title, category, filter tag, certifying standard, and photo URL.</p>
+      </div>
+      <button onclick="closeGalleryModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <form id="galleryItemForm" method="POST" action="/admin/content/gallery" enctype="multipart/form-data" class="space-y-4 text-xs">
+      <div>
+        <label class="block font-medium text-slate-300 mb-1">Item Title / Standard Name *</label>
+        <input type="text" id="galTitle" name="title" required placeholder="e.g. Abrasive Blasting ISO 8501-1 Sa 2.5 Standard" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition">
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block font-medium text-slate-300 mb-1">Filter Tag *</label>
+          <select id="galTag" name="filter_tag" required class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition font-mono">
+            <option value="surface-prep">surface-prep</option>
+            <option value="inspection">inspection</option>
+            <option value="failure-analysis">failure-analysis</option>
+            <option value="standards">standards</option>
+            <option value="refinery">refinery</option>
+            <option value="marine">marine</option>
+          </select>
+        </div>
+        <div>
+          <label class="block font-medium text-slate-300 mb-1">Standard Code (Optional)</label>
+          <input type="text" id="galStandard" name="standard_code" placeholder="ISO 8501-1 / SSPC-SP 10" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition font-mono">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block font-medium text-slate-300 mb-1">Client Category</label>
+          <input type="text" id="galCategory" name="client_category" placeholder="Protective Coatings / Refinery" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition">
+        </div>
+        <div>
+          <label class="block font-medium text-slate-300 mb-1">Location Reference</label>
+          <input type="text" id="galLocation" name="location_name" placeholder="Surat Facility / Refinery Site" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition">
+        </div>
+      </div>
+
+      <div>
+        <label class="block font-medium text-slate-300 mb-1">Service Type</label>
+        <input type="text" id="galService" name="service_type" placeholder="Surface Preparation / Condition Survey" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition">
+      </div>
+
+      {{> file_uploader fieldId="galImage" fieldName="image" label="Project Visual Image"}}
+
+      <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
+        <button type="button" onclick="closeGalleryModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl border border-slate-700 transition">
+          Cancel
+        </button>
+        <button type="submit" class="px-5 py-2 bg-sky-600 hover:bg-sky-500 text-white font-semibold rounded-xl shadow-lg shadow-sky-600/20 transition flex items-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          <span id="galSubmitText">Save Gallery Item</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function selectUnsplashPhoto(type) {
+    const urlInput = document.getElementById('galImage_url');
+    let val = '';
+    if (type === 'industrial') val = 'https://images.unsplash.com/photo-1541888946425-d0fbb186a5b3?auto=format&fit=crop&w=800&q=80';
+    if (type === 'blasting') val = 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80';
+    if (type === 'inspection') val = 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=800&q=80';
+    if (urlInput) urlInput.value = val;
+    previewImageUrl(val, 'galImage_preview_img', 'galImage_placeholder');
+  }
+
+  function openGalleryModal() {
+    const form = document.getElementById('galleryItemForm');
+    form.action = '/admin/content/gallery';
+    document.getElementById('galleryModalHeading').textContent = 'Add Project Gallery Item';
+    document.getElementById('galSubmitText').textContent = 'Save Gallery Item';
+    document.getElementById('galTitle').value = '';
+    document.getElementById('galTag').value = 'standards';
+    document.getElementById('galStandard').value = '';
+    document.getElementById('galCategory').value = 'Protective Coatings';
+    document.getElementById('galLocation').value = 'Technical Reference';
+    document.getElementById('galService').value = 'Surface Preparation';
+    previewImageUrl('', 'galImage_preview_img', 'galImage_placeholder');
+
+    const backdrop = document.getElementById('galleryModalBackdrop');
+    const card = document.getElementById('galleryModalCard');
+    backdrop.classList.remove('hidden');
+    setTimeout(() => {
+      card.classList.remove('scale-95');
+      card.classList.add('scale-100');
+    }, 10);
+  }
+
+  function editGalleryModal(item) {
+    const form = document.getElementById('galleryItemForm');
+    form.action = '/admin/content/gallery/' + item.id + '/edit';
+    document.getElementById('galleryModalHeading').textContent = 'Edit Project Gallery Item';
+    document.getElementById('galSubmitText').textContent = 'Update Item';
+    document.getElementById('galTitle').value = item.title || '';
+    document.getElementById('galTag').value = item.filter_tag || 'standards';
+    document.getElementById('galStandard').value = item.standard_code || '';
+    document.getElementById('galCategory').value = item.client_category || 'Protective Coatings';
+    document.getElementById('galLocation').value = item.location_name || 'Technical Reference';
+    document.getElementById('galService').value = item.service_type || 'Surface Preparation';
+    previewImageUrl(item.image || '', 'galImage_preview_img', 'galImage_placeholder');
+    if (document.getElementById('galImage_url')) document.getElementById('galImage_url').value = item.image || '';
+
+    const backdrop = document.getElementById('galleryModalBackdrop');
+    const card = document.getElementById('galleryModalCard');
+    backdrop.classList.remove('hidden');
+    setTimeout(() => {
+      card.classList.remove('scale-95');
+      card.classList.add('scale-100');
+    }, 10);
+  }
+
+  function closeGalleryModal() {
+    const backdrop = document.getElementById('galleryModalBackdrop');
+    const card = document.getElementById('galleryModalCard');
+    card.classList.remove('scale-100');
+    card.classList.add('scale-95');
+    setTimeout(() => {
+      backdrop.classList.add('hidden');
+    }, 150);
+  }
+</script>

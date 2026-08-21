@@ -1,0 +1,274 @@
+<div class="space-y-6">
+  <!-- Section Header Banner -->
+  <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
+    <div>
+      <div class="text-xs font-mono font-semibold text-sky-400 uppercase tracking-wider">Website Management</div>
+      <h2 class="text-xl font-bold text-white mt-1">Page SEO Metadata</h2>
+      <p class="text-xs text-slate-400">Manage Meta Titles, Meta Descriptions, Canonical URLs, and SERP previews for page routes.</p>
+    </div>
+    <button onclick="openSeoModal()" class="px-4 py-2.5 bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs rounded-xl shadow-lg shadow-sky-600/20 transition flex items-center gap-2 shrink-0">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+      <span>Add Page SEO</span>
+    </button>
+  </div>
+
+  <!-- Page SEO Data Table -->
+  <div class="bg-slate-900/80 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs">
+        <thead class="bg-slate-950/80 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
+          <tr>
+            <th class="px-4 py-3.5">Page Route</th>
+            <th class="px-4 py-3.5">Meta Title</th>
+            <th class="px-4 py-3.5">Meta Description</th>
+            <th class="px-4 py-3.5">Robots</th>
+            <th class="px-4 py-3.5 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-800/60 text-slate-300">
+          {{#each seoList}}
+          <tr class="hover:bg-slate-800/40 transition">
+            <td class="px-4 py-3.5 font-semibold text-sky-400 uppercase font-mono">
+              <span class="px-2.5 py-1 rounded-lg bg-sky-500/10 border border-sky-500/20 text-sky-400 text-xs">
+                {{#if this.page_identifier_display}}{{this.page_identifier_display}}{{else}}{{this.page_identifier}}{{/if}}
+              </span>
+            </td>
+            <td class="px-4 py-3.5 font-medium text-white max-w-xs truncate">
+              <div class="truncate font-semibold">{{this.meta_title}}</div>
+              <div class="text-[10px] text-slate-400 font-mono mt-0.5 max-w-xs truncate">{{this.canonical_url}}</div>
+            </td>
+            <td class="px-4 py-3.5 text-slate-300 max-w-md truncate">
+              <p class="truncate">{{this.meta_description}}</p>
+            </td>
+            <td class="px-4 py-3.5">
+              <span class="px-2 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono text-[10px] font-medium">
+                {{this.robots}}
+              </span>
+            </td>
+            <td class="px-4 py-3.5 text-right space-x-1 whitespace-nowrap">
+              <a 
+                href="{{../websiteUrl}}/{{this.page_identifier}}/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-sky-400 rounded-lg text-[11px] font-medium border border-slate-700 transition inline-flex items-center gap-1"
+              >
+                <span>View Page</span>
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+              </a>
+              <button 
+                onclick="editSeoModal({{json this}})"
+                class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-[11px] font-medium border border-slate-700 transition"
+              >
+                Edit
+              </button>
+              <button 
+                onclick="openConfirmModal({
+                  title: 'Delete Page SEO',
+                  description: 'Are you sure you want to delete SEO metadata for &quot;{{this.page_identifier}}&quot;? This action cannot be undone.',
+                  confirmActionUrl: '/admin/website/seo/{{#if this.page_identifier}}{{this.page_identifier}}{{else}}{{this.id}}{{/if}}/delete',
+                  confirmText: 'Delete SEO Entry'
+                })"
+                class="px-2.5 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg text-[11px] font-medium border border-rose-500/20 transition"
+              >
+                Delete
+              </button>
+            </td>
+          </tr>
+          {{else}}
+          <tr>
+            <td colspan="5" class="p-0">
+              {{> empty_state emptyTitle="No Page SEO Configured" emptyDescription="No SEO metadata rules have been added for page routes." createUrl="javascript:openSeoModal()" createText="Add First Page SEO"}}
+            </td>
+          </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Form for Create / Edit Page SEO with Google SERP Live Preview -->
+<div id="seoModalBackdrop" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden transition-opacity flex items-center justify-center p-4">
+  <div id="seoModalCard" class="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-2xl w-full p-6 space-y-6 transform scale-95 transition-all max-h-[90vh] overflow-y-auto custom-scrollbar">
+    <div class="flex items-start justify-between gap-4 border-b border-slate-800 pb-4">
+      <div>
+        <h3 id="seoModalHeading" class="text-base font-bold text-white">Add Page SEO Metadata</h3>
+        <p class="text-xs text-slate-400 mt-0.5">Configure Search Engine titles, descriptions, canonical URLs, and preview SERP snippet.</p>
+      </div>
+      <button onclick="closeSeoModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <!-- Live Google Search Snippet Preview Box -->
+    <div class="bg-slate-950 border border-slate-800 rounded-2xl p-4 space-y-2">
+      <div class="flex items-center justify-between text-[11px] font-mono font-semibold text-slate-400 uppercase tracking-wider">
+        <span>Google SERP Live Preview</span>
+        <span id="serpStatus" class="text-emerald-400 font-sans font-bold">Optimal Length</span>
+      </div>
+      <div class="p-3.5 bg-white rounded-xl text-left space-y-1 font-sans">
+        <div id="serpUrl" class="text-xs text-[#202124] font-medium truncate">/</div>
+        <div id="serpTitle" class="text-base font-semibold text-[#1a0dab] hover:underline leading-snug cursor-pointer truncate">Page Title Placeholder</div>
+        <div id="serpDesc" class="text-xs text-[#4d5156] line-clamp-2 leading-normal">Enter meta description below to see real-time Google search snippet snippet preview...</div>
+      </div>
+    </div>
+
+    <form id="seoItemForm" method="POST" action="/admin/website/seo" class="space-y-4 text-xs">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block font-medium text-slate-300 mb-1">Target Page Route *</label>
+          <select id="seoPageIdentifier" name="page_identifier" required class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition">
+            <option value="home">Homepage (home)</option>
+            <option value="about">About Us (about)</option>
+            <option value="services">Services Hub (services)</option>
+            <option value="blog">Blog Knowledge Hub (blog)</option>
+            <option value="gallery">Project Gallery (gallery)</option>
+            <option value="contact">Contact Us (contact)</option>
+            <option value="board">Board Team (board)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block font-medium text-slate-300 mb-1">Robots Index Directive</label>
+          <select id="seoRobots" name="robots" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition">
+            <option value="index, follow">index, follow (Recommended)</option>
+            <option value="noindex, follow">noindex, follow</option>
+            <option value="noindex, nofollow">noindex, nofollow</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <div class="flex items-center justify-between mb-1">
+          <label class="font-medium text-slate-300">Meta Title *</label>
+          <span id="titleCounter" class="text-[11px] text-slate-400 font-mono">0 / 60 chars</span>
+        </div>
+        <input type="text" id="seoMetaTitle" name="meta_title" required placeholder="e.g. Industrial Coating Consultants & Inspection | BG Group" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition" oninput="updateSerpPreview()">
+      </div>
+
+      <div>
+        <div class="flex items-center justify-between mb-1">
+          <label class="font-medium text-slate-300">Meta Description *</label>
+          <span id="descCounter" class="text-[11px] text-slate-400 font-mono">0 / 160 chars</span>
+        </div>
+        <textarea id="seoMetaDesc" name="meta_description" rows="3" required placeholder="Provide a concise 150-160 character summary of page content for Google search results..." class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition" oninput="updateSerpPreview()"></textarea>
+      </div>
+
+      <div>
+        <label class="block font-medium text-slate-300 mb-1">Canonical URL</label>
+        <input type="url" id="seoCanonical" name="canonical_url" placeholder="/" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition" oninput="updateSerpPreview()">
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
+        <button type="button" onclick="closeSeoModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl border border-slate-700 transition">
+          Cancel
+        </button>
+        <button type="submit" class="px-5 py-2 bg-sky-600 hover:bg-sky-500 text-white font-semibold rounded-xl shadow-lg shadow-sky-600/20 transition flex items-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          <span id="seoSubmitText">Save SEO Metadata</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function updateSerpPreview() {
+    const title = document.getElementById('seoMetaTitle').value.trim();
+    const desc = document.getElementById('seoMetaDesc').value.trim();
+    const canonical = document.getElementById('seoCanonical').value.trim();
+
+    const serpTitle = document.getElementById('serpTitle');
+    const serpDesc = document.getElementById('serpDesc');
+    const serpUrl = document.getElementById('serpUrl');
+    const titleCounter = document.getElementById('titleCounter');
+    const descCounter = document.getElementById('descCounter');
+    const serpStatus = document.getElementById('serpStatus');
+
+    serpTitle.textContent = title || 'Page Meta Title Placeholder';
+    serpDesc.textContent = desc || 'Enter meta description below to see real-time Google search snippet preview...';
+    serpUrl.textContent = canonical || '/';
+
+    const titleLen = title.length;
+    const descLen = desc.length;
+
+    titleCounter.textContent = titleLen + ' / 60 chars';
+    if (titleLen > 60) {
+      titleCounter.className = 'text-[11px] text-rose-400 font-mono font-bold';
+    } else {
+      titleCounter.className = 'text-[11px] text-slate-400 font-mono';
+    }
+
+    descCounter.textContent = descLen + ' / 160 chars';
+    if (descLen > 160) {
+      descCounter.className = 'text-[11px] text-rose-400 font-mono font-bold';
+    } else {
+      descCounter.className = 'text-[11px] text-slate-400 font-mono';
+    }
+
+    if (titleLen > 60 || descLen > 160) {
+      serpStatus.textContent = 'Too Long (Truncated by Google)';
+      serpStatus.className = 'text-rose-400 font-sans font-bold';
+    } else if (titleLen >= 30 && descLen >= 100) {
+      serpStatus.textContent = 'Optimal Length';
+      serpStatus.className = 'text-emerald-400 font-sans font-bold';
+    } else {
+      serpStatus.textContent = 'Short Snippet';
+      serpStatus.className = 'text-amber-400 font-sans font-bold';
+    }
+  }
+
+  function openSeoModal() {
+    const form = document.getElementById('seoItemForm');
+    form.action = '/admin/website/seo';
+    document.getElementById('seoModalHeading').textContent = 'Add Page SEO Metadata';
+    document.getElementById('seoSubmitText').textContent = 'Save Page SEO';
+    document.getElementById('seoPageIdentifier').value = 'home';
+    document.getElementById('seoMetaTitle').value = '';
+    document.getElementById('seoMetaDesc').value = '';
+    document.getElementById('seoCanonical').value = '';
+    document.getElementById('seoRobots').value = 'index, follow';
+
+    updateSerpPreview();
+
+    const backdrop = document.getElementById('seoModalBackdrop');
+    const card = document.getElementById('seoModalCard');
+    backdrop.classList.remove('hidden');
+    setTimeout(() => {
+      card.classList.remove('scale-95');
+      card.classList.add('scale-100');
+    }, 10);
+  }
+
+  function editSeoModal(item) {
+    const identifier = item.page_identifier || item.id;
+    const form = document.getElementById('seoItemForm');
+    form.action = '/admin/website/seo/' + identifier + '/edit';
+    document.getElementById('seoModalHeading').textContent = 'Edit Page SEO Metadata';
+    document.getElementById('seoSubmitText').textContent = 'Update Page SEO';
+    document.getElementById('seoPageIdentifier').value = item.page_identifier || 'home';
+    document.getElementById('seoMetaTitle').value = item.meta_title || '';
+    document.getElementById('seoMetaDesc').value = item.meta_description || '';
+    document.getElementById('seoCanonical').value = item.canonical_url || '';
+    document.getElementById('seoRobots').value = item.robots || 'index, follow';
+
+    updateSerpPreview();
+
+    const backdrop = document.getElementById('seoModalBackdrop');
+    const card = document.getElementById('seoModalCard');
+    backdrop.classList.remove('hidden');
+    setTimeout(() => {
+      card.classList.remove('scale-95');
+      card.classList.add('scale-100');
+    }, 10);
+  }
+
+  function closeSeoModal() {
+    const backdrop = document.getElementById('seoModalBackdrop');
+    const card = document.getElementById('seoModalCard');
+    card.classList.remove('scale-100');
+    card.classList.add('scale-95');
+    setTimeout(() => {
+      backdrop.classList.add('hidden');
+    }, 150);
+  }
+</script>

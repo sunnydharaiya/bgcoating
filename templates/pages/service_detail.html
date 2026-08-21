@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<main id="spaMain" role="main">
+<section class="spa-page" id="page-service-detail" data-page="service-detail" style="display:block;" aria-label="Service Detail">
+
+  <!-- ======================= HERO SECTION ======================= -->
+  <section class="page-hero grid-bg" id="svc-detail-top">
+    <div class="wrap">
+      <div class="rv in" style="max-width:850px">
+        <p class="crumbs">
+          <a href="{% url 'home' %}">HOME</a> <i>›</i>
+          <a href="{% url 'services' %}">SERVICES</a> <i>›</i>
+          <span>{{ service.title|upper }}</span>
+        </p>
+        <p class="eyebrow">{{ service.category.name|default:"TECHNICAL CONSULTATION" }} {% if service.standard_code %}· {{ service.standard_code }}{% endif %}</p>
+        <h1 class="h-display" style="margin-top:1.1rem">{{ service.title }}</h1>
+        {% if service.excerpt %}
+        <p class="lead" style="margin-top:1.4rem">{{ service.excerpt }}</p>
+        {% endif %}
+        <div style="margin-top:2rem; display:flex; gap:1rem; flex-wrap:wrap">
+          <a class="btn btn-primary" href="{% url 'contact' %}?service={{ service.title|urlencode }}">Request Technical Consultation <span class="arr">→</span></a>
+          <a class="btn btn-ghost" href="#specifications">View Specifications</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= MAIN BODY CONTENT & SIDEBAR ======================= -->
+  <section class="grid-bg hex-bg" id="specifications" style="background:#FFFFFF; color:#16202F; padding:4rem 0">
+    <div class="wrap">
+      <div style="display:grid; grid-template-columns:1fr 340px; gap:3rem; align-items:start">
+        
+        <!-- Main Content Area -->
+        <div style="background:#FFFFFF; border:1px solid var(--line-lt); border-radius:18px; padding:2.5rem; box-shadow:var(--shadow-1)">
+          
+          {% if service.cover_image %}
+          <div style="border-radius:14px; overflow:hidden; margin-bottom:2.5rem; max-height:440px; border:1px solid var(--line-lt); box-shadow:var(--shadow-1)">
+            <img src="{% if 'assets/images' in service.cover_image.name %}{% static service.cover_image.name %}{% else %}{{ service.cover_image.url }}{% endif %}" alt="{{ service.title }}" style="width:100%; height:100%; object-fit:cover">
+          </div>
+          {% endif %}
+
+          <div class="detail-body-text" style="font-size:1.02rem; line-height:1.8; color:var(--txt-ink)">
+            {% if service.full_content %}
+              {{ service.full_content|safe }}
+            {% else %}
+              <h2 style="font-family:var(--font-display); font-size:1.6rem; color:#0E1726; margin-bottom:1.2rem; font-weight:700">Scope of Work &amp; Technical Capabilities</h2>
+              <div style="white-space:pre-wrap">{{ service.description }}</div>
+            {% endif %}
+          </div>
+
+          <!-- Key Deliverables Protocol Box -->
+          <div style="margin-top:3rem; background:var(--mist); border:1px solid var(--line-lt); border-radius:16px; padding:2rem">
+            <h3 style="font-family:var(--font-display); font-size:1.2rem; color:#0E1726; margin-bottom:1.2rem; font-weight:700">Key Deliverables &amp; Quality Inspection Protocols</h3>
+            
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.2rem">
+              <div style="background:#FFFFFF; padding:1.2rem; border-radius:12px; border:1px solid var(--line-lt)">
+                <strong style="display:block; color:#0E1726; font-size:.92rem; margin-bottom:.3rem">Surface Preparation QA/QC</strong>
+                <p style="font-size:.82rem; color:var(--txt-mut); margin:0">Blast profile and cleanliness verification per SSPC-VIS 1 / ISO 8501-1 standards.</p>
+              </div>
+
+              <div style="background:#FFFFFF; padding:1.2rem; border-radius:12px; border:1px solid var(--line-lt)">
+                <strong style="display:block; color:#0E1726; font-size:.92rem; margin-bottom:.3rem">DFT Gauge Measurement</strong>
+                <p style="font-size:.82rem; color:var(--txt-mut); margin:0">Dry film thickness statistical sampling per SSPC-PA 2 &amp; ISO 19840 guidelines.</p>
+              </div>
+
+              <div style="background:#FFFFFF; padding:1.2rem; border-radius:12px; border:1px solid var(--line-lt)">
+                <strong style="display:block; color:#0E1726; font-size:.92rem; margin-bottom:.3rem">Holiday &amp; Spark Testing</strong>
+                <p style="font-size:.82rem; color:var(--txt-mut); margin:0">High &amp; low voltage pin-hole detection per NACE SP0188 / ASTM D5162.</p>
+              </div>
+
+              <div style="background:#FFFFFF; padding:1.2rem; border-radius:12px; border:1px solid var(--line-lt)">
+                <strong style="display:block; color:#0E1726; font-size:.92rem; margin-bottom:.3rem">Soluble Salt Analysis</strong>
+                <p style="font-size:.82rem; color:var(--txt-mut); margin:0">Bresle patch conductivity testing for micro-contamination assessment.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- CTA Banner -->
+          <div style="margin-top:3rem; background:linear-gradient(135deg,#0A111F 0%,#101A2E 100%); border-radius:18px; padding:2.5rem; color:#EDF2FA; display:flex; flex-direction:column; gap:1.2rem; box-shadow:var(--shadow-2)">
+            <p class="eyebrow" style="margin:0">NACE / AMPP Level 3 Consultancy</p>
+            <h3 style="font-family:var(--font-display); font-size:1.5rem; color:#FFFFFF; margin:0">Require an On-Site Audit or Quality Verification?</h3>
+            <p style="font-size:.92rem; color:#9AA7BD; margin:0">Connect directly with BG Group's certified protective coating inspectors for failure analysis, third-party QA/QC, or specification drafting.</p>
+            <div style="margin-top:.5rem">
+              <a class="btn btn-primary" href="{% url 'contact' %}?service={{ service.title|urlencode }}">Schedule Technical Audit <span class="arr">→</span></a>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Sidebar Summary & Related Offerings -->
+        <div style="display:flex; flex-direction:column; gap:2rem">
+          
+          <!-- Technical Summary Card -->
+          <div style="background:#0A111F; border:1px solid rgba(255,255,255,.1); border-radius:18px; padding:2rem; color:#EDF2FA">
+            <p class="eyebrow" style="margin-bottom:1rem">Technical Summary</p>
+            
+            <div style="display:flex; flex-direction:column; gap:1.2rem; font-size:.88rem">
+              <div>
+                <span style="font-family:var(--font-mono); font-size:.7rem; letter-spacing:.12em; color:#9AA7BD; text-transform:uppercase; display:block">Category Group</span>
+                <strong style="color:#FFFFFF; font-size:.98rem">{{ service.category.name }}</strong>
+              </div>
+
+              {% if service.standard_code %}
+              <div>
+                <span style="font-family:var(--font-mono); font-size:.7rem; letter-spacing:.12em; color:#9AA7BD; text-transform:uppercase; display:block">Reference Standard</span>
+                <strong style="color:var(--accent); font-family:var(--font-mono); font-size:1rem">★ {{ service.standard_code }}</strong>
+              </div>
+              {% endif %}
+
+              <div>
+                <span style="font-family:var(--font-mono); font-size:.7rem; letter-spacing:.12em; color:#9AA7BD; text-transform:uppercase; display:block">Compliance Framework</span>
+                <strong style="color:#37B7E8; font-family:var(--font-mono); font-size:.88rem">ISO 12944 / NACE SP0188</strong>
+              </div>
+
+              <div>
+                <span style="font-family:var(--font-mono); font-size:.7rem; letter-spacing:.12em; color:#9AA7BD; text-transform:uppercase; display:block">Target Industries</span>
+                <span style="color:#C9D4E6; display:block; margin-top:.2rem">Oil &amp; Gas, Marine Structures, Refineries, Heavy Industrial Infrastructure</span>
+              </div>
+            </div>
+
+            <div style="margin-top:1.8rem">
+              <a class="btn btn-ghost" style="width:100%; text-align:center; justify-content:center" href="{% url 'contact' %}?service={{ service.title|urlencode }}">Inquire About Service</a>
+            </div>
+          </div>
+
+          <!-- Related Offerings Column -->
+          {% if related_services %}
+          <div style="background:#FFFFFF; border:1px solid var(--line-lt); border-radius:18px; padding:1.8rem; box-shadow:var(--shadow-1)">
+            <p class="eyebrow" style="color:var(--txt-ink); margin-bottom:1rem">Related Services</p>
+            <div style="display:flex; flex-direction:column; gap:.9rem">
+              {% for rel in related_services %}
+              <a href="{% url 'service_detail' rel.slug %}" style="display:block; padding:.9rem; border-radius:12px; background:var(--mist); border:1px solid var(--line-lt); transition:all .3s" onmouseover="this.style.borderColor='var(--accent)';" onmouseout="this.style.borderColor='var(--line-lt)';">
+                <span style="font-family:var(--font-mono); font-size:.68rem; color:var(--accent-deep); text-transform:uppercase; font-weight:600; display:block">{{ rel.category.name }}</span>
+                <h4 style="font-size:.92rem; color:#0E1726; margin:.2rem 0; font-family:var(--font-display); font-weight:700">{{ rel.title }}</h4>
+                <p style="font-size:.8rem; color:var(--txt-mut); margin:0; line-clamp:2">{{ rel.excerpt }}</p>
+              </a>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+</section>
+</main>
+{% endblock %}

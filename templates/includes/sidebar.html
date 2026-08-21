@@ -1,0 +1,120 @@
+{% load static %}
+<button id="railLauncher" class="rail-launcher" aria-label="Open section navigation" aria-controls="docRail" aria-expanded="true">
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+  <span>On this site</span>
+</button>
+<div id="railBackdrop" class="rail-backdrop" hidden=""></div>
+<nav id="docRail" class="doc-rail" aria-label="Site sections">
+  <div class="rail-head">
+    <span class="rail-title">On this site</span>
+    <button id="railClose" class="rail-close" aria-label="Collapse navigation"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
+  </div>
+  <div class="rail-scroll">
+    <ul class="rail-nav" role="list">
+
+      <li class="grp {% if current_page == 'home' %}active open{% endif %}" data-route="home">
+        <div class="grp-row">
+          <a class="grp-link {% if current_page == 'home' %}active{% endif %}" href="{% url 'home' %}" aria-current="page"><i class="dot" aria-hidden="true"></i>Home</a>
+          <button class="grp-toggle" aria-expanded="{% if current_page == 'home' %}true{% else %}false{% endif %}" aria-controls="rg-home" aria-label="Toggle Home sections"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+        </div>
+        <div class="grp-sub" id="rg-home"><div class="grp-sub-in">
+          <a href="{% url 'home' %}#sec-services" data-anchor="sec-services"><i class="sdot" aria-hidden="true"></i><span class="slbl">Services Snapshot</span></a>
+          <a href="{% url 'home' %}#process" data-anchor="process"><i class="sdot" aria-hidden="true"></i><span class="slbl">Our Process</span></a>
+          <a href="{% url 'home' %}#digital" data-anchor="digital"><i class="sdot" aria-hidden="true"></i><span class="slbl">Digital Platform</span></a>
+          <a href="{% url 'home' %}#sec-gallery" data-anchor="sec-gallery"><i class="sdot" aria-hidden="true"></i><span class="slbl">Featured Work</span></a>
+          <a href="{% url 'home' %}#testimonials" data-anchor="testimonials"><i class="sdot" aria-hidden="true"></i><span class="slbl">Client Words</span></a>
+          <a href="{% url 'home' %}#sec-blog" data-anchor="sec-blog"><i class="sdot" aria-hidden="true"></i><span class="slbl">Latest Insights</span></a>
+        </div></div>
+      </li>
+
+      <li class="grp {% if current_page == 'about' %}active open{% endif %}" data-route="about">
+        <div class="grp-row">
+          <a class="grp-link {% if current_page == 'about' %}active{% endif %}" href="{% url 'about' %}"><i class="dot" aria-hidden="true"></i>Company</a>
+          <button class="grp-toggle" aria-expanded="{% if current_page == 'about' %}true{% else %}false{% endif %}" aria-controls="rg-about" aria-label="Toggle Company sections"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+        </div>
+        <div class="grp-sub" id="rg-about"><div class="grp-sub-in">
+          <a href="{% url 'about' %}#who-we-are" data-anchor="who-we-are"><i class="sdot" aria-hidden="true"></i><span class="slbl">Who We Are</span></a>
+          <a href="{% url 'about' %}#journey" data-anchor="journey"><i class="sdot" aria-hidden="true"></i><span class="slbl">Our Journey</span></a>
+          <a href="{% url 'about' %}#why-bg" data-anchor="why-bg"><i class="sdot" aria-hidden="true"></i><span class="slbl">Why BG Group</span></a>
+          <a href="{% url 'about' %}#expertise" data-anchor="expertise"><i class="sdot" aria-hidden="true"></i><span class="slbl">Our Expertise</span></a>
+          <a href="{% url 'about' %}#industries" data-anchor="industries"><i class="sdot" aria-hidden="true"></i><span class="slbl">Industries We Serve</span></a>
+          <a href="{% url 'about' %}#leadership" data-anchor="leadership"><i class="sdot" aria-hidden="true"></i><span class="slbl">Leadership</span></a>
+          <a href="{% url 'about' %}#mission-vision" data-anchor="mission-vision"><i class="sdot" aria-hidden="true"></i><span class="slbl">Mission &amp; Vision</span></a>
+          <a href="{% url 'about' %}#standards" data-anchor="standards"><i class="sdot" aria-hidden="true"></i><span class="slbl">Standards &amp; Frameworks</span></a>
+        </div></div>
+      </li>
+
+      <li class="grp {% if current_page == 'board' %}active open{% endif %}" data-route="board">
+        <div class="grp-row">
+          <a class="grp-link {% if current_page == 'board' %}active{% endif %}" href="{% url 'board' %}"><i class="dot" aria-hidden="true"></i>Board Team</a>
+          <button class="grp-toggle" aria-expanded="{% if current_page == 'board' %}true{% else %}false{% endif %}" aria-controls="rg-board" aria-label="Toggle Board Team sections"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+        </div>
+        <div class="grp-sub" id="rg-board"><div class="grp-sub-in">
+          <a href="{% url 'board' %}#journey" data-anchor="journey"><i class="sdot" aria-hidden="true"></i><span class="slbl">Professional Journey</span></a>
+          <a href="{% url 'board' %}#career" data-anchor="career"><i class="sdot" aria-hidden="true"></i><span class="slbl">Career &amp; Milestones</span></a>
+          <a href="{% url 'board' %}#expertise" data-anchor="expertise"><i class="sdot" aria-hidden="true"></i><span class="slbl">Expertise</span></a>
+          <a href="{% url 'board' %}#projects" data-anchor="projects"><i class="sdot" aria-hidden="true"></i><span class="slbl">Flagship Projects</span></a>
+          <a href="{% url 'board' %}#certifications" data-anchor="certifications"><i class="sdot" aria-hidden="true"></i><span class="slbl">Certifications</span></a>
+          <a href="{% url 'board' %}#awards" data-anchor="awards"><i class="sdot" aria-hidden="true"></i><span class="slbl">Awards</span></a>
+        </div></div>
+      </li>
+
+      <li class="grp {% if current_page == 'services' %}active open{% endif %}" data-route="services">
+        <div class="grp-row">
+          <a class="grp-link {% if current_page == 'services' %}active{% endif %}" href="{% url 'services' %}"><i class="dot" aria-hidden="true"></i>Services</a>
+          <button class="grp-toggle" aria-expanded="{% if current_page == 'services' %}true{% else %}false{% endif %}" aria-controls="rg-serv" aria-label="Toggle Services sections"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+        </div>
+        <div class="grp-sub" id="rg-serv"><div class="grp-sub-in">
+          <a href="{% url 'services' %}#cat-surface" data-anchor="cat-surface"><i class="sdot" aria-hidden="true"></i><span class="slbl">Surface &amp; Coatings</span></a>
+          <a href="{% url 'services' %}#cat-inspection" data-anchor="cat-inspection"><i class="sdot" aria-hidden="true"></i><span class="slbl">Coating Inspection</span></a>
+          <a href="{% url 'services' %}#cat-consultancy" data-anchor="cat-consultancy"><i class="sdot" aria-hidden="true"></i><span class="slbl">Coating Consultancy</span></a>
+          <a href="{% url 'services' %}#cat-digital" data-anchor="cat-digital"><i class="sdot" aria-hidden="true"></i><span class="slbl">Digital Platform &amp; OS</span></a>
+          <a href="{% url 'services' %}#cat-training" data-anchor="cat-training"><i class="sdot" aria-hidden="true"></i><span class="slbl">Training &amp; Certification</span></a>
+          <a href="{% url 'services' %}#cat-equipment" data-anchor="cat-equipment"><i class="sdot" aria-hidden="true"></i><span class="slbl">Facility Audits</span></a>
+          <a href="{% url 'services' %}#cat-specialized" data-anchor="cat-specialized"><i class="sdot" aria-hidden="true"></i><span class="slbl">Specialized Applications</span></a>
+        </div></div>
+      </li>
+
+      <li class="grp {% if current_page == 'gallery' %}active open{% endif %}" data-route="gallery">
+        <div class="grp-row">
+          <a class="grp-link {% if current_page == 'gallery' %}active{% endif %}" href="{% url 'gallery' %}"><i class="dot" aria-hidden="true"></i>Gallery</a>
+          <button class="grp-toggle" aria-expanded="{% if current_page == 'gallery' %}true{% else %}false{% endif %}" aria-controls="rg-gal" aria-label="Toggle Gallery sections"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+        </div>
+        <div class="grp-sub" id="rg-gal"><div class="grp-sub-in">
+          <a href="{% url 'gallery' %}#gallery-grid" data-anchor="gallery-grid"><i class="sdot" aria-hidden="true"></i><span class="slbl">Project Photos</span></a>
+          <a href="{% url 'gallery' %}#before-after" data-anchor="before-after"><i class="sdot" aria-hidden="true"></i><span class="slbl">Before &amp; After</span></a>
+        </div></div>
+      </li>
+
+      <li class="grp {% if current_page == 'blog' %}active open{% endif %}" data-route="blog">
+        <div class="grp-row">
+          <a class="grp-link {% if current_page == 'blog' %}active{% endif %}" href="{% url 'blog' %}"><i class="dot" aria-hidden="true"></i>Blog</a>
+          <button class="grp-toggle" aria-expanded="{% if current_page == 'blog' %}true{% else %}false{% endif %}" aria-controls="rg-blog" aria-label="Toggle Blog sections"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+        </div>
+        <div class="grp-sub" id="rg-blog"><div class="grp-sub-in">
+          <a href="{% url 'blog' %}#blog-list" data-anchor="blog-list"><i class="sdot" aria-hidden="true"></i><span class="slbl">All Articles</span></a>
+          <a href="{% url 'blog' %}#blog-topics" data-anchor="blog-topics"><i class="sdot" aria-hidden="true"></i><span class="slbl">Topics</span></a>
+        </div></div>
+      </li>
+
+      <li class="grp {% if current_page == 'contact' %}active open{% endif %}" data-route="contact">
+        <div class="grp-row">
+          <a class="grp-link {% if current_page == 'contact' %}active{% endif %}" href="{% url 'contact' %}"><i class="dot" aria-hidden="true"></i>Contact</a>
+          <button class="grp-toggle" aria-expanded="{% if current_page == 'contact' %}true{% else %}false{% endif %}" aria-controls="rg-cnt" aria-label="Toggle Contact sections"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+        </div>
+        <div class="grp-sub" id="rg-cnt"><div class="grp-sub-in">
+          <a href="{% url 'contact' %}#cnt-info" data-anchor="cnt-info"><i class="sdot" aria-hidden="true"></i><span class="slbl">Office Info</span></a>
+          <a href="{% url 'contact' %}#enquiry" data-anchor="enquiry"><i class="sdot" aria-hidden="true"></i><span class="slbl">Send Enquiry</span></a>
+        </div></div>
+      </li>
+
+    
+      <li class="grp" data-route="career">
+        <div class="grp-row">
+          <a class="grp-link" href="https://forms.gle/v6kCBLKYeeUtMPky8" target="_blank" rel="noopener noreferrer"><i class="dot" aria-hidden="true"></i>Career <svg class="ext" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M7 17L17 7"></path><path d="M7 7h10v10"></path></svg></a>
+        </div>
+      </li>
+
+    </ul>
+  </div>
+</nav>

@@ -1,0 +1,191 @@
+<div class="space-y-6">
+  <!-- Section Header Banner -->
+  <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
+    <div>
+      <div class="text-xs font-mono font-semibold text-sky-400 uppercase tracking-wider">Services CMS</div>
+      <h2 class="text-xl font-bold text-white mt-1">Service Categories</h2>
+      <p class="text-xs text-slate-400">Manage categories grouping industrial coating services and technical solutions.</p>
+    </div>
+    <button onclick="openCategoryModal()" class="px-4 py-2.5 bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs rounded-xl shadow-lg shadow-sky-600/20 transition flex items-center gap-2 shrink-0">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+      <span>Add Service Category</span>
+    </button>
+  </div>
+
+  <!-- Categories Table -->
+  <div class="bg-slate-900/80 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs">
+        <thead class="bg-slate-950/80 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
+          <tr>
+            <th class="px-4 py-3.5 w-16">Order</th>
+            <th class="px-4 py-3.5">Category Name</th>
+            <th class="px-4 py-3.5">Slug</th>
+            <th class="px-4 py-3.5">Description</th>
+            <th class="px-4 py-3.5">Services Count</th>
+            <th class="px-4 py-3.5 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-800/60 text-slate-300">
+          {{#each categories}}
+          <tr class="hover:bg-slate-800/40 transition">
+            <td class="px-4 py-3.5 font-mono text-slate-400 font-semibold">{{this.order}}</td>
+            <td class="px-4 py-3.5 font-semibold text-white">
+              <span>{{this.name}}</span>
+            </td>
+            <td class="px-4 py-3.5 font-mono text-sky-400">/services/#{{this.slug}}</td>
+            <td class="px-4 py-3.5 text-slate-400 max-w-xs truncate">{{#if this.description}}{{this.description}}{{else}}<span class="italic text-slate-600">No description</span>{{/if}}</td>
+            <td class="px-4 py-3.5">
+              <span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono text-xs font-semibold">
+                {{#if this.services}}{{this.services.length}}{{else}}0{{/if}} offerings
+              </span>
+            </td>
+            <td class="px-4 py-3.5 text-right space-x-1 whitespace-nowrap">
+              <a 
+                href="{{../websiteUrl}}/services/#{{this.slug}}" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-sky-400 rounded-lg text-[11px] font-medium border border-slate-700 transition inline-flex items-center gap-1"
+              >
+                <span>View Live</span>
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+              </a>
+              <button 
+                onclick="editCategoryModal({{json this}})"
+                class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-[11px] font-medium border border-slate-700 transition"
+              >
+                Edit
+              </button>
+              <button 
+                onclick="openConfirmModal({
+                  title: 'Delete Service Category',
+                  description: 'Are you sure you want to delete category &quot;{{this.name}}&quot;? Associated services will also be affected.',
+                  confirmActionUrl: '/admin/services/categories/{{#if this.slug}}{{this.slug}}{{else}}{{this.id}}{{/if}}/delete',
+                  confirmText: 'Delete Category'
+                })"
+                class="px-2.5 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg text-[11px] font-medium border border-rose-500/20 transition"
+              >
+                Delete
+              </button>
+            </td>
+          </tr>
+          {{else}}
+          <tr>
+            <td colspan="6" class="p-0">
+              {{> empty_state emptyTitle="No Categories Found" emptyDescription="No service categories have been created yet." createUrl="javascript:openCategoryModal()" createText="Add First Category"}}
+            </td>
+          </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Form for Create / Edit Service Category -->
+<div id="categoryModalBackdrop" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden transition-opacity flex items-center justify-center p-4">
+  <div id="categoryModalCard" class="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-6 transform scale-95 transition-all">
+    <div class="flex items-start justify-between gap-4 border-b border-slate-800 pb-4">
+      <div>
+        <h3 id="categoryModalHeading" class="text-base font-bold text-white">Add Service Category</h3>
+        <p class="text-xs text-slate-400 mt-0.5">Define category name, URL slug, and summary description.</p>
+      </div>
+      <button onclick="closeCategoryModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <form id="categoryItemForm" method="POST" action="/admin/services/categories" class="space-y-4 text-xs">
+      <div>
+        <label class="block font-medium text-slate-300 mb-1">Category Name *</label>
+        <input type="text" id="catName" name="name" required placeholder="e.g. Surface Preparation & Blasting" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition" oninput="autoSlugifyCategory(this.value)">
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block font-medium text-slate-300 mb-1">URL Slug</label>
+          <input type="text" id="catSlug" name="slug" placeholder="surface-preparation" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition font-mono">
+        </div>
+        <div>
+          <label class="block font-medium text-slate-300 mb-1">Display Order</label>
+          <input type="number" id="catOrder" name="order" value="0" min="0" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition">
+        </div>
+      </div>
+
+      <div>
+        <label class="block font-medium text-slate-300 mb-1">Description</label>
+        <textarea id="catDesc" name="description" rows="3" placeholder="Brief summary of services grouped under this category..." class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition"></textarea>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
+        <button type="button" onclick="closeCategoryModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl border border-slate-700 transition">
+          Cancel
+        </button>
+        <button type="submit" class="px-5 py-2 bg-sky-600 hover:bg-sky-500 text-white font-semibold rounded-xl shadow-lg shadow-sky-600/20 transition flex items-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          <span id="catSubmitText">Save Category</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function autoSlugifyCategory(val) {
+    const slugInput = document.getElementById('catSlug');
+    if (!slugInput.dataset.custom) {
+      slugInput.value = val.toLowerCase().replace(/[^\w ]+/g, '').replace(/ +/g, '-');
+    }
+  }
+
+  function openCategoryModal() {
+    const form = document.getElementById('categoryItemForm');
+    form.action = '/admin/services/categories';
+    document.getElementById('categoryModalHeading').textContent = 'Add Service Category';
+    document.getElementById('catSubmitText').textContent = 'Save Category';
+    document.getElementById('catName').value = '';
+    document.getElementById('catSlug').value = '';
+    document.getElementById('catSlug').dataset.custom = '';
+    document.getElementById('catDesc').value = '';
+    document.getElementById('catOrder').value = '0';
+
+    const backdrop = document.getElementById('categoryModalBackdrop');
+    const card = document.getElementById('categoryModalCard');
+    backdrop.classList.remove('hidden');
+    setTimeout(() => {
+      card.classList.remove('scale-95');
+      card.classList.add('scale-100');
+    }, 10);
+  }
+
+  function editCategoryModal(item) {
+    const identifier = item.slug || item.id;
+    const form = document.getElementById('categoryItemForm');
+    form.action = '/admin/services/categories/' + identifier + '/edit';
+    document.getElementById('categoryModalHeading').textContent = 'Edit Service Category';
+    document.getElementById('catSubmitText').textContent = 'Update Category';
+    document.getElementById('catName').value = item.name || '';
+    document.getElementById('catSlug').value = item.slug || '';
+    document.getElementById('catSlug').dataset.custom = 'true';
+    document.getElementById('catDesc').value = item.description || '';
+    document.getElementById('catOrder').value = item.order ?? 0;
+
+    const backdrop = document.getElementById('categoryModalBackdrop');
+    const card = document.getElementById('categoryModalCard');
+    backdrop.classList.remove('hidden');
+    setTimeout(() => {
+      card.classList.remove('scale-95');
+      card.classList.add('scale-100');
+    }, 10);
+  }
+
+  function closeCategoryModal() {
+    const backdrop = document.getElementById('categoryModalBackdrop');
+    const card = document.getElementById('categoryModalCard');
+    card.classList.remove('scale-100');
+    card.classList.add('scale-95');
+    setTimeout(() => {
+      backdrop.classList.add('hidden');
+    }, 150);
+  }
+</script>
