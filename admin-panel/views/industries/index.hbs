@@ -1,57 +1,57 @@
 <div class="space-y-6">
   <!-- Section Header Banner -->
-  <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
+  <div class="bg-white border border-slate-200 rounded-md p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-2xs">
     <div>
-      <div class="text-xs font-mono font-semibold text-sky-400 uppercase tracking-wider">Standards &amp; Frameworks</div>
-      <h2 class="text-xl font-bold text-white mt-1">Industry Sectors</h2>
-      <p class="text-xs text-slate-400">Manage target industrial sectors served (Oil &amp; Gas, Refinery, Marine, Power, Petrochemical).</p>
+      <div class="text-[11px] font-mono font-semibold text-blue-600 uppercase tracking-wider">Standards &amp; Frameworks</div>
+      <h2 class="text-lg font-bold text-slate-900 mt-0.5">Industry Sectors</h2>
+      <p class="text-xs text-slate-500">Manage target industrial sectors served (Oil &amp; Gas, Refinery, Marine, Power, Petrochemical).</p>
     </div>
-    <button onclick="openIndustryModal()" class="px-4 py-2.5 bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs rounded-xl shadow-lg shadow-sky-600/20 transition flex items-center gap-2 shrink-0">
+    <button onclick="openIndustryModal()" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-md shadow-2xs transition flex items-center gap-2 shrink-0">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
       <span>Add Industry Sector</span>
     </button>
   </div>
 
   <!-- Industry Sectors Table -->
-  <div class="bg-slate-900/80 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+  <div class="bg-white border border-slate-200 rounded-md overflow-hidden shadow-2xs">
     <div class="overflow-x-auto">
       <table class="w-full text-left text-xs">
-        <thead class="bg-slate-950/80 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
+        <thead class="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold border-b border-slate-200 text-[11px]">
           <tr>
-            <th class="px-4 py-3.5 w-16">Order</th>
-            <th class="px-4 py-3.5">Industry Sector Name</th>
-            <th class="px-4 py-3.5">URL Slug</th>
-            <th class="px-4 py-3.5">Icon Indicator</th>
-            <th class="px-4 py-3.5 text-right">Actions</th>
+            <th class="px-4 py-3 w-16">Order</th>
+            <th class="px-4 py-3">Industry Sector Name</th>
+            <th class="px-4 py-3">URL Slug</th>
+            <th class="px-4 py-3">Icon Indicator</th>
+            <th class="px-4 py-3 text-right">Actions</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-slate-800/60 text-slate-300">
+        <tbody class="divide-y divide-slate-200 text-slate-700">
           {{#each industries}}
-          <tr class="hover:bg-slate-800/40 transition">
-            <td class="px-4 py-3.5 font-mono text-slate-400 font-semibold">{{this.order}}</td>
-            <td class="px-4 py-3.5 font-semibold text-white">
+          <tr class="hover:bg-slate-50 transition">
+            <td class="px-4 py-3 font-mono text-slate-500 font-semibold">{{this.order}}</td>
+            <td class="px-4 py-3 font-semibold text-slate-900">
               <div class="flex items-center gap-2">
-                <div class="w-7 h-7 rounded-lg bg-sky-500/10 text-sky-400 border border-sky-500/20 flex items-center justify-center shrink-0">
+                <div class="w-7 h-7 rounded-md bg-blue-50 text-blue-600 border border-blue-200 flex items-center justify-center shrink-0">
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
                 </div>
                 <span>{{this.name}}</span>
               </div>
             </td>
-            <td class="px-4 py-3.5 font-mono text-sky-400">/industries/#{{this.slug}}</td>
-            <td class="px-4 py-3.5 font-mono text-slate-400 text-[11px] truncate max-w-xs">{{#if this.icon_svg}}{{this.icon_svg}}{{else}}icon-factory{{/if}}</td>
-            <td class="px-4 py-3.5 text-right space-x-1 whitespace-nowrap">
+            <td class="px-4 py-3 font-mono text-blue-600 font-medium">/industries/#{{this.slug}}</td>
+            <td class="px-4 py-3 font-mono text-slate-500 text-[11px] truncate max-w-xs">{{#if this.icon_svg}}{{this.icon_svg}}{{else}}icon-factory{{/if}}</td>
+            <td class="px-4 py-3 text-right space-x-1 whitespace-nowrap">
               <a 
                 href="{{../websiteUrl}}/industries/#{{this.slug}}" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-sky-400 rounded-lg text-[11px] font-medium border border-slate-700 transition inline-flex items-center gap-1"
+                class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-blue-600 rounded-md text-xs font-medium border border-slate-200 transition inline-flex items-center gap-1"
               >
                 <span>View Live</span>
                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
               </a>
               <button 
                 onclick="editIndustryModal({{json this}})"
-                class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-[11px] font-medium border border-slate-700 transition"
+                class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md text-xs font-medium border border-slate-200 transition"
               >
                 Edit
               </button>
@@ -62,7 +62,7 @@
                   confirmActionUrl: '/admin/industries/{{#if this.slug}}{{this.slug}}{{else}}{{this.id}}{{/if}}/delete',
                   confirmText: 'Delete Sector'
                 })"
-                class="px-2.5 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg text-[11px] font-medium border border-rose-500/20 transition"
+                class="px-2.5 py-1 bg-red-50 hover:bg-red-100 text-red-600 rounded-md text-xs font-medium border border-red-200 transition"
               >
                 Delete
               </button>
@@ -82,45 +82,45 @@
 </div>
 
 <!-- Modal Form for Create / Edit Industry Sector -->
-<div id="industryModalBackdrop" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden transition-opacity flex items-center justify-center p-4">
-  <div id="industryModalCard" class="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-6 transform scale-95 transition-all max-h-[90vh] overflow-y-auto custom-scrollbar">
-    <div class="flex items-start justify-between gap-4 border-b border-slate-800 pb-4">
+<div id="industryModalBackdrop" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 hidden transition-opacity flex items-center justify-center p-4">
+  <div id="industryModalCard" class="bg-white border border-slate-200 rounded-lg shadow-xl max-w-lg w-full p-6 space-y-5 transform scale-95 transition-all max-h-[90vh] overflow-y-auto custom-scrollbar">
+    <div class="flex items-start justify-between gap-4 border-b border-slate-200 pb-3.5">
       <div>
-        <h3 id="industryModalHeading" class="text-base font-bold text-white">Add Industry Sector</h3>
-        <p class="text-xs text-slate-400 mt-0.5">Configure industry sector name, URL slug, icon indicator, and display order.</p>
+        <h3 id="industryModalHeading" class="text-base font-semibold text-slate-900">Add Industry Sector</h3>
+        <p class="text-xs text-slate-500 mt-0.5">Configure industry sector name, URL slug, icon indicator, and display order.</p>
       </div>
-      <button onclick="closeIndustryModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      <button onclick="closeIndustryModal()" class="text-slate-400 hover:text-slate-700 p-1 rounded-md hover:bg-slate-100">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
     </div>
 
     <form id="industryItemForm" method="POST" action="/admin/industries" class="space-y-4 text-xs">
       <div>
-        <label class="block font-medium text-slate-300 mb-1">Industry Sector Name *</label>
-        <input type="text" id="indName" name="name" required placeholder="e.g. Oil & Gas Refineries" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition" oninput="autoSlugifyIndustry(this.value)">
+        <label class="block font-medium text-slate-700 mb-1">Industry Sector Name *</label>
+        <input type="text" id="indName" name="name" required placeholder="e.g. Oil & Gas Refineries" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-md text-slate-900 text-xs focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition" oninput="autoSlugifyIndustry(this.value)">
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label class="block font-medium text-slate-300 mb-1">URL Slug</label>
-          <input type="text" id="indSlug" name="slug" placeholder="oil-gas-refineries" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition font-mono">
+          <label class="block font-medium text-slate-700 mb-1">URL Slug</label>
+          <input type="text" id="indSlug" name="slug" placeholder="oil-gas-refineries" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-md text-slate-900 text-xs font-mono focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition">
         </div>
         <div>
-          <label class="block font-medium text-slate-300 mb-1">Display Order</label>
-          <input type="number" id="indOrder" name="order" value="0" min="0" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition">
+          <label class="block font-medium text-slate-700 mb-1">Display Order</label>
+          <input type="number" id="indOrder" name="order" value="0" min="0" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-md text-slate-900 text-xs font-mono focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition">
         </div>
       </div>
 
       <div>
-        <label class="block font-medium text-slate-300 mb-1">Icon Indicator / Class</label>
-        <input type="text" id="indIcon" name="icon_svg" placeholder="icon-factory, icon-anchor, icon-zap" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition font-mono">
+        <label class="block font-medium text-slate-700 mb-1">Icon Indicator / Class</label>
+        <input type="text" id="indIcon" name="icon_svg" placeholder="icon-factory, icon-anchor, icon-zap" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-md text-slate-900 text-xs font-mono focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition">
       </div>
 
-      <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
-        <button type="button" onclick="closeIndustryModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl border border-slate-700 transition">
+      <div class="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-200">
+        <button type="button" onclick="closeIndustryModal()" class="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-md border border-slate-200 transition">
           Cancel
         </button>
-        <button type="submit" class="px-5 py-2 bg-sky-600 hover:bg-sky-500 text-white font-semibold rounded-xl shadow-lg shadow-sky-600/20 transition flex items-center gap-1.5">
+        <button type="submit" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md shadow-2xs transition flex items-center gap-1.5">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
           <span id="indSubmitText">Save Industry Sector</span>
         </button>
@@ -188,3 +188,4 @@
     }, 150);
   }
 </script>
+

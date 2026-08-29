@@ -1,30 +1,30 @@
 <!-- Reusable Global Confirmation & Form Modal Component -->
-<div id="globalModalBackdrop" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden transition-opacity flex items-center justify-center p-4">
-  <div id="globalModalCard" class="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-6 transform scale-95 transition-all">
+<div id="globalModalBackdrop" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 hidden transition-opacity flex items-center justify-center p-4">
+  <div id="globalModalCard" class="bg-white border border-slate-200 rounded-lg shadow-xl max-w-lg w-full p-6 space-y-5 transform scale-95 transition-all">
     <div class="flex items-start justify-between gap-4">
       <div class="flex items-center gap-3">
-        <div id="modalIconContainer" class="w-10 h-10 rounded-xl bg-sky-500/10 text-sky-400 border border-sky-500/20 flex items-center justify-center shrink-0">
-          <svg id="modalIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <div id="modalIconContainer" class="w-9 h-9 rounded-md bg-blue-50 text-blue-600 border border-blue-200 flex items-center justify-center shrink-0">
+          <svg id="modalIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
         </div>
         <div>
-          <h3 id="modalTitle" class="text-base font-bold text-white">Confirm Action</h3>
-          <p id="modalDescription" class="text-xs text-slate-400 mt-0.5">Are you sure you want to proceed with this operation?</p>
+          <h3 id="modalTitle" class="text-base font-semibold text-slate-900">Confirm Action</h3>
+          <p id="modalDescription" class="text-xs text-slate-500 mt-0.5">Are you sure you want to proceed with this operation?</p>
         </div>
       </div>
-      <button onclick="closeGlobalModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      <button onclick="closeGlobalModal()" class="text-slate-400 hover:text-slate-700 p-1 rounded-md hover:bg-slate-100">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
     </div>
 
     <!-- Optional Custom Dynamic Body Content -->
-    <div id="modalCustomContent" class="hidden text-xs text-slate-300 space-y-3"></div>
+    <div id="modalCustomContent" class="hidden text-xs text-slate-600 space-y-3"></div>
 
-    <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
-      <button type="button" onclick="closeGlobalModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl border border-slate-700 transition">
+    <div class="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-200">
+      <button type="button" onclick="closeGlobalModal()" class="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-md border border-slate-200 transition">
         Cancel
       </button>
       <form id="modalConfirmForm" method="POST" action="" class="inline">
-        <button id="modalConfirmBtn" type="submit" class="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold rounded-xl shadow-lg shadow-rose-600/20 transition flex items-center gap-1.5">
+        <button id="modalConfirmBtn" type="submit" class="px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-md shadow-2xs transition flex items-center gap-1.5">
           <span id="modalConfirmText">Delete Item</span>
         </button>
       </form>
@@ -57,11 +57,11 @@
     form.method = confirmMethod;
 
     if (isDanger) {
-      confirmBtn.className = 'px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold rounded-xl shadow-lg shadow-rose-600/20 transition flex items-center gap-1.5';
-      iconContainer.className = 'w-10 h-10 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/20 flex items-center justify-center shrink-0';
+      confirmBtn.className = 'px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-md shadow-2xs transition flex items-center gap-1.5';
+      iconContainer.className = 'w-9 h-9 rounded-md bg-red-50 text-red-600 border border-red-200 flex items-center justify-center shrink-0';
     } else {
-      confirmBtn.className = 'px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold rounded-xl shadow-lg shadow-sky-600/20 transition flex items-center gap-1.5';
-      iconContainer.className = 'w-10 h-10 rounded-xl bg-sky-500/10 text-sky-400 border border-sky-500/20 flex items-center justify-center shrink-0';
+      confirmBtn.className = 'px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-md shadow-2xs transition flex items-center gap-1.5';
+      iconContainer.className = 'w-9 h-9 rounded-md bg-blue-50 text-blue-600 border border-blue-200 flex items-center justify-center shrink-0';
     }
 
     backdrop.classList.remove('hidden');
@@ -81,3 +81,4 @@
     }, 150);
   };
 </script>
+

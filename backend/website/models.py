@@ -56,6 +56,7 @@ class PageSEO(models.Model):
         ('gallery', 'Project Gallery'),
         ('contact', 'Contact Us'),
         ('board', 'Board Team'),
+        ('thank_you', 'Thank You'),
     ]
 
     page_identifier = models.CharField(max_length=50, choices=PAGE_CHOICES, unique=True)

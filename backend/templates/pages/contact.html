@@ -21,16 +21,17 @@
               <h2>Send Us Your Enquiry</h2>
               <p class="fc-sub">We typically respond within one business day</p>
               <div class="form-progress"><i id="formBar"></i></div>
-              <form id="enquiryForm" novalidate="">
+              <form id="enquiryForm" method="POST" action="{% url 'contact' %}" novalidate="">
+                {% csrf_token %}
                 <div class="ffield row2">
-                  <div class="ffield"><input type="text" id="f_name" placeholder=" " required=""><label for="f_name">Full Name *</label><span class="err">Required</span></div>
-                  <div class="ffield"><input type="text" id="f_company" placeholder=" "><label for="f_company">Company</label></div>
+                  <div class="ffield"><input type="text" id="f_name" name="full_name" placeholder=" " required=""><label for="f_name">Full Name *</label><span class="err">Required</span></div>
+                  <div class="ffield"><input type="text" id="f_company" name="company" placeholder=" "><label for="f_company">Company</label></div>
                 </div>
                 <div class="ffield row2">
-                  <div class="ffield"><input type="email" id="f_email" placeholder=" " required=""><label for="f_email">Email *</label><span class="err">Valid email required</span></div>
-                  <div class="ffield"><input type="tel" id="f_phone" placeholder=" " required=""><label for="f_phone">Phone *</label><span class="err">Required</span></div>
+                  <div class="ffield"><input type="email" id="f_email" name="email" placeholder=" " required=""><label for="f_email">Email *</label><span class="err">Valid email required</span></div>
+                  <div class="ffield"><input type="tel" id="f_phone" name="phone" placeholder=" " required=""><label for="f_phone">Phone *</label><span class="err">Required</span></div>
                 </div>
-                <div class="ffield"><select id="f_service">
+                <div class="ffield"><select id="f_service" name="service_of_interest">
                     <option value="" selected="" disabled="" hidden=""></option>
                     <option value="Coating Survey &amp; Corrosion Assessment">Coating Survey &amp; Corrosion Assessment</option>
                     <option value="On-Site Coating Experts (Freelancing)">On-Site Coating Experts (Freelancing)</option>
@@ -46,17 +47,17 @@
                     <option value="Specialized Application (TSA/PFP/FRE)">Specialized Application (TSA/PFP/FRE)</option>
                     <option value="General Enquiry">General Enquiry</option>
                   </select><label for="f_service">Service Of Interest</label></div>
-                <div class="ffield"><textarea id="f_msg" placeholder=" " required=""></textarea><label for="f_msg">Project Details / Message *</label><span class="err">Please add a message</span></div>
+                <div class="ffield"><textarea id="f_msg" name="message" placeholder=" " required=""></textarea><label for="f_msg">Project Details / Message *</label><span class="err">Please add a message</span></div>
                 <button type="submit" class="btn btn-primary" id="submitBtn" style="width:100%">Submit Enquiry <span class="arr">→</span></button>
               </form>
             </div>
             <div class="form-success" id="formSuccess">
               <div class="tick">✓</div>
               <h2>Thank You!</h2>
-              <p class="fc-sub" style="color:var(--txt-lo)">Your enquiry is ready to send</p>
-              <p style="color:var(--txt-lo);max-width:44ch;margin:0 auto 1.5rem">We've prepared your message. Click below to send it via your email app, or reach us directly on WhatsApp for an instant response.</p>
+              <p class="fc-sub" style="color:var(--txt-lo)">Your enquiry has been received</p>
+              <p style="color:var(--txt-lo);max-width:44ch;margin:0 auto 1.5rem">Thank you for submitting your enquiry. Storing your details and redirecting to confirmation...</p>
               <div class="hero-ctas" style="justify-content:center">
-                <a class="btn btn-primary" id="mailtoLink" href="{% url 'home' %}">Open Email App <span class="arr">→</span></a>
+                <a class="btn btn-primary" id="thankyouLink" href="{% url 'thank_you' %}">View Confirmation <span class="arr">→</span></a>
                 <a class="btn btn-ghost" href="https://wa.me/919925810408" target="_blank" rel="noopener">WhatsApp Instead</a>
               </div>
             </div>

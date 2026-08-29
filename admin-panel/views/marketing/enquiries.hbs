@@ -1,55 +1,55 @@
 <div class="space-y-6">
   <!-- Section Header Banner -->
-  <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
+  <div class="bg-white border border-slate-200 rounded-md p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-2xs">
     <div>
-      <div class="text-xs font-mono font-semibold text-rose-400 uppercase tracking-wider">Marketing &amp; Leads</div>
-      <h2 class="text-xl font-bold text-white mt-1">Contact &amp; Technical Submissions</h2>
-      <p class="text-xs text-slate-400">Review inbound technical consultation requests, RFQs, and client inquiries submitted via the website contact form.</p>
+      <div class="text-[11px] font-mono font-semibold text-blue-600 uppercase tracking-wider">Marketing &amp; Leads</div>
+      <h2 class="text-lg font-bold text-slate-900 mt-0.5">Contact &amp; Technical Submissions</h2>
+      <p class="text-xs text-slate-500">Review inbound technical consultation requests, RFQs, and client inquiries submitted via the website contact form.</p>
     </div>
-    <div class="px-4 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-300 font-mono flex items-center gap-2">
-      <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-      <span>Total Inquiries: <strong class="text-white">{{enquiries.length}}</strong></span>
+    <div class="px-3 py-1.5 bg-slate-100 border border-slate-200 rounded-md text-xs text-slate-700 font-mono flex items-center gap-2 shrink-0">
+      <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+      <span>Total Inquiries: <strong class="text-slate-900 font-semibold">{{enquiries.length}}</strong></span>
     </div>
   </div>
 
   <!-- Contact Submissions Audit Table -->
-  <div class="bg-slate-900/80 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+  <div class="bg-white border border-slate-200 rounded-md overflow-hidden shadow-2xs">
     <div class="overflow-x-auto">
       <table class="w-full text-left text-xs">
-        <thead class="bg-slate-950/80 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
+        <thead class="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold border-b border-slate-200 text-[11px]">
           <tr>
-            <th class="px-4 py-3.5">Date &amp; Time</th>
-            <th class="px-4 py-3.5">Full Name &amp; Company</th>
-            <th class="px-4 py-3.5">Contact Details</th>
-            <th class="px-4 py-3.5">Service Interest</th>
-            <th class="px-4 py-3.5">Message Preview</th>
-            <th class="px-4 py-3.5 text-right">Actions</th>
+            <th class="px-4 py-3">Date &amp; Time</th>
+            <th class="px-4 py-3">Full Name &amp; Company</th>
+            <th class="px-4 py-3">Contact Details</th>
+            <th class="px-4 py-3">Service Interest</th>
+            <th class="px-4 py-3">Message Preview</th>
+            <th class="px-4 py-3 text-right">Actions</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-slate-800/60 text-slate-300">
+        <tbody class="divide-y divide-slate-200 text-slate-700">
           {{#each enquiries}}
-          <tr class="hover:bg-slate-800/40 transition">
-            <td class="px-4 py-3.5 font-mono text-slate-400 whitespace-nowrap">{{formatDate this.submitted_at}}</td>
-            <td class="px-4 py-3.5">
-              <div class="font-bold text-white">{{this.full_name}}</div>
-              <div class="text-[10px] text-slate-400">{{#if this.company}}{{this.company}}{{else}}<span class="italic text-slate-600">Individual Client</span>{{/if}}</div>
+          <tr class="hover:bg-slate-50 transition">
+            <td class="px-4 py-3 font-mono text-slate-500 whitespace-nowrap text-[11px]">{{formatDate this.submitted_at}}</td>
+            <td class="px-4 py-3">
+              <div class="font-bold text-slate-900">{{this.full_name}}</div>
+              <div class="text-[10px] text-slate-500 mt-0.5">{{#if this.company}}{{this.company}}{{else}}<span class="italic text-slate-400">Individual Client</span>{{/if}}</div>
             </td>
-            <td class="px-4 py-3.5 font-mono">
-              <a href="mailto:{{this.email}}" class="text-sky-400 hover:underline block truncate max-w-xs">{{this.email}}</a>
-              <a href="tel:{{this.phone}}" class="text-slate-400 hover:text-slate-200 text-[11px] block mt-0.5">{{this.phone}}</a>
+            <td class="px-4 py-3 font-mono">
+              <a href="mailto:{{this.email}}" class="text-blue-600 hover:underline block truncate max-w-xs font-medium">{{this.email}}</a>
+              <a href="tel:{{this.phone}}" class="text-slate-500 hover:text-slate-900 text-[11px] block mt-0.5">{{this.phone}}</a>
             </td>
-            <td class="px-4 py-3.5">
-              <span class="px-2.5 py-1 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20 font-mono text-[10px] font-semibold whitespace-nowrap">
+            <td class="px-4 py-3">
+              <span class="px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 font-mono text-[10px] font-semibold whitespace-nowrap">
                 {{this.service_of_interest}}
               </span>
             </td>
-            <td class="px-4 py-3.5 text-slate-400 max-w-xs truncate font-sans">{{this.message}}</td>
-            <td class="px-4 py-3.5 text-right space-x-1 whitespace-nowrap">
+            <td class="px-4 py-3 text-slate-600 max-w-xs truncate font-sans">{{this.message}}</td>
+            <td class="px-4 py-3 text-right space-x-1 whitespace-nowrap">
               <button 
                 onclick="viewEnquiryModal({{json this}})"
-                class="px-2.5 py-1.5 bg-sky-600/20 hover:bg-sky-600/30 text-sky-400 rounded-lg text-[11px] font-medium border border-sky-500/30 transition"
+                class="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-md text-xs font-medium border border-blue-200 transition"
               >
-                View Full Message
+                View Details
               </button>
               <button 
                 onclick="openConfirmModal({
@@ -58,7 +58,7 @@
                   confirmActionUrl: '/admin/marketing/enquiries/{{this.id}}/delete',
                   confirmText: 'Delete Submission'
                 })"
-                class="px-2.5 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg text-[11px] font-medium border border-rose-500/20 transition"
+                class="px-2.5 py-1 bg-red-50 hover:bg-red-100 text-red-600 rounded-md text-xs font-medium border border-red-200 transition"
               >
                 Delete
               </button>
@@ -78,42 +78,42 @@
 </div>
 
 <!-- Modal Dialog for Viewing Full Enquiry Message -->
-<div id="enquiryModalBackdrop" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden transition-opacity flex items-center justify-center p-4">
-  <div id="enquiryModalCard" class="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-xl w-full p-6 space-y-6 transform scale-95 transition-all max-h-[90vh] overflow-y-auto custom-scrollbar">
-    <div class="flex items-start justify-between gap-4 border-b border-slate-800 pb-4">
+<div id="enquiryModalBackdrop" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 hidden transition-opacity flex items-center justify-center p-4">
+  <div id="enquiryModalCard" class="bg-white border border-slate-200 rounded-lg shadow-xl max-w-xl w-full p-6 space-y-5 transform scale-95 transition-all max-h-[90vh] overflow-y-auto custom-scrollbar">
+    <div class="flex items-start justify-between gap-4 border-b border-slate-200 pb-3.5">
       <div>
-        <div class="text-[10px] font-mono text-rose-400 font-semibold uppercase tracking-wider">Client Inquiry Audit</div>
-        <h3 id="enqTitle" class="text-base font-bold text-white mt-0.5">Consultation Submission Details</h3>
+        <div class="text-[10px] font-mono text-blue-600 font-semibold uppercase tracking-wider">Client Inquiry Audit</div>
+        <h3 id="enqTitle" class="text-base font-semibold text-slate-900 mt-0.5">Consultation Submission Details</h3>
       </div>
-      <button onclick="closeEnquiryModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      <button onclick="closeEnquiryModal()" class="text-slate-400 hover:text-slate-700 p-1 rounded-md hover:bg-slate-100">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
     </div>
 
     <div class="space-y-4 text-xs">
-      <div class="grid grid-cols-2 gap-4 p-4 bg-slate-950/60 border border-slate-800 rounded-xl">
+      <div class="grid grid-cols-2 gap-4 p-4 bg-slate-50 border border-slate-200 rounded-md">
         <div>
           <div class="text-slate-500 font-medium">Client Name</div>
-          <div id="enqName" class="font-bold text-white text-sm mt-0.5"></div>
+          <div id="enqName" class="font-bold text-slate-900 text-sm mt-0.5"></div>
         </div>
         <div>
           <div class="text-slate-500 font-medium">Company Name</div>
-          <div id="enqCompany" class="font-semibold text-slate-300 mt-0.5"></div>
+          <div id="enqCompany" class="font-semibold text-slate-700 mt-0.5"></div>
         </div>
         <div>
           <div class="text-slate-500 font-medium">Email Address</div>
-          <a id="enqEmailLink" href="#" class="font-mono text-sky-400 hover:underline mt-0.5 block"></a>
+          <a id="enqEmailLink" href="#" class="font-mono text-blue-600 hover:underline mt-0.5 block font-medium"></a>
         </div>
         <div>
           <div class="text-slate-500 font-medium">Phone Number</div>
-          <a id="enqPhoneLink" href="#" class="font-mono text-slate-300 hover:underline mt-0.5 block"></a>
+          <a id="enqPhoneLink" href="#" class="font-mono text-slate-700 hover:underline mt-0.5 block"></a>
         </div>
       </div>
 
-      <div class="flex items-center justify-between p-3 bg-slate-950/40 border border-slate-800/80 rounded-xl">
+      <div class="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-md">
         <div>
           <span class="text-slate-500 font-medium">Service of Interest: </span>
-          <span id="enqService" class="font-bold text-rose-400 font-mono ml-1"></span>
+          <span id="enqService" class="font-semibold text-blue-600 font-mono ml-1"></span>
         </div>
         <div>
           <span id="enqDate" class="text-slate-500 font-mono text-[11px]"></span>
@@ -121,16 +121,16 @@
       </div>
 
       <div>
-        <label class="block font-medium text-slate-300 mb-1.5">Full Message Content</label>
-        <div id="enqMessage" class="p-4 bg-slate-950 border border-slate-800 rounded-xl text-slate-200 leading-relaxed font-sans whitespace-pre-wrap"></div>
+        <label class="block font-medium text-slate-700 mb-1.5">Full Message Content</label>
+        <div id="enqMessage" class="p-4 bg-slate-50 border border-slate-200 rounded-md text-slate-800 leading-relaxed font-sans whitespace-pre-wrap"></div>
       </div>
 
-      <div class="flex items-center justify-between pt-4 border-t border-slate-800">
-        <a id="enqReplyBtn" href="#" class="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white font-semibold rounded-xl transition flex items-center gap-2">
+      <div class="flex items-center justify-between pt-4 border-t border-slate-200">
+        <a id="enqReplyBtn" href="#" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md shadow-2xs transition flex items-center gap-2">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
           <span>Reply via Email</span>
         </a>
-        <button type="button" onclick="closeEnquiryModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl border border-slate-700 transition">
+        <button type="button" onclick="closeEnquiryModal()" class="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-md border border-slate-200 transition">
           Close
         </button>
       </div>

@@ -1,58 +1,58 @@
 <div class="space-y-6">
   <!-- Section Header Banner -->
-  <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
+  <div class="bg-white border border-slate-200 rounded-md p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-2xs">
     <div>
-      <div class="text-xs font-mono font-semibold text-sky-400 uppercase tracking-wider">Content &amp; Insights</div>
-      <h2 class="text-xl font-bold text-white mt-1">Board Members &amp; Leadership</h2>
-      <p class="text-xs text-slate-400">Manage technical leadership team profiles, NACE/AMPP certifications, display order, and executive bios.</p>
+      <div class="text-[11px] font-mono font-semibold text-blue-600 uppercase tracking-wider">Content &amp; Insights</div>
+      <h2 class="text-lg font-bold text-slate-900 mt-0.5">Board Members &amp; Leadership</h2>
+      <p class="text-xs text-slate-500">Manage technical leadership team profiles, NACE/AMPP certifications, display order, and executive bios.</p>
     </div>
-    <button onclick="openBoardModal()" class="px-4 py-2.5 bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs rounded-xl shadow-lg shadow-sky-600/20 transition flex items-center gap-2 shrink-0">
+    <button onclick="openBoardModal()" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-md shadow-2xs transition flex items-center gap-2 shrink-0">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
       <span>Add Board Member</span>
     </button>
   </div>
 
   <!-- Board Members Profile Grid -->
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
     {{#each members}}
-    <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 shadow-xl hover:border-sky-500/40 transition flex flex-col justify-between space-y-4">
-      <div class="space-y-4">
-        <div class="flex items-start justify-between gap-4">
+    <div class="bg-white border border-slate-200 rounded-md p-5 shadow-2xs hover:border-blue-400 transition flex flex-col justify-between space-y-4">
+      <div class="space-y-3.5">
+        <div class="flex items-start justify-between gap-3">
           <div class="flex items-center gap-3">
             {{#if this.photo}}
-            <img src="{{this.photo}}" alt="{{this.name}}" class="w-14 h-14 rounded-2xl object-cover border-2 border-slate-800 shrink-0">
+            <img src="{{this.photo}}" alt="{{this.name}}" class="w-12 h-12 rounded-full object-cover border border-slate-200 shrink-0">
             {{else}}
-            <div class="w-14 h-14 rounded-2xl bg-sky-500/10 text-sky-400 border border-sky-500/20 flex items-center justify-center font-bold text-lg shrink-0">
+            <div class="w-12 h-12 rounded-full bg-blue-50 text-blue-600 border border-blue-200 flex items-center justify-center font-bold text-base shrink-0">
               {{this.name.[0]}}
             </div>
             {{/if}}
             <div>
-              <h3 class="text-base font-bold text-white leading-tight">{{this.name}}</h3>
-              <p class="text-xs text-slate-400 font-medium mt-0.5">{{this.role}}</p>
+              <h3 class="text-sm font-bold text-slate-900 leading-tight">{{this.name}}</h3>
+              <p class="text-xs text-slate-500 font-medium mt-0.5">{{this.role}}</p>
             </div>
           </div>
-          <span class="px-2.5 py-1 rounded-lg bg-slate-950 text-slate-400 border border-slate-800 font-mono text-xs font-semibold shrink-0">
+          <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200 font-mono text-[11px] font-semibold shrink-0">
             #{{this.display_order}}
           </span>
         </div>
 
         {{#if this.certification}}
         <div>
-          <span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono text-[10px] font-bold">
+          <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono text-[10px] font-bold">
             ★ {{this.certification}}
           </span>
         </div>
         {{/if}}
 
-        <p class="text-xs text-slate-400 line-clamp-3 leading-relaxed">
-          {{#if this.bio}}{{this.bio}}{{else}}<span class="italic text-slate-600">No biography provided</span>{{/if}}
+        <p class="text-xs text-slate-600 line-clamp-3 leading-relaxed">
+          {{#if this.bio}}{{this.bio}}{{else}}<span class="italic text-slate-400">No biography provided</span>{{/if}}
         </p>
       </div>
 
-      <div class="pt-4 border-t border-slate-800/80 flex items-center justify-end gap-2 text-xs">
+      <div class="pt-3.5 border-t border-slate-200 flex items-center justify-end gap-1.5 text-xs">
         <button 
           onclick="editBoardModal({{json this}})"
-          class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg font-medium border border-slate-700 transition"
+          class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md text-xs font-medium border border-slate-200 transition"
         >
           Edit
         </button>
@@ -63,7 +63,7 @@
             confirmActionUrl: '/admin/content/board/{{this.id}}/delete',
             confirmText: 'Delete Member'
           })"
-          class="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg font-medium border border-rose-500/20 transition"
+          class="px-2.5 py-1 bg-red-50 hover:bg-red-100 text-red-600 rounded-md text-xs font-medium border border-red-200 transition"
         >
           Delete
         </button>
@@ -78,52 +78,52 @@
 </div>
 
 <!-- Modal Form for Create / Edit Board Member -->
-<div id="boardModalBackdrop" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden transition-opacity flex items-center justify-center p-4">
-  <div id="boardModalCard" class="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-6 transform scale-95 transition-all max-h-[90vh] overflow-y-auto custom-scrollbar">
-    <div class="flex items-start justify-between gap-4 border-b border-slate-800 pb-4">
+<div id="boardModalBackdrop" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 hidden transition-opacity flex items-center justify-center p-4">
+  <div id="boardModalCard" class="bg-white border border-slate-200 rounded-lg shadow-xl max-w-lg w-full p-6 space-y-5 transform scale-95 transition-all max-h-[90vh] overflow-y-auto custom-scrollbar">
+    <div class="flex items-start justify-between gap-4 border-b border-slate-200 pb-3.5">
       <div>
-        <h3 id="boardModalHeading" class="text-base font-bold text-white">Add Board Member</h3>
-        <p class="text-xs text-slate-400 mt-0.5">Configure name, role, NACE/AMPP certifications, photo, and bio.</p>
+        <h3 id="boardModalHeading" class="text-base font-semibold text-slate-900">Add Board Member</h3>
+        <p class="text-xs text-slate-500 mt-0.5">Configure name, role, NACE/AMPP certifications, photo, and bio.</p>
       </div>
-      <button onclick="closeBoardModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      <button onclick="closeBoardModal()" class="text-slate-400 hover:text-slate-700 p-1 rounded-md hover:bg-slate-100">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
     </div>
 
     <form id="boardItemForm" method="POST" action="/admin/content/board" enctype="multipart/form-data" class="space-y-4 text-xs">
       <div>
-        <label class="block font-medium text-slate-300 mb-1">Full Name *</label>
-        <input type="text" id="bmName" name="name" required placeholder="e.g. Er. B.G. Patel" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition">
+        <label class="block font-medium text-slate-700 mb-1">Full Name *</label>
+        <input type="text" id="bmName" name="name" required placeholder="e.g. Er. B.G. Patel" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-md text-slate-900 text-xs focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition">
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="md:col-span-2">
-          <label class="block font-medium text-slate-300 mb-1">Role / Position *</label>
-          <input type="text" id="bmRole" name="role" required placeholder="Managing Director & Principal Specialist" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition">
+          <label class="block font-medium text-slate-700 mb-1">Role / Position *</label>
+          <input type="text" id="bmRole" name="role" required placeholder="Managing Director & Principal Specialist" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-md text-slate-900 text-xs focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition">
         </div>
         <div>
-          <label class="block font-medium text-slate-300 mb-1">Display Order</label>
-          <input type="number" id="bmOrder" name="display_order" value="0" min="0" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition">
+          <label class="block font-medium text-slate-700 mb-1">Display Order</label>
+          <input type="number" id="bmOrder" name="display_order" value="0" min="0" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-md text-slate-900 text-xs font-mono focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition">
         </div>
       </div>
 
       <div>
-        <label class="block font-medium text-slate-300 mb-1">Certifications (e.g. NACE Level 3 / AMPP)</label>
-        <input type="text" id="bmCert" name="certification" placeholder="NACE Level 3 Inspector #9842 / AMPP Certified" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition font-mono">
+        <label class="block font-medium text-slate-700 mb-1">Certifications (e.g. NACE Level 3 / AMPP)</label>
+        <input type="text" id="bmCert" name="certification" placeholder="NACE Level 3 Inspector #9842 / AMPP Certified" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-md text-slate-900 text-xs font-mono focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition">
       </div>
 
       {{> file_uploader fieldId="bmPhoto" fieldName="photo" label="Profile Photo"}}
 
       <div>
-        <label class="block font-medium text-slate-300 mb-1">Executive Bio</label>
-        <textarea id="bmBio" name="bio" rows="4" placeholder="Over 25 years of experience in protective coatings, refinery corrosion surveys, and ISO 12944 compliance..." class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition"></textarea>
+        <label class="block font-medium text-slate-700 mb-1">Executive Bio</label>
+        <textarea id="bmBio" name="bio" rows="4" placeholder="Over 25 years of experience in protective coatings, refinery corrosion surveys, and ISO 12944 compliance..." class="w-full px-3 py-2 bg-white border border-slate-200 rounded-md text-slate-900 text-xs focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition"></textarea>
       </div>
 
-      <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
-        <button type="button" onclick="closeBoardModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl border border-slate-700 transition">
+      <div class="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-200">
+        <button type="button" onclick="closeBoardModal()" class="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-md border border-slate-200 transition">
           Cancel
         </button>
-        <button type="submit" class="px-5 py-2 bg-sky-600 hover:bg-sky-500 text-white font-semibold rounded-xl shadow-lg shadow-sky-600/20 transition flex items-center gap-1.5">
+        <button type="submit" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md shadow-2xs transition flex items-center gap-1.5">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
           <span id="bmSubmitText">Save Board Member</span>
         </button>
@@ -195,3 +195,4 @@
     }, 150);
   }
 </script>
+

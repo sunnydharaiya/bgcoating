@@ -7,37 +7,39 @@ module.exports = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['Poppins', 'sans-serif'],
+        mono: ['Poppins', 'sans-serif'],
+        body: ['Poppins', 'sans-serif'],
+        heading: ['Poppins', 'sans-serif'],
+      },
       colors: {
         brand: {
-          50: '#fff8f0',
-          100: '#ffeedb',
-          200: '#ffd9b3',
-          300: '#ffc24b', // highlight amber
-          400: '#f9a83d',
-          500: '#F7941E', // BG Amber / Primary Accent
-          600: '#D96F00', // Deep Amber Hover
-          700: '#b35600',
-          800: '#8c4000',
-          900: '#662d00',
-          accent: '#F7941E',
-          cyan: '#37B7E8', // Digital / Inspection Blue
-        },
-        navy: {
-          950: '#0A111F', // Carbon Navy Base
-          900: '#101A2E', // Raised Dark Surface
-          850: '#16233C', // Card Surface / Elevated
-          800: '#1E2D4A', // Border / Muted Lines
+          50: '#eff6ff',
+          100: '#dbeafe',
+          200: '#bfdbfe',
+          300: '#93c5fd',
+          400: '#60a5fa',
+          500: '#2563eb', // Primary Blue
+          600: '#1d4ed8', // Darker Hover Blue
+          700: '#1e40af',
+          800: '#1e3a8a',
+          900: '#172554',
+          accent: '#f59e0b',
         },
         sidebar: {
-          bg: '#0A111F',
-          card: '#101A2E',
-          hover: '#16233C',
-          border: 'rgba(255,255,255,0.08)',
-          text: '#9AA7BD',
-          active: '#F7941E'
+          bg: '#ffffff',
+          card: '#f8fafc',
+          hover: '#f1f5f9',
+          border: '#e2e8f0',
+          text: '#64748b',
+          active: '#2563eb',
+          activeBg: '#eff6ff'
         }
       }
     },
   },
   plugins: [],
 }
+
+

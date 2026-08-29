@@ -514,7 +514,7 @@ window.__init_contact=function(__scope){
 
 
 
-/* premium form: floating labels, progress, validation, mailto handoff */
+/* premium form: floating labels, progress, validation, DB storage + redirect to thank you page */
 const form = __scope.querySelector('#enquiryForm');
 if (form){
   const fields = ['f_name','f_email','f_phone','f_msg'];
@@ -524,19 +524,28 @@ if (form){
   const sel = __scope.querySelector('#f_service');
   if (sel) sel.addEventListener('change', () => sel.classList.toggle('filled', !!sel.value));
   function progress(){
-    const filled = fields.filter(id => (document.getElementById(id).value||'').trim().length > 0).length;
+    const filled = fields.filter(id => {
+      const el = document.getElementById(id);
+      return el && (el.value||'').trim().length > 0;
+    }).length;
     if (bar) bar.style.width = Math.round(filled/fields.length*100) + '%';
   }
   allInputs.forEach(el => el.addEventListener('input', progress));
   function validEmail(v){ return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v); }
   function check(id){
-    const el = document.getElementById(id); const wrap = el.closest('.ffield');
+    const el = document.getElementById(id);
+    if (!el) return true;
+    const wrap = el.closest('.ffield');
     let ok = (el.value||'').trim().length > 0;
     if (id === 'f_email') ok = validEmail(el.value.trim());
-    wrap.classList.toggle('invalid', !ok); return ok;
+    if (wrap) wrap.classList.toggle('invalid', !ok);
+    return ok;
   }
-  fields.forEach(id => document.getElementById(id).addEventListener('blur', () => check(id)));
-  form.addEventListener('submit', e => {
+  fields.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('blur', () => check(id));
+  });
+  form.addEventListener('submit', async e => {
     e.preventDefault();
     const results = fields.map(check);
     if (results.includes(false)){
@@ -544,21 +553,51 @@ if (form){
       return;
     }
     const btn = __scope.querySelector('#submitBtn');
-    btn.innerHTML = 'Sending…'; btn.disabled = true;
-    const name = __scope.querySelector('#f_name').value.trim();
-    const company = __scope.querySelector('#f_company').value.trim();
-    const email = __scope.querySelector('#f_email').value.trim();
-    const phone = __scope.querySelector('#f_phone').value.trim();
-    const service = __scope.querySelector('#f_service').value || 'General Enquiry';
-    const msg = __scope.querySelector('#f_msg').value.trim();
-    const subject = encodeURIComponent(`Enquiry: ${service} — ${name}`);
-    const body = encodeURIComponent(`Name: ${name}\nCompany: ${company}\nEmail: ${email}\nPhone: ${phone}\nService: ${service}\n\n${msg}`);
-    const mailto = `mailto:inquiry.bggroup@gmail.com?subject=${subject}&body=${body}`;
-    __scope.querySelector('#mailtoLink').setAttribute('href', mailto);
-    setTimeout(() => {
-      __scope.querySelector('#formInner').style.display = 'none';
-      __scope.querySelector('#formSuccess').classList.add('show');
-    }, reduceMotion ? 0 : 600);
+    if (btn) {
+      btn.innerHTML = 'Submitting Enquiry…';
+      btn.disabled = true;
+    }
+    const name = (__scope.querySelector('#f_name')?.value || '').trim();
+    const company = (__scope.querySelector('#f_company')?.value || '').trim();
+    const email = (__scope.querySelector('#f_email')?.value || '').trim();
+    const phone = (__scope.querySelector('#f_phone')?.value || '').trim();
+    const service = __scope.querySelector('#f_service')?.value || 'General Enquiry';
+    const msg = (__scope.querySelector('#f_msg')?.value || '').trim();
+
+    const csrfToken = form.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+
+    try {
+      const formData = new FormData();
+      formData.append('csrfmiddlewaretoken', csrfToken);
+      formData.append('full_name', name);
+      formData.append('company', company);
+      formData.append('email', email);
+      formData.append('phone', phone);
+      formData.append('service_of_interest', service);
+      formData.append('message', msg);
+
+      const resp = await fetch('{% url "contact" %}', {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRFToken': csrfToken,
+          'Accept': 'application/json'
+        },
+        body: formData
+      });
+
+      if (resp.ok) {
+        const data = await resp.json().catch(() => ({}));
+        const redirectUrl = data.redirect_url || "{% url 'thank_you' %}";
+        window.location.href = redirectUrl;
+      } else {
+        // Fallback: standard form submit
+        form.submit();
+      }
+    } catch (err) {
+      console.warn('AJAX submit error, falling back:', err);
+      form.submit();
+    }
   });
 }
 

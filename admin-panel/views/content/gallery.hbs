@@ -1,78 +1,78 @@
 <div class="space-y-6">
   <!-- Section Header Banner -->
-  <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
+  <div class="bg-white border border-slate-200 rounded-md p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-2xs">
     <div>
-      <div class="text-xs font-mono font-semibold text-sky-400 uppercase tracking-wider">Content &amp; Insights</div>
-      <h2 class="text-xl font-bold text-white mt-1">Project Gallery &amp; Visual Standards</h2>
-      <p class="text-xs text-slate-400">Manage project reference photos, surface preparation visual standards, and site inspection benchmarks.</p>
+      <div class="text-[11px] font-mono font-semibold text-blue-600 uppercase tracking-wider">Content &amp; Insights</div>
+      <h2 class="text-lg font-bold text-slate-900 mt-0.5">Project Gallery &amp; Visual Standards</h2>
+      <p class="text-xs text-slate-500">Manage project reference photos, surface preparation visual standards, and site inspection benchmarks.</p>
     </div>
-    <button onclick="openGalleryModal()" class="px-4 py-2.5 bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs rounded-xl shadow-lg shadow-sky-600/20 transition flex items-center gap-2 shrink-0">
+    <button onclick="openGalleryModal()" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-md shadow-2xs transition flex items-center gap-2 shrink-0">
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
       <span>Add Gallery Item</span>
     </button>
   </div>
 
   <!-- Tag Filter Toolbar -->
-  <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
-    <div class="flex items-center gap-2 w-full sm:w-auto flex-wrap">
-      <span class="text-slate-400 font-medium shrink-0">Filter Tag:</span>
-      <a href="/admin/content/gallery" class="px-3 py-1.5 rounded-xl text-xs font-semibold border transition {{#unless tagFilter}}bg-sky-600 text-white border-sky-500 shadow-md{{else}}bg-slate-950/80 text-slate-400 border-slate-800 hover:border-slate-700{{/unless}}">
+  <div class="bg-white border border-slate-200 rounded-md p-3.5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs shadow-2xs">
+    <div class="flex items-center gap-1.5 w-full sm:w-auto flex-wrap">
+      <span class="text-slate-500 font-medium shrink-0 mr-1">Filter Tag:</span>
+      <a href="/admin/content/gallery" class="px-2.5 py-1 rounded-md text-xs font-semibold border transition {{#unless tagFilter}}bg-blue-600 text-white border-blue-600 shadow-2xs{{else}}bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200{{/unless}} font-mono">
         All Items
       </a>
-      <a href="?tag=surface-prep" class="px-3 py-1.5 rounded-xl text-xs font-semibold border transition {{#if (eq tagFilter "surface-prep")}}bg-sky-600 text-white border-sky-500 shadow-md{{else}}bg-slate-950/80 text-slate-400 border-slate-800 hover:border-slate-700{{/if}}">
+      <a href="?tag=surface-prep" class="px-2.5 py-1 rounded-md text-xs font-semibold border transition {{#if (eq tagFilter "surface-prep")}}bg-blue-600 text-white border-blue-600 shadow-2xs{{else}}bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200{{/if}} font-mono">
         Surface Prep
       </a>
-      <a href="?tag=inspection" class="px-3 py-1.5 rounded-xl text-xs font-semibold border transition {{#if (eq tagFilter "inspection")}}bg-sky-600 text-white border-sky-500 shadow-md{{else}}bg-slate-950/80 text-slate-400 border-slate-800 hover:border-slate-700{{/if}}">
+      <a href="?tag=inspection" class="px-2.5 py-1 rounded-md text-xs font-semibold border transition {{#if (eq tagFilter "inspection")}}bg-blue-600 text-white border-blue-600 shadow-2xs{{else}}bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200{{/if}} font-mono">
         Inspection
       </a>
-      <a href="?tag=failure-analysis" class="px-3 py-1.5 rounded-xl text-xs font-semibold border transition {{#if (eq tagFilter "failure-analysis")}}bg-sky-600 text-white border-sky-500 shadow-md{{else}}bg-slate-950/80 text-slate-400 border-slate-800 hover:border-slate-700{{/if}}">
+      <a href="?tag=failure-analysis" class="px-2.5 py-1 rounded-md text-xs font-semibold border transition {{#if (eq tagFilter "failure-analysis")}}bg-blue-600 text-white border-blue-600 shadow-2xs{{else}}bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200{{/if}} font-mono">
         Failure Analysis
       </a>
-      <a href="?tag=standards" class="px-3 py-1.5 rounded-xl text-xs font-semibold border transition {{#if (eq tagFilter "standards")}}bg-sky-600 text-white border-sky-500 shadow-md{{else}}bg-slate-950/80 text-slate-400 border-slate-800 hover:border-slate-700{{/if}}">
+      <a href="?tag=standards" class="px-2.5 py-1 rounded-md text-xs font-semibold border transition {{#if (eq tagFilter "standards")}}bg-blue-600 text-white border-blue-600 shadow-2xs{{else}}bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200{{/if}} font-mono">
         Standards
       </a>
-      <a href="?tag=refinery" class="px-3 py-1.5 rounded-xl text-xs font-semibold border transition {{#if (eq tagFilter "refinery")}}bg-sky-600 text-white border-sky-500 shadow-md{{else}}bg-slate-950/80 text-slate-400 border-slate-800 hover:border-slate-700{{/if}}">
+      <a href="?tag=refinery" class="px-2.5 py-1 rounded-md text-xs font-semibold border transition {{#if (eq tagFilter "refinery")}}bg-blue-600 text-white border-blue-600 shadow-2xs{{else}}bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200{{/if}} font-mono">
         Refinery
       </a>
     </div>
-    <div class="text-slate-400 text-xs">
-      Total <span class="font-bold text-white">{{gallery.length}}</span> items
+    <div class="text-slate-500 text-xs font-medium">
+      Total <span class="font-bold text-slate-900 font-mono">{{gallery.length}}</span> items
     </div>
   </div>
 
   <!-- Responsive Visual Gallery Grid -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
     {{#each gallery}}
-    <div class="bg-slate-900/80 border border-slate-800 rounded-2xl overflow-hidden shadow-xl hover:border-sky-500/40 transition group flex flex-col justify-between">
+    <div class="bg-white border border-slate-200 rounded-md overflow-hidden shadow-2xs hover:border-blue-400 transition group flex flex-col justify-between">
       <div>
-        <div class="relative h-48 bg-slate-950 overflow-hidden">
+        <div class="relative h-44 bg-slate-100 overflow-hidden border-b border-slate-200">
           {{#if this.image}}
           <img src="{{this.image}}" alt="{{this.title}}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300">
           {{else}}
-          <div class="w-full h-full flex items-center justify-center bg-slate-950 text-slate-600 font-mono text-xs">No Image</div>
+          <div class="w-full h-full flex items-center justify-center bg-slate-100 text-slate-400 font-mono text-xs">No Image</div>
           {{/if}}
-          <div class="absolute top-3 right-3">
-            <span class="px-2.5 py-1 rounded-lg bg-slate-950/90 text-sky-400 border border-sky-500/30 text-[10px] font-mono font-bold backdrop-blur-md uppercase">
+          <div class="absolute top-2.5 right-2.5">
+            <span class="px-2 py-0.5 rounded bg-white/90 text-blue-700 border border-blue-200 text-[10px] font-mono font-bold shadow-2xs backdrop-blur-xs uppercase">
               {{this.filter_tag}}
             </span>
           </div>
         </div>
 
-        <div class="p-5 space-y-3">
+        <div class="p-4 space-y-2.5">
           <div>
-            <h3 class="text-sm font-bold text-white group-hover:text-sky-400 transition leading-snug">{{this.title}}</h3>
-            <p class="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
-              <svg class="w-3.5 h-3.5 text-slate-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            <h3 class="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition leading-snug">{{this.title}}</h3>
+            <p class="text-xs text-slate-500 mt-1 flex items-center gap-1.5 font-medium">
+              <svg class="w-3.5 h-3.5 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
               <span>{{this.location_name}}</span>
             </p>
           </div>
 
-          <div class="flex items-center gap-2 flex-wrap text-xs pt-1">
-            <span class="px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-[10px] font-medium">
+          <div class="flex items-center gap-2 flex-wrap text-xs pt-0.5">
+            <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 text-[10px] font-medium">
               {{this.client_category}}
             </span>
             {{#if this.standard_code}}
-            <span class="px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-bold font-mono">
+            <span class="px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-bold font-mono">
               {{this.standard_code}}
             </span>
             {{/if}}
@@ -80,12 +80,12 @@
         </div>
       </div>
 
-      <div class="p-4 bg-slate-950/60 border-t border-slate-800/80 flex items-center justify-between text-xs">
-        <span class="text-[11px] text-slate-500">{{this.service_type}}</span>
+      <div class="p-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs">
+        <span class="text-[11px] text-slate-500 font-mono">{{this.service_type}}</span>
         <div class="space-x-1">
           <button 
             onclick="editGalleryModal({{json this}})"
-            class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-[11px] font-medium border border-slate-700 transition"
+            class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md text-xs font-medium border border-slate-200 transition"
           >
             Edit
           </button>
@@ -96,7 +96,7 @@
               confirmActionUrl: '/admin/content/gallery/{{this.id}}/delete',
               confirmText: 'Delete Item'
             })"
-            class="px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg text-[11px] font-medium border border-rose-500/20 transition"
+            class="px-2.5 py-1 bg-red-50 hover:bg-red-100 text-red-600 rounded-md text-xs font-medium border border-red-200 transition"
           >
             Delete
           </button>
@@ -112,28 +112,28 @@
 </div>
 
 <!-- Modal Form for Create / Edit Gallery Item -->
-<div id="galleryModalBackdrop" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden transition-opacity flex items-center justify-center p-4">
-  <div id="galleryModalCard" class="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-xl w-full p-6 space-y-6 transform scale-95 transition-all max-h-[90vh] overflow-y-auto custom-scrollbar">
-    <div class="flex items-start justify-between gap-4 border-b border-slate-800 pb-4">
+<div id="galleryModalBackdrop" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 hidden transition-opacity flex items-center justify-center p-4">
+  <div id="galleryModalCard" class="bg-white border border-slate-200 rounded-lg shadow-xl max-w-xl w-full p-6 space-y-5 transform scale-95 transition-all max-h-[90vh] overflow-y-auto custom-scrollbar">
+    <div class="flex items-start justify-between gap-4 border-b border-slate-200 pb-3.5">
       <div>
-        <h3 id="galleryModalHeading" class="text-base font-bold text-white">Add Project Gallery Item</h3>
-        <p class="text-xs text-slate-400 mt-0.5">Configure title, category, filter tag, certifying standard, and photo URL.</p>
+        <h3 id="galleryModalHeading" class="text-base font-semibold text-slate-900">Add Project Gallery Item</h3>
+        <p class="text-xs text-slate-500 mt-0.5">Configure title, category, filter tag, certifying standard, and photo URL.</p>
       </div>
-      <button onclick="closeGalleryModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      <button onclick="closeGalleryModal()" class="text-slate-400 hover:text-slate-700 p-1 rounded-md hover:bg-slate-100">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
     </div>
 
     <form id="galleryItemForm" method="POST" action="/admin/content/gallery" enctype="multipart/form-data" class="space-y-4 text-xs">
       <div>
-        <label class="block font-medium text-slate-300 mb-1">Item Title / Standard Name *</label>
-        <input type="text" id="galTitle" name="title" required placeholder="e.g. Abrasive Blasting ISO 8501-1 Sa 2.5 Standard" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition">
+        <label class="block font-medium text-slate-700 mb-1">Item Title / Standard Name *</label>
+        <input type="text" id="galTitle" name="title" required placeholder="e.g. Abrasive Blasting ISO 8501-1 Sa 2.5 Standard" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-md text-slate-900 text-xs focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition">
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label class="block font-medium text-slate-300 mb-1">Filter Tag *</label>
-          <select id="galTag" name="filter_tag" required class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition font-mono">
+          <label class="block font-medium text-slate-700 mb-1">Filter Tag *</label>
+          <select id="galTag" name="filter_tag" required class="w-full px-3 py-2 bg-white border border-slate-200 rounded-md text-slate-900 text-xs focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition font-mono">
             <option value="surface-prep">surface-prep</option>
             <option value="inspection">inspection</option>
             <option value="failure-analysis">failure-analysis</option>
@@ -143,34 +143,34 @@
           </select>
         </div>
         <div>
-          <label class="block font-medium text-slate-300 mb-1">Standard Code (Optional)</label>
-          <input type="text" id="galStandard" name="standard_code" placeholder="ISO 8501-1 / SSPC-SP 10" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition font-mono">
+          <label class="block font-medium text-slate-700 mb-1">Standard Code (Optional)</label>
+          <input type="text" id="galStandard" name="standard_code" placeholder="ISO 8501-1 / SSPC-SP 10" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-md text-slate-900 text-xs font-mono focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition">
         </div>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label class="block font-medium text-slate-300 mb-1">Client Category</label>
-          <input type="text" id="galCategory" name="client_category" placeholder="Protective Coatings / Refinery" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition">
+          <label class="block font-medium text-slate-700 mb-1">Client Category</label>
+          <input type="text" id="galCategory" name="client_category" placeholder="Protective Coatings / Refinery" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-md text-slate-900 text-xs focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition">
         </div>
         <div>
-          <label class="block font-medium text-slate-300 mb-1">Location Reference</label>
-          <input type="text" id="galLocation" name="location_name" placeholder="Surat Facility / Refinery Site" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition">
+          <label class="block font-medium text-slate-700 mb-1">Location Reference</label>
+          <input type="text" id="galLocation" name="location_name" placeholder="Surat Facility / Refinery Site" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-md text-slate-900 text-xs focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition">
         </div>
       </div>
 
       <div>
-        <label class="block font-medium text-slate-300 mb-1">Service Type</label>
-        <input type="text" id="galService" name="service_type" placeholder="Surface Preparation / Condition Survey" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition">
+        <label class="block font-medium text-slate-700 mb-1">Service Type</label>
+        <input type="text" id="galService" name="service_type" placeholder="Surface Preparation / Condition Survey" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-md text-slate-900 text-xs focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition">
       </div>
 
       {{> file_uploader fieldId="galImage" fieldName="image" label="Project Visual Image"}}
 
-      <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
-        <button type="button" onclick="closeGalleryModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl border border-slate-700 transition">
+      <div class="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-200">
+        <button type="button" onclick="closeGalleryModal()" class="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-md border border-slate-200 transition">
           Cancel
         </button>
-        <button type="submit" class="px-5 py-2 bg-sky-600 hover:bg-sky-500 text-white font-semibold rounded-xl shadow-lg shadow-sky-600/20 transition flex items-center gap-1.5">
+        <button type="submit" class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md shadow-2xs transition flex items-center gap-1.5">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
           <span id="galSubmitText">Save Gallery Item</span>
         </button>
@@ -245,3 +245,4 @@
     }, 150);
   }
 </script>
+

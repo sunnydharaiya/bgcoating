@@ -1,35 +1,29 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-slate-950">
+<html lang="en" class="h-full bg-slate-50">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{title}} | BG Coating Admin Panel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/styles.css">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       theme: {
         extend: {
+          fontFamily: {
+            sans: ['Poppins', 'sans-serif'],
+            mono: ['Poppins', 'sans-serif'],
+          },
           colors: {
             brand: {
-              50: '#fff8f0',
-              100: '#ffeedb',
-              300: '#ffc24b',
-              500: '#F7941E',
-              600: '#D96F00',
-              cyan: '#37B7E8',
-            },
-            slate: {
-              950: '#0A111F',
-              900: '#101A2E',
-              800: '#16233C',
-              700: '#20304D',
-              600: '#2E4369',
-              500: '#48628A',
-              400: '#9AA7BD',
-              300: '#CBD5E1',
-              200: '#E2E8F0',
-              100: '#EDF2FA',
+              50: '#eff6ff',
+              100: '#dbeafe',
+              500: '#2563eb',
+              600: '#1d4ed8',
+              700: '#1e40af',
             }
           }
         }
@@ -37,27 +31,27 @@
     }
   </script>
 </head>
-<body class="h-full bg-[#0A111F] text-[#EDF2FA] flex flex-col font-sans antialiased overflow-x-hidden">
+<body class="h-full bg-[#f8fafc] text-slate-900 flex flex-col font-sans antialiased overflow-x-hidden">
 
   <!-- Mobile Overlay Backdrop -->
-  <div id="drawerBackdrop" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-30 hidden lg:hidden transition-opacity"></div>
+  <div id="drawerBackdrop" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-30 hidden lg:hidden transition-opacity"></div>
 
-  <!-- Reusable Sidebar -->
+  <!-- Reusable Fixed/Sticky Sidebar (~240px) -->
   {{> sidebar}}
 
   <!-- Main Content Wrapper -->
-  <div class="lg:pl-64 flex flex-col flex-1 min-h-screen">
-    <!-- Reusable Topbar Header -->
+  <div class="lg:pl-60 flex flex-col flex-1 min-h-screen bg-[#f8fafc]">
+    <!-- Reusable Topbar Header (~56px) -->
     {{> header}}
 
-    <!-- Main Dynamic Content Area -->
-    <main class="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-6">
+    <!-- Main Dynamic Workspace Content Area -->
+    <main class="flex-1 p-4 sm:p-6 max-w-7xl w-full mx-auto space-y-6">
       {{{body}}}
     </main>
 
-    <!-- Admin Footer -->
-    <footer class="py-4 px-6 border-t border-slate-800 text-center text-xs text-slate-500">
-      <span>BG Group of Paint &amp; Coatings Consultant · CMS Admin Panel</span>
+    <!-- Enterprise Footer -->
+    <footer class="py-3 px-6 border-t border-slate-200 bg-white text-center text-xs text-slate-500 font-medium">
+      <span>BG Group of Paint &amp; Coatings Consultant · CMS Admin Platform</span>
     </footer>
   </div>
 
@@ -73,8 +67,8 @@
     const drawerBackdrop = document.getElementById('drawerBackdrop');
 
     function toggleDrawer() {
-      sidebarNav.classList.toggle('-translate-x-full');
-      drawerBackdrop.classList.toggle('hidden');
+      if (sidebarNav) sidebarNav.classList.toggle('-translate-x-full');
+      if (drawerBackdrop) drawerBackdrop.classList.toggle('hidden');
     }
 
     if (mobileMenuBtn) {
@@ -120,3 +114,4 @@
   </script>
 </body>
 </html>
+

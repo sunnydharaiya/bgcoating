@@ -1,5 +1,6 @@
 import json
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
+from django.http import JsonResponse
 from .models import (
     PageSEO,
     ServiceCategory,
@@ -125,25 +126,77 @@ def contact(request):
         company = request.POST.get('company') or request.POST.get('f_company') or ''
         email = request.POST.get('email') or request.POST.get('f_email')
         phone = request.POST.get('phone') or request.POST.get('f_phone')
-        service = request.POST.get('service') or request.POST.get('f_service') or 'General Consultation'
+        service = request.POST.get('service_of_interest') or request.POST.get('service') or request.POST.get('f_service') or 'General Enquiry'
         message = request.POST.get('message') or request.POST.get('f_msg') or ''
 
+        # Support JSON request body
+        if request.content_type == 'application/json':
+            try:
+                data = json.loads(request.body.decode('utf-8'))
+                full_name = data.get('full_name') or data.get('f_name') or full_name
+                company = data.get('company') or data.get('f_company') or company
+                email = data.get('email') or data.get('f_email') or email
+                phone = data.get('phone') or data.get('f_phone') or phone
+                service = data.get('service_of_interest') or data.get('service') or data.get('f_service') or service
+                message = data.get('message') or data.get('f_msg') or message
+            except Exception:
+                pass
+
         if full_name and email and phone:
-            ContactSubmission.objects.create(
-                full_name=full_name,
-                company=company,
-                email=email,
-                phone=phone,
-                service_of_interest=service,
-                message=message
+            submission = ContactSubmission.objects.create(
+                full_name=full_name.strip(),
+                company=company.strip() if company else '',
+                email=email.strip(),
+                phone=phone.strip(),
+                service_of_interest=service.strip() if service else 'General Enquiry',
+                message=message.strip() if message else ''
             )
-            context['success_message'] = "Thank you! Your enquiry has been received. Our technical team will reach out shortly."
+
+            is_ajax = (
+                request.headers.get('x-requested-with') == 'XMLHttpRequest' or
+                request.content_type == 'application/json' or
+                'application/json' in request.headers.get('accept', '')
+            )
+            if is_ajax:
+                return JsonResponse({
+                    'status': 'success',
+                    'message': 'Thank you! Your enquiry has been received.',
+                    'redirect_url': '/thank-you/',
+                    'submission_id': submission.id
+                })
+
+            return redirect('thank_you')
+        else:
+            is_ajax = (
+                request.headers.get('x-requested-with') == 'XMLHttpRequest' or
+                request.content_type == 'application/json'
+            )
+            if is_ajax:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Please provide required fields (Full Name, Email, and Phone).'
+                }, status=400)
+            context['error_message'] = "Please provide all required fields (Full Name, Email, and Phone)."
 
     context.update({
         'industries': Industry.objects.all(),
         'services': Service.objects.all(),
     })
     return render(request, 'pages/contact.html', context)
+
+
+def thank_you(request):
+    context = _get_page_seo(
+        request,
+        'thank_you',
+        'Thank You For Your Enquiry | BG Group Of Paint & Coatings Consultant',
+        'Thank you for reaching out to BG Group. Your technical consultation request has been received by our certified coating engineers.',
+    )
+    context.update({
+        'featured_services': Service.objects.filter(is_featured=True).select_related('category')[:4],
+        'latest_blogs': BlogPost.objects.all()[:3],
+    })
+    return render(request, 'pages/thank_you.html', context)
 
 
 def board(request):

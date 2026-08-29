@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<main id="spaMain" role="main">
+  <section class="spa-page" id="page-thank-you" data-page="thank-you" style="display:block;" aria-label="Thank You">
+
+    <!-- ======================= HERO SECTION ======================= -->
+    <section class="page-hero grid-bg" id="thankyou-hero" style="padding: clamp(5rem, 8vw, 7rem) 0 4rem; text-align: center;">
+      <div class="wrap">
+        <div class="rv in" style="max-width: 820px; margin-inline: auto;">
+          <p class="crumbs" style="justify-content: center; margin-bottom: 1.5rem;">
+            <a href="{% url 'home' %}">HOME</a> <i>›</i>
+            <a href="{% url 'contact' %}">CONTACT</a> <i>›</i>
+            <span>ENQUIRY RECEIVED</span>
+          </p>
+          
+          <!-- Glowing Success Icon Badge -->
+          <div style="display: inline-flex; align-items: center; justify-content: center; width: 78px; height: 78px; border-radius: 50%; background: linear-gradient(135deg, rgba(247,148,30,0.15), rgba(55,183,232,0.15)); border: 2px solid var(--accent); box-shadow: var(--glow-accent); margin-bottom: 1.8rem; animation: pulseGlow 2.5s infinite ease-in-out;">
+            <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+          </div>
+
+          <p class="eyebrow" style="justify-content: center; margin-bottom: 0.8rem;">Enquiry Confirmed</p>
+          <h1 class="h-display" style="font-size: clamp(2.2rem, 4.5vw, 3.4rem); color: var(--txt-hi); margin-bottom: 1.2rem;">
+            Thank You for <span style="background: var(--grad-accent); -webkit-background-clip: text; background-clip: text; color: transparent;">Reaching Out</span>
+          </h1>
+          <p class="lead" style="margin-inline: auto; font-size: 1.1rem; color: var(--txt-lo); max-width: 60ch; line-height: 1.75;">
+            Your project consultation enquiry has been recorded in our system and forwarded to our senior NACE / AMPP Level 3 certified coating engineers.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================= NEXT STEPS & DETAILS ======================= -->
+    <section class="section-light grid-bg" style="padding: 4rem 0 5rem;">
+      <div class="wrap">
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem; margin-bottom: 3.5rem;">
+          
+          <!-- Card 1: What Happens Next -->
+          <div class="form-card rv in" style="background: #FFFFFF; border: 1px solid var(--line-lt); border-radius: var(--radius); padding: 2.2rem; box-shadow: var(--shadow-1); display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1.2rem;">
+                <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(247,148,30,0.1); display: flex; align-items: center; justify-content: center; color: var(--accent);">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                </div>
+                <h3 style="font-size: 1.25rem; color: #0E1726; margin: 0;">What Happens Next?</h3>
+              </div>
+              
+              <ul style="display: flex; flex-direction: column; gap: 1.2rem; margin-top: 1.4rem;">
+                <li style="display: flex; gap: 1rem; align-items: flex-start;">
+                  <span style="display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; background: #0E1726; color: #FFFFFF; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700; flex-shrink: 0; margin-top: 2px;">1</span>
+                  <div>
+                    <strong style="color: #0E1726; font-size: 0.95rem; display: block;">Engineering Review (Within 4 Hours)</strong>
+                    <span style="font-size: 0.85rem; color: var(--txt-mut); line-height: 1.5; display: block;">Our specialists evaluate your substrate, service environment, and coating specification requirements.</span>
+                  </div>
+                </li>
+                <li style="display: flex; gap: 1rem; align-items: flex-start;">
+                  <span style="display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; background: #0E1726; color: #FFFFFF; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700; flex-shrink: 0; margin-top: 2px;">2</span>
+                  <div>
+                    <strong style="color: #0E1726; font-size: 0.95rem; display: block;">Technical Response &amp; Recommendation</strong>
+                    <span style="font-size: 0.85rem; color: var(--txt-mut); line-height: 1.5; display: block;">We prepare standard-aligned advice (ISO 12944 / NACE / SSPC) and comprehensive feasibility plans.</span>
+                  </div>
+                </li>
+                <li style="display: flex; gap: 1rem; align-items: flex-start;">
+                  <span style="display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; background: #0E1726; color: #FFFFFF; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700; flex-shrink: 0; margin-top: 2px;">3</span>
+                  <div>
+                    <strong style="color: #0E1726; font-size: 0.95rem; display: block;">Site Consultation / Turnaround Mobilization</strong>
+                    <span style="font-size: 0.85rem; color: var(--txt-mut); line-height: 1.5; display: block;">If on-site survey, inspection or coating supervisor deployment is requested, we schedule project kick-off.</span>
+                  </div>
+                </li>
+              </ul>
+            </div>
+            
+            <div style="margin-top: 2rem; padding: 1rem; background: var(--mist); border-radius: 10px; border-left: 3px solid var(--accent); font-size: 0.85rem; color: var(--txt-mut);">
+              <b style="color: #0E1726;">Typical Response Time:</b> We reply within 1 business day.
+            </div>
+          </div>
+
+          <!-- Card 2: Need Immediate Assistance -->
+          <div class="form-card rv rv-d1 in" style="background: #0A111F; border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius); padding: 2.2rem; color: var(--txt-hi); box-shadow: var(--shadow-2); display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1.2rem;">
+                <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(55,183,232,0.15); display: flex; align-items: center; justify-content: center; color: var(--cyan);">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                  </svg>
+                </div>
+                <h3 style="font-size: 1.25rem; color: #FFFFFF; margin: 0;">Need Immediate Response?</h3>
+              </div>
+
+              <p style="font-size: 0.92rem; color: var(--txt-lo); line-height: 1.6; margin-bottom: 1.8rem;">
+                For urgent refinery turnaround, plant shutdown emergencies, or priority on-site inspection inquiries, reach our desk directly:
+              </p>
+
+              <div style="display: flex; flex-direction: column; gap: 1rem;">
+                <a class="btn btn-primary" href="https://wa.me/{{ site_settings.whatsapp_number|default:'919925810408' }}?text=Hello%20BG%20Group,%20I%20just%20submitted%20an%20enquiry%20on%20your%20website%20and%20would%20like%20to%20discuss%20my%20project." target="_blank" rel="noopener" style="justify-content: center; width: 100%; font-size: 0.92rem;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="margin-right:4px;">
+                    <path d="M17.5 14.4c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.96-.94 1.16-.17.2-.35.22-.65.07-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.49-1.77-1.66-2.07-.17-.3-.02-.46.13-.61.14-.13.3-.35.45-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.67-1.62-.92-2.22-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.07-.8.37-.27.3-1.04 1.02-1.04 2.5 0 1.47 1.07 2.9 1.22 3.1.15.2 2.1 3.2 5.1 4.49.71.31 1.27.49 1.7.63.72.23 1.37.2 1.88.12.57-.09 1.76-.72 2-1.42.25-.7.25-1.29.18-1.42-.07-.13-.27-.2-.57-.35zM12.05 21.8h-.01a9.87 9.87 0 0 1-5.03-1.38l-.36-.21-3.73.98 1-3.65-.24-.37a9.86 9.86 0 1 1 8.37 4.63zM12.05 0C5.5 0 .16 5.34.16 11.9c0 2.1.55 4.14 1.6 5.95L0 24l6.3-1.65a11.87 11.87 0 0 0 5.74 1.46h.01c6.55 0 11.89-5.33 11.89-11.9C23.94 5.34 18.6 0 12.05 0z"></path>
+                  </svg>
+                  Chat on WhatsApp Now
+                </a>
+
+                <a class="btn btn-ghost" href="tel:{{ site_settings.phone_number|default:'+919925810408' }}" style="justify-content: center; width: 100%; border-color: rgba(255,255,255,0.2); font-size: 0.92rem;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px;">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                  </svg>
+                  Call +91-99258-10408
+                </a>
+              </div>
+            </div>
+
+            <div style="margin-top: 1.8rem; font-size: 0.82rem; color: var(--txt-lo); text-align: center;">
+              Office: Akash Echo Point, E103, Bhimrad, Surat – 395007
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ======================= EXPLORE MORE CARDS ======================= -->
+        <div class="section-head rv in" style="text-align: center; margin-inline: auto; margin-bottom: 2.5rem;">
+          <p class="eyebrow" style="justify-content: center;">Continue Exploring</p>
+          <h2 class="h-section">Explore BG Group Engineering Assets</h2>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+          
+          <a href="{% url 'services' %}" class="trust rv in" style="background:#FFFFFF; border:1px solid var(--line-lt); border-radius:var(--radius-sm); padding:1.8rem; box-shadow:var(--shadow-1); text-decoration:none; transition:all .3s ease;" onmouseover="this.style.transform='translateY(-6px)'; this.style.borderColor='var(--accent)';" onmouseout="this.style.transform='none'; this.style.borderColor='var(--line-lt)';">
+            <div style="font-size: 1.8rem; margin-bottom: 0.8rem;">🛡️</div>
+            <h4 style="color:#0E1726; font-size:1.1rem; margin-bottom:.5rem;">Services Hub</h4>
+            <p style="color:var(--txt-mut); font-size:.88rem; line-height:1.5;">Browse all 12+ specialized coating and inspection solutions.</p>
+            <span style="color:var(--accent-deep); font-weight:600; font-size:.84rem; display:inline-flex; align-items:center; gap:.4rem; margin-top:1rem;">Explore Services →</span>
+          </a>
+
+          <a href="{% url 'calculator_dashboard' %}" class="trust rv rv-d1 in" style="background:#FFFFFF; border:1px solid var(--line-lt); border-radius:var(--radius-sm); padding:1.8rem; box-shadow:var(--shadow-1); text-decoration:none; transition:all .3s ease;" onmouseover="this.style.transform='translateY(-6px)'; this.style.borderColor='var(--accent)';" onmouseout="this.style.transform='none'; this.style.borderColor='var(--line-lt)';">
+            <div style="font-size: 1.8rem; margin-bottom: 0.8rem;">⚡</div>
+            <h4 style="color:#0E1726; font-size:1.1rem; margin-bottom:.5rem;">CoatingOS™ Suite</h4>
+            <p style="color:var(--txt-mut); font-size:.88rem; line-height:1.5;">Calculate WFT, DFT, theoretical coverage, and dead volume online.</p>
+            <span style="color:var(--accent-deep); font-weight:600; font-size:.84rem; display:inline-flex; align-items:center; gap:.4rem; margin-top:1rem;">Open Calculator →</span>
+          </a>
+
+          <a href="{% url 'gallery' %}" class="trust rv rv-d2 in" style="background:#FFFFFF; border:1px solid var(--line-lt); border-radius:var(--radius-sm); padding:1.8rem; box-shadow:var(--shadow-1); text-decoration:none; transition:all .3s ease;" onmouseover="this.style.transform='translateY(-6px)'; this.style.borderColor='var(--accent)';" onmouseout="this.style.transform='none'; this.style.borderColor='var(--line-lt)';">
+            <div style="font-size: 1.8rem; margin-bottom: 0.8rem;">📐</div>
+            <h4 style="color:#0E1726; font-size:1.1rem; margin-bottom:.5rem;">Project Gallery</h4>
+            <p style="color:var(--txt-mut); font-size:.88rem; line-height:1.5;">View past refinery, pipeline, and visual standard reference cases.</p>
+            <span style="color:var(--accent-deep); font-weight:600; font-size:.84rem; display:inline-flex; align-items:center; gap:.4rem; margin-top:1rem;">View Standards →</span>
+          </a>
+
+          <a href="{% url 'blog' %}" class="trust rv rv-d3 in" style="background:#FFFFFF; border:1px solid var(--line-lt); border-radius:var(--radius-sm); padding:1.8rem; box-shadow:var(--shadow-1); text-decoration:none; transition:all .3s ease;" onmouseover="this.style.transform='translateY(-6px)'; this.style.borderColor='var(--accent)';" onmouseout="this.style.transform='none'; this.style.borderColor='var(--line-lt)';">
+            <div style="font-size: 1.8rem; margin-bottom: 0.8rem;">📚</div>
+            <h4 style="color:#0E1726; font-size:1.1rem; margin-bottom:.5rem;">Knowledge Hub</h4>
+            <p style="color:var(--txt-mut); font-size:.88rem; line-height:1.5;">Read technical articles on surface preparation, Ra/Rz &amp; ISO standards.</p>
+            <span style="color:var(--accent-deep); font-weight:600; font-size:.84rem; display:inline-flex; align-items:center; gap:.4rem; margin-top:1rem;">Read Insights →</span>
+          </a>
+
+        </div>
+
+        <!-- Return CTA -->
+        <div style="text-align: center; margin-top: 4rem;">
+          <a class="btn btn-primary" href="{% url 'home' %}">Return to Homepage <span class="arr">→</span></a>
+        </div>
+
+      </div>
+    </section>
+
+  </section>
+</main>
+
+<style>
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(247,148,30,0.3), 0 0 40px rgba(55,183,232,0.15);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 32px rgba(247,148,30,0.55), 0 0 50px rgba(55,183,232,0.3);
+    transform: scale(1.04);
+  }
+}
+</style>
+{% endblock %}

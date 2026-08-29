@@ -1,124 +1,125 @@
 <div class="space-y-6">
   <!-- Section Header Banner -->
-  <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-xl">
+  <div class="bg-white border border-slate-200 rounded-md p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-2xs">
     <div>
-      <div class="text-xs font-mono font-semibold text-sky-400 uppercase tracking-wider">Website Management</div>
-      <h2 class="text-xl font-bold text-white mt-1">Global Site Settings</h2>
-      <p class="text-xs text-slate-400">Manage site branding, phone numbers, contact email addresses, physical location, and social links.</p>
+      <div class="text-[11px] font-mono font-semibold text-blue-600 uppercase tracking-wider">Website Management</div>
+      <h2 class="text-lg font-bold text-slate-900 mt-0.5">Global Site Settings</h2>
+      <p class="text-xs text-slate-500">Manage site branding, phone numbers, contact email addresses, physical location, and social links.</p>
     </div>
   </div>
 
   <form action="/admin/website/settings" method="POST" class="space-y-6">
     <!-- Branding & Identity -->
-    <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-4">
-      <h3 class="text-sm font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
-        <svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+    <div class="bg-white border border-slate-200 rounded-md p-5 space-y-4 shadow-2xs">
+      <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 pb-3">
+        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
         <span>Brand Identity &amp; Title</span>
       </h3>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
         <div>
-          <label class="block font-medium text-slate-300 mb-1">Site Name *</label>
-          <input type="text" name="site_name" value="{{siteSettings.site_name}}" required class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition">
+          <label class="block font-medium text-slate-700 mb-1">Site Name *</label>
+          <input type="text" name="site_name" value="{{siteSettings.site_name}}" required class="w-full px-3 py-2 bg-white border border-slate-200 rounded-md text-slate-900 text-xs focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition">
         </div>
         <div>
-          <label class="block font-medium text-slate-300 mb-1">Tagline</label>
-          <input type="text" name="tagline" value="{{siteSettings.tagline}}" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition">
+          <label class="block font-medium text-slate-700 mb-1">Tagline</label>
+          <input type="text" name="tagline" value="{{siteSettings.tagline}}" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-md text-slate-900 text-xs focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition">
         </div>
       </div>
     </div>
 
     <!-- Contact & Communications -->
-    <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-4">
-      <h3 class="text-sm font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
-        <svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+    <div class="bg-white border border-slate-200 rounded-md p-5 space-y-4 shadow-2xs">
+      <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 pb-3">
+        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
         <span>Contact Info &amp; Communication Channels</span>
       </h3>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
         <div>
-          <label class="block font-medium text-slate-300 mb-1">Primary Phone Number</label>
-          <input type="text" name="phone_number" value="{{siteSettings.phone_number}}" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition">
+          <label class="block font-medium text-slate-700 mb-1">Primary Phone Number</label>
+          <input type="text" name="phone_number" value="{{siteSettings.phone_number}}" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-md text-slate-900 text-xs focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition font-mono">
         </div>
         <div>
-          <label class="block font-medium text-slate-300 mb-1">WhatsApp Number (e.g. 919925810408)</label>
-          <input type="text" name="whatsapp_number" value="{{siteSettings.whatsapp_number}}" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition">
+          <label class="block font-medium text-slate-700 mb-1">WhatsApp Number (e.g. 919925810408)</label>
+          <input type="text" name="whatsapp_number" value="{{siteSettings.whatsapp_number}}" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-md text-slate-900 text-xs focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition font-mono">
         </div>
         <div>
-          <label class="block font-medium text-slate-300 mb-1">Primary Enquiry Email</label>
-          <input type="email" name="primary_email" value="{{siteSettings.primary_email}}" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition">
+          <label class="block font-medium text-slate-700 mb-1">Primary Enquiry Email</label>
+          <input type="email" name="primary_email" value="{{siteSettings.primary_email}}" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-md text-slate-900 text-xs focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition font-mono">
         </div>
         <div>
-          <label class="block font-medium text-slate-300 mb-1">Support Email</label>
-          <input type="email" name="support_email" value="{{siteSettings.support_email}}" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition">
+          <label class="block font-medium text-slate-700 mb-1">Support Email</label>
+          <input type="email" name="support_email" value="{{siteSettings.support_email}}" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-md text-slate-900 text-xs focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition font-mono">
         </div>
         <div class="md:col-span-2">
-          <label class="block font-medium text-slate-300 mb-1">Office Address</label>
-          <textarea name="office_address" rows="2" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition">{{siteSettings.office_address}}</textarea>
+          <label class="block font-medium text-slate-700 mb-1">Office Address</label>
+          <textarea name="office_address" rows="2" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-md text-slate-900 text-xs focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition">{{siteSettings.office_address}}</textarea>
         </div>
         <div>
-          <label class="block font-medium text-slate-300 mb-1">Working Hours</label>
-          <input type="text" name="working_hours" value="{{siteSettings.working_hours}}" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition">
+          <label class="block font-medium text-slate-700 mb-1">Working Hours</label>
+          <input type="text" name="working_hours" value="{{siteSettings.working_hours}}" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-md text-slate-900 text-xs focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition">
         </div>
       </div>
     </div>
 
     <!-- Social Media & External Forms -->
-    <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-4">
-      <h3 class="text-sm font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
-        <svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+    <div class="bg-white border border-slate-200 rounded-md p-5 space-y-4 shadow-2xs">
+      <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 pb-3">
+        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
         <span>Social Profiles &amp; Application Forms</span>
       </h3>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
         <div>
-          <label class="block font-medium text-slate-300 mb-1">Facebook URL</label>
-          <input type="url" name="facebook_url" value="{{siteSettings.facebook_url}}" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition">
+          <label class="block font-medium text-slate-700 mb-1">Facebook URL</label>
+          <input type="url" name="facebook_url" value="{{siteSettings.facebook_url}}" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-md text-slate-900 text-xs font-mono focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition">
         </div>
         <div>
-          <label class="block font-medium text-slate-300 mb-1">Instagram URL</label>
-          <input type="url" name="instagram_url" value="{{siteSettings.instagram_url}}" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition">
+          <label class="block font-medium text-slate-700 mb-1">Instagram URL</label>
+          <input type="url" name="instagram_url" value="{{siteSettings.instagram_url}}" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-md text-slate-900 text-xs font-mono focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition">
         </div>
         <div>
-          <label class="block font-medium text-slate-300 mb-1">LinkedIn Company URL</label>
-          <input type="url" name="linkedin_url" value="{{siteSettings.linkedin_url}}" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition">
+          <label class="block font-medium text-slate-700 mb-1">LinkedIn Company URL</label>
+          <input type="url" name="linkedin_url" value="{{siteSettings.linkedin_url}}" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-md text-slate-900 text-xs font-mono focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition">
         </div>
         <div>
-          <label class="block font-medium text-slate-300 mb-1">YouTube Channel URL</label>
-          <input type="url" name="youtube_url" value="{{siteSettings.youtube_url}}" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition">
+          <label class="block font-medium text-slate-700 mb-1">YouTube Channel URL</label>
+          <input type="url" name="youtube_url" value="{{siteSettings.youtube_url}}" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-md text-slate-900 text-xs font-mono focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition">
         </div>
         <div>
-          <label class="block font-medium text-slate-300 mb-1">Pinterest Profile URL</label>
-          <input type="url" name="pinterest_url" value="{{siteSettings.pinterest_url}}" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition">
+          <label class="block font-medium text-slate-700 mb-1">Pinterest Profile URL</label>
+          <input type="url" name="pinterest_url" value="{{siteSettings.pinterest_url}}" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-md text-slate-900 text-xs font-mono focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition">
         </div>
         <div>
-          <label class="block font-medium text-slate-300 mb-1">Career Application Form URL</label>
-          <input type="url" name="career_form_url" value="{{siteSettings.career_form_url}}" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition">
+          <label class="block font-medium text-slate-700 mb-1">Career Application Form URL</label>
+          <input type="url" name="career_form_url" value="{{siteSettings.career_form_url}}" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-md text-slate-900 text-xs font-mono focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition">
         </div>
       </div>
     </div>
 
     <!-- Footer Content & Copyright -->
-    <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-4">
-      <h3 class="text-sm font-bold text-white flex items-center gap-2 border-b border-slate-800 pb-3">
-        <svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+    <div class="bg-white border border-slate-200 rounded-md p-5 space-y-4 shadow-2xs">
+      <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 pb-3">
+        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
         <span>Footer Description &amp; Copyright Notice</span>
       </h3>
       <div class="space-y-4 text-xs">
         <div>
-          <label class="block font-medium text-slate-300 mb-1">Footer Description Text</label>
-          <textarea name="footer_description" rows="3" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition">{{siteSettings.footer_description}}</textarea>
+          <label class="block font-medium text-slate-700 mb-1">Footer Description Text</label>
+          <textarea name="footer_description" rows="3" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-md text-slate-900 text-xs focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition">{{siteSettings.footer_description}}</textarea>
         </div>
         <div>
-          <label class="block font-medium text-slate-300 mb-1">Copyright Line</label>
-          <input type="text" name="copyright_text" value="{{siteSettings.copyright_text}}" class="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-sky-500 transition">
+          <label class="block font-medium text-slate-700 mb-1">Copyright Line</label>
+          <input type="text" name="copyright_text" value="{{siteSettings.copyright_text}}" class="w-full px-3 py-2 bg-white border border-slate-200 rounded-md text-slate-900 text-xs focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition">
         </div>
       </div>
     </div>
 
     <!-- Form Submit Button Bar -->
-    <div class="flex items-center justify-end gap-3 p-4 bg-slate-900/90 border border-slate-800 rounded-2xl sticky bottom-4 z-20 shadow-2xl">
-      <button type="submit" class="px-6 py-2.5 bg-sky-600 hover:bg-sky-500 active:bg-sky-700 text-white font-semibold text-xs rounded-xl shadow-lg shadow-sky-600/20 transition flex items-center gap-2">
+    <div class="flex items-center justify-end gap-3 p-3.5 bg-white/95 backdrop-blur-md border border-slate-200 rounded-md sticky bottom-4 z-20 shadow-md">
+      <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-md shadow-2xs transition flex items-center gap-2">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
         <span>Save Global Site Settings</span>
       </button>
     </div>
   </form>
 </div>
+
