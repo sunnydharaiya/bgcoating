@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" class="h-full bg-slate-50">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -31,10 +32,12 @@
     }
   </script>
 </head>
+
 <body class="h-full bg-[#f8fafc] text-slate-900 flex flex-col font-sans antialiased overflow-x-hidden">
 
   <!-- Mobile Overlay Backdrop -->
-  <div id="drawerBackdrop" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-30 hidden lg:hidden transition-opacity"></div>
+  <div id="drawerBackdrop"
+    class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-30 hidden lg:hidden transition-opacity"></div>
 
   <!-- Reusable Fixed/Sticky Sidebar (~240px) -->
   {{> sidebar}}
@@ -45,7 +48,7 @@
     {{> header}}
 
     <!-- Main Dynamic Workspace Content Area -->
-    <main class="flex-1 p-4 sm:p-6 max-w-7xl w-full mx-auto space-y-6">
+    <main class="flex-1 p-4 sm:p-6  w-full mx-auto space-y-6">
       {{{body}}}
     </main>
 
@@ -87,7 +90,7 @@
 
       if (file && previewImg) {
         const reader = new FileReader();
-        reader.onload = function(e) {
+        reader.onload = function (e) {
           previewImg.src = e.target.result;
           previewImg.classList.remove('hidden');
           if (placeholder) placeholder.classList.add('hidden');
@@ -113,5 +116,5 @@
     }
   </script>
 </body>
-</html>
 
+</html>

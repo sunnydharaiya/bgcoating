@@ -1,6 +1,5 @@
 {% load static %}
 <div id="spaFade" aria-hidden="true"></div>
-<div id="spaFade" aria-hidden="true"></div>
 <div class="topbar">
   <div class="wrap tb-in">
     <span class="tb-msg">Welcome to {{ site_settings.site_name|default:"BG Group Of Paint &amp; Coatings Consultant" }}</span>
@@ -43,29 +42,93 @@
       </ul>
     </nav>
     <div class="nav-cta">
-      <a class="btn btn-primary" href="{% url 'contact' %}" data-route="">Get a Consultation <span class="arr">→</span></a>
-      <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false"><span></span><span></span><span></span></button>
+      <a class="btn btn-primary nav-cta-btn" href="{% url 'contact' %}" data-route="">
+        <span class="btn-text-full">Get a Consultation</span>
+        <span class="btn-text-short">Consult</span>
+        <span class="arr">→</span>
+      </a>
+      <button class="burger" id="burger" aria-label="Open navigation menu" aria-controls="drawer" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
     </div>
   </div>
 </header>
 
-<div class="drawer" id="drawer">
-  <p class="grp">Navigation</p>
-  {% if header_navigation %}
-    {% for item in header_navigation %}
-    <a href="{{ item.url }}" data-route="" {% if item.is_external %}target="_blank" rel="noopener noreferrer"{% endif %}>{{ item.title }}</a>
-    {% endfor %}
-  {% else %}
-    <a href="{% url 'home' %}" data-route="" class="{% if current_page == 'home' %}active{% endif %}">Home</a>
-    <a href="{% url 'about' %}" data-route="" class="{% if current_page == 'about' %}active{% endif %}">About Us</a>
-    <a href="{% url 'board' %}" data-route="" class="{% if current_page == 'board' %}active{% endif %}">Board Team</a>
-    <a href="{% url 'services' %}" data-route="" class="{% if current_page == 'services' %}active{% endif %}">Services</a>
-    <a href="{% url 'gallery' %}" data-route="" class="{% if current_page == 'gallery' %}active{% endif %}">Gallery</a>
-    <a href="{% url 'blog' %}" data-route="" class="{% if current_page == 'blog' %}active{% endif %}">Blog &amp; Insights</a>
-    <a href="{{ site_settings.career_form_url|default:'https://forms.gle/v6kCBLKYeeUtMPky8' }}" target="_blank" rel="noopener noreferrer">Career</a>
-    <a href="{% url 'contact' %}" data-route="" class="{% if current_page == 'contact' %}active{% endif %}">Contact Us</a>
-  {% endif %}
-  <div style="margin-top:2rem">
-    <a class="btn btn-primary" href="{% url 'contact' %}" data-route="" style="width:100%;justify-content:center">Get a Consultation <span class="arr">→</span></a>
+<!-- Mobile Navigation Drawer Backdrop -->
+<div class="drawer-backdrop" id="drawerBackdrop" aria-hidden="true"></div>
+
+<!-- Mobile Navigation Drawer -->
+<div class="drawer" id="drawer" role="dialog" aria-modal="true" aria-label="Mobile Navigation">
+  <div class="drawer-header">
+    <div class="drawer-brand">
+      {% if site_settings and site_settings.logo %}
+      <img src="{{ site_settings.logo.url }}" alt="{{ site_settings.site_name }} logo">
+      {% else %}
+      <img src="{% static 'assets/images/logo-2.png' %}" alt="BG Group logo">
+      {% endif %}
+      <span class="drawer-brand-name">BG GROUP<small>Coatings Consultant</small></span>
+    </div>
+    <button class="drawer-close" id="drawerClose" aria-label="Close menu">&times;</button>
+  </div>
+
+  <div class="drawer-body">
+    <p class="drawer-grp">Navigation</p>
+    <div class="drawer-nav">
+      {% if header_navigation %}
+        {% for item in header_navigation %}
+        <a class="drawer-link" href="{{ item.url }}" data-route="" {% if item.is_external %}target="_blank" rel="noopener noreferrer"{% endif %}>
+          <span>{{ item.title }}</span>
+          <span class="darr">→</span>
+        </a>
+        {% endfor %}
+      {% else %}
+        <a class="drawer-link {% if current_page == 'home' %}active{% endif %}" href="{% url 'home' %}" data-route="">
+          <span>Home</span><span class="darr">→</span>
+        </a>
+        <a class="drawer-link {% if current_page == 'about' %}active{% endif %}" href="{% url 'about' %}" data-route="">
+          <span>About Us</span><span class="darr">→</span>
+        </a>
+        <a class="drawer-link {% if current_page == 'board' %}active{% endif %}" href="{% url 'board' %}" data-route="">
+          <span>Board Team</span><span class="darr">→</span>
+        </a>
+        <a class="drawer-link {% if current_page == 'services' %}active{% endif %}" href="{% url 'services' %}" data-route="">
+          <span>Services</span><span class="darr">→</span>
+        </a>
+        <a class="drawer-link {% if current_page == 'gallery' %}active{% endif %}" href="{% url 'gallery' %}" data-route="">
+          <span>Gallery</span><span class="darr">→</span>
+        </a>
+        <a class="drawer-link {% if current_page == 'blog' %}active{% endif %}" href="{% url 'blog' %}" data-route="">
+          <span>Blog &amp; Insights</span><span class="darr">→</span>
+        </a>
+        <a class="drawer-link" href="{{ site_settings.career_form_url|default:'https://forms.gle/v6kCBLKYeeUtMPky8' }}" target="_blank" rel="noopener noreferrer">
+          <span>Career</span><span class="darr">↗</span>
+        </a>
+        <a class="drawer-link {% if current_page == 'contact' %}active{% endif %}" href="{% url 'contact' %}" data-route="">
+          <span>Contact Us</span><span class="darr">→</span>
+        </a>
+      {% endif %}
+    </div>
+
+    <div class="drawer-cta">
+      <a class="btn btn-primary" href="{% url 'contact' %}" data-route="" style="width:100%;justify-content:center">
+        Get a Consultation <span class="arr">→</span>
+      </a>
+    </div>
+
+    <div class="drawer-contact">
+      <p class="drawer-grp">Quick Connect</p>
+      <a class="drawer-contact-item" href="tel:{{ site_settings.contact_phone|default:'+919925810408' }}">
+        <span class="dci-icon">📞</span>
+        <span>{{ site_settings.contact_phone|default:'+91 99258 10408' }}</span>
+      </a>
+      <a class="drawer-contact-item" href="mailto:{{ site_settings.contact_email|default:'inquiry.bggroup@gmail.com' }}">
+        <span class="dci-icon">✉️</span>
+        <span>{{ site_settings.contact_email|default:'inquiry.bggroup@gmail.com' }}</span>
+      </a>
+      <a class="drawer-contact-item" href="https://wa.me/{{ site_settings.whatsapp_number|default:'919925810408' }}" target="_blank" rel="noopener">
+        <span class="dci-icon">💬</span>
+        <span>WhatsApp Chat</span>
+      </a>
+    </div>
   </div>
 </div>

@@ -88,35 +88,6 @@
 /* ================= BG GROUP · interaction layer ================= */
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-/* sticky header state */
-const header = document.getElementById('siteHeader');
-const toTop = document.getElementById('toTop');
-addEventListener('scroll', () => {
-  const s = scrollY > 30;
-  if (header) header.classList.toggle('scrolled', s);
-  if (toTop) toTop.classList.toggle('show', scrollY > 300);
-}, { passive:true });
-if (toTop) toTop.addEventListener('click', () => scrollTo({ top:0, behavior: reduceMotion ? 'auto' : 'smooth' }));
-
-/* mobile drawer */
-const burger = document.getElementById('burger');
-const drawer = document.getElementById('drawer');
-if (burger && drawer) {
-  burger.addEventListener('click', () => {
-    const open = drawer.classList.toggle('open');
-    burger.classList.toggle('open', open);
-    burger.setAttribute('aria-expanded', open);
-    document.body.style.overflow = open ? 'hidden' : '';
-  });
-  drawer.addEventListener('click', e => { if (e.target.tagName === 'A') burger.click(); });
-}
-
-/* reveal on scroll */
-const io = new IntersectionObserver(entries => {
-  entries.forEach(en => { if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); } });
-}, { threshold:.14, rootMargin:'0px 0px -40px 0px' });
-document.querySelectorAll('.rv').forEach(el => io.observe(el));
-
 /* count-up numbers */
 const nio = new IntersectionObserver(entries => {
   entries.forEach(en => {
@@ -145,35 +116,33 @@ if (pb) new IntersectionObserver((es,o) => es.forEach(en => {
 
 /* marquee: duplicate content for seamless loop */
 const mq = document.getElementById('marquee');
-if (mq) mq.innerHTML += mq.innerHTML;
+if (mq && !mq.dataset.looped) {
+  mq.dataset.looped = '1';
+  mq.innerHTML += mq.innerHTML;
+}
 
 /* testimonial slider */
 const track = document.getElementById('testiTrack');
 if (track) {
-const cards = () => track.children.length;
-let idx = 0;
-function perView(){ return innerWidth <= 640 ? 1 : innerWidth <= 1100 ? 2 : 3; }
-function go(n){
-  const pv = perView(), max = cards() - pv;
-  idx = Math.max(0, Math.min(n, max));
-  const card = track.children[0];
-  const step = card.getBoundingClientRect().width + parseFloat(getComputedStyle(track).gap);
-  track.style.transform = `translateX(${-idx * step}px)`;
+  const cards = () => track.children.length;
+  let idx = 0;
+  function perView(){ return innerWidth <= 640 ? 1 : innerWidth <= 1100 ? 2 : 3; }
+  function go(n){
+    const pv = perView(), max = cards() - pv;
+    idx = Math.max(0, Math.min(n, max));
+    const card = track.children[0];
+    if (card) {
+      const step = card.getBoundingClientRect().width + parseFloat(getComputedStyle(track).gap || 0);
+      track.style.transform = `translateX(${-idx * step}px)`;
+    }
+  }
+  const tPrev = document.getElementById('tPrev');
+  const tNext = document.getElementById('tNext');
+  if (tPrev) tPrev.addEventListener('click', () => go(idx - 1));
+  if (tNext) tNext.addEventListener('click', () => go(idx + 1));
+  addEventListener('resize', () => go(idx));
+  if (!reduceMotion) setInterval(() => go(idx + 1 > cards() - perView() ? 0 : idx + 1), 6500);
 }
-document.getElementById('tPrev').addEventListener('click', () => go(idx - 1));
-document.getElementById('tNext').addEventListener('click', () => go(idx + 1));
-addEventListener('resize', () => go(idx));
-if (!reduceMotion) setInterval(() => go(idx + 1 > cards() - perView() ? 0 : idx + 1), 6500);
-}
-
-/* DFT gauge needle sweep on scroll into view */
-const gc = document.getElementById('gaugeCard');
-if (gc) new IntersectionObserver((es,o) => es.forEach(en => {
-  if (en.isIntersecting) { gc.classList.add('in'); o.disconnect(); }
-}), { threshold:.5 }).observe(gc);
-
-/* current year */
-document.getElementById('year').textContent = new Date().getFullYear();
 
 window.__init_home=function(__scope){};
 
@@ -733,10 +702,14 @@ if (form){
 
       if (curFile === targetFile || (targetFile === 'index.php' && curFile === '')) {
         e.preventDefault();
-        const drawer = document.getElementById('drawer'), burger = document.getElementById('burger');
+        const drawer = document.getElementById('drawer'), burger = document.getElementById('burger'), backdrop = document.getElementById('drawerBackdrop');
         if (drawer && drawer.classList.contains('open')) {
           drawer.classList.remove('open');
-          if (burger) burger.classList.remove('open');
+          if (burger) {
+            burger.classList.remove('open');
+            burger.setAttribute('aria-expanded', 'false');
+          }
+          if (backdrop) backdrop.classList.remove('show');
           document.body.style.overflow = '';
         }
         if (location.hash !== '#' + anchor) {

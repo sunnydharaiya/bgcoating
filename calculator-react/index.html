@@ -7,23 +7,17 @@
     <title>BG CoatingOS™ — Digital Workspace & Coating Calculator SPA</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&family=Rajdhani:wght@500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
     <script>
       (function() {
-        var envStoreUrl = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_STORE_URL) 
-          || (typeof process !== 'undefined' && process.env && process.env.VITE_STORE_URL)
-          || "%VITE_STORE_URL%";
-        
-        if (typeof envStoreUrl === 'string' && envStoreUrl.startsWith('%') && envStoreUrl.endsWith('%')) {
-          envStoreUrl = '';
+        var envStoreUrl = "%VITE_STORE_URL%";
+        if (typeof envStoreUrl === 'string' && ((envStoreUrl.startsWith('%') && envStoreUrl.endsWith('%')) || envStoreUrl === 'undefined')) {
+          envStoreUrl = (typeof process !== 'undefined' && process.env && process.env.VITE_STORE_URL) || '';
         }
 
-        var envApiUrl = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_URL)
-          || (typeof process !== 'undefined' && process.env && process.env.VITE_API_URL)
-          || "%VITE_API_URL%";
-
-        if (typeof envApiUrl === 'string' && envApiUrl.startsWith('%') && envApiUrl.endsWith('%')) {
-          envApiUrl = '';
+        var envApiUrl = "%VITE_API_URL%";
+        if (typeof envApiUrl === 'string' && ((envApiUrl.startsWith('%') && envApiUrl.endsWith('%')) || envApiUrl === 'undefined')) {
+          envApiUrl = (typeof process !== 'undefined' && process.env && process.env.VITE_API_URL) || '';
         }
 
         window.__ENV__ = Object.freeze({
@@ -39,7 +33,7 @@
       })();
     </script>
   </head>
-  <body class="bg-slate-900 text-slate-100 antialiased font-sans">
+  <body class="bg-[#F3F5F8] text-[#1B222C] antialiased font-sans">
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
