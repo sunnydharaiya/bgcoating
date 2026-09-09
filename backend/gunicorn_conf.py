@@ -11,7 +11,7 @@ wsgi_app = "bgcoating_config.wsgi:application"
 
 # Socket / Network Binding
 # Can be overridden via GUNICORN_BIND env var
-bind = os.environ.get("GUNICORN_BIND", "127.0.0.1:8000")
+bind = os.environ.get("GUNICORN_BIND", "127.0.0.1:8011")
 
 # Worker Processes
 # Standard formula: (2 x $num_cores) + 1
