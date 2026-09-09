@@ -1,0 +1,64 @@
+name: Deploy Backend to VPS (Gunicorn)
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - '.github/workflows/deploy-backend.yml'
+  workflow_dispatch: # Allows manual trigger anytime from GitHub Actions tab
+
+concurrency:
+  group: production-backend-deploy
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate Backend Configuration
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: 'backend/requirements.txt'
+
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+
+      - name: Run Django System Check
+        run: |
+          cd backend
+          python manage.py check
+
+  deploy:
+    name: Deploy to VPS
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Execute Remote Deployment via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || '22' }}
+          passphrase: ${{ secrets.VPS_SSH_PASSPHRASE || '' }}
+          script_stop: true
+          envs: VPS_PROJECT_DIR
+          script: |
+            export VPS_PROJECT_DIR="${{ secrets.VPS_PROJECT_DIR || '/var/www/bgcoating.com' }}"
+            if [ -f "${VPS_PROJECT_DIR}/backend/deploy/deploy.sh" ]; then
+              chmod +x "${VPS_PROJECT_DIR}/backend/deploy/deploy.sh"
+              bash "${VPS_PROJECT_DIR}/backend/deploy/deploy.sh"
+            else
+              echo "❌ Error: Deployment script not found at ${VPS_PROJECT_DIR}/backend/deploy/deploy.sh"
+              exit 1
+            fi

@@ -2,22 +2,22 @@
 *.py[cod]
 *$py.class
 __pycache__/
+.venv/
 venv/
 env/
-ENV/
-*.sqlite3
-db.sqlite3
 media/
+staticfiles/
 *.log
+*.pid
+*.sock
 local_settings.py
+.pytest_cache/
+.coverage
 
-# Node / Frontend Build Outputs & Dependencies
-node_modules/
-dist/
-build/
+# Environment Variables
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
 
 # OS & IDE Files
 .vscode/
@@ -26,3 +26,4 @@ build/
 *.swo
 .DS_Store
 Thumbs.db
+

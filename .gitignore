@@ -39,14 +39,18 @@ ENV/
 env.bak/
 venv.bak/
 
-# Django Databases & Media
-*.sqlite3
-db.sqlite3
-**/db.sqlite3
+# Django Static & Media
+staticfiles/
+**/staticfiles/
 media/
 **/media/
 local_settings.py
 *.log
+*.pid
+*.sock
+.pytest_cache/
+.coverage
+htmlcov/
 
 # ==========================================
 # Node / Frontend / React / Admin Panel

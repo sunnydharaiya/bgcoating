@@ -1,4 +1,20 @@
-asgiref==3.12.1
-Django==6.1
-sqlparse==0.5.5
-tzdata==2026.3
+# Django Core
+Django>=5.0,<6.2
+asgiref>=3.7.0
+sqlparse>=0.4.4
+tzdata>=2024.1
+
+# REST API & CORS
+djangorestframework>=3.14.0
+django-cors-headers>=4.3.0
+
+# Production WSGI Server & Static Files
+gunicorn>=21.2.0
+whitenoise[brotli]>=6.6.0
+
+# Environment Configuration
+python-dotenv>=1.0.0
+
+# Database & Media (Optional / Extensible)
+Pillow>=10.2.0
+psycopg2-binary>=2.9.9
