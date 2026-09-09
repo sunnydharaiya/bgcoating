@@ -3,20 +3,18 @@ Description=Gunicorn daemon for BG Coating Backend
 After=network.target
 
 [Service]
-# User and Group under which Gunicorn runs (change if using a different user like ubuntu/deploy)
-User=www-data
-Group=www-data
+# User and Group under which Gunicorn runs (root or www-data)
+User=root
+Group=root
 
 # Path to the repository backend directory on VPS
 WorkingDirectory=/var/www/bgcoating.com/backend
 
-# Environment variables
-EnvironmentFile=/var/www/bgcoating.com/backend/.env
+# Optional environment variables (dash prefix '-' ensures no crash if file is absent)
+EnvironmentFile=-/var/www/bgcoating.com/backend/.env
 
-# Gunicorn execution path inside the Python virtualenv
-ExecStart=/var/www/bgcoating.com/backend/.venv/bin/gunicorn \
-          --config /var/www/bgcoating.com/backend/gunicorn_conf.py \
-          bgcoating_config.wsgi:application
+# Gunicorn execution path inside the Python virtualenv (single line)
+ExecStart=/var/www/bgcoating.com/backend/.venv/bin/gunicorn --config /var/www/bgcoating.com/backend/gunicorn_conf.py bgcoating_config.wsgi:application
 
 # Restart policies
 Restart=always
