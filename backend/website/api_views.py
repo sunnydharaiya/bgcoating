@@ -4,6 +4,7 @@ from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
+from django.contrib.auth.models import User
 from django.db import models
 
 from .models import (
@@ -52,16 +53,33 @@ from . import calculator_engine
 @permission_classes([AllowAny])
 def api_login(request):
     """Authentication API endpoint returning Auth Token and user details."""
-    username = request.data.get('username')
+    raw_username = request.data.get('username')
     password = request.data.get('password')
 
-    if not username or not password:
+    if not raw_username or not password:
         return Response(
             {"error": "Both username and password are required."},
             status=status.HTTP_400_BAD_REQUEST
         )
 
-    user = authenticate(username=username, password=password)
+    username_input = str(raw_username).strip()
+    password_input = str(password).strip()
+
+    # 1. Direct authentication with provided username
+    user = authenticate(username=username_input, password=password_input)
+
+    # 2. If direct auth fails, check if input is an email address
+    if not user and '@' in username_input:
+        matched_user = User.objects.filter(email__iexact=username_input).first()
+        if matched_user:
+            user = authenticate(username=matched_user.username, password=password_input)
+
+    # 3. If still not matched, check case-insensitive username lookup
+    if not user:
+        matched_user = User.objects.filter(username__iexact=username_input).first()
+        if matched_user:
+            user = authenticate(username=matched_user.username, password=password_input)
+
     if not user:
         return Response(
             {"error": "Invalid username or password."},
