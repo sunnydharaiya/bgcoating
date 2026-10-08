@@ -1,0 +1,55 @@
+ady has Preview; the panel duplicate is removed */
+  .prev-btn{display:none !important}
+  .prog-panel-in{gap:14px !important}
+
+  /* 6 - landing hero joins the platform family (was black/crimson) */
+  .ng-hero{background:linear-gradient(120deg,#FFFFFF 0%,#FFF9F1 55%,#FFF4E3 100%) !important;
+    border:1px solid var(--bdr) !important;border-radius:16px !important;
+    box-shadow:0 2px 8px rgba(20,24,32,.06) !important;padding:24px 26px !important;margin-bottom:18px !important}
+  .ng-hero::before{background:radial-gradient(circle,rgba(247,148,29,.10),transparent 62%) !important;
+    width:320px !important;height:320px !important;top:-120px !important;right:-60px !important}
+  .ng-hero::after{height:3px !important;background:linear-gradient(90deg,#F7941D,#FFB347,#F7941D) !important;
+    top:0 !important;bottom:auto !important;border-radius:16px 16px 0 0 !important}
+  .ng-hero-bd{gap:18px !important}
+  .ng-logo{width:64px !important;height:64px !important;border-radius:14px !important;
+    box-shadow:0 2px 8px rgba(20,24,32,.08) !important;border:1px solid var(--bdr) !important}
+  .ng-kick{background:var(--bg4) !important;border:1px solid #F3D2A0 !important;color:#B05E00 !important;
+    font-family:'IBM Plex Mono',monospace !important;font-weight:500 !important;letter-spacing:.16em !important}
+  .ng-dot{background:#F7941D !important;animation:none !important}
+  .ng-title{font-family:'Sora',sans-serif !important;font-size:clamp(19px,2.2vw,26px) !important;
+    color:var(--txt) !important;letter-spacing:-.01em !important;line-height:1.18 !important}
+  .ng-title span{color:#F7941D !important}
+  .ng-sub{color:var(--txt2) !important;font-size:12.5px !important;margin-top:7px !important}
+  .ng-hint{color:var(--txt3) !important;margin-top:8px !important}
+  .ng-btn{background:linear-gradient(120deg,#F7941D 0%,#FFB347 60%,#F7941D 100%) !important;
+    background-size:200% 100% !important;color:#FFFFFF !important;border:none !important;border-radius:999px !important;
+    font-family:'Sora',sans-serif !important;font-size:14px !important;font-weight:600 !important;
+    letter-spacing:0 !important;text-transform:none !important;padding:12px 26px !important;margin-top:14px !important;
+    box-shadow:0 4px 12px rgba(247,148,29,.28) !important;
+    transition:transform .22s cubic-bezier(.2,.7,.2,1),box-shadow .22s,background .22s !important}
+  .ng-btn:hover{transform:translateY(-2px) !important;scale:1 !important;
+    box-shadow:0 8px 20px rgba(247,148,29,.38) !important;background-position:100% 0 !important}
+
+
+  /* Multiple company profiles — strip inside Company Details + print picker */
+  #cp-strip{margin:0 0 14px}
+  #cp-strip .cp-lbl{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--txt3);margin-bottom:7px}
+  #cp-strip .cp-lbl span{letter-spacing:0;text-transform:none;font-family:'IBM Plex Sans',sans-serif;font-size:10.5px}
+  .cp-chips{display:flex;flex-wrap:wrap;gap:6px}
+  .cp-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;cursor:pointer;
+    background:#FFFFFF;border:1px solid var(--bdr);color:var(--txt2);font-size:12px;
+    transition:border-color .22s,color .22s,background .22s}
+  .cp-chip:hover{border-color:#F3D2A0;color:#B05E00}
+  .cp-chip.on{background:var(--bg4);border-color:#F3D2A0;color:var(--brand-crimson);font-weight:600}
+  .cp-chip i{font-style:normal;color:#1E9E50;font-size:9px}
+  .cp-chip b{font-weight:400;color:var(--txt4);margin-left:2px;padding:0 2px;border-radius:4px}
+  .cp-chip b:hover{color:#C62828;background:#FBECEC}
+  #cp-pick{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;
+    background:rgba(34,38,44,.45);backdrop-filter:blur(4px);padding:20px}
+  #cp-pick.show{display:flex}
+  .cp-pick-in{width:min(440px,100%);background:#FFFFFF;border:1px solid var(--bdr);border-radius:16px;
+    box-shadow:0 20px 60px rgba(20,24,32,.28);overflow:hidden;font-family:'IBM Plex Sans',sans-serif}
+  .cp-pick-h{padding:16px 18px;border-bottom:1px solid var(--bdr);font-family:'Sora',sans-serif;font-weight:700;
+    font-size:15px;color:var(--txt)}
+  .cp-pick-h span{display:block;font-fami

@@ -255,6 +255,26 @@ export default function ManpowerEstimationPage({ currentSubTool = 'hub', onNavig
     addToast(status === 'Approved' ? '✓ Estimation marked as Approved & saved!' : '💾 Draft saved to Report Register', 'success');
   };
 
+  // Handle header actions from top bar (Preview, Save Draft, Validate, Register, Reset)
+  useEffect(() => {
+    const handleHeaderAction = (e) => {
+      const { action } = e.detail || {};
+      if (action === 'save-draft') {
+        handleSaveReport('Draft');
+      } else if (action === 'preview') {
+        setIsPreviewModalOpen(true);
+      } else if (action === 'validate') {
+        setIsApprovalModalOpen(true);
+      } else if (action === 'register') {
+        handleTabChange('register');
+      } else if (action === 'reset') {
+        handleReset();
+      }
+    };
+    window.addEventListener('bg_header_action', handleHeaderAction);
+    return () => window.removeEventListener('bg_header_action', handleHeaderAction);
+  }, [state, metrics]);
+
   // Load Report Record
   const handleLoadReport = (record) => {
     if (record.snap) {
@@ -325,82 +345,86 @@ export default function ManpowerEstimationPage({ currentSubTool = 'hub', onNavig
   ];
 
   return (
-    <div className="min-h-screen bg-[#F3F5F8] text-[#1B222C] pb-16 font-sans">
+    <div className="w-full text-[#1B222C] font-sans">
       
-      {/* Top Sticky Freeze Dashboard Bar */}
-      <ManpowerFreezeBar
-        state={state}
-        metrics={metrics}
-        onReset={handleReset}
-      />
+      {/* Top Sticky Freeze Dashboard Bar (Only in sub-tools) */}
+      {activeTab !== 'hub' && (
+        <ManpowerFreezeBar
+          state={state}
+          metrics={metrics}
+          onReset={handleReset}
+        />
+      )}
 
       {/* Main Container */}
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 pt-4 sm:pt-6 space-y-6">
+      <div className="w-full space-y-6">
         
-        {/* Sub-Navigation Tabs & Top Action Strip */}
-        <div className="bg-white border border-[#D8DEE5] rounded-xl p-2 shadow-[0_2px_8px_rgba(20,24,32,0.06)] flex flex-col md:flex-row items-center justify-between gap-3">
-          
-          {/* Horizontal Scrollable Tabs */}
-          <div className="flex items-center gap-1 overflow-x-auto w-full md:w-auto pb-1 md:pb-0 scrollbar-none">
-            {tabs.map((t) => {
-              const Icon = t.icon;
-              const isActive = activeTab === t.id;
-              return (
-                <button
-                  key={t.id}
-                  onClick={() => handleTabChange(t.id)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition cursor-pointer ${
-                    isActive
-                      ? 'bg-gradient-to-r from-[#E87B1E] to-[#9E1B1E] text-white shadow-xs font-rajdhani uppercase tracking-wider'
-                      : 'text-[#4E5B6A] hover:text-[#1B222C] hover:bg-[#F7F8FA]'
-                  }`}
-                >
-                  <Icon className="w-3.5 h-3.5" />
-                  <span>{t.label}</span>
-                </button>
-              );
-            })}
+        {/* Sub-Navigation Tabs & Top Action Strip (Only in sub-tools) */}
+        {activeTab !== 'hub' && (
+          <div className="bg-white border border-[#D8DEE5] rounded-xl p-2 shadow-[0_2px_8px_rgba(20,24,32,0.06)] flex flex-col md:flex-row items-center justify-between gap-3">
+            
+            {/* Horizontal Scrollable Tabs */}
+            <div className="flex items-center gap-1 overflow-x-auto w-full md:w-auto pb-1 md:pb-0 scrollbar-none">
+              {tabs.map((t) => {
+                const Icon = t.icon;
+                const isActive = activeTab === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    onClick={() => handleTabChange(t.id)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition cursor-pointer ${
+                      isActive
+                        ? 'bg-gradient-to-r from-[#F7941D] to-[#E8700A] text-white shadow-xs font-rajdhani uppercase tracking-wider'
+                        : 'text-[#4E5B6A] hover:text-[#1B222C] hover:bg-[#F7F8FA]'
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    <span>{t.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Quick Utility Actions */}
+            <div className="flex items-center gap-1.5 shrink-0 self-end md:self-auto">
+              <button
+                onClick={() => setIsCompanyModalOpen(true)}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[#F3D2A0] bg-[#FFF4E3] text-xs font-semibold text-[#9E1B1E] hover:bg-[#FEE9C7] transition cursor-pointer"
+                title="Configure Company Details & Logo"
+              >
+                <Building2 className="w-3.5 h-3.5 text-[#E87B1E]" />
+                <span className="hidden sm:inline">Company</span>
+              </button>
+
+              <button
+                onClick={() => setIsWatermarkModalOpen(true)}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[#F3D2A0] bg-[#FFF4E3] text-xs font-semibold text-[#9E1B1E] hover:bg-[#FEE9C7] transition cursor-pointer"
+                title="Watermark Security Control"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-[#E87B1E]" />
+                <span className="hidden sm:inline">Watermark</span>
+              </button>
+
+              <button
+                onClick={handleOpenGuideline}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[#E6E8EC] bg-[#F7F8FA] text-xs font-semibold text-[#4E5B6A] hover:bg-[#E6E8EC] transition cursor-pointer"
+                title="Engineering Guidelines & Formulas"
+              >
+                <BookOpen className="w-3.5 h-3.5 text-blue-500" />
+                <span className="hidden sm:inline">Norms</span>
+              </button>
+
+              <button
+                onClick={() => setIsPreviewModalOpen(true)}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#E8700A] hover:bg-[#F5911F] text-white text-xs font-bold transition shadow-xs cursor-pointer"
+              >
+                <Eye className="w-3.5 h-3.5" />
+                <span>Preview</span>
+              </button>
+            </div>
+
           </div>
-
-          {/* Quick Utility Actions */}
-          <div className="flex items-center gap-1.5 shrink-0 self-end md:self-auto">
-            <button
-              onClick={() => setIsCompanyModalOpen(true)}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[#F3D2A0] bg-[#FFF4E3] text-xs font-semibold text-[#9E1B1E] hover:bg-[#FEE9C7] transition cursor-pointer"
-              title="Configure Company Details & Logo"
-            >
-              <Building2 className="w-3.5 h-3.5 text-[#E87B1E]" />
-              <span className="hidden sm:inline">Company</span>
-            </button>
-
-            <button
-              onClick={() => setIsWatermarkModalOpen(true)}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[#F3D2A0] bg-[#FFF4E3] text-xs font-semibold text-[#9E1B1E] hover:bg-[#FEE9C7] transition cursor-pointer"
-              title="Watermark Security Control"
-            >
-              <ShieldCheck className="w-3.5 h-3.5 text-[#E87B1E]" />
-              <span className="hidden sm:inline">Watermark</span>
-            </button>
-
-            <button
-              onClick={handleOpenGuideline}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[#E6E8EC] bg-[#F7F8FA] text-xs font-semibold text-[#4E5B6A] hover:bg-[#E6E8EC] transition cursor-pointer"
-              title="Engineering Guidelines & Formulas"
-            >
-              <BookOpen className="w-3.5 h-3.5 text-blue-500" />
-              <span className="hidden sm:inline">Norms</span>
-            </button>
-
-            <button
-              onClick={() => setIsPreviewModalOpen(true)}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#E8700A] hover:bg-[#F5911F] text-white text-xs font-bold transition shadow-xs cursor-pointer"
-            >
-              <Eye className="w-3.5 h-3.5" />
-              <span>Preview</span>
-            </button>
-          </div>
-
-        </div>
+        )}
 
         {/* Active Sub-Tool Rendering */}
         <div>
@@ -410,6 +434,9 @@ export default function ManpowerEstimationPage({ currentSubTool = 'hub', onNavig
               metrics={metrics}
               onNavigate={handleTabChange}
               onApplyPreset={handleApplyPreset}
+              reports={reports}
+              onOpenPreview={() => setIsPreviewModalOpen(true)}
+              onOpenPrint={() => handleTabChange('report')}
             />
           )}
 

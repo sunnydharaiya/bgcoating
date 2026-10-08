@@ -1,0 +1,89 @@
+<aside class="sidebar" id="sidebar">
+    <div class="side-brand">
+      <div class="side-logo"><img src="..." alt="BG Group"></div>
+      <div class="side-bt">
+        <div class="side-name"><span>BG</span> GROUP</div>
+        <div class="side-tag">Coating Consultants</div>
+      </div>
+    </div>
+
+    <nav class="side-nav">
+      <button class="ng active" onclick="goHome(this)"><span class="ico">🏠</span>Dashboard</button>
+
+      <div class="sec-label">Paint Calculators</div>
+      <button class="ng" onclick="goGrp(&#39;paint&#39;,this)"><span class="ico">🖌️</span>Paint Suite<span class="cnt">7</span></button>
+      <a class="nav-sub" onclick="goCalc(&#39;paint&#39;,&#39;sp-cov&#39;,this)">Coverage</a>
+      <a class="nav-sub" onclick="goCalc(&#39;paint&#39;,&#39;sp-pc&#39;,this)">WFT Range</a>
+      <a class="nav-sub" onclick="goCalc(&#39;paint&#39;,&#39;sp-dft&#39;,this)">DFT</a>
+      <a class="nav-sub" onclick="goCalc(&#39;paint&#39;,&#39;sp-cons&#39;,this)">Paint Consumption</a>
+      <a class="nav-sub" onclick="goCalc(&#39;paint&#39;,&#39;sp-bl&#39;,this)">Blasting Loss</a>
+      <a class="nav-sub" onclick="goCalc(&#39;paint&#39;,&#39;sp-mx&#39;,this)">Mixing Ratio</a>
+      <a class="nav-sub" onclick="goCalc(&#39;paint&#39;,&#39;sp-cost&#39;,this)">Cost per Area</a>
+
+      <div class="sec-label">Surface Area</div>
+      <button class="ng" onclick="goGrp(&#39;area&#39;,this)"><span class="ico">📐</span>Surface Area<span class="cnt">6</span></button>
+      <a class="nav-sub" onclick="goCalc(&#39;area&#39;,&#39;sa-pipe&#39;,this)">Pipe</a>
+      <a class="nav-sub" onclick="goCalc(&#39;area&#39;,&#39;sa-tank&#39;,this)">Tank</a>
+      <a class="nav-sub" onclick="goCalc(&#39;area&#39;,&#39;sa-wws&#39;,this)">Structure</a>
+      <a class="nav-sub" onclick="goCalc(&#39;area&#39;,&#39;sa-plate&#39;,this)">Plate</a>
+      <a class="nav-sub" onclick="goCalc(&#39;area&#39;,&#39;sa-de&#39;,this)">Dished End</a>
+      <a class="nav-sub" onclick="goCalc(&#39;area&#39;,&#39;sa-vessel&#39;,this)">Vessel</a>
+
+      <div class="sec-label">Abrasive Consumption</div>
+      <button class="ng" onclick="goGrp(&#39;abrasive&#39;,this)"><span class="ico">💎</span>Abrasives<span class="cnt">2</span></button>
+      <a class="nav-sub" onclick="goAbr(&#39;ab-garnet&#39;,this)">Garnet</a>
+      <a class="nav-sub" onclick="goAbr(&#39;ab-cslag&#39;,this)">Copper Slag</a>
+
+      <div class="sec-label">Salt Test</div>
+      <button class="ng" onclick="goGrp(&#39;salt&#39;,this)"><span class="ico">🧂</span>Salt Test<span class="cnt">1</span></button>
+      <a class="nav-sub" onclick="goCalc(&#39;salt&#39;,&#39;salt-main&#39;,this)">Bresle Salt Test</a>
+
+      <div class="sec-label">Executive Coating Calculation – PRO</div>
+      <button class="ng" onclick="goGrp(&#39;pro&#39;,this)"><span class="ico">👑</span>Executive PRO<span class="cnt" id="pro-cnt">28</span></button>
+      <div style="font-size:9.5px;font-weight:700;color:rgba(245,145,31,.85);letter-spacing:.6px;padding:8px 12px 2px 26px;">1. Volume Solids Calculator</div>
+      <a class="nav-sub" style="padding-left:52px;" onclick="goCalc(&#39;pro&#39;,&#39;vs-tds&#39;,this)">Volume Solids — TDS</a>
+      <a class="nav-sub" style="padding-left:52px;" onclick="goCalc(&#39;pro&#39;,&#39;vs-den&#39;,this)">Volume Solids — Density</a>
+      <a class="nav-sub" style="padding-left:52px;" onclick="goCalc(&#39;pro&#39;,&#39;vs-lab&#39;,this)">Volume Solids — Lab D2697</a>
+      <div style="font-size:9.5px;font-weight:700;color:rgba(245,145,31,.85);letter-spacing:.6px;padding:8px 12px 2px 26px;">2. Paint Reconciliation Calculator</div>
+      <a class="nav-sub" style="padding-left:52px;" onclick="goCalc(&#39;pro&#39;,&#39;pro-recon&#39;,this)">Theoretical vs Actual</a>
+      <div style="font-size:9.5px;font-weight:700;color:rgba(245,145,31,.85);letter-spacing:.6px;padding:8px 12px 2px 26px;">3. Coating Life Cycle Cost (LCC)</div>
+      <a class="nav-sub" style="padding-left:52px;" onclick="goCalc(&#39;pro&#39;,&#39;pro-lcc&#39;,this)">Total Cost of Ownership</a>
+      <div style="font-size:9.5px;font-weight:700;color:rgba(245,145,31,.85);letter-spacing:.6px;padding:8px 12px 2px 26px;">4. Abrasive Size &amp; Blast Profile</div>
+      <a class="nav-sub" style="padding-left:52px;" onclick="goCalc(&#39;pro&#39;,&#39;pro-abp&#39;,this)">Profile Prediction &amp; Chart</a>
+      <div style="font-size:9.5px;font-weight:700;color:rgba(245,145,31,.85);letter-spacing:.6px;padding:8px 12px 2px 26px;">5. Abrasive Recycling Calculator</div>
+      <a class="nav-sub" style="padding-left:52px;" onclick="goCalc(&#39;pro&#39;,&#39;pro-arc&#39;,this)">Recovery &amp; Recycling Efficiency</a>
+      <div style="font-size:9.5px;font-weight:700;color:rgba(245,145,31,.85);letter-spacing:.6px;padding:8px 12px 2px 26px;">6. Dust Collector Capacity</div>
+      <a class="nav-sub" style="padding-left:52px;" onclick="goCalc(&#39;pro&#39;,&#39;pro-dcc&#39;,this)">CFM · Filter Area · Model</a>
+      <div style="font-size:9.5px;font-weight:700;color:rgba(245,145,31,.85);letter-spacing:.6px;padding:8px 12px 2px 26px;">7. Surface Area &amp; Weight</div>
+      <a class="nav-sub" style="padding-left:52px;" onclick="goCalc(&#39;pro&#39;,&#39;pro-saw&#39;,this)">Sections · Steel Weight · BOQ</a>
+      <div style="font-size:9.5px;font-weight:700;color:rgba(245,145,31,.85);letter-spacing:.6px;padding:8px 12px 2px 26px;">8. Inspection &amp; QA/QC</div>
+      <a class="nav-sub" style="padding-left:52px;" onclick="goCalc(&#39;pro&#39;,&#39;qa-pa2&#39;,this)">DFT Acceptance — SSPC-PA 2</a>
+      <a class="nav-sub" style="padding-left:52px;" onclick="goCalc(&#39;pro&#39;,&#39;qa-iso&#39;,this)">DFT Acceptance — ISO 19840</a>
+      <a class="nav-sub" style="padding-left:52px;" onclick="goCalc(&#39;pro&#39;,&#39;qa-hol&#39;,this)">Holiday Test Voltage</a>
+      <div style="font-size:9.5px;font-weight:700;color:rgba(245,145,31,.85);letter-spacing:.6px;padding:8px 12px 2px 26px;">9. Corrosion Engineering</div>
+      <a class="nav-sub" style="padding-left:52px;" onclick="goCalc(&#39;pro&#39;,&#39;ce-rate&#39;,this)">Corrosion Rate</a>
+      <a class="nav-sub" style="padding-left:52px;" onclick="goCalc(&#39;pro&#39;,&#39;ce-life&#39;,this)">Coating Life Prediction</a>
+      <div style="font-size:9.5px;font-weight:700;color:rgba(245,145,31,.85);letter-spacing:.6px;padding:8px 12px 2px 26px;">10. Thermal Spray Aluminium (TSA)</div>
+      <a class="nav-sub" style="padding-left:52px;" onclick="goCalc(&#39;pro&#39;,&#39;tsa-wire&#39;,this)">Wire Consumption</a>
+      <a class="nav-sub" style="padding-left:52px;" onclick="goCalc(&#39;pro&#39;,&#39;tsa-cov&#39;,this)">Area Coverage</a>
+      <a class="nav-sub" style="padding-left:52px;" onclick="goCalc(&#39;pro&#39;,&#39;tsa-eff&#39;,this)">Deposition Efficiency</a>
+      <a class="nav-sub" style="padding-left:52px;" onclick="goCalc(&#39;pro&#39;,&#39;tsa-thk&#39;,this)">Thickness Verification</a>
+      <a class="nav-sub" style="padding-left:52px;" onclick="goCalc(&#39;pro&#39;,&#39;tsa-prod&#39;,this)">Productivity</a>
+      <a class="nav-sub" style="padding-left:52px;" onclick="goCalc(&#39;pro&#39;,&#39;tsa-cost&#39;,this)">TSA Cost</a>
+      <div style="font-size:9.5px;font-weight:700;color:rgba(245,145,31,.85);letter-spacing:.6px;padding:8px 12px 2px 26px;">11. Passive Fire Protection (PFP)</div>
+      <a class="nav-sub" style="padding-left:52px;" onclick="goCalc(&#39;pro&#39;,&#39;pfp-mat&#39;,this)">PFP Material</a>
+      <a class="nav-sub" style="padding-left:52px;" onclick="goCalc(&#39;pro&#39;,&#39;pfp-thk&#39;,this)">PFP Thickness (Fire Rating)</a>
+      <a class="nav-sub" style="padding-left:52px;" onclick="goCalc(&#39;pro&#39;,&#39;pfp-den&#39;,this)">PFP Density</a>
+      <a class="nav-sub" style="padding-left:52px;" onclick="goCalc(&#39;pro&#39;,&#39;pfp-mesh&#39;,this)">Mesh Quantity</a>
+      <a class="nav-sub" style="padding-left:52px;" onclick="goCalc(&#39;pro&#39;,&#39;pfp-cost&#39;,this)">PFP Cost</a>
+      <a class="nav-sub" style="padding-left:52px;" onclick="goCalc(&#39;pro&#39;,&#39;pfp-rep&#39;,this)">Repair Quantity</a>
+      <div style="font-size:9.5px;font-weight:700;color:rgba(245,145,31,.85);letter-spacing:.6px;padding:8px 12px 2px 26px;">12. Bid Tab &amp; Comparison</div>
+      <a class="nav-sub" style="padding-left:52px;" onclick="goCalc(&#39;pro&#39;,&#39;bid-proc&#39;,this)">Paint Procurement Quantity</a>
+      <a class="nav-sub" style="padding-left:52px;" onclick="goCalc(&#39;pro&#39;,&#39;bid-comp&#39;,this)">Multi-Manufacturer Bid Comparison</a>
+    </nav>
+
+    <div class="side-foot">
+      <a href="https://bgcoating.com/" target="_blank"><span class="sf-ico">🌐</span>bgcoating.com</a>
+      <a href="tel:+919925810408"><span class="sf-ico">📞</span>+91 99258 10408</a>
+    </div>
+  </aside>

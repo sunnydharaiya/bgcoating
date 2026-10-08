@@ -393,6 +393,46 @@ export default function TsaQualificationPage({
     });
   };
 
+  // Listen for Top Header Actions (preview, save-draft, validate, register, reset)
+  useEffect(() => {
+    const handleHeaderAction = (e) => {
+      const action = e.detail?.action;
+      if (action === 'save-draft') {
+        const repNo = formData['f-rep-no'] || `BG-TSA-${new Date().getFullYear()}-${String(reports.length + 1).padStart(4, '0')}`;
+        const newRecord = {
+          id: 'REP-' + Date.now(),
+          repNo,
+          name: formData['f-name'] || 'Operator',
+          civil: formData['f-civil'] || '',
+          category: formData['f-category'] || 'TSA Operator',
+          proj: formData['f-proj'] || 'Project',
+          projNo: formData['f-proj-no'] || '',
+          client: formData['f-client'] || '',
+          contractor: formData['f-contractor'] || '',
+          verdict: evaluation.verdict,
+          overall: evaluation.overall,
+          status: 'Draft',
+          savedAt: new Date().toISOString(),
+          preparedBy: formData['sig2-name'] || 'QA/QC Inspector',
+          data: JSON.parse(JSON.stringify(formData))
+        };
+        setReports(prev => [newRecord, ...prev.filter(r => r.repNo !== repNo)]);
+        addToast('Draft Saved', `Saved draft qualification record (${repNo}).`, 'success');
+      } else if (action === 'preview') {
+        setIsPreviewModalOpen(true);
+      } else if (action === 'validate') {
+        setIsApprovalModalOpen(true);
+      } else if (action === 'register') {
+        navigateSub('register');
+      } else if (action === 'reset') {
+        handleResetDraft();
+      }
+    };
+
+    window.addEventListener('bg_header_action', handleHeaderAction);
+    return () => window.removeEventListener('bg_header_action', handleHeaderAction);
+  }, [formData, reports, evaluation]);
+
   // Render SubTool view
   const renderCurrentView = () => {
     switch (currentSubTool) {
@@ -477,8 +517,15 @@ export default function TsaQualificationPage({
           <TsaHub
             formData={formData}
             evaluation={evaluation}
+            reports={reports}
             onNavigate={navigateSub}
             onApplyPreset={handleApplyPreset}
+            onNewGeneration={() => {
+              setFormData(JSON.parse(JSON.stringify(INITIAL_TSA_STATE)));
+              navigateSub('project-info');
+            }}
+            onOpenPreview={() => setIsPreviewModalOpen(true)}
+            onOpenPrint={() => window.print()}
           />
         );
     }
@@ -487,19 +534,21 @@ export default function TsaQualificationPage({
   return (
     <div className="min-h-screen bg-[#F3F5F8] text-[#1B222C] pb-16 font-sans">
       
-      {/* Top Sticky FreezeBar */}
-      <TsaFreezeBar
-        formData={formData}
-        evaluation={evaluation}
-        currentSubTool={currentSubTool}
-        onNavigate={navigateSub}
-        onResetDraft={handleResetDraft}
-        onOpenPreview={() => setIsPreviewModalOpen(true)}
-        onOpenGuideline={handleOpenGuideline}
-      />
+      {/* Top Sticky FreezeBar (Hidden on Hub view) */}
+      {currentSubTool !== 'hub' && (
+        <TsaFreezeBar
+          formData={formData}
+          evaluation={evaluation}
+          currentSubTool={currentSubTool}
+          onNavigate={navigateSub}
+          onResetDraft={handleResetDraft}
+          onOpenPreview={() => setIsPreviewModalOpen(true)}
+          onOpenGuideline={handleOpenGuideline}
+        />
+      )}
 
       {/* Main Container */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+      <div className={currentSubTool === 'hub' ? 'max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-4' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6'}>
         {renderCurrentView()}
       </div>
 

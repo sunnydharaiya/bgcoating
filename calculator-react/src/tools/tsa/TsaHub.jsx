@@ -1,312 +1,338 @@
 import React from 'react';
-import { 
-  Flame, 
-  Sparkles, 
-  FileText, 
-  CheckSquare, 
-  Layers, 
-  Camera, 
-  Award, 
-  FileSpreadsheet, 
-  Printer, 
-  ArrowRight,
-  ShieldCheck,
-  FolderOpen,
-  PlusCircle,
-  BarChart3,
+import {
+  BarChart2,
+  Edit3,
   CheckCircle2,
-  TrendingUp,
-  Cpu,
-  Zap
+  Award,
+  ChevronRight,
+  Eye,
+  Printer,
+  Rocket,
+  Folder
 } from 'lucide-react';
-import { TSA_PRESETS } from '../../data/tsaDatabase';
 
 export default function TsaHub({
   reports = [],
-  evaluation,
+  evaluation = {},
   onNavigate,
-  onLoadPreset,
-  onNewReport
+  onApplyPreset,
+  onNewGeneration,
+  onOpenPreview,
+  onOpenPrint
 }) {
-  const approvedCount = reports.filter(r => r.status === 'Approved').length;
-  const passCount = reports.filter(r => r.verdict === 'PASS').length;
-  const passRate = reports.length > 0 ? Math.round((passCount / reports.length) * 100) : 100;
-  const avgScore = reports.length > 0
-    ? (reports.reduce((acc, r) => acc + (r.overall || 0), 0) / reports.length).toFixed(1)
-    : '98.5';
+  const totalReports = reports.length;
+  const draftReports = reports.filter(r => r.status === 'Draft' || !r.status).length;
+  const approvedReports = reports.filter(r => r.status === 'Approved').length;
+  const pendingReports = reports.filter(r => r.status === 'Pending' || r.verdict === 'PENDING').length;
 
-  const SECTIONS = [
-    {
-      id: 'project-info',
-      title: '01. Project & Scope',
-      desc: 'Operator portrait photo, project/client details, coating system table, and 10 Thermal Spray material specifications.',
-      icon: FileText,
-      color: 'from-amber-500 to-orange-600',
-      badge: `${Math.round(evaluation?.stageProgress?.info || 0)}% Complete`
-    },
-    {
-      id: 'checklist',
-      title: '02. Assessment Checklist',
-      desc: '12 Practical Thermal Spray competency elements per AWS C2.23M / ISO 2063-2 standards.',
-      icon: CheckSquare,
-      color: 'from-blue-500 to-indigo-600',
-      badge: `${Math.round(evaluation?.stageProgress?.checklist || 0)}% Pass`
-    },
-    {
-      id: 's1',
-      title: '03. Blasting + TSA',
-      desc: 'Stage 1 Thermal Spray Aluminum record with multi-hour psychrometrics, 9 application parameters, 6 tests, and 4-mini-table DFT matrix.',
-      icon: Flame,
-      color: 'from-red-500 to-amber-600',
-      badge: `${Math.round(evaluation?.stageProgress?.s1 || 0)}% Logged`
-    },
-    {
-      id: 's2',
-      title: '04. 1st Coat / Sealer',
-      desc: 'High-temperature silicone aluminum or tie-coat sealer application, WFT/DFT inspection, and batch traceability.',
-      icon: Layers,
-      color: 'from-orange-500 to-amber-600',
-      badge: `${Math.round(evaluation?.stageProgress?.s2 || 0)}% Logged`
-    },
-    {
-      id: 's3',
-      title: '05. 2nd Coat (Optional)',
-      desc: 'Intermediate epoxy barrier coat stage with complete process parameters and SSPC PA-2 DFT spot matrix.',
-      icon: Layers,
-      color: 'from-cyan-500 to-blue-600',
-      badge: `${Math.round(evaluation?.stageProgress?.s3 || 0)}% Logged`
-    },
-    {
-      id: 's4',
-      title: '06. 3rd Coat (Topcoat)',
-      desc: 'Finish polyurethane / polysiloxane topcoat stage with batch expiry verification and color shade verification.',
-      icon: Layers,
-      color: 'from-emerald-500 to-teal-600',
-      badge: `${Math.round(evaluation?.stageProgress?.s4 || 0)}% Logged`
-    },
-    {
-      id: 'photo',
-      title: '07. Photo Report',
-      desc: 'Evidence photographs with title tags, dates, location tags, captions, and lightbox inspection.',
-      icon: Camera,
-      color: 'from-purple-500 to-pink-600',
-      badge: `${Math.round(evaluation?.stageProgress?.photo || 0)}% Uploaded`
-    },
-    {
-      id: 'verdict',
-      title: '08. Verdict & Approval',
-      desc: '4-tier weighted evaluation matrix, rubber stamp emblem, and 3 digital signatory endorsement blocks.',
-      icon: Award,
-      color: 'from-emerald-500 to-green-600',
-      badge: evaluation?.verdict || 'PENDING'
-    },
-    {
-      id: 'summary',
-      title: '09. Executive Summary',
-      desc: 'Executive narrative, quantitative score breakdown, certificate validity, and clipboard export.',
-      icon: FileSpreadsheet,
-      color: 'from-slate-600 to-slate-800',
-      badge: 'Auto-Compiled'
-    },
-    {
-      id: 'register',
-      title: '10. Master Register',
-      desc: 'Saved qualification records repository with stage sequence verification, search, and CSV export.',
-      icon: FolderOpen,
-      color: 'from-blue-600 to-cyan-700',
-      badge: `${reports.length} Records`
+  const handleStartNew = () => {
+    if (onNewGeneration) {
+      onNewGeneration();
+    } else if (onNavigate) {
+      onNavigate('project-info');
     }
-  ];
+  };
+
+  const handleGoRegister = () => {
+    if (onNavigate) onNavigate('register');
+  };
+
+  const handleGoPreview = () => {
+    if (onOpenPreview) {
+      onOpenPreview();
+    } else if (onNavigate) {
+      onNavigate('preview');
+    }
+  };
+
+  const handleGoPrint = () => {
+    if (onOpenPrint) {
+      onOpenPrint();
+    } else if (onNavigate) {
+      onNavigate('report');
+    }
+  };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
+    <div className="space-y-8 max-w-6xl mx-auto pb-6 animate-in fade-in duration-200">
       
-      {/* Hero Welcome Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#14181F] via-[#2A3340] to-[#14181F] text-white p-6 sm:p-8 border border-slate-700/50 shadow-xl">
-        <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-radial from-[#E87B1E]/20 to-transparent pointer-events-none" />
-        <div className="relative z-10 max-w-3xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E87B1E]/20 border border-[#E87B1E]/40 text-[#F39322] text-xs font-bold uppercase tracking-wider mb-3">
-            <Flame className="w-3.5 h-3.5 animate-pulse" />
-            <span>AWS C2.23M · NACE No.12 · ISO 2063-2 · SSPC-CS 23.00</span>
-          </div>
-          <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight leading-tight">
-            TSA Operator Qualification <span className="text-[#F39322]">Digital Hub</span>
-          </h1>
-          <p className="text-sm sm:text-base text-slate-300 mt-2 leading-relaxed">
-            Standardized digital qualification management system for Twin-Wire Arc Thermal Spray Aluminium (TSA) applicators, featuring multi-hour psychrometrics, 19-test coating inspection catalogs, and SSPC PA-2 4-mini-table DFT matrices.
-          </p>
-
-          {/* Quick Action Buttons */}
-          <div className="flex flex-wrap items-center gap-3 mt-6">
-            <button
-              onClick={() => onNavigate?.('project-info')}
-              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#E87B1E] to-[#9E1B1E] text-white font-bold text-sm shadow-lg shadow-[#E87B1E]/30 hover:opacity-95 transition-all flex items-center gap-2 cursor-pointer"
-            >
-              <span>Start Qualification</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => onNavigate?.('register')}
-              className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/20 text-white font-semibold text-sm backdrop-blur-sm transition-all flex items-center gap-2 cursor-pointer"
-            >
-              <FolderOpen className="w-4 h-4 text-amber-400" />
-              <span>Report Register ({reports.length})</span>
-            </button>
-            <button
-              onClick={() => onNavigate?.('preview')}
-              className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/20 text-white font-semibold text-sm backdrop-blur-sm transition-all flex items-center gap-2 cursor-pointer"
-            >
-              <Printer className="w-4 h-4 text-emerald-400" />
-              <span>Print Dossier</span>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* KPI Stats Strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Reports</span>
-            <FolderOpen className="w-4 h-4 text-[#E87B1E]" />
-          </div>
-          <div className="text-2xl font-extrabold text-slate-800 dark:text-slate-100 mt-2 font-mono">
-            {reports.length}
-          </div>
-          <span className="text-[11px] text-slate-500 font-medium">In master register</span>
+      {/* 1. Hero Card (Exact match to media_1791305324466.png) */}
+      <div className="bg-gradient-to-br from-[#2D160E] via-[#200F09] to-[#170905] border border-[#5A2C18] rounded-2xl md:rounded-3xl p-6 md:p-8 text-center text-white relative shadow-xl max-w-4xl mx-auto">
+        
+        {/* Top Capsule Badge */}
+        <div className="inline-block mb-4">
+          <span className="bg-[#3D1D10] text-[#E89A3C] border border-[#6B371F] text-[10px] md:text-[11px] font-mono font-bold px-3.5 py-1 rounded-full uppercase tracking-wider inline-flex items-center gap-1.5">
+            <span className="text-[#F7941D]">✦</span>
+            <span>DIGITAL QUALIFICATION · TSA OPERATOR · TWIN WIRE ARC · THERMAL SPRAY</span>
+          </span>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Approved Reports</span>
-            <ShieldCheck className="w-4 h-4 text-emerald-500" />
+        {/* Title and Logo Row */}
+        <div className="flex flex-col md:flex-row items-center justify-center gap-5 max-w-3xl mx-auto">
+          <div className="w-16 h-16 rounded-2xl bg-white border border-white/20 p-2 shadow-md flex items-center justify-center shrink-0">
+            <img src="/logo-2.png" alt="BG Logo" className="w-full h-full object-contain" />
           </div>
-          <div className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-2 font-mono">
-            {approvedCount}
-          </div>
-          <span className="text-[11px] text-slate-500 font-medium">Fully endorsed</span>
-        </div>
 
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Pass Rate</span>
-            <CheckCircle2 className="w-4 h-4 text-blue-500" />
-          </div>
-          <div className="text-2xl font-extrabold text-blue-600 dark:text-blue-400 mt-2 font-mono">
-            {passRate}%
-          </div>
-          <span className="text-[11px] text-slate-500 font-medium">≥80.0% qualification</span>
-        </div>
-
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-xs">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Average Score</span>
-            <TrendingUp className="w-4 h-4 text-purple-500" />
-          </div>
-          <div className="text-2xl font-extrabold text-purple-600 dark:text-purple-400 mt-2 font-mono">
-            {avgScore}%
-          </div>
-          <span className="text-[11px] text-slate-500 font-medium">Weighted average</span>
-        </div>
-      </div>
-
-      {/* 1-Click Industry Presets */}
-      <div className="bg-gradient-to-br from-amber-500/5 via-orange-500/5 to-transparent border border-[#E87B1E]/20 rounded-3xl p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-[#E87B1E]" />
-              <span>One-Click Industry TSA Presets</span>
-            </h2>
-            <p className="text-xs text-slate-500">
-              Select an offshore, refinery, or subsea specification template to prefill parameters and coating tables.
+          <div className="text-center md:text-left">
+            <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
+              TSA Operator Qualification <span className="text-[#F7941D]">&amp; Digital Reporting</span>
+            </h1>
+            <p className="text-xs md:text-[13px] text-slate-300 mt-2 leading-relaxed">
+              A premium industrial qualification platform by BG Group of Paint and Coating Consultant — capture Project &amp; TSA Operator data, Training &amp; Assessment, Blasting + Thermal Spray and additional coats with real time DFT compliance per SSPC PA 2, AWS C2.25 / ISO 14919, application parameter verification, environmental monitoring and photographic evidence; the system auto-validates limits, then generates MNC-grade printable qualification dossiers.
             </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {TSA_PRESETS.map((preset) => (
-            <div
-              key={preset.id}
-              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 hover:border-[#E87B1E] transition-all shadow-xs flex flex-col justify-between group"
-            >
-              <div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-[#FDF1E6] dark:bg-[#E87B1E]/20 text-[#E87B1E]">
-                    {preset.category}
-                  </span>
-                  <span className="text-[10px] font-mono text-slate-400">
-                    {preset.system.length} Coats
-                  </span>
-                </div>
-                <h3 className="font-bold text-slate-800 dark:text-slate-100 mt-2 text-sm">
-                  {preset.title}
-                </h3>
-                <p className="text-xs text-slate-500 mt-1 line-clamp-2">
-                  {preset.spec} · {preset.surfPrep}
-                </p>
-              </div>
+        {/* CTA Button */}
+        <div className="mt-6 flex flex-col items-center">
+          <button
+            onClick={handleStartNew}
+            className="bg-gradient-to-r from-[#F7941D] to-[#E8700A] hover:from-[#E8700A] hover:to-[#D97706] text-white font-extrabold text-xs md:text-sm px-8 py-3 rounded-full shadow-[0_4px_16px_rgba(247,148,29,0.35)] flex items-center justify-center gap-2 transition hover:scale-[1.02] cursor-pointer"
+          >
+            <Rocket className="w-4 h-4 fill-white text-white" />
+            <span className="tracking-wide uppercase font-mono">NEW GENERATION</span>
+          </button>
+          <span className="text-[11px] text-[#A37B69] mt-2.5">
+            Start a new qualification — all sheets open for guided data entry
+          </span>
+        </div>
 
-              <button
-                onClick={() => onLoadPreset?.(preset)}
-                className="mt-4 w-full py-2 rounded-xl bg-slate-100 dark:bg-slate-800 group-hover:bg-[#E87B1E] group-hover:text-white text-slate-700 dark:text-slate-300 font-bold text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                <span>Load Template</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
+      </div>
+
+      {/* 2. Qualification Overview (Exact match to media_1791305324466.png) */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="w-1 h-4 bg-[#F7941D] rounded-full inline-block"></span>
+            <h2 className="text-sm md:text-base font-bold text-[#1B222C]">
+              Qualification Overview
+            </h2>
+          </div>
+          <span className="text-[11px] text-[#94A3B8] font-medium">
+            Saved qualification reports
+          </span>
+        </div>
+
+        {/* 4 Overview Metric Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          
+          {/* Card 1: Total Reports */}
+          <div 
+            onClick={handleGoRegister}
+            className="bg-white rounded-xl border border-[#E6E8EC] border-t-2 border-t-sky-500 p-4 shadow-2xs hover:shadow-sm transition cursor-pointer flex flex-col justify-between"
+          >
+            <div className="flex items-center justify-between">
+              <div className="w-8 h-8 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center">
+                <BarChart2 className="w-4 h-4" />
+              </div>
+              <ChevronRight className="w-4 h-4 text-slate-300" />
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* 10 Workflow Section Jump Cards */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100">
-              Qualification Workflow Sections
-            </h2>
-            <p className="text-xs text-slate-500">
-              Progressive steps for capturing operator credentials, multi-hour spray trials, inspection results, and approvals.
-            </p>
+            <div className="mt-3">
+              <span className="text-2xl font-extrabold text-[#1B222C] font-mono block">
+                {totalReports}
+              </span>
+              <span className="text-xs font-bold text-[#1B222C] block mt-0.5">
+                Total Reports
+              </span>
+              <span className="text-[10px] text-[#64748B] block">
+                All saved reports
+              </span>
+            </div>
           </div>
-        </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {SECTIONS.map((sec) => {
-            const Icon = sec.icon;
-            return (
-              <div
-                key={sec.id}
-                onClick={() => onNavigate?.(sec.id)}
-                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 hover:shadow-md hover:border-[#E87B1E]/60 transition-all cursor-pointer group flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex items-center justify-between">
-                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${sec.color} text-white flex items-center justify-center shadow-sm`}>
-                      <Icon className="w-5 h-5" />
-                    </div>
-                    <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-mono">
-                      {sec.badge}
-                    </span>
-                  </div>
-                  <h3 className="font-bold text-slate-800 dark:text-slate-100 text-base mt-3 group-hover:text-[#E87B1E] transition-colors">
-                    {sec.title}
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-1 line-clamp-3 leading-relaxed">
-                    {sec.desc}
-                  </p>
-                </div>
-
-                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-bold text-[#E87B1E]">
-                  <span>Open Section</span>
-                  <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-                </div>
+          {/* Card 2: Draft Reports */}
+          <div 
+            onClick={handleGoRegister}
+            className="bg-white rounded-xl border border-[#E6E8EC] border-t-2 border-t-orange-500 p-4 shadow-2xs hover:shadow-sm transition cursor-pointer flex flex-col justify-between"
+          >
+            <div className="flex items-center justify-between">
+              <div className="w-8 h-8 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center">
+                <Edit3 className="w-4 h-4" />
               </div>
-            );
-          })}
+              <ChevronRight className="w-4 h-4 text-slate-300" />
+            </div>
+            <div className="mt-3">
+              <span className="text-2xl font-extrabold text-[#1B222C] font-mono block">
+                {draftReports}
+              </span>
+              <span className="text-xs font-bold text-[#1B222C] block mt-0.5">
+                Draft Reports
+              </span>
+              <span className="text-[10px] text-[#64748B] block">
+                Work in progress
+              </span>
+            </div>
+          </div>
+
+          {/* Card 3: Approved */}
+          <div 
+            onClick={handleGoRegister}
+            className="bg-white rounded-xl border border-[#E6E8EC] border-t-2 border-t-emerald-500 p-4 shadow-2xs hover:shadow-sm transition cursor-pointer flex flex-col justify-between"
+          >
+            <div className="flex items-center justify-between">
+              <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                <CheckCircle2 className="w-4 h-4" />
+              </div>
+              <ChevronRight className="w-4 h-4 text-slate-300" />
+            </div>
+            <div className="mt-3">
+              <span className="text-2xl font-extrabold text-[#1B222C] font-mono block">
+                {approvedReports}
+              </span>
+              <span className="text-xs font-bold text-[#1B222C] block mt-0.5">
+                Approved
+              </span>
+              <span className="text-[10px] text-[#64748B] block">
+                Validated &amp; signed off
+              </span>
+            </div>
+          </div>
+
+          {/* Card 4: Pending */}
+          <div 
+            onClick={handleGoRegister}
+            className="bg-white rounded-xl border border-[#E6E8EC] border-t-2 border-t-sky-400 p-4 shadow-2xs hover:shadow-sm transition cursor-pointer flex flex-col justify-between"
+          >
+            <div className="flex items-center justify-between">
+              <div className="w-8 h-8 rounded-lg bg-sky-50 text-sky-500 flex items-center justify-center">
+                <Award className="w-4 h-4" />
+              </div>
+              <ChevronRight className="w-4 h-4 text-slate-300" />
+            </div>
+            <div className="mt-3">
+              <span className="text-2xl font-extrabold text-[#1B222C] font-mono block">
+                {pendingReports}
+              </span>
+              <span className="text-xs font-bold text-[#1B222C] block mt-0.5">
+                Pending
+              </span>
+              <span className="text-[10px] text-[#64748B] block">
+                Awaiting approval
+              </span>
+            </div>
+          </div>
+
         </div>
       </div>
+
+      {/* 3. Quick Actions (Exact match to media_1791305324466.png) */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="w-1 h-4 bg-[#F7941D] rounded-full inline-block"></span>
+            <h2 className="text-sm md:text-base font-bold text-[#1B222C]">
+              Quick Actions
+            </h2>
+          </div>
+          <span className="text-[11px] text-[#94A3B8] font-medium">
+            Jump straight in
+          </span>
+        </div>
+
+        {/* 4 Action Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          
+          {/* Action 1: New Generation */}
+          <div 
+            onClick={handleStartNew}
+            className="bg-white rounded-xl border border-[#E6E8EC] p-3.5 shadow-2xs hover:shadow-sm hover:border-[#F7941D] transition cursor-pointer flex items-center gap-3 group"
+          >
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#EA580C] to-[#C2410C] text-white flex items-center justify-center shrink-0 shadow-xs">
+              <Edit3 className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <span className="font-bold text-xs text-[#1B222C] group-hover:text-[#F7941D] transition-colors block">
+                New Generation
+              </span>
+              <span className="text-[11px] text-[#64748B] block mt-0.5">
+                Start a fresh qualification
+              </span>
+            </div>
+          </div>
+
+          {/* Action 2: Report Register */}
+          <div 
+            onClick={handleGoRegister}
+            className="bg-white rounded-xl border border-[#E6E8EC] p-3.5 shadow-2xs hover:shadow-sm hover:border-[#F7941D] transition cursor-pointer flex items-center gap-3 group"
+          >
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0284C7] to-[#0369A1] text-white flex items-center justify-center shrink-0 shadow-xs">
+              <Folder className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <span className="font-bold text-xs text-[#1B222C] group-hover:text-[#F7941D] transition-colors block">
+                Report Register
+              </span>
+              <span className="text-[11px] text-[#64748B] block mt-0.5">
+                Open all saved reports
+              </span>
+            </div>
+          </div>
+
+          {/* Action 3: Preview Latest */}
+          <div 
+            onClick={handleGoPreview}
+            className="bg-white rounded-xl border border-[#E6E8EC] p-3.5 shadow-2xs hover:shadow-sm hover:border-[#F7941D] transition cursor-pointer flex items-center gap-3 group"
+          >
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#7C3AED] to-[#6D28D9] text-white flex items-center justify-center shrink-0 shadow-xs">
+              <Eye className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <span className="font-bold text-xs text-[#1B222C] group-hover:text-[#F7941D] transition-colors block">
+                Preview Latest
+              </span>
+              <span className="text-[11px] text-[#64748B] block mt-0.5">
+                Read-only report preview
+              </span>
+            </div>
+          </div>
+
+          {/* Action 4: Print Existing */}
+          <div 
+            onClick={handleGoPrint}
+            className="bg-white rounded-xl border border-[#E6E8EC] p-3.5 shadow-2xs hover:shadow-sm hover:border-[#F7941D] transition cursor-pointer flex items-center gap-3 group"
+          >
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#16A34A] to-[#15803D] text-white flex items-center justify-center shrink-0 shadow-xs">
+              <Printer className="w-5 h-5 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5">
+                <span className="font-bold text-xs text-[#1B222C] group-hover:text-[#F7941D] transition-colors truncate">
+                  Print Existing
+                </span>
+                <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-amber-500/20 text-[#D97706]">
+                  PRO
+                </span>
+              </div>
+              <span className="text-[11px] text-[#64748B] block mt-0.5 truncate">
+                Excel-format printable view
+              </span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      {/* 4. Dark Corporate Footer (Exact match to media_1791305324466.png) */}
+      <footer className="mt-10 rounded-2xl bg-[#141822] text-white py-6 px-6 text-center shadow-lg border border-[#232B3C] space-y-2">
+        <div className="flex items-center justify-center gap-2">
+          <div className="w-5 h-5 rounded bg-white p-0.5 shrink-0 flex items-center justify-center">
+            <img src="/logo-2.png" alt="BG Logo" className="w-full h-full object-contain" />
+          </div>
+          <span className="font-bold text-xs md:text-sm tracking-wide text-white">
+            BG GROUP · PAINT &amp; COATING CONSULTANT
+          </span>
+        </div>
+        <p className="text-[11px] text-[#8F9CAE]">
+          Corrosion Management · Surface Treatment · Coating Engineering Destination
+        </p>
+        <div className="pt-1 text-[11px] text-[#F7941D] flex flex-wrap items-center justify-center gap-x-4 gap-y-1 font-mono">
+          <span>support@bgcoating.com</span>
+          <span className="text-slate-600 hidden sm:inline">•</span>
+          <span>www.bgcoating.com</span>
+          <span className="text-slate-600 hidden sm:inline">•</span>
+          <span>+91 99250 10408</span>
+        </div>
+      </footer>
 
     </div>
   );

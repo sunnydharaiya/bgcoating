@@ -1,258 +1,342 @@
-// src/tools/painter/PainterHub.jsx
 import React from 'react';
-import { 
-  ShieldCheck, 
-  Paintbrush, 
-  Layers, 
-  FileText, 
-  CheckSquare, 
-  Camera, 
-  Award, 
-  FileSpreadsheet, 
-  Sparkles, 
-  ArrowRight,
-  TrendingUp,
-  Activity,
-  Sliders,
-  Flame,
+import {
+  BarChart2,
+  Edit3,
   CheckCircle2,
-  AlertTriangle
+  Award,
+  ChevronRight,
+  Eye,
+  Printer,
+  Rocket,
+  Folder,
+  FileText
 } from 'lucide-react';
-import { PAINTER_PRESETS } from '../../data/painterDatabase';
 
 export default function PainterHub({
-  onNavigate,
-  onApplyPreset,
   reports = [],
-  evaluation
+  evaluation = {},
+  onNavigate,
+  onLoadPreset,
+  onNewGeneration,
+  onOpenPreview,
+  onOpenPrint
 }) {
-  const { overall = 0, verdict = 'PENDING' } = evaluation || {};
-
   const totalReports = reports.length;
-  const draftReports = reports.filter(r => r.status === 'Draft').length;
+  const draftReports = reports.filter(r => r.status === 'Draft' || !r.status).length;
   const approvedReports = reports.filter(r => r.status === 'Approved').length;
-  const passCount = reports.filter(r => r.verdict === 'PASS').length;
-  const passRate = totalReports > 0 ? Math.round((passCount / totalReports) * 100) : 100;
+  const pendingReports = reports.filter(r => r.status === 'Pending' || r.verdict === 'PENDING').length;
 
-  const cards = [
-    {
-      id: 'info',
-      step: '01',
-      title: 'Project & Painter Information',
-      desc: 'Operator passport photo upload, project metadata, civil ID, and Coating System table specification.',
-      icon: Paintbrush,
-      badge: 'Step 1'
-    },
-    {
-      id: 'train',
-      step: '02',
-      title: 'Training & Assessment Test',
-      desc: '15-topic syllabus, 45-question Pre & Post test scores, and auto-calculated Improvement Index (Δ%).',
-      icon: Layers,
-      badge: 'Step 2'
-    },
-    {
-      id: 'checklist',
-      step: '03',
-      title: 'Practical Assessment Checklist',
-      desc: '13 critical assessment elements covering spray gun setup, pot life, stripe coating, and defect detection.',
-      icon: CheckSquare,
-      badge: 'Step 3'
-    },
-    {
-      id: 's1',
-      step: '04',
-      title: 'Blasting & Primer Stage (s1)',
-      desc: 'Substrate visual inspection, inorganic/organic zinc primer application, batch expiry check, and 4-mini-table DFT matrix.',
-      icon: Sliders,
-      badge: 'Baseline'
-    },
-    {
-      id: 's2',
-      step: '05',
-      title: '1st Intermediate / Finish (s2)',
-      desc: 'Epoxy intermediate coat, overcoating interval timing calculation, batch traceability, and cumulative DFT verification.',
-      icon: Layers,
-      badge: 'Stage 2'
-    },
-    {
-      id: 's3',
-      step: '06',
-      title: '2nd Intermediate / Finish (s3)',
-      desc: 'High-build epoxy layer, environmental psychrometric snapshot, inspection testing, and 24-spot DFT measurements.',
-      icon: Layers,
-      badge: 'Stage 3'
-    },
-    {
-      id: 's4',
-      step: '07',
-      title: '3rd Finish Topcoat (s4)',
-      desc: 'Polyurethane / acrylic topcoat, shade RAL verification, pot life monitoring, and final aesthetic finish inspection.',
-      icon: Paintbrush,
-      badge: 'Topcoat'
-    },
-    {
-      id: 'photo',
-      step: '08',
-      title: 'Photographic Evidence Report',
-      desc: '10-photo structured evidence grid with location tags, inspector initials, captions, and lightbox zoom.',
-      icon: Camera,
-      badge: 'Evidence'
-    },
-    {
-      id: 'verdict',
-      step: '09',
-      title: 'Verdict & Signatory Approval',
-      desc: 'Official qualification rubber-stamp, 6-tier criteria evaluation matrix, and 3 digital signatory stamp uploads.',
-      icon: Award,
-      badge: 'Final Sign-off'
-    },
-    {
-      id: 'register',
-      step: '10',
-      title: 'Master Qualification Register',
-      desc: 'Database of saved operator reports, multi-column search, stage sequence validation, and Excel/CSV export.',
-      icon: FileSpreadsheet,
-      badge: 'Register'
+  const handleStartNew = () => {
+    if (onNewGeneration) {
+      onNewGeneration();
+    } else if (onNavigate) {
+      onNavigate('info');
     }
-  ];
+  };
+
+  const handleGoRegister = () => {
+    if (onNavigate) onNavigate('register');
+  };
+
+  const handleGoPreview = () => {
+    if (onOpenPreview) {
+      onOpenPreview();
+    } else if (onNavigate) {
+      onNavigate('preview');
+    }
+  };
+
+  const handleGoPrint = () => {
+    if (onOpenPrint) {
+      onOpenPrint();
+    } else if (onNavigate) {
+      onNavigate('report');
+    }
+  };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 max-w-6xl mx-auto pb-6 animate-in fade-in duration-200">
       
-      {/* Hero Welcome Banner */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#1E2530] via-[#2A3340] to-[#14181F] text-white p-6 md:p-8 border border-slate-700 shadow-xl">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-[#E87B1E]/20 to-[#9E1B1E]/10 rounded-full blur-3xl pointer-events-none" />
+      {/* 1. Hero Card (Exact match to media_1791304046270.png) */}
+      <div className="bg-gradient-to-br from-[#2D160E] via-[#200F09] to-[#170905] border border-[#5A2C18] rounded-2xl md:rounded-3xl p-6 md:p-8 text-center text-white relative shadow-xl max-w-4xl mx-auto">
         
-        <div className="relative z-10 max-w-3xl space-y-3">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E87B1E]/20 border border-[#E87B1E]/40 text-[#F8C078] text-xs font-bold uppercase tracking-wider">
-            <ShieldCheck className="w-3.5 h-3.5 text-[#F39322]" />
-            Industrial Coating Applicator Standard · ASTM D 4228 / SSPC PA-2
-          </div>
-          
-          <h1 className="text-2xl md:text-3xl font-black font-rajdhani tracking-wide text-white leading-tight">
-            Spray Painter Qualification Report <span className="text-[#F39322]">Management System</span>
-          </h1>
-          
-          <p className="text-sm text-slate-300 leading-relaxed">
-            Standardized end-to-end digital qualification workflow for industrial spray painting operators.
-            Covers theoretical examinations (45 Qs), 13-point practical checklists, multi-coat application records (Primer, 1st, 2nd, 3rd coats),
-            overcoating intervals, 4-mini-table DFT matrices (Plane, Pipe, T-Beam, Flange), photographic evidence, and official 3-signature approval.
-          </p>
+        {/* Top Capsule Badge */}
+        <div className="inline-block mb-4">
+          <span className="bg-[#3D1D10] text-[#E89A3C] border border-[#6B371F] text-[10px] md:text-[11px] font-mono font-bold px-3.5 py-1 rounded-full uppercase tracking-wider inline-flex items-center gap-1.5">
+            <span className="text-[#F7941D]">✦</span>
+            <span>DIGITAL QUALIFICATION • SPRAY PAINTER • COATING APPLICATION</span>
+          </span>
+        </div>
 
-          {/* Quick Metrics Bar */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3">
-            <div className="bg-white/5 border border-white/10 rounded-xl p-3 backdrop-blur-xs">
-              <span className="text-[10px] uppercase font-bold text-slate-400">Total Records</span>
-              <div className="text-xl font-black font-mono text-white mt-0.5">{totalReports}</div>
-            </div>
-            <div className="bg-white/5 border border-white/10 rounded-xl p-3 backdrop-blur-xs">
-              <span className="text-[10px] uppercase font-bold text-slate-400">Drafts / In-Progress</span>
-              <div className="text-xl font-black font-mono text-amber-400 mt-0.5">{draftReports}</div>
-            </div>
-            <div className="bg-white/5 border border-white/10 rounded-xl p-3 backdrop-blur-xs">
-              <span className="text-[10px] uppercase font-bold text-slate-400">Approved Reports</span>
-              <div className="text-xl font-black font-mono text-emerald-400 mt-0.5">{approvedReports}</div>
-            </div>
-            <div className="bg-white/5 border border-white/10 rounded-xl p-3 backdrop-blur-xs">
-              <span className="text-[10px] uppercase font-bold text-slate-400">Qualification Pass Rate</span>
-              <div className="text-xl font-black font-mono text-[#F8C078] mt-0.5">{passRate}%</div>
-            </div>
+        {/* Title and Logo Row */}
+        <div className="flex flex-col md:flex-row items-center justify-center gap-5 max-w-3xl mx-auto">
+          <div className="w-16 h-16 rounded-2xl bg-white border border-white/20 p-2 shadow-md flex items-center justify-center shrink-0">
+            <img src="/logo-2.png" alt="BG Logo" className="w-full h-full object-contain" />
+          </div>
+
+          <div className="text-center md:text-left">
+            <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
+              Spray Painter Qualification <span className="text-[#F7941D]">&amp; Digital Reporting</span>
+            </h1>
+            <p className="text-xs md:text-[13px] text-slate-300 mt-2 leading-relaxed">
+              A premium industrial qualification platform by BG Group of Paint and Coating Consultant — capture Project &amp; Operator data, Training &amp; Assessment, Blasting + Primer and three coats with real-time DFT/WFT compliance per SSPC PA 2, dew-point monitoring and photo evidence; the system auto-validates limits, then generates MNC-grade printable qualification dossiers.
+            </p>
           </div>
         </div>
+
+        {/* CTA Button */}
+        <div className="mt-6 flex flex-col items-center">
+          <button
+            onClick={handleStartNew}
+            className="bg-gradient-to-r from-[#F7941D] to-[#E8700A] hover:from-[#E8700A] hover:to-[#D97706] text-white font-extrabold text-xs md:text-sm px-8 py-3 rounded-full shadow-[0_4px_16px_rgba(247,148,29,0.35)] flex items-center justify-center gap-2 transition hover:scale-[1.02] cursor-pointer"
+          >
+            <Rocket className="w-4 h-4 fill-white text-white" />
+            <span className="tracking-wide uppercase font-mono">NEW GENERATION</span>
+          </button>
+          <span className="text-[11px] text-[#A37B69] mt-2.5">
+            Start a new qualification — all sheets open for guided data entry
+          </span>
+        </div>
+
       </div>
 
-      {/* One-Click Industrial Presets */}
+      {/* 2. Qualification Overview (Exact match to media_1791304046270.png) */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-[#E87B1E]" />
-            <h2 className="text-sm font-black uppercase tracking-wider text-slate-800 font-rajdhani">
-              One-Click Industry Qualification Presets
+            <span className="w-1 h-4 bg-[#F7941D] rounded-full inline-block"></span>
+            <h2 className="text-sm md:text-base font-bold text-[#1B222C]">
+              Qualification Overview
             </h2>
           </div>
-          <span className="text-xs text-slate-500">Auto-fills Coating System specifications</span>
+          <span className="text-[11px] text-[#94A3B8] font-medium">
+            Saved qualification reports
+          </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {PAINTER_PRESETS.map((preset) => (
-            <div
-              key={preset.id}
-              className="bg-white rounded-xl border border-slate-200 p-4 hover:shadow-md hover:border-[#E87B1E]/60 transition-all flex flex-col justify-between group"
-            >
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-600">
-                    {preset.category}
-                  </span>
-                  <span className="text-[10px] font-mono text-slate-400">{preset.standards}</span>
-                </div>
-                <h3 className="text-sm font-bold text-slate-800 group-hover:text-[#9E1B1E] transition-colors">
-                  {preset.title}
-                </h3>
-                <p className="text-xs text-slate-600 line-clamp-2">
-                  {preset.description}
-                </p>
-                <div className="text-[11px] font-mono text-slate-500 bg-slate-50 p-2 rounded border border-slate-100">
-                  Substrate: <span className="text-slate-700 font-medium">{preset.substrate}</span>
-                </div>
+        {/* 4 Overview Metric Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          
+          {/* Card 1: Total Reports */}
+          <div 
+            onClick={handleGoRegister}
+            className="bg-white rounded-xl border border-[#E6E8EC] border-t-2 border-t-sky-500 p-4 shadow-2xs hover:shadow-sm transition cursor-pointer flex flex-col justify-between"
+          >
+            <div className="flex items-center justify-between">
+              <div className="w-8 h-8 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center">
+                <BarChart2 className="w-4 h-4" />
               </div>
-
-              <button
-                onClick={() => onApplyPreset(preset)}
-                className="mt-3.5 w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-bold text-white bg-gradient-to-r from-[#E87B1E] to-[#9E1B1E] hover:from-[#F39322] hover:to-[#A50021] transition shadow-xs cursor-pointer"
-              >
-                <span>Apply This Preset</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
+              <ChevronRight className="w-4 h-4 text-slate-300" />
             </div>
-          ))}
+            <div className="mt-3">
+              <span className="text-2xl font-extrabold text-[#1B222C] font-mono block">
+                {totalReports}
+              </span>
+              <span className="text-xs font-bold text-[#1B222C] block mt-0.5">
+                Total Reports
+              </span>
+              <span className="text-[10px] text-[#64748B] block">
+                All saved reports
+              </span>
+            </div>
+          </div>
+
+          {/* Card 2: Draft Reports */}
+          <div 
+            onClick={handleGoRegister}
+            className="bg-white rounded-xl border border-[#E6E8EC] border-t-2 border-t-orange-500 p-4 shadow-2xs hover:shadow-sm transition cursor-pointer flex flex-col justify-between"
+          >
+            <div className="flex items-center justify-between">
+              <div className="w-8 h-8 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center">
+                <Edit3 className="w-4 h-4" />
+              </div>
+              <ChevronRight className="w-4 h-4 text-slate-300" />
+            </div>
+            <div className="mt-3">
+              <span className="text-2xl font-extrabold text-[#1B222C] font-mono block">
+                {draftReports}
+              </span>
+              <span className="text-xs font-bold text-[#1B222C] block mt-0.5">
+                Draft Reports
+              </span>
+              <span className="text-[10px] text-[#64748B] block">
+                Work in progress
+              </span>
+            </div>
+          </div>
+
+          {/* Card 3: Approved */}
+          <div 
+            onClick={handleGoRegister}
+            className="bg-white rounded-xl border border-[#E6E8EC] border-t-2 border-t-emerald-500 p-4 shadow-2xs hover:shadow-sm transition cursor-pointer flex flex-col justify-between"
+          >
+            <div className="flex items-center justify-between">
+              <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                <CheckCircle2 className="w-4 h-4" />
+              </div>
+              <ChevronRight className="w-4 h-4 text-slate-300" />
+            </div>
+            <div className="mt-3">
+              <span className="text-2xl font-extrabold text-[#1B222C] font-mono block">
+                {approvedReports}
+              </span>
+              <span className="text-xs font-bold text-[#1B222C] block mt-0.5">
+                Approved
+              </span>
+              <span className="text-[10px] text-[#64748B] block">
+                Validated &amp; signed off
+              </span>
+            </div>
+          </div>
+
+          {/* Card 4: Pending */}
+          <div 
+            onClick={handleGoRegister}
+            className="bg-white rounded-xl border border-[#E6E8EC] border-t-2 border-t-sky-400 p-4 shadow-2xs hover:shadow-sm transition cursor-pointer flex flex-col justify-between"
+          >
+            <div className="flex items-center justify-between">
+              <div className="w-8 h-8 rounded-lg bg-sky-50 text-sky-500 flex items-center justify-center">
+                <Award className="w-4 h-4" />
+              </div>
+              <ChevronRight className="w-4 h-4 text-slate-300" />
+            </div>
+            <div className="mt-3">
+              <span className="text-2xl font-extrabold text-[#1B222C] font-mono block">
+                {pendingReports}
+              </span>
+              <span className="text-xs font-bold text-[#1B222C] block mt-0.5">
+                Pending
+              </span>
+              <span className="text-[10px] text-[#64748B] block">
+                Awaiting approval
+              </span>
+            </div>
+          </div>
+
         </div>
       </div>
 
-      {/* Section Jump Cards */}
+      {/* 3. Quick Actions (Exact match to media_1791304046270.png) */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Layers className="w-4 h-4 text-[#E87B1E]" />
-            <h2 className="text-sm font-black uppercase tracking-wider text-slate-800 font-rajdhani">
-              Qualification Workflow Steps
+            <span className="w-1 h-4 bg-[#F7941D] rounded-full inline-block"></span>
+            <h2 className="text-sm md:text-base font-bold text-[#1B222C]">
+              Quick Actions
             </h2>
           </div>
-          <span className="text-xs text-slate-500">Jump directly to any section</span>
+          <span className="text-[11px] text-[#94A3B8] font-medium">
+            Jump straight in
+          </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-          {cards.map((card) => {
-            const Icon = card.icon;
-            return (
-              <button
-                key={card.id}
-                onClick={() => onNavigate('painter-qualification', card.id)}
-                className="text-left bg-white rounded-xl border border-slate-200 p-4 hover:shadow-md hover:border-[#E87B1E]/70 transition-all flex items-start gap-3.5 group cursor-pointer"
-              >
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#E87B1E]/10 to-[#9E1B1E]/10 text-[#9E1B1E] flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
-                  <Icon className="w-5 h-5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-1 mb-1">
-                    <span className="text-[10px] font-mono font-bold text-[#E87B1E]">{card.step}</span>
-                    <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
-                      {card.badge}
-                    </span>
-                  </div>
-                  <h3 className="text-xs font-bold text-slate-800 group-hover:text-[#9E1B1E] transition-colors truncate">
-                    {card.title}
-                  </h3>
-                  <p className="text-[11px] text-slate-500 line-clamp-2 mt-0.5 leading-snug">
-                    {card.desc}
-                  </p>
-                </div>
-              </button>
-            );
-          })}
+        {/* 4 Action Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          
+          {/* Action 1: New Generation */}
+          <div 
+            onClick={handleStartNew}
+            className="bg-white rounded-xl border border-[#E6E8EC] p-3.5 shadow-2xs hover:shadow-sm hover:border-[#F7941D] transition cursor-pointer flex items-center gap-3 group"
+          >
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#EA580C] to-[#C2410C] text-white flex items-center justify-center shrink-0 shadow-xs">
+              <Edit3 className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <span className="font-bold text-xs text-[#1B222C] group-hover:text-[#F7941D] transition-colors block">
+                New Generation
+              </span>
+              <span className="text-[11px] text-[#64748B] block mt-0.5">
+                Start a fresh qualification
+              </span>
+            </div>
+          </div>
+
+          {/* Action 2: Report Register */}
+          <div 
+            onClick={handleGoRegister}
+            className="bg-white rounded-xl border border-[#E6E8EC] p-3.5 shadow-2xs hover:shadow-sm hover:border-[#F7941D] transition cursor-pointer flex items-center gap-3 group"
+          >
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0284C7] to-[#0369A1] text-white flex items-center justify-center shrink-0 shadow-xs">
+              <Folder className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <span className="font-bold text-xs text-[#1B222C] group-hover:text-[#F7941D] transition-colors block">
+                Report Register
+              </span>
+              <span className="text-[11px] text-[#64748B] block mt-0.5">
+                Open all saved reports
+              </span>
+            </div>
+          </div>
+
+          {/* Action 3: Preview Latest */}
+          <div 
+            onClick={handleGoPreview}
+            className="bg-white rounded-xl border border-[#E6E8EC] p-3.5 shadow-2xs hover:shadow-sm hover:border-[#F7941D] transition cursor-pointer flex items-center gap-3 group"
+          >
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#7C3AED] to-[#6D28D9] text-white flex items-center justify-center shrink-0 shadow-xs">
+              <Eye className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <span className="font-bold text-xs text-[#1B222C] group-hover:text-[#F7941D] transition-colors block">
+                Preview Latest
+              </span>
+              <span className="text-[11px] text-[#64748B] block mt-0.5">
+                Read-only report preview
+              </span>
+            </div>
+          </div>
+
+          {/* Action 4: Print Existing */}
+          <div 
+            onClick={handleGoPrint}
+            className="bg-white rounded-xl border border-[#E6E8EC] p-3.5 shadow-2xs hover:shadow-sm hover:border-[#F7941D] transition cursor-pointer flex items-center gap-3 group"
+          >
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#16A34A] to-[#15803D] text-white flex items-center justify-center shrink-0 shadow-xs">
+              <Printer className="w-5 h-5 text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5">
+                <span className="font-bold text-xs text-[#1B222C] group-hover:text-[#F7941D] transition-colors truncate">
+                  Print Existing
+                </span>
+                <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-amber-500/20 text-[#D97706]">
+                  PRO
+                </span>
+              </div>
+              <span className="text-[11px] text-[#64748B] block mt-0.5 truncate">
+                Excel-format printable view
+              </span>
+            </div>
+          </div>
+
         </div>
       </div>
+
+      {/* 4. Dark Corporate Footer (Exact match to media_1791304046270.png) */}
+      <footer className="mt-10 rounded-2xl bg-[#141822] text-white py-6 px-6 text-center shadow-lg border border-[#232B3C] space-y-2">
+        <div className="flex items-center justify-center gap-2">
+          <div className="w-5 h-5 rounded bg-white p-0.5 shrink-0 flex items-center justify-center">
+            <img src="/logo-2.png" alt="BG Logo" className="w-full h-full object-contain" />
+          </div>
+          <span className="font-bold text-xs md:text-sm tracking-wide text-white">
+            BG GROUP • PAINT &amp; COATING CONSULTANT
+          </span>
+        </div>
+        <p className="text-[11px] text-[#8F9CAE]">
+          Corrosion Management · Surface Treatment · Coating Engineering Destination
+        </p>
+        <p className="text-[10px] text-slate-400">
+          © Powered by <span className="text-[#F7941D] font-medium">BG Group of Paint and Coating Consultant</span>
+        </p>
+        <div className="pt-1 text-[11px] text-[#F7941D] flex flex-wrap items-center justify-center gap-x-4 gap-y-1 font-mono">
+          <span>support@bgcoating.com</span>
+          <span className="text-slate-600 hidden sm:inline">•</span>
+          <span>www.bgcoating.com</span>
+          <span className="text-slate-600 hidden sm:inline">•</span>
+          <span>+91 99258 10408</span>
+        </div>
+      </footer>
 
     </div>
   );

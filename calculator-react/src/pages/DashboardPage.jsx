@@ -1,553 +1,839 @@
-import React, { useState, useEffect, useRef } from 'react';
+// src/pages/DashboardPage.jsx
+import React, { useState, useEffect } from 'react';
 import { 
   Calculator, 
-  FileCode2, 
-  BookOpen, 
+  FileText, 
+  ClipboardCheck, 
+  Coins, 
+  FileCheck2, 
+  Users, 
+  Building2, 
+  GraduationCap, 
   Sparkles, 
   ArrowRight, 
-  ShieldCheck, 
+  ChevronRight, 
+  BookOpen, 
+  Play, 
+  LifeBuoy, 
+  MessageSquare, 
+  Clock, 
+  Folder, 
+  Layers, 
+  Eye, 
   CheckCircle2, 
-  Plus, 
-  Building2, 
   Search, 
-  ExternalLink,
-  Layers,
-  FileCheck,
-  Coins,
-  Users,
-  Award,
-  Paintbrush,
-  Flame,
-  ClipboardCheck,
-  GraduationCap,
-  HardHat,
-  ChevronLeft,
-  ChevronRight,
-  Play,
-  Pause,
-  Sliders,
-  Maximize2
+  X, 
+  Send, 
+  Bot, 
+  TrendingUp, 
+  FileSpreadsheet, 
+  ShieldCheck, 
+  HelpCircle,
+  Video
 } from 'lucide-react';
 
 export default function DashboardPage({ setActivePage }) {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterType, setFilterType] = useState('all');
-
-  // Carousel State
-  const [currentSlide, setCurrentSlide] = useState(0);
-  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
-
-  const heroSlides = [
-    {
-      id: 'blast-setup',
-      title: 'Industrial Surface Preparation & Abrasive Blast Setup',
-      category: 'Surface Prep · ISO 8501-1 SA 2½',
-      subtitle: 'Compressed air delivery, hypodermic nozzle pressure check, and GMA garnet media recovery systems.',
-      image: '/01__Main_BLAST-SETUP-image.jpg',
-      badge: 'Standard: ISO 8501-1',
-      metric: 'Rz 65–85 µm',
-      targetModule: 'coating-calculator'
-    },
-    {
-      id: 'refinery-vessel',
-      title: 'Storage Tank Shell & Internal Vessel Lining',
-      category: 'Refinery & Petrochem · Asset Integrity',
-      subtitle: 'High-build solvent-free amine-cured epoxy lining engineered for aggressive hydrocarbon immersion.',
-      image: '/R2_1_Refinery_Vessel.jpg',
-      badge: 'ISO 12944 Im2 / Im4',
-      metric: 'DFT 450 µm',
-      targetModule: 'specification-reading'
-    },
-    {
-      id: 'structural-jacket',
-      title: 'Offshore Platform Jacket & Heavy Structural Steel Protection',
-      category: 'Marine / Offshore · Atmospheric CX',
-      subtitle: 'Inorganic zinc silicate primer + high-build epoxy intermediate + aliphatic polyurethane topcoat.',
-      image: '/Front_Page.jpg',
-      badge: '25-Yr Durability (VH)',
-      metric: '3-Coat System',
-      targetModule: 'coating-procedure'
-    },
-    {
-      id: 'blast-booth',
-      title: 'Automated Blasting & Spray Coating Enclosure',
-      category: 'Shop Painting Facility · Environmental Control',
-      subtitle: 'Continuous abrasive classification, dust extraction ventilation, and climate-controlled drying.',
-      image: '/R2___1_Blasting_and_Painting_Booth.jpg',
-      badge: 'Controlled Environment',
-      metric: 'RH < 80% · Dew Pt +3°C',
-      targetModule: 'manpower-estimation'
-    },
-    {
-      id: 'inspection-survey',
-      title: 'Coating Survey & Adhesion Verification (CIR)',
-      category: 'QA / QC Field Testing · ASTM D4541 / D3359',
-      subtitle: 'SSPC-PA 2 90/10 gauge rule verification, Bresle salt contamination, and hydraulic pull-off testing.',
-      image: '/01__Coating_Survey_and_Corrosion_Assessment-transformed.png',
-      badge: 'AMPP / FROSIO Level 3',
-      metric: 'Adhesion > 14 MPa',
-      targetModule: 'inspection-reporting'
-    }
-  ];
-
-  // Auto-play carousel
-  useEffect(() => {
-    if (!isAutoPlaying) return;
-    const interval = setInterval(() => {
-      setCurrentSlide(prev => (prev + 1) % heroSlides.length);
-    }, 5500);
-    return () => clearInterval(interval);
-  }, [isAutoPlaying, heroSlides.length]);
-
-  const handlePrevSlide = (e) => {
-    e.stopPropagation();
-    setCurrentSlide(prev => (prev === 0 ? heroSlides.length - 1 : prev - 1));
-  };
-
-  const handleNextSlide = (e) => {
-    e.stopPropagation();
-    setCurrentSlide(prev => (prev + 1) % heroSlides.length);
-  };
-
-  const metricCards = [
-    { title: 'Project Estimations', value: '1,420', subtitle: 'Saved in project history', change: '+18% this month', icon: Calculator, color: 'amber' },
-    { title: 'Certified Operators', value: '312', subtitle: 'Blasters, Painters & TSA', change: 'OQR / PQR Active', icon: Award, color: 'orange' },
-    { title: 'Standards Library', value: '45+', subtitle: 'ISO 12944, NACE, SSPC, ASTM', change: 'Fully Verified', icon: BookOpen, color: 'sky' },
-    { title: 'Approved Contractors', value: '24', subtitle: 'Prequalified Tier 1/2', change: 'CMS Active', icon: Building2, color: 'emerald' }
-  ];
-
-  const recentCalculations = [
-    { id: 'CALC-9045', project: 'Mundra LNG Tank Farm Coating', type: 'Tank Shell', inputs: 'Dia 24.0m × H 15.0m', area: '1,130.97 m²', paint: '288.75 L', date: '2026-08-29 19:40', status: 'Approved' },
-    { id: 'CALC-9044', project: 'FPSO Turret Process Piping Spools', type: 'Pipe Spool', inputs: 'OD 323.9mm × L 12.0m (25 Qty)', area: '305.25 m²', paint: '78.10 L', date: '2026-08-29 18:15', status: 'Logged' },
-    { id: 'CALC-9043', project: 'Dahej Petrochemical Heavy Beams', type: 'Structural Steel', inputs: 'Tonnage 450 MT (Med Norm)', area: '11,250.00 m²', paint: '2,880.00 L', date: '2026-08-29 15:30', status: 'Logged' },
-    { id: 'CALC-9042', project: 'Hazira Offshore Platform Jacket', type: 'Abrasive Blasting', inputs: 'Area 2,400 m² (Garnet GMA)', area: '2,400.00 m²', paint: '43.20 MT Media', date: '2026-08-29 14:10', status: 'Logged' },
-    { id: 'CALC-9041', project: 'Surat Refinery Storage Tank T-102', type: 'Tank Roof', inputs: 'Conical Roof Dia 18.0m', area: '274.07 m²', paint: '70.10 L', date: '2026-08-29 11:25', status: 'Logged' }
-  ];
-
-  const filteredLogs = recentCalculations.filter(c => {
-    const matchesSearch = c.project.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          c.id.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesType = filterType === 'all' || c.type.toLowerCase().replace(' ', '_') === filterType.toLowerCase();
-    return matchesSearch && matchesType;
+  // Dynamic Date and Greeting
+  const [greetingInfo, setGreetingInfo] = useState({
+    greeting: 'GOOD MORNING',
+    dateStr: 'WEDNESDAY, 5 AUGUST 2026'
   });
 
-  const coreModules = [
+  // AI Assistant Modal State
+  const [aiModalOpen, setAiModalOpen] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [aiMessages, setAiMessages] = useState([
+    {
+      sender: 'ai',
+      text: 'Hello! I am your BG CoatingOS™ AI Assistant. Ask me anything about coating specifications, DFT limits per SSPC-PA 2, dew point margins, or blast profile criteria.'
+    }
+  ]);
+
+  // Ecosystem Overview Modal State
+  const [ecosystemModalOpen, setEcosystemModalOpen] = useState(false);
+
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      const hours = now.getHours();
+      let greeting = 'GOOD MORNING';
+      if (hours >= 12 && hours < 17) {
+        greeting = 'GOOD AFTERNOON';
+      } else if (hours >= 17) {
+        greeting = 'GOOD EVENING';
+      }
+
+      const options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+      const dateFormatted = now.toLocaleDateString('en-US', options).toUpperCase();
+      setGreetingInfo({
+        greeting,
+        dateStr: dateFormatted
+      });
+    };
+    updateTime();
+
+    const handleOpenAi = () => setAiModalOpen(true);
+    const handleOpenEcosystem = () => setEcosystemModalOpen(true);
+    window.addEventListener('bg_open_ai_modal', handleOpenAi);
+    window.addEventListener('bg_open_ecosystem_modal', handleOpenEcosystem);
+    return () => {
+      window.removeEventListener('bg_open_ai_modal', handleOpenAi);
+      window.removeEventListener('bg_open_ecosystem_modal', handleOpenEcosystem);
+    };
+  }, []);
+
+  const handleNav = (targetPage) => {
+    if (setActivePage) {
+      setActivePage(targetPage);
+    }
+  };
+
+  const handleSendAi = (e) => {
+    e.preventDefault();
+    if (!aiPrompt.trim()) return;
+    const userMsg = aiPrompt.trim();
+    setAiMessages(prev => [...prev, { sender: 'user', text: userMsg }]);
+    setAiPrompt('');
+
+    // Simulated Intelligent Assistant Response
+    setTimeout(() => {
+      let response = `Per ISO 8502-4 and SSPC regulations, ensure steel surface temperature is at least 3°C above the dew point before coating application.`;
+      if (userMsg.toLowerCase().includes('dft') || userMsg.toLowerCase().includes('thickness')) {
+        response = `SSPC-PA 2 Level 3 rule: Spot readings must average between 80% to 120% of specified NDFT. No individual gauge reading can fall below 80% minimum.`;
+      } else if (userMsg.toLowerCase().includes('blast') || userMsg.toLowerCase().includes('surface')) {
+        response = `For abrasive blasting per ISO 8501-1 Sa 2.5 (Near-White Metal), surface profile anchor pattern should satisfy 50–75 µm per ASTM D4417 Method B/C.`;
+      }
+      setAiMessages(prev => [...prev, { sender: 'ai', text: response }]);
+    }, 600);
+  };
+
+  // Organogram Modules Data matching media_1791308020542.png
+  const organogramModules = [
     {
       id: 'coating-calculator',
-      title: 'Coating Calculator Suite',
-      tag: '44+ Tools',
-      desc: 'Surface area take-off, paint & abrasive volume, WFT/DFT, dead volume loss, TSA, PFP, and life cycle cost.',
+      title: 'Coating Calculator',
+      subtitle: 'Smart calculators for accurate engineering results.',
       icon: Calculator,
-      color: 'text-[#F7941D] bg-amber-50 border-amber-100',
-      action: 'Launch Calculator Hub'
+      color: 'blue',
+      badgeBg: 'bg-blue-600',
+      badgeBorder: 'border-blue-500',
+      lineColor: 'border-blue-500',
+      bullets: [
+        'Area Calculator',
+        'Paint Consumption',
+        'WFT / DFT Calculator',
+        'Cost Estimation',
+        'Surface Roughness',
+        'Unit Conversion'
+      ],
+      target: 'coating-calculator'
     },
     {
       id: 'specification-reading',
-      title: 'Specification Reading Engine',
-      tag: 'MNC Spec Sheet',
-      desc: 'MNC-grade coating design input sheets, multi-coat paint stack builder, ISO 12944 corrosivity, and client A4 export.',
-      icon: FileCode2,
-      color: 'text-emerald-600 bg-emerald-50 border-emerald-100',
-      action: 'Open Spec Engine'
+      title: 'Specification Reading',
+      subtitle: 'Read, interpret & manage coating specifications.',
+      icon: FileText,
+      color: 'cyan',
+      badgeBg: 'bg-cyan-600',
+      badgeBorder: 'border-cyan-500',
+      lineColor: 'border-cyan-500',
+      bullets: [
+        'Specification Upload',
+        'MNC Specifications',
+        'Project Standards',
+        'Clause Library',
+        'Search & Filter',
+        'Revision History'
+      ],
+      target: 'specification-reading'
     },
     {
       id: 'coating-procedure',
-      title: 'Coating Procedure (ITP)',
-      tag: 'Method Statement',
-      desc: 'Surface preparation & painting method statements, environmental control gates, and Inspection & Test Plans (ITP).',
-      icon: FileCheck,
-      color: 'text-[#D97706] bg-orange-50 border-orange-100',
-      action: 'Author Procedure'
-    },
-    {
-      id: 'unit-rate-estimation',
-      title: 'Quick Unit-Rate Estimation',
-      tag: 'Commercial Bid',
-      desc: 'Calculate all-inclusive per-square-metre contractor unit rates incorporating surface prep, paint stacks, access, and margins.',
-      icon: Coins,
-      color: 'text-amber-700 bg-amber-50 border-amber-100',
-      action: 'Open Unit-Rate Bid'
-    },
-    {
-      id: 'manpower-estimation',
-      title: 'Manpower Project Estimator',
-      tag: 'Crew & Machinery',
-      desc: 'Blasting and painting daily productivity, crew sizing, shift schedules, air compressor rentals, and manpower budgets.',
-      icon: Users,
-      color: 'text-purple-700 bg-purple-50 border-purple-100',
-      action: 'Calculate Workforce'
-    },
-    {
-      id: 'blaster-qualification',
-      title: 'Blaster Qualification (OQR)',
-      tag: 'ISO 8501 / 8503',
-      desc: 'Operator testing, hypodermic nozzle pressure check, surface profile Rz evaluation, and certificate generation.',
-      icon: Award,
-      color: 'text-orange-600 bg-orange-50 border-orange-100',
-      action: 'Evaluate Blaster'
-    },
-    {
-      id: 'painter-qualification',
-      title: 'Painter Qualification (PQR)',
-      tag: 'SSPC-PA 2',
-      desc: 'Airless spray painter evaluation, SSPC-PA 2 DFT distribution, cross-cut & pull-off adhesion testing, and PQR cards.',
-      icon: Paintbrush,
-      color: 'text-rose-600 bg-rose-50 border-rose-100',
-      action: 'Evaluate Painter'
-    },
-    {
-      id: 'tsa-qualification',
-      title: 'TSA Operator Qualification',
-      tag: 'ISO 2063 / NORSOK',
-      desc: 'Twin-Wire Arc thermal spray operator qualification, 180° mandrel bend test, and ASTM D4541 adhesion evaluation.',
-      icon: Flame,
-      color: 'text-amber-600 bg-amber-50 border-amber-100',
-      action: 'Evaluate TSA Operator'
-    },
-    {
-      id: 'inspection-reporting',
-      title: 'Inspection & Adhesion (CIR)',
-      tag: 'Daily Report',
-      desc: 'Daily psychrometric logs, multi-coat DFT distributions, ASTM D4541 hydraulic pull-off adhesion, and A4 CIR export.',
+      title: 'Coating Procedure',
+      subtitle: 'Create, manage & approve painting procedures.',
       icon: ClipboardCheck,
-      color: 'text-emerald-700 bg-emerald-50 border-emerald-100',
-      action: 'Log Daily CIR'
+      color: 'emerald',
+      badgeBg: 'bg-emerald-600',
+      badgeBorder: 'border-emerald-500',
+      lineColor: 'border-emerald-500',
+      bullets: [
+        'Procedure Templates',
+        'Step-by-Step Builder',
+        'Revision Control',
+        'Workflow Approval',
+        'Coating System Annexures',
+        'Procedure Register'
+      ],
+      target: 'coating-procedure'
     },
     {
-      id: 'academy-lms',
-      title: 'Digital Coating Academy LMS',
-      tag: 'LMS Academy',
-      desc: 'Accredited training curricula, exam simulators for NACE/AMPP CIP & FROSIO, and student certification.',
-      icon: GraduationCap,
-      color: 'text-sky-600 bg-sky-50 border-sky-100',
-      action: 'Enter Academy'
+      id: 'estimation',
+      title: 'Estimation',
+      subtitle: 'Quick & detailed estimation with cost breakdown.',
+      icon: Coins,
+      color: 'indigo',
+      badgeBg: 'bg-indigo-600',
+      badgeBorder: 'border-indigo-500',
+      lineColor: 'border-indigo-500',
+      bullets: [
+        'Quick Estimation',
+        'Detailed Estimation',
+        'Material Estimation',
+        'Manpower Estimation',
+        'Equipment Estimation',
+        'Cost Summary'
+      ],
+      target: 'unit-rate-estimation'
+    },
+    {
+      id: 'documentation-report',
+      title: 'Documentation / Report',
+      subtitle: 'Digital reports, records & data management made easy.',
+      icon: Folder,
+      color: 'amber',
+      badgeBg: 'bg-amber-500',
+      badgeBorder: 'border-amber-400',
+      lineColor: 'border-amber-500',
+      bullets: [
+        'Inspection Reports',
+        'Daily Reports',
+        'Quality Records',
+        'Image Management',
+        'Document Library',
+        'Export & Share'
+      ],
+      target: 'inspection-reporting'
     },
     {
       id: 'contractor-management',
-      title: 'Contractor Directory (CMS)',
-      tag: 'Vendor CMS',
-      desc: 'Prequalification directory, vendor safety indices, certified workforce roster, and site allocation management.',
-      icon: Building2,
-      color: 'text-indigo-600 bg-indigo-50 border-indigo-100',
-      action: 'Manage Contractors'
+      title: 'Contractor Management Module',
+      subtitle: 'Manage contractors, performance & compliance.',
+      icon: Users,
+      color: 'blue',
+      badgeBg: 'bg-blue-600',
+      badgeBorder: 'border-blue-500',
+      lineColor: 'border-blue-500',
+      bullets: [
+        'Contractor Register',
+        'Performance Tracking',
+        'Competency Matrix',
+        'Document Verification',
+        'Compliance Status',
+        'Rating & Evaluation'
+      ],
+      target: 'contractor-management'
     },
     {
-      id: 'knowledge',
-      title: 'Standards Reference Library',
-      tag: 'ISO / NACE',
-      desc: 'Access SSPC-VIS 1 visual standards, ISO 8501-1 blast grades, SSPC-PA 2 gauge rules, and NACE inspection protocols.',
-      icon: BookOpen,
-      color: 'text-blue-600 bg-blue-50 border-blue-100',
-      action: 'Browse Library'
+      id: 'training-certification',
+      title: 'Training & Certification',
+      subtitle: 'Learn, get certified & grow your expertise.',
+      icon: GraduationCap,
+      color: 'rose',
+      badgeBg: 'bg-rose-500',
+      badgeBorder: 'border-rose-400',
+      lineColor: 'border-rose-500',
+      bullets: [
+        'Training Courses',
+        'Online Learning',
+        'Assessments',
+        'Certification',
+        'Progress Tracking',
+        'Certificate Library'
+      ],
+      target: 'academy-lms'
+    },
+    {
+      id: 'ai-assistant',
+      title: 'AI Assistant',
+      subtitle: 'AI powered intelligence for coating professionals.',
+      icon: Sparkles,
+      color: 'purple',
+      badgeBg: 'bg-purple-600',
+      badgeBorder: 'border-purple-500',
+      lineColor: 'border-purple-500',
+      bullets: [
+        'Ask Anything',
+        'DFT Calculator AI',
+        'Procedure Generator',
+        'Report Generator',
+        'Image Analysis',
+        'Voice Commands'
+      ],
+      target: 'ai-modal'
     }
   ];
 
-  const slide = heroSlides[currentSlide];
-
   return (
-    <div className="space-y-8 max-w-7xl mx-auto pb-12 animate-in fade-in duration-200">
+    <div className="space-y-6 max-w-[1440px] mx-auto pb-16 font-sans text-slate-800 animate-in fade-in duration-200">
       
-      {/* 1. Top Workspace Greeting & Header Card */}
-      <div className="bg-gradient-to-r from-[#14181F] via-[#1E2530] to-[#14181F] border border-[#2A3340] border-b-3 border-b-[#E87B1E] rounded-2xl p-6 md:p-8 shadow-xl text-white relative overflow-hidden">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-3 max-w-2xl">
-            <div className="inline-flex items-center gap-2 bg-[#FFF4E3]/15 border border-[#F3D2A0]/30 text-[#F39322] text-xs font-mono px-3 py-1 rounded-full uppercase tracking-wider">
-              <Sparkles className="w-3.5 h-3.5 text-[#E87B1E]" />
-              <span>BG CoatingOS™ — Digital Workspace for Coating Professionals</span>
-            </div>
-            
-            <h2 className="text-2xl md:text-3xl font-extrabold text-white leading-tight font-rajdhani tracking-wide">
-              Good day, Prakash Ramavat <span className="text-slate-400 font-normal text-base md:text-lg">· Principal Consultant</span>
-            </h2>
-
-            <p className="text-xs text-slate-300 leading-relaxed font-sans">
-              Unified surface treatment, protective coatings, corrosion engineering, QA/QC qualification, and commercial estimation operating system aligned with ISO 12944, SSPC, ASTM, and NACE/AMPP frameworks.
-            </p>
+      {/* ========================================================
+          1. HEADER GREETING BANNER
+          Matches media_1791308020542.png
+          ======================================================== */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-1">
+        <div className="space-y-1.5">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">
+              Welcome to BG CoatingOS™
+            </h1>
+            <span className="bg-[#FFF5EA] text-[#D97706] border border-[#FDE3C7] text-[10px] md:text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-md inline-flex items-center uppercase tracking-wider">
+              {greetingInfo.greeting} · {greetingInfo.dateStr}
+            </span>
           </div>
-
-          <div className="flex flex-wrap md:flex-col gap-3 shrink-0">
-            <button
-              onClick={() => setActivePage('coating-calculator')}
-              className="bg-gradient-to-r from-[#E87B1E] to-[#9E1B1E] hover:from-[#F39322] hover:to-[#E87B1E] text-white font-rajdhani font-bold px-5 py-2.5 rounded-xl text-xs uppercase tracking-wider transition shadow-md flex items-center justify-center gap-2 group cursor-pointer"
-            >
-              <Plus className="w-4 h-4" />
-              <span>+ New Estimation</span>
-              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-            </button>
-
-            <button
-              onClick={() => setActivePage('specification-reading')}
-              className="bg-[#1E2530] hover:bg-[#2A3340] text-white font-rajdhani font-bold px-5 py-2.5 rounded-xl text-xs uppercase tracking-wider border border-[#39455A] transition flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <FileCode2 className="w-4 h-4 text-emerald-400" />
-              <span>Spec Design Sheet</span>
-            </button>
-          </div>
+          <p className="text-xs md:text-[13px] text-slate-500 max-w-4xl leading-relaxed">
+            Complete digital operating system for coating engineering, surface treatment, corrosion protection, inspection, estimation, planning and asset integrity management.
+          </p>
         </div>
+
+        <button
+          onClick={() => setEcosystemModalOpen(true)}
+          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-amber-300 bg-amber-50/70 hover:bg-amber-100 text-[#D97706] text-xs font-semibold shadow-2xs transition cursor-pointer shrink-0"
+        >
+          <Eye className="w-3.5 h-3.5 text-[#D97706]" />
+          <span>View Ecosystem Overview</span>
+        </button>
       </div>
 
-      {/* 2. Operations & Project Showcase Image Carousel (Refined & Seamless) */}
-      <div 
-        className="relative rounded-3xl overflow-hidden bg-slate-950 border border-slate-200/80 shadow-md group"
-        onMouseEnter={() => setIsAutoPlaying(false)}
-        onMouseLeave={() => setIsAutoPlaying(true)}
-      >
-        {/* Main Slide Presentation Container */}
-        <div className="relative h-64 sm:h-80 md:h-96 w-full overflow-hidden">
-          <img 
-            src={slide.image} 
-            alt={slide.title}
-            className="w-full h-full object-cover object-center transition-all duration-700 ease-out transform scale-100 group-hover:scale-105"
-          />
-
-          {/* Deep Contrast Multi-Stop Gradient Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/80 via-slate-950/20 to-transparent" />
-
-          {/* Top Pill Controls */}
-          <div className="absolute top-4 left-4 right-4 flex items-center justify-between z-10">
-            <div className="flex items-center gap-2">
-              <span className="bg-[#F7941D] text-slate-950 font-mono font-bold text-[10px] uppercase px-2.5 py-1 rounded-full shadow-xs">
-                {slide.badge}
-              </span>
-              <span className="hidden sm:inline-block bg-slate-900/80 backdrop-blur-xs text-slate-200 border border-white/15 font-mono text-[10px] px-2.5 py-1 rounded-full">
-                {slide.category}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-mono text-[10px] px-2 py-0.5 rounded-md font-bold">
-                {slide.metric}
-              </span>
-              <button
-                onClick={() => setIsAutoPlaying(prev => !prev)}
-                className="p-1.5 rounded-full bg-slate-900/70 hover:bg-slate-900 text-slate-300 border border-white/10 transition cursor-pointer"
-                title={isAutoPlaying ? "Pause Carousel" : "Play Carousel"}
-              >
-                {isAutoPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
-              </button>
-            </div>
-          </div>
-
-          {/* Bottom Captions & Quick Launch CTA */}
-          <div className="absolute bottom-4 left-4 right-4 md:bottom-6 md:left-8 md:right-8 flex flex-col md:flex-row md:items-end justify-between gap-4 z-10">
-            <div className="space-y-1.5 max-w-2xl">
-              <h3 className="text-lg md:text-2xl font-bold text-white leading-tight font-['Sora',sans-serif] drop-shadow-sm">
-                {slide.title}
-              </h3>
-              <p className="text-xs text-slate-300 line-clamp-2 max-w-xl leading-relaxed">
-                {slide.subtitle}
-              </p>
-            </div>
-
-            <button
-              onClick={() => setActivePage(slide.targetModule)}
-              className="self-start md:self-auto bg-white hover:bg-amber-50 text-slate-900 font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-2 transition shadow-md cursor-pointer shrink-0 font-mono"
-            >
-              <span>Explore Module</span>
-              <ArrowRight className="w-3.5 h-3.5 text-[#F7941D]" />
-            </button>
-          </div>
-
-          {/* Previous Slide Button */}
-          <button
-            onClick={handlePrevSlide}
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-slate-900/60 hover:bg-slate-900 text-white border border-white/20 flex items-center justify-center transition-all opacity-80 hover:opacity-100 hover:scale-110 z-20 cursor-pointer shadow-lg"
-            aria-label="Previous Slide"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-
-          {/* Next Slide Button */}
-          <button
-            onClick={handleNextSlide}
-            className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-slate-900/60 hover:bg-slate-900 text-white border border-white/20 flex items-center justify-center transition-all opacity-80 hover:opacity-100 hover:scale-110 z-20 cursor-pointer shadow-lg"
-            aria-label="Next Slide"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </button>
+      {/* ========================================================
+          2. COMPLETE MODULE ORGANOGRAM
+          Matches media_1791308020542.png
+          ======================================================== */}
+      <div className="bg-white border border-slate-200 rounded-3xl p-6 md:p-8 shadow-xs space-y-6 overflow-hidden">
+        
+        {/* Header Label */}
+        <div>
+          <h2 className="text-xs font-mono font-bold text-slate-700 uppercase tracking-widest">
+            BG COATING OS – COMPLETE MODULE ORGANOGRAM
+          </h2>
+          <p className="text-[11px] text-slate-400 font-mono mt-0.5">
+            One Platform. All Coating Operations.
+          </p>
         </div>
 
-        {/* Carousel Bottom Navigation Dots & Indicators */}
-        <div className="bg-slate-900/90 border-t border-white/10 px-4 py-2.5 flex items-center justify-between">
-          <div className="text-[11px] font-mono text-slate-400">
-            Featured Operations Showcase ({currentSlide + 1} / {heroSlides.length})
-          </div>
-
-          <div className="flex items-center gap-1.5">
-            {heroSlides.map((s, idx) => (
-              <button
-                key={s.id}
-                onClick={() => setCurrentSlide(idx)}
-                className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
-                  currentSlide === idx 
-                    ? 'w-6 bg-[#F7941D]' 
-                    : 'w-2 bg-slate-700 hover:bg-slate-500'
-                }`}
-                aria-label={`Go to slide ${idx + 1}`}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* 3. Key Metric Cards Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {metricCards.map((m, idx) => {
-          const Icon = m.icon;
-          return (
-            <div key={idx} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="p-2 rounded-xl bg-slate-100 text-slate-700">
-                  <Icon className="w-4 h-4 text-[#F7941D]" />
-                </div>
-                <span className="text-[10px] font-mono bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full font-bold">
-                  {m.change}
+        {/* Central Tree Diagram Container */}
+        <div className="relative pt-2">
+          
+          {/* ROOT CENTRAL NODE */}
+          <div className="flex justify-center mb-8 relative z-10">
+            <div className="bg-white border-2 border-[#F7941D] rounded-2xl px-5 py-3 shadow-md flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#F7941D] text-white flex items-center justify-center font-bold text-lg shadow-sm">
+                <img
+                  src="/logo-2.png"
+                  alt="BG Logo"
+                  className="w-7 h-7 object-contain brightness-0 invert"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.style.display = 'none';
+                  }}
+                />
+              </div>
+              <div className="text-left leading-tight">
+                <span className="font-extrabold text-sm md:text-base text-slate-900 tracking-wider font-mono block">
+                  BG COATING OS
+                </span>
+                <span className="text-[10px] text-slate-400 font-medium block">
+                  Complete Digital Operating System
                 </span>
               </div>
-              <div>
-                <span className="text-[11px] font-mono text-slate-500 uppercase tracking-wider block">{m.title}</span>
-                <div className="text-2xl font-extrabold text-slate-900 mt-0.5 font-['Sora',sans-serif]">{m.value}</div>
-              </div>
-              <p className="text-xs text-slate-500 pt-1 border-t border-slate-100">{m.subtitle}</p>
             </div>
-          );
-        })}
-      </div>
+          </div>
 
-      {/* 4. Workspace Module Launchers Grid (All 11 Modules) */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between border-b border-[#D8DEE5] pb-2">
-          <h3 className="text-sm font-extrabold text-[#1B222C] font-rajdhani uppercase tracking-wider flex items-center gap-2">
-            <span className="text-[#E87B1E] font-mono">|</span> CoatingOS Digital Workspace Modules
-          </h3>
-          <span className="text-[10px] text-[#7E8B99] font-mono">11 Live Production Modules</span>
+          {/* SVG CONNECTOR LINES (Connecting Central Node to all 8 Module Columns) */}
+          <div className="hidden lg:block absolute top-[52px] left-0 right-0 h-16 pointer-events-none">
+            {/* Center vertical stem down from root */}
+            <div className="absolute left-1/2 -translate-x-1/2 top-0 h-8 w-[2px] bg-slate-300" />
+            
+            {/* Horizontal cross bar extending across all columns */}
+            <div className="absolute top-8 left-[6.25%] right-[6.25%] h-[2px] bg-slate-300" />
+            
+            {/* 8 Vertical drops into each card */}
+            <div className="absolute top-8 left-[6.25%] h-8 w-[2px] bg-slate-300" />
+            <div className="absolute top-8 left-[18.75%] h-8 w-[2px] bg-slate-300" />
+            <div className="absolute top-8 left-[31.25%] h-8 w-[2px] bg-slate-300" />
+            <div className="absolute top-8 left-[43.75%] h-8 w-[2px] bg-slate-300" />
+            <div className="absolute top-8 left-[56.25%] h-8 w-[2px] bg-slate-300" />
+            <div className="absolute top-8 left-[68.75%] h-8 w-[2px] bg-slate-300" />
+            <div className="absolute top-8 left-[81.25%] h-8 w-[2px] bg-slate-300" />
+            <div className="absolute top-8 left-[93.75%] h-8 w-[2px] bg-slate-300" />
+          </div>
+
+          {/* 8 COLUMNS GRID */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 relative z-10 pt-2">
+            {organogramModules.map((mod) => {
+              const Icon = mod.icon;
+              return (
+                <div
+                  key={mod.id}
+                  onClick={() => {
+                    if (mod.target === 'ai-modal') {
+                      setAiModalOpen(true);
+                    } else {
+                      handleNav(mod.target);
+                    }
+                  }}
+                  className="bg-white border border-slate-200/90 rounded-2xl p-3.5 shadow-2xs hover:shadow-md hover:border-amber-400/80 transition-all flex flex-col justify-between group cursor-pointer text-left"
+                >
+                  <div>
+                    {/* Module Icon Badge */}
+                    <div className="flex justify-center mb-3">
+                      <div className={`w-9 h-9 rounded-xl ${mod.badgeBg} text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform`}>
+                        <Icon className="w-5 h-5 text-white stroke-[2]" />
+                      </div>
+                    </div>
+
+                    {/* Title */}
+                    <h3 className="font-bold text-xs text-slate-900 group-hover:text-[#F7941D] text-center leading-tight mb-1 transition-colors">
+                      {mod.title}
+                    </h3>
+
+                    {/* Subtitle */}
+                    <p className="text-[10px] text-slate-500 text-center leading-relaxed mb-3 min-h-[28px]">
+                      {mod.subtitle}
+                    </p>
+
+                    {/* Bullet Points */}
+                    <ul className="space-y-1.5 text-[10px] text-slate-600 border-t border-slate-100 pt-2.5">
+                      {mod.bullets.map((b, idx) => (
+                        <li key={idx} className="flex items-start gap-1.5 leading-snug">
+                          <span className="text-slate-400 shrink-0">•</span>
+                          <span className="truncate">{b}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Bottom Link Button */}
+                  <div className="pt-3 mt-2 border-t border-slate-100/80 text-center">
+                    <span className="text-[10px] font-semibold text-slate-400 group-hover:text-[#F7941D] inline-flex items-center gap-1 transition-colors">
+                      + More Tools
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {coreModules.map((mod) => {
-            const Icon = mod.icon;
-            return (
-              <div 
-                key={mod.id}
-                onClick={() => setActivePage(mod.id)}
-                className="bg-white hover:border-[#F3D2A0] border border-[#D8DEE5] p-6 rounded-2xl cursor-pointer transition shadow-[0_2px_8px_rgba(20,24,32,0.06)] hover:shadow-md space-y-4 group hover:-translate-y-0.5"
-              >
-                <div className="flex items-center justify-between">
-                  <div className={`p-3 rounded-xl border group-hover:scale-105 transition ${mod.color}`}>
-                    <Icon className="w-6 h-6" />
-                  </div>
-                  <span className="text-[10px] font-mono bg-[#FFF4E3] text-[#E87B1E] border border-[#F3D2A0] px-2 py-0.5 rounded-md font-bold">
-                    {mod.tag}
-                  </span>
+      </div>
+
+      {/* ========================================================
+          3. PLATFORM SUMMARY, RECENT ACTIVITY & QUICK ACCESS
+          Matches media_1791308020542.png
+          ======================================================== */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        
+        {/* CARD 1: PLATFORM SUMMARY */}
+        <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                <span>Platform Summary</span>
+                <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+              </h3>
+            </div>
+
+            {/* 2x2 Metric Tiles */}
+            <div className="grid grid-cols-2 gap-2.5 mb-4">
+              
+              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100 flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                  <Layers className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-base font-extrabold text-[#1B222C] font-rajdhani group-hover:text-[#E87B1E] transition">
-                    {mod.title}
-                  </h3>
-                  <p className="text-xs text-[#7E8B99] mt-1 leading-relaxed font-sans">
-                    {mod.desc}
-                  </p>
-                </div>
-                <div className="text-xs font-bold text-[#E87B1E] flex items-center gap-1 font-mono">
-                  <span>{mod.action}</span>
-                  <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                  <span className="text-base font-extrabold text-slate-900 block leading-tight font-mono">8</span>
+                  <span className="text-[10px] text-slate-500 font-medium block">Core Modules</span>
                 </div>
               </div>
-            );
-          })}
-        </div>
-      </div>
 
-      {/* 5. Recent Calculations Activity Audit Log Table */}
-      <div className="bg-white border border-[#D8DEE5] rounded-2xl p-6 shadow-[0_2px_8px_rgba(20,24,32,0.06)] space-y-4">
-        
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#E6E8EC] pb-4">
-          <div>
-            <h3 className="text-sm font-extrabold text-[#1B222C] font-rajdhani uppercase tracking-wider">Recent Estimation Activity Logs</h3>
-            <p className="text-xs text-[#7E8B99] font-sans">Real-time log of project calculation requests and engineering metrics.</p>
+              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100 flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-orange-100 text-[#F7941D] flex items-center justify-center shrink-0">
+                  <Calculator className="w-4 h-4" />
+                </div>
+                <div>
+                  <span className="text-base font-extrabold text-slate-900 block leading-tight font-mono">50+</span>
+                  <span className="text-[10px] text-slate-500 font-medium block">Smart Calculators</span>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100 flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-cyan-100 text-cyan-600 flex items-center justify-center shrink-0">
+                  <FileSpreadsheet className="w-4 h-4" />
+                </div>
+                <div>
+                  <span className="text-base font-extrabold text-slate-900 block leading-tight font-mono">100+</span>
+                  <span className="text-[10px] text-slate-500 font-medium block">Report Templates</span>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100 flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center shrink-0">
+                  <BookOpen className="w-4 h-4" />
+                </div>
+                <div>
+                  <span className="text-base font-extrabold text-slate-900 block leading-tight font-mono">500+</span>
+                  <span className="text-[10px] text-slate-500 font-medium block">Standard References</span>
+                </div>
+              </div>
+
+            </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
-              <input
-                type="text"
-                placeholder="Search project or ID..."
-                className="bg-[#FFF9EE] border border-[#E6B878] rounded-xl pl-9 pr-4 py-1.5 text-xs text-[#8B3A00] placeholder-[#8B3A00]/50 w-48 focus:outline-none focus:ring-2 focus:ring-[#E87B1E] font-mono"
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-              />
+          {/* AI Banner Button */}
+          <button
+            onClick={() => setAiModalOpen(true)}
+            className="w-full p-2.5 rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/80 flex items-center justify-between text-left hover:brightness-95 transition cursor-pointer"
+          >
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-2xs">
+                <Sparkles className="w-3.5 h-3.5 text-white" />
+              </div>
+              <div className="leading-tight">
+                <span className="text-xs font-bold text-slate-900 block">AI Powered Intelligence</span>
+                <span className="text-[10px] text-slate-500 block">Ask, Analyze &amp; Automate</span>
+              </div>
+            </div>
+            <ArrowRight className="w-3.5 h-3.5 text-blue-600" />
+          </button>
+        </div>
+
+        {/* CARD 2: RECENT ACTIVITY */}
+        <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xs font-bold text-slate-900">Recent Activity</h3>
+              <span className="text-[9px] font-mono text-slate-400 uppercase tracking-wider">THIS SESSION</span>
             </div>
 
-            <select
-              className="bg-[#F7F8FA] border border-[#D8DEE5] text-[#4E5B6A] rounded-xl px-3 py-1.5 text-xs font-semibold focus:outline-none"
-              value={filterType}
-              onChange={e => setFilterType(e.target.value)}
+            <div className="space-y-3">
+              
+              <div className="flex items-start justify-between gap-2.5 text-xs">
+                <div className="flex items-start gap-2.5">
+                  <div className="w-6 h-6 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 mt-0.5">
+                    <FileText className="w-3.5 h-3.5" />
+                  </div>
+                  <div>
+                    <span className="font-bold text-slate-800 block text-xs">Specification Reading session started</span>
+                    <span className="text-[10px] text-slate-500 block font-mono">Uploaded NORSOK M-501 Rev.7</span>
+                  </div>
+                </div>
+                <span className="text-[10px] font-mono text-slate-400 shrink-0">22:45</span>
+              </div>
+
+              <div className="flex items-start justify-between gap-2.5 text-xs">
+                <div className="flex items-start gap-2.5">
+                  <div className="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5">
+                    <Coins className="w-3.5 h-3.5" />
+                  </div>
+                  <div>
+                    <span className="font-bold text-slate-800 block text-xs">Estimation session started</span>
+                    <span className="text-[10px] text-slate-500 block font-mono">Tank - Internal Coating Estimation</span>
+                  </div>
+                </div>
+                <span className="text-[10px] font-mono text-slate-400 shrink-0">22:30</span>
+              </div>
+
+              <div className="flex items-start justify-between gap-2.5 text-xs">
+                <div className="flex items-start gap-2.5">
+                  <div className="w-6 h-6 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 mt-0.5">
+                    <ClipboardCheck className="w-3.5 h-3.5" />
+                  </div>
+                  <div>
+                    <span className="font-bold text-slate-800 block text-xs">Procedure draft created</span>
+                    <span className="text-[10px] text-slate-500 block font-mono">Procedure for Epoxy Coating System</span>
+                  </div>
+                </div>
+                <span className="text-[10px] font-mono text-slate-400 shrink-0">22:10</span>
+              </div>
+
+            </div>
+          </div>
+
+          <div className="pt-3 border-t border-slate-100 text-center">
+            <button
+              onClick={() => handleNav('knowledge')}
+              className="text-[11px] font-semibold text-slate-500 hover:text-[#F7941D] inline-flex items-center gap-1 transition-colors cursor-pointer"
             >
-              <option value="all">All Tool Types</option>
-              <option value="tank_shell">Tank Shell</option>
-              <option value="tank_roof">Tank Roof</option>
-              <option value="pipe_spool">Pipe Spool</option>
-              <option value="structural_steel">Structural Steel</option>
-              <option value="abrasive_blasting">Abrasive Blasting</option>
-            </select>
+              <span>View All Activity</span>
+              <ArrowRight className="w-3 h-3" />
+            </button>
           </div>
         </div>
 
-        {/* Data Table */}
-        <div className="overflow-x-auto">
-          <table className="enterprise-table">
-            <thead>
-              <tr>
-                <th>Log ID</th>
-                <th>Project / Asset Name</th>
-                <th>Tool Type</th>
-                <th>Input Parameters</th>
-                <th>Surface Area</th>
-                <th>Practical Liters</th>
-                <th>Logged At</th>
-                <th className="text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredLogs.length > 0 ? (
-                filteredLogs.map((row) => (
-                  <tr key={row.id}>
-                    <td className="font-mono font-bold text-[#E87B1E]">{row.id}</td>
-                    <td className="font-bold text-[#1B222C]">{row.project}</td>
-                    <td>
-                      <span className="bg-[#FFF4E3] text-[#E87B1E] border border-[#F3D2A0] px-2 py-0.5 rounded text-[11px] font-mono font-bold">
-                        {row.type}
-                      </span>
-                    </td>
-                    <td className="font-mono text-[#4E5B6A] text-[11px]">{row.inputs}</td>
-                    <td className="font-mono font-bold text-[#1B222C]">{row.area}</td>
-                    <td className="font-mono font-bold text-[#E87B1E]">{row.paint}</td>
-                    <td className="font-mono text-[#7E8B99] text-[11px]">{row.date}</td>
-                    <td className="text-right">
-                      <button 
-                        onClick={() => setActivePage('coating-calculator')}
-                        className="text-[#E87B1E] hover:text-[#9E1B1E] font-bold text-xs inline-flex items-center gap-1 cursor-pointer font-rajdhani uppercase tracking-wider"
-                      >
-                        <span>Inspect</span>
-                        <ExternalLink className="w-3 h-3" />
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="8" className="p-6 text-center text-[#7E8B99] font-mono text-xs">
-                    No matching calculation logs found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+        {/* CARD 3: QUICK ACCESS */}
+        <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xs font-bold text-slate-900">Quick Access</h3>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2.5">
+              
+              <button
+                onClick={() => handleNav('coating-calculator')}
+                className="p-3 rounded-2xl bg-slate-50 hover:bg-amber-50/50 border border-slate-100 hover:border-amber-200 flex items-center gap-2.5 transition text-left cursor-pointer group"
+              >
+                <div className="w-7 h-7 rounded-xl bg-orange-100 text-[#F7941D] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <Calculator className="w-3.5 h-3.5" />
+                </div>
+                <span className="text-[11px] font-semibold text-slate-700 leading-tight">
+                  Launch Calculator
+                </span>
+              </button>
+
+              <button
+                onClick={() => handleNav('specification-reading')}
+                className="p-3 rounded-2xl bg-slate-50 hover:bg-cyan-50/50 border border-slate-100 hover:border-cyan-200 flex items-center gap-2.5 transition text-left cursor-pointer group"
+              >
+                <div className="w-7 h-7 rounded-xl bg-cyan-100 text-cyan-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <FileText className="w-3.5 h-3.5" />
+                </div>
+                <span className="text-[11px] font-semibold text-slate-700 leading-tight">
+                  Open Specification
+                </span>
+              </button>
+
+              <button
+                onClick={() => handleNav('coating-procedure')}
+                className="p-3 rounded-2xl bg-slate-50 hover:bg-emerald-50/50 border border-slate-100 hover:border-emerald-200 flex items-center gap-2.5 transition text-left cursor-pointer group"
+              >
+                <div className="w-7 h-7 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <ClipboardCheck className="w-3.5 h-3.5" />
+                </div>
+                <span className="text-[11px] font-semibold text-slate-700 leading-tight">
+                  Create Procedure
+                </span>
+              </button>
+
+              <button
+                onClick={() => handleNav('unit-rate-estimation')}
+                className="p-3 rounded-2xl bg-slate-50 hover:bg-blue-50/50 border border-slate-100 hover:border-blue-200 flex items-center gap-2.5 transition text-left cursor-pointer group"
+              >
+                <div className="w-7 h-7 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <Coins className="w-3.5 h-3.5" />
+                </div>
+                <span className="text-[11px] font-semibold text-slate-700 leading-tight">
+                  New Estimation
+                </span>
+              </button>
+
+              <button
+                onClick={() => handleNav('inspection-reporting')}
+                className="p-3 rounded-2xl bg-slate-50 hover:bg-amber-50/50 border border-slate-100 hover:border-amber-200 flex items-center gap-2.5 transition text-left cursor-pointer group"
+              >
+                <div className="w-7 h-7 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <Folder className="w-3.5 h-3.5" />
+                </div>
+                <span className="text-[11px] font-semibold text-slate-700 leading-tight">
+                  Create Report
+                </span>
+              </button>
+
+              <button
+                onClick={() => setAiModalOpen(true)}
+                className="p-3 rounded-2xl bg-slate-50 hover:bg-purple-50/50 border border-slate-100 hover:border-purple-200 flex items-center gap-2.5 transition text-left cursor-pointer group"
+              >
+                <div className="w-7 h-7 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                  <Sparkles className="w-3.5 h-3.5" />
+                </div>
+                <span className="text-[11px] font-semibold text-slate-700 leading-tight">
+                  AI Assistant
+                </span>
+              </button>
+
+            </div>
+          </div>
         </div>
 
       </div>
+
+      {/* ========================================================
+          4. NEED HELP? BOTTOM RESOURCES BAR
+          Matches media_1791308020542.png
+          ======================================================== */}
+      <div className="space-y-3">
+        <h3 className="text-xs font-bold text-slate-900 tracking-tight">Need Help?</h3>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+          
+          <button
+            onClick={() => handleNav('knowledge')}
+            className="p-3.5 rounded-2xl bg-white border border-slate-200 hover:border-amber-300 shadow-2xs hover:shadow-xs flex items-center gap-3 transition text-left cursor-pointer group"
+          >
+            <div className="w-9 h-9 rounded-xl bg-amber-50 text-[#F7941D] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+              <BookOpen className="w-4 h-4" />
+            </div>
+            <div className="leading-tight">
+              <span className="text-xs font-bold text-slate-900 block group-hover:text-[#F7941D] transition-colors">
+                Knowledge Base
+              </span>
+              <span className="text-[10px] text-slate-500 block mt-0.5">
+                Guides, standards &amp; articles
+              </span>
+            </div>
+          </button>
+
+          <button
+            onClick={() => handleNav('knowledge')}
+            className="p-3.5 rounded-2xl bg-white border border-slate-200 hover:border-amber-300 shadow-2xs hover:shadow-xs flex items-center gap-3 transition text-left cursor-pointer group"
+          >
+            <div className="w-9 h-9 rounded-xl bg-yellow-50 text-yellow-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+              <Play className="w-4 h-4" />
+            </div>
+            <div className="leading-tight">
+              <span className="text-xs font-bold text-slate-900 block group-hover:text-[#F7941D] transition-colors">
+                Video Tutorials
+              </span>
+              <span className="text-[10px] text-slate-500 block mt-0.5">
+                Step by step learning
+              </span>
+            </div>
+          </button>
+
+          <button
+            onClick={() => handleNav('support')}
+            className="p-3.5 rounded-2xl bg-white border border-slate-200 hover:border-amber-300 shadow-2xs hover:shadow-xs flex items-center gap-3 transition text-left cursor-pointer group"
+          >
+            <div className="w-9 h-9 rounded-xl bg-orange-50 text-[#E8700A] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+              <LifeBuoy className="w-4 h-4" />
+            </div>
+            <div className="leading-tight">
+              <span className="text-xs font-bold text-slate-900 block group-hover:text-[#F7941D] transition-colors">
+                Support Center
+              </span>
+              <span className="text-[10px] text-slate-500 block mt-0.5">
+                Raise a ticket / Get help
+              </span>
+            </div>
+          </button>
+
+          <button
+            onClick={() => handleNav('support')}
+            className="p-3.5 rounded-2xl bg-white border border-slate-200 hover:border-amber-300 shadow-2xs hover:shadow-xs flex items-center gap-3 transition text-left cursor-pointer group"
+          >
+            <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+              <MessageSquare className="w-4 h-4" />
+            </div>
+            <div className="leading-tight">
+              <span className="text-xs font-bold text-slate-900 block group-hover:text-[#F7941D] transition-colors">
+                Contact Us
+              </span>
+              <span className="text-[10px] text-slate-500 block mt-0.5">
+                We are here to help
+              </span>
+            </div>
+          </button>
+
+        </div>
+      </div>
+
+      {/* ========================================================
+          5. AI ASSISTANT INTERACTIVE MODAL
+          ======================================================== */}
+      {aiModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-lg shadow-2xl flex flex-col h-[520px] overflow-hidden">
+            
+            {/* Modal Header */}
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-purple-50 to-indigo-50">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-purple-600 text-white flex items-center justify-center shadow-xs">
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">Coating Intelligence AI Assistant</h3>
+                  <p className="text-[10px] text-slate-500 font-mono">Specialized in AMPP, SSPC, NACE, ISO &amp; ASTM Standards</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setAiModalOpen(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-200 transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Chat Body */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/50">
+              {aiMessages.map((msg, idx) => (
+                <div
+                  key={idx}
+                  className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div
+                    className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-xs leading-relaxed shadow-2xs ${
+                      msg.sender === 'user'
+                        ? 'bg-[#181E29] text-white rounded-br-xs'
+                        : 'bg-white border border-slate-200 text-slate-800 rounded-bl-xs'
+                    }`}
+                  >
+                    {msg.text}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Chat Input */}
+            <form onSubmit={handleSendAi} className="p-3 border-t border-slate-100 bg-white flex items-center gap-2">
+              <input
+                type="text"
+                placeholder="Ask about dew point margin, SSPC-PA 2, blast profile..."
+                value={aiPrompt}
+                onChange={e => setAiPrompt(e.target.value)}
+                className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              />
+              <button
+                type="submit"
+                className="p-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white shadow-xs transition"
+              >
+                <Send className="w-4 h-4" />
+              </button>
+            </form>
+
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================
+          6. ECOSYSTEM OVERVIEW MODAL
+          ======================================================== */}
+      {ecosystemModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-2xl max-h-[85vh] shadow-2xl flex flex-col overflow-hidden">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-amber-50/50">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-[#F7941D] text-white flex items-center justify-center shadow-xs">
+                  <Eye className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">Ecosystem Architecture &amp; Operations</h3>
+                  <p className="text-[10px] text-slate-500 font-mono">BG Group Complete Industrial Coating Operating Platform</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setEcosystemModalOpen(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-200 transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6 space-y-4 text-xs text-slate-700 leading-relaxed">
+              <p>
+                <strong>BG CoatingOS™</strong> brings together the entire lifecycle of industrial surface preparation, painting application, quality control, estimation, and workforce prequalification:
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                {organogramModules.map((m) => (
+                  <div key={m.id} className="p-3 rounded-xl border border-slate-200 bg-slate-50/60">
+                    <span className="font-bold text-slate-900 block">{m.title}</span>
+                    <span className="text-[11px] text-slate-500 block mt-0.5">{m.subtitle}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

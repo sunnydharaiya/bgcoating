@@ -1,0 +1,102 @@
+id="pg-home">
+
+      <!-- hero-s: toggled by goGrp() — kept for JS compatibility -->
+      <section class="dash-hero" id="hero-s">
+        <div class="dh-in">
+          <div class="dh-logo"><img src="[BASE64]" alt="BG Group"></div>
+          <div class="dh-txt">
+            <div class="dh-kick"><span class="dh-dot"></span>World-Class Coating Consultants</div>
+            <h1 class="dh-title">BG GROUP OF <span>PAINT &amp; COATING</span> CONSULTANTS</h1>
+            <p class="dh-sub">Corrosion Management &nbsp;|&nbsp; Surface Protection &nbsp;|&nbsp; Digital Engineering Solutions</p>
+            <div class="dh-meta">
+              <a href="https://bgcoating.com/" target="_blank">🌐 bgcoating.com</a>
+              <a href="tel:+919925810408">📞 +91 99258 10408</a>
+              <span>📍 Surat, Gujarat, India</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- KPI summary cards -->
+      <div class="kpis">
+        <div class="kpi" onclick="goGrp(&#39;paint&#39;,document.querySelectorAll(&#39;.ng&#39;)[1])">
+          <div class="kpi-top"><div class="kpi-ico">🖌️</div><span class="kpi-arr">→</span></div>
+          <div class="kpi-num">7</div><div class="kpi-lbl">Paint Calculators</div><div class="kpi-sub">WFT · DFT · Coverage · Cost</div>
+        </div>
+        <div class="kpi" onclick="goGrp(&#39;area&#39;,document.querySelectorAll(&#39;.ng&#39;)[2])">
+          <div class="kpi-top"><div class="kpi-ico">📐</div><span class="kpi-arr">→</span></div>
+          <div class="kpi-num">6</div><div class="kpi-lbl">Surface Area</div><div class="kpi-sub">Pipe · Tank · Vessel · Plate</div>
+        </div>
+        <div class="kpi" onclick="goGrp(&#39;abrasive&#39;,document.querySelectorAll(&#39;.ng&#39;)[3])">
+          <div class="kpi-top"><div class="kpi-ico">💎</div><span class="kpi-arr">→</span></div>
+          <div class="kpi-num">2</div><div class="kpi-lbl">Abrasive Consumption</div><div class="kpi-sub">Garnet · Copper Slag</div>
+        </div>
+        <div class="kpi" onclick="goGrp(&#39;salt&#39;,document.querySelectorAll(&#39;.ng&#39;)[4])">
+          <div class="kpi-top"><div class="kpi-ico">🧂</div><span class="kpi-arr">→</span></div>
+          <div class="kpi-num">1</div><div class="kpi-lbl">Salt Contamination</div><div class="kpi-sub">Bresle · ISO 8502-9</div>
+        </div>
+        <div class="kpi" onclick="goGrp(&#39;pro&#39;,document.querySelectorAll(&#39;.ng&#39;)[5])">
+          <div class="kpi-top"><div class="kpi-ico">👑</div><span class="kpi-arr">→</span></div>
+          <div class="kpi-num" id="pro-kpi-num">28</div><div class="kpi-lbl">Executive Coating — PRO</div><div class="kpi-sub">28 PRO modules incl. Bid Comparison</div>
+        </div>
+      </div>
+
+      <!-- Quick access -->
+      <div class="dash-sec"><span class="ds-bar"></span><h2>Quick Access</h2><span class="ds-d">Most-used calculators</span></div>
+      <div class="qa">
+        <div class="qa-tile" onclick="goCalc(&#39;paint&#39;,&#39;sp-cov&#39;,null)"><div class="qa-ic">📐</div><div><div class="qa-tt">Coverage</div><div class="qa-td">TC &amp; PS spread rate (m²/L)</div></div></div>
+        <div class="qa-tile" onclick="goCalc(&#39;paint&#39;,&#39;sp-pc&#39;,null)"><div class="qa-ic">🧮</div><div><div class="qa-tt">WFT Range</div><div class="qa-td">Min &amp; Max WFT from DFT</div></div></div>
+        <div class="qa-tile" onclick="goCalc(&#39;paint&#39;,&#39;sp-dft&#39;,null)"><div class="qa-ic">📏</div><div><div class="qa-tt">DFT</div><div class="qa-td">Dry film thickness from WFT</div></div></div>
+        <div class="qa-tile" onclick="goCalc(&#39;area&#39;,&#39;sa-pipe&#39;,null)"><div class="qa-ic">🔩</div><div><div class="qa-tt">Surface Area</div><div class="qa-td">Pipe · Tank · Vessel m²</div></div></div>
+        <div class="qa-tile" onclick="goAbr(&#39;ab-garnet&#39;,null)"><div class="qa-ic">💎</div><div><div class="qa-tt">Abrasive</div><div class="qa-td">Garnet &amp; Copper Slag (kg)</div></div></div>
+        <div class="qa-tile" onclick="goCalc(&#39;salt&#39;,&#39;salt-main&#39;,null)"><div class="qa-ic">🧂</div><div><div class="qa-tt">Salt Test</div><div class="qa-td">Bresle ISO 8502-9 + temp</div></div></div>
+        <div class="qa-tile" onclick="goCalc(&#39;pro&#39;,&#39;vs-tds&#39;,null)"><div class="qa-ic">👑</div><div><div class="qa-tt">Executive PRO</div><div class="qa-td">Volume Solids verification suite</div></div></div>
+      </div>
+
+      <!-- Industry insights -->
+      <div class="dash-sec"><span class="ds-bar"></span><h2>Industry Insights</h2><span class="ds-d">Engineering reference</span></div>
+      <div class="ins">
+        <div class="ins-card">
+          <div class="ins-h"><div class="ins-ic">🛡️</div><div class="ins-t">Common Paint Systems</div></div>
+          <div class="ins-row"><span class="ins-k">Inorganic Zinc Silicate</span><span class="ins-v">75 µm</span></div>
+          <div class="ins-row"><span class="ins-k">Epoxy Intermediate</span><span class="ins-v">100 µm</span></div>
+          <div class="ins-row"><span class="ins-k">High-Build Epoxy</span><span class="ins-v">125 µm</span></div>
+          <div class="ins-row"><span class="ins-k">Polyurethane Topcoat</span><span class="ins-v">50 µm</span></div>
+        </div>
+        <div class="ins-card">
+          <div class="ins-h"><div class="ins-ic">📏</div><div class="ins-t">Typical DFT Ranges</div></div>
+          <div class="ins-row"><span class="ins-k">Primer Coat</span><span class="ins-v">40–75 µm</span></div>
+          <div class="ins-row"><span class="ins-k">Intermediate</span><span class="ins-v">100–150 µm</span></div>
+          <div class="ins-row"><span class="ins-k">Finish / Topcoat</span><span class="ins-v">50–80 µm</span></div>
+          <div class="ins-row"><span class="ins-k">Coal Tar Epoxy</span><span class="ins-v">200 µm</span></div>
+        </div>
+        <div class="ins-card">
+          <div class="ins-h"><div class="ins-ic">💎</div><div class="ins-t">Abrasive Factors</div></div>
+          <div class="ins-row"><span class="ins-k">Garnet · SA 2.5</span><span class="ins-v">20 kg/m²</span></div>
+          <div class="ins-row"><span class="ins-k">Garnet · SA 3.0</span><span class="ins-v">25 kg/m²</span></div>
+          <div class="ins-row"><span class="ins-k">Copper Slag · SA 2.5</span><span class="ins-v">30 kg/m²</span></div>
+          <div class="ins-row"><span class="ins-k">Copper Slag · SA 3.0</span><span class="ins-v">35 kg/m²</span></div>
+        </div>
+        <div class="ins-card">
+          <div class="ins-h"><div class="ins-ic">🧂</div><div class="ins-t">Salt Test Limits</div></div>
+          <div class="ins-row"><span class="ins-k">Standard (general)</span><span class="ins-v">≤ 20 mg/m²</span></div>
+          <div class="ins-row"><span class="ins-k">Immersion service</span><span class="ins-v">≤ 10 mg/m²</span></div>
+          <div class="ins-row"><span class="ins-k">High-spec offshore</span><span class="ins-v">≤ 5 mg/m²</span></div>
+          <div class="ins-row"><span class="ins-k">Method</span><span class="ins-v">ISO 8502-9</span></div>
+        </div>
+      </div>
+
+      <!-- Overview grid (JS-populated) + Reference table -->
+      <div class="dash-sec"><span class="ds-bar"></span><h2>All Calculators</h2><span class="ds-d">Tap any tool to begin</span></div>
+      <div class="ov" id="ovg"><div class="ovc"><span class="ovarr">→</span><div class="ovic">🧮</div><div class="ovt">WFT Range Calculation</div><div class="ovd">Min &amp; Max WFT from DFT range</div></div><div class="ovc"><span class="ovarr">→</span><div class="ovic">📏</div><div class="ovt">DFT Calculation</div><div class="ovd">Dry Film Thickness from WFT</div></div><div class="ovc"><span class="ovarr">→</span><div class="ovic">📐</div><div class="ovt">Paint Coverage</div><div class="ovd">TC &amp; PS Spread Rate (m²/L)</div></div><div class="ovc"><span class="ovarr">→</span><div class="ovic">🧪</div><div class="ovt">Paint Consumption</div><div class="ovd">Total litres for surface area</div></div><div class="ovc"><span class="ovarr">→</span><div class="ovic">💥</div><div class="ovt">Blast Loss</div><div class="ovd">Dead Volume paint loss</div></div><div class="ovc"><span class="ovarr">→</span><div class="ovic">⚗️</div><div class="ovt">Mixing Ratio</div><div class="ovd">Part A &amp; B volumes</div></div><div class="ovc"><span class="ovarr">→</span><div class="ovic">💰</div><div class="ovt">Cost Per Area</div><div class="ovd">Full project costing</div></div><div class="ovc"><span class="ovarr">→</span><div class="ovic">🔩</div><div class="ovt">Pipe Area</div><div class="ovd">Inside / outside surface m²</div></div><div class="ovc"><span class="ovarr">→</span><div class="ovic">🛢️</div><div class="ovt">Tank Area</div><div class="ovd">Shell, roof &amp; bottom m²</div></div><div class="ovc"><span class="ovarr">→</span><div class="ovic">⚖️</div><div class="ovt">Structure Weight-Wise</div><div class="ovd">Surface area from tonnage</div></div><div class="ovc"><span class="ovarr">→</span><div class="ovic">🔲</div><div class="ovt">Plate Area</div><div class="ovd">Both sides + thickness faces</div></div><div class="ovc"><span class="ovarr">→</span><div class="ovic">🫙</div><div class="ovt">Dished End Area</div><div class="ovd">Hemi / Semi-Ellip / Tori head</div></div><div class="ovc"><span class="ovarr">→</span><div class="ovic">🏭</div><div class="ovt">Vessel / Equipment</div><div class="ovd">Complete vessel area</div></div><div class="ovc"><span class="ovarr">→</span><div class="ovic">💎</div><div class="ovt">Abrasive Consumption</div><div class="ovd">Garnet + Copper Slag (kg)</div></div><div class="ovc"><span class="ovarr">→</span><div class="ovic">🧂</div><div class="ovt">Salt Contamination</div><div class="ovd">ISO 8502-9 + temp correction</div></div></div>
+
+      <div class="card">
+        <div class="ch"><div class="ci">📋</div><div><div class="ct">Quick Reference — Common Paint Systems</div><div class="cs">Click any row to auto-fill the Coverage calculator</div></div></div>
+        <div class="cb"><div class="rtw"><table class="rt" id="reftbl"><thead><tr><th>Paint Type</th><th>VS%</th><th>DFT µm</th><th>TC m²/L</th><th>Loss%</th><th>PS m²/L</th></tr></thead><tbody id="rtb"><tr><td>Inorganic Zinc Silicate</td><td><span class="bdg bo">75%</span></td><td>75</td><td><strong style="color:var(--o1);font-family:&#39;Rajdhani&#39;,sans-serif;">10.00</strong></td><td>20%</td><td>8.00</td></tr><tr><td>Epoxy Zinc Primer</td><td><span class="bdg bo">65%</span></td><td>60</td><td><strong style="color:var(--o1);font-family:&#39;Rajdhani&#39;,sans-serif;">10.83</strong></td><td>25%</td><td>8.13</td></tr><tr><td>Epoxy Intermediate</td><td><span class="bdg bg2x">80%</span></td><td>100</td><td><strong style="color:var(--o1);font-family:&#39;Rajdhani&#39;,sans-serif;">8.00</strong></td><td>20%</td><td>6.40</td></tr><tr><td>High-Build Epoxy</td><td><span class="bdg bg2x">85%</span></td><td>125</td><td><strong style="color:var(--o1);font-family:&#39;Rajdhani&#39;,sans-serif;">6.80</strong></td><td>20%</td><td>5.44</td></tr><tr><td>Polyurethane Topcoat</td><td><span class="bdg bo">60%</span></td><td>50</td><td><strong style="color:var(--o1);font-family:&#39;Rajdhani&#39;,sans-serif;">12.00</strong></td><td>25%</td><td>9.00</td></tr><tr><td>Coal Tar Epoxy</td><td><span class="bdg bb">70%</span></td><td>200</td><td><strong style="color:var(--o1);font-family:&#39;Rajdhani&#39;,sans-serif;">3.50</strong></td><td>25%</td><td>2.63</td></tr><tr><td>Amine-Cured Epoxy</td><td><span class="bdg bg2x">90%</span></td><td>150</td><td><strong style="color:var(--o1);font-family:&#39;Rajdhani&#39;,sans-serif;">6.00</strong></td><td>20%</td><td>4.80</td></tr><tr><td>Alkyd Primer</td><td><span class="bdg bb">45%</span></td><td>40</td><td><strong style="color:var(--o1);font-family:&#39;Rajdhani&#39;,sans-serif;">11.25</strong></td><td>15%</td><td>9.56</td></tr></tbody></table></div></div>
+      </div>
+
+    </div>
+    <!-- END HOME -->
+
+<!-- PAINT GROUP -->
+<div class="pg" 

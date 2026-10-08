@@ -101,40 +101,136 @@ export default function SpecHub({ onSelectSection, onApplyPreset, specData }) {
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
       
-      {/* Header Banner */}
-      <div className="bg-white border border-slate-200 rounded-3xl p-6 md:p-8 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="space-y-2 max-w-2xl">
-          <div className="flex items-center gap-2">
-            <span className="bg-amber-50 text-[#D97706] border border-amber-200 px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase font-mono tracking-wider">
-              Module 02
-            </span>
-            <span className="text-xs font-mono text-slate-400">BG CoatingOS™ Engineering Standard</span>
+      {/* 1. Hero Banner matching reference design */}
+      <section className="ng-hero">
+        <div className="ng-hero-bd flex flex-col sm:flex-row items-start sm:items-center gap-5">
+          <div className="ng-logo">
+            <img src="/logo-2.png" alt="BG Group" className="w-full h-full object-contain" />
           </div>
-          <h1 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">
-            Coating Specification Reading &amp; System Design
-          </h1>
-          <p className="text-xs md:text-sm text-slate-500 leading-relaxed">
-            Standardized engineering input collection, multi-coat build design, approved manufacturer matching, and automated MNC-grade printable specification dossier generation.
-          </p>
+          <div className="ng-hero-tx">
+            <div className="ng-kick">
+              <span className="ng-dot"></span>
+              Specification Reading · NACE / AMPP / ISO / ASTM Aligned
+            </div>
+            <h1 className="ng-title">
+              Surface Treatment &amp; Coating <span>Specification Reading</span>
+            </h1>
+            <p className="ng-sub">
+              A premium engineering platform by BG Group of Paint &amp; Coating Consultants — collect, validate &amp; manage MNC-grade coating specification readings for paint, insulation, fireproofing, TSA / FRE / FRP, galvanizing &amp; pickling projects.
+            </p>
+            <div className="flex flex-wrap items-center gap-3 mt-3.5">
+              <button 
+                type="button" 
+                onClick={() => onSelectSection('scope')}
+                className="ng-btn cursor-pointer"
+              >
+                <span>✨ Start Extraction Now</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => openGuideline('spec_reading')}
+                className="px-4 py-2 rounded-full border border-[#D8DEE5] hover:border-[#F7941D] text-xs font-semibold text-[#4E5B6A] hover:text-[#F7941D] bg-white transition cursor-pointer mt-3.5"
+              >
+                <BookOpen className="w-3.5 h-3.5 inline mr-1.5" />
+                <span>Guideline</span>
+              </button>
+            </div>
+            <div className="ng-hint">
+              Start a new Coating Specification Reading — all sections open for guided data entry
+            </div>
+          </div>
         </div>
+      </section>
 
-        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-          <button
-            onClick={() => openGuideline('spec_reading')}
-            className="px-4 py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-[#D97706] border border-amber-200 text-xs font-bold transition flex items-center gap-2 cursor-pointer shadow-2xs"
-          >
-            <BookOpen className="w-4 h-4" />
-            <span>Specification Guideline</span>
-          </button>
-          <button
-            onClick={() => onSelectSection('report')}
-            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#F7941D] to-[#A50021] hover:from-[#E8700A] hover:to-[#8B0018] text-white text-xs font-bold transition flex items-center gap-2 cursor-pointer shadow-xs"
-          >
-            <FileSpreadsheet className="w-4 h-4" />
-            <span>View Full Report Dossier</span>
-          </button>
+      {/* 2. Report Overview (KPIs) */}
+      <div>
+        <div className="dash-sec">
+          <span className="ds-bar"></span>
+          <h2>Report Overview</h2>
+          <span className="ds-d">Saved Coating Specification Readings</span>
+        </div>
+        <div className="kpis">
+          <div className="kpi" onClick={() => onSelectSection('register')}>
+            <div className="kpi-top">
+              <div className="kpi-ico">📊</div>
+              <span className="kpi-arr">→</span>
+            </div>
+            <div className="kpi-num">2</div>
+            <div className="kpi-lbl">Total Reports</div>
+            <div className="kpi-sub">All coating specification readings</div>
+          </div>
+          <div className="kpi" onClick={() => onSelectSection('register')}>
+            <div className="kpi-top">
+              <div className="kpi-ico">✏️</div>
+              <span className="kpi-arr">→</span>
+            </div>
+            <div className="kpi-num" style={{ color: '#E65100' }}>1</div>
+            <div className="kpi-lbl">Draft Reports</div>
+            <div className="kpi-sub">Work in progress</div>
+          </div>
+          <div className="kpi" onClick={() => onSelectSection('register')}>
+            <div className="kpi-top">
+              <div className="kpi-ico">✅</div>
+              <span className="kpi-arr">→</span>
+            </div>
+            <div className="kpi-num" style={{ color: '#2E7D32' }}>1</div>
+            <div className="kpi-lbl">Approved Reports</div>
+            <div className="kpi-sub">Validated &amp; signed off</div>
+          </div>
+          <div className="kpi" onClick={() => onSelectSection('register')}>
+            <div className="kpi-top">
+              <div className="kpi-ico">⌛</div>
+              <span className="kpi-arr">→</span>
+            </div>
+            <div className="kpi-num" style={{ color: '#1565C0' }}>1</div>
+            <div className="kpi-lbl">Pending Reports</div>
+            <div className="kpi-sub">Awaiting approval</div>
+          </div>
         </div>
       </div>
+
+      {/* 3. Quick Actions */}
+      <div>
+        <div className="dash-sec">
+          <span className="ds-bar"></span>
+          <h2>Quick Actions</h2>
+          <span className="ds-d">Jump straight in</span>
+        </div>
+        <div className="qa">
+          <div className="qa-tile" onClick={() => onSelectSection('scope')}>
+            <div className="qa-ic">✨</div>
+            <div>
+              <div className="qa-tt">New Generation</div>
+              <div className="qa-td">Start a fresh coating specification reading</div>
+            </div>
+          </div>
+          <div className="qa-tile" onClick={() => onSelectSection('register')}>
+            <div className="qa-ic">📊</div>
+            <div>
+              <div className="qa-tt">Report Register</div>
+              <div className="qa-td">Open all saved sheets</div>
+            </div>
+          </div>
+          <div className="qa-tile" onClick={() => onSelectSection('preview')}>
+            <div className="qa-ic">👁</div>
+            <div>
+              <div className="qa-tt">Preview Latest</div>
+              <div className="qa-td">Read-only report preview</div>
+            </div>
+          </div>
+          <div className="qa-tile" onClick={() => onSelectSection('report')}>
+            <div className="qa-ic">🖨️</div>
+            <div>
+              <div className="qa-tt flex items-center gap-1.5">
+                <span>Print Existing</span>
+                <span className="bg-gradient-to-r from-[#F7941D] to-[#E8700A] text-white text-[9px] font-bold px-1.5 py-0.5 rounded uppercase font-mono">Pro</span>
+              </div>
+              <div className="qa-td">Excel-format printable view</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
 
       {/* 9 Modular Sections Grid */}
       <div className="space-y-4">
@@ -230,6 +326,20 @@ export default function SpecHub({ onSelectSection, onApplyPreset, specData }) {
         </div>
       </div>
 
+      {/* Dark Enterprise Footer matching Screenshot 2 */}
+      <footer className="app-footer-dark">
+        <div className="flex items-center gap-2">
+          <img src="/logo-2.png" alt="BG Group" className="w-5 h-5 object-contain rounded bg-white p-0.5" />
+          <span className="font-mono text-xs font-bold tracking-wider text-white uppercase">
+            BG GROUP · DIGITAL WORKSPACE FOR COATING PROFESSIONALS
+          </span>
+        </div>
+        <div className="text-[11px] text-slate-400 font-sans">
+          Surat, Gujarat, India &nbsp;·&nbsp; <a href="https://bgcoating.com/" target="_blank" rel="noreferrer" className="text-[#F7941D] hover:underline">bgcoating.com</a> &nbsp;·&nbsp; <a href="tel:+919925810408" className="text-slate-300 hover:text-white">+91 99258 10408</a>
+        </div>
+      </footer>
+
     </div>
   );
 }
+

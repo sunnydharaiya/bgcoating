@@ -508,6 +508,27 @@ export default function PainterQualificationPage({
     });
   };
 
+  // Listen for Top Header Actions (preview, save-draft, validate, register, reset)
+  useEffect(() => {
+    const handleHeaderAction = (e) => {
+      const action = e.detail?.action;
+      if (action === 'save-draft') {
+        handleSaveDraft();
+      } else if (action === 'preview') {
+        setIsPreviewModalOpen(true);
+      } else if (action === 'validate') {
+        setIsApprovalModalOpen(true);
+      } else if (action === 'register') {
+        if (onNavigate) onNavigate('painter', 'register');
+      } else if (action === 'reset') {
+        handleResetState();
+      }
+    };
+
+    window.addEventListener('bg_header_action', handleHeaderAction);
+    return () => window.removeEventListener('bg_header_action', handleHeaderAction);
+  }, [reports, state, evaluation]);
+
   // Sub-Tool View Router
   const renderSubTool = () => {
     switch (currentSubTool) {
@@ -516,8 +537,14 @@ export default function PainterQualificationPage({
           <PainterHub
             reports={reports}
             evaluation={evaluation}
-            onNavigate={onNavigate}
+            onNavigate={(sub) => onNavigate ? onNavigate('painter', sub) : null}
             onLoadPreset={handleLoadPreset}
+            onNewGeneration={() => {
+              setState(INITIAL_PAINTER_STATE);
+              if (onNavigate) onNavigate('painter', 'info');
+            }}
+            onOpenPreview={() => setIsPreviewModalOpen(true)}
+            onOpenPrint={() => window.print()}
           />
         );
 
@@ -677,86 +704,96 @@ export default function PainterQualificationPage({
           <PainterHub
             reports={reports}
             evaluation={evaluation}
-            onNavigate={onNavigate}
+            onNavigate={(sub) => onNavigate ? onNavigate('painter', sub) : null}
             onLoadPreset={handleLoadPreset}
+            onNewGeneration={() => {
+              setState(INITIAL_PAINTER_STATE);
+              if (onNavigate) onNavigate('painter', 'info');
+            }}
+            onOpenPreview={() => setIsPreviewModalOpen(true)}
+            onOpenPrint={() => window.print()}
           />
         );
     }
   };
 
   return (
-    <div className="space-y-5 max-w-7xl mx-auto pb-16 animate-in fade-in duration-200 font-sans">
+    <div className={`space-y-5 ${currentSubTool === 'hub' ? 'max-w-6xl mx-auto' : 'max-w-7xl mx-auto'} pb-16 animate-in fade-in duration-200 font-sans`}>
       
-      {/* Sticky Progress Freeze Bar */}
-      <PainterFreezeBar
-        currentSubTool={currentSubTool}
-        evaluation={evaluation}
-        formData={state}
-        onNavigate={onNavigate}
-        onReset={handleResetState}
-      />
+      {/* Sticky Progress Freeze Bar (Hidden on Hub view) */}
+      {currentSubTool !== 'hub' && (
+        <PainterFreezeBar
+          currentSubTool={currentSubTool}
+          evaluation={evaluation}
+          formData={state}
+          onNavigate={onNavigate}
+          onReset={handleResetState}
+        />
+      )}
 
-      {/* Action Toolbar */}
-      <div className="bg-white rounded-2xl border border-[#D8DEE5] p-3.5 shadow-[0_2px_8px_rgba(20,24,32,0.06)] flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2 flex-wrap">
-          <button
-            type="button"
-            onClick={handleSaveDraft}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-[#4E5B6A] bg-[#F7F8FA] hover:bg-[#FFF4E3] hover:text-[#9E1B1E] border border-[#D8DEE5] transition cursor-pointer"
-          >
-            <Save className="w-3.5 h-3.5 text-[#E87B1E]" />
-            <span>Save Draft</span>
-          </button>
+      {/* Action Toolbar (Hidden on Hub view) */}
+      {currentSubTool !== 'hub' && (
+        <div className="bg-white rounded-2xl border border-[#D8DEE5] p-3.5 shadow-[0_2px_8px_rgba(20,24,32,0.06)] flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={handleSaveDraft}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-[#4E5B6A] bg-[#F7F8FA] hover:bg-[#FFF4E3] hover:text-[#9E1B1E] border border-[#D8DEE5] transition cursor-pointer"
+            >
+              <Save className="w-3.5 h-3.5 text-[#E87B1E]" />
+              <span>Save Draft</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => setIsPreviewModalOpen(true)}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold font-rajdhani uppercase tracking-wider text-white bg-gradient-to-r from-[#E87B1E] to-[#9E1B1E] hover:opacity-90 transition shadow-xs cursor-pointer"
-          >
-            <Printer className="w-3.5 h-3.5" />
-            <span>Print Dossier (A4)</span>
-          </button>
+            <button
+              type="button"
+              onClick={() => setIsPreviewModalOpen(true)}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold font-rajdhani uppercase tracking-wider text-white bg-gradient-to-r from-[#E87B1E] to-[#9E1B1E] hover:opacity-90 transition shadow-xs cursor-pointer"
+            >
+              <Printer className="w-3.5 h-3.5" />
+              <span>Print Dossier (A4)</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={handleSyncCoatingSystem}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-[#9E1B1E] bg-[#FFF4E3] hover:bg-[#FEE9C7] border border-[#F3D2A0] transition cursor-pointer"
-            title="Push Coating System spec into Stages s1..s4"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-[#E87B1E]" />
-            <span>Sync System to Stages</span>
-          </button>
+            <button
+              type="button"
+              onClick={handleSyncCoatingSystem}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-[#9E1B1E] bg-[#FFF4E3] hover:bg-[#FEE9C7] border border-[#F3D2A0] transition cursor-pointer"
+              title="Push Coating System spec into Stages s1..s4"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-[#E87B1E]" />
+              <span>Sync System to Stages</span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={() => setIsCompanyModalOpen(true)}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#4E5B6A] hover:text-[#9E1B1E] hover:bg-[#FFF4E3] border border-[#D8DEE5] transition cursor-pointer"
+            >
+              <Building2 className="w-3.5 h-3.5 text-[#E87B1E]" />
+              <span>Company Branding</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsWatermarkModalOpen(true)}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#4E5B6A] hover:text-[#9E1B1E] hover:bg-[#FFF4E3] border border-[#D8DEE5] transition cursor-pointer"
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-[#E87B1E]" />
+              <span>Watermark</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleOpenGuideline}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold text-[#9E1B1E] bg-[#FFF4E3] hover:bg-[#FEE9C7] border border-[#F3D2A0] transition cursor-pointer"
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              <span>Standards &amp; Guideline</span>
+            </button>
+          </div>
         </div>
-
-        <div className="flex items-center gap-2 flex-wrap">
-          <button
-            type="button"
-            onClick={() => setIsCompanyModalOpen(true)}
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#4E5B6A] hover:text-[#9E1B1E] hover:bg-[#FFF4E3] border border-[#D8DEE5] transition cursor-pointer"
-          >
-            <Building2 className="w-3.5 h-3.5 text-[#E87B1E]" />
-            <span>Company Branding</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setIsWatermarkModalOpen(true)}
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#4E5B6A] hover:text-[#9E1B1E] hover:bg-[#FFF4E3] border border-[#D8DEE5] transition cursor-pointer"
-          >
-            <ShieldCheck className="w-3.5 h-3.5 text-[#E87B1E]" />
-            <span>Watermark</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={handleOpenGuideline}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold text-[#9E1B1E] bg-[#FFF4E3] hover:bg-[#FEE9C7] border border-[#F3D2A0] transition cursor-pointer"
-          >
-            <BookOpen className="w-3.5 h-3.5" />
-            <span>Standards &amp; Guideline</span>
-          </button>
-        </div>
-      </div>
+      )}
 
       {/* Render Active Sub-Tool Component */}
       {renderSubTool()}

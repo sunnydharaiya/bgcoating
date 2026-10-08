@@ -361,6 +361,27 @@ export default function BlasterQualificationPage({
     });
   };
 
+  // Listen for Top Header Actions (preview, save-draft, validate, register, reset)
+  useEffect(() => {
+    const handleHeaderAction = (e) => {
+      const action = e.detail?.action;
+      if (action === 'save-draft') {
+        handleSaveDraft();
+      } else if (action === 'preview') {
+        setIsPreviewOpen(true);
+      } else if (action === 'validate') {
+        setIsApprovalOpen(true);
+      } else if (action === 'register') {
+        if (onNavigate) onNavigate('blaster', 'register');
+      } else if (action === 'reset') {
+        handleReset();
+      }
+    };
+
+    window.addEventListener('bg_header_action', handleHeaderAction);
+    return () => window.removeEventListener('bg_header_action', handleHeaderAction);
+  }, [reports, state, metrics]);
+
   const navTabs = [
     { id: 'hub', label: 'Hub & Overview', icon: Sparkles },
     { id: 'dashboard', label: 'Analytics', icon: TrendingUp },
@@ -377,71 +398,75 @@ export default function BlasterQualificationPage({
   return (
     <div className="min-h-screen bg-[#F3F5F8] text-[#1B222C] font-sans pb-16">
       
-      {/* Top Freeze Dashboard Bar */}
-      <BlasterFreezeBar
-        state={state}
-        metrics={metrics}
-        onReset={handleReset}
-        onNavigate={(sub) => onNavigate('blaster', sub)}
-        activeTab={currentSubTool}
-      />
+      {/* Top Freeze Dashboard Bar (Hidden on Hub view) */}
+      {currentSubTool !== 'hub' && (
+        <BlasterFreezeBar
+          state={state}
+          metrics={metrics}
+          onReset={handleReset}
+          onNavigate={(sub) => onNavigate('blaster', sub)}
+          activeTab={currentSubTool}
+        />
+      )}
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-4 space-y-6">
+      <div className={currentSubTool === 'hub' ? 'max-w-7xl mx-auto px-4 sm:px-6 pt-4' : 'max-w-7xl mx-auto px-4 sm:px-6 pt-4 space-y-6'}>
         
-        {/* Navigation Rail & Quick Actions */}
-        <div className="bg-white border border-[#D8DEE5] rounded-xl p-2 shadow-[0_2px_8px_rgba(20,24,32,0.06)] flex flex-col md:flex-row items-center justify-between gap-3">
-          
-          {/* Subtool Tabs */}
-          <div className="flex items-center gap-1 overflow-x-auto w-full md:w-auto pb-1 md:pb-0 scrollbar-none">
-            {navTabs.map((tab) => {
-              const Icon = tab.icon;
-              const isActive = currentSubTool === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => onNavigate('blaster', tab.id)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition cursor-pointer ${
-                    isActive
-                      ? 'bg-gradient-to-r from-[#E87B1E] to-[#9E1B1E] text-white shadow-xs font-rajdhani uppercase tracking-wider'
-                      : 'text-[#4E5B6A] hover:bg-[#F7F8FA] hover:text-[#1B222C]'
-                  }`}
-                >
-                  <Icon className="w-3.5 h-3.5" />
-                  <span>{tab.label}</span>
-                </button>
-              );
-            })}
+        {/* Navigation Rail & Quick Actions (Hidden on Hub view) */}
+        {currentSubTool !== 'hub' && (
+          <div className="bg-white border border-[#D8DEE5] rounded-xl p-2 shadow-[0_2px_8px_rgba(20,24,32,0.06)] flex flex-col md:flex-row items-center justify-between gap-3">
+            
+            {/* Subtool Tabs */}
+            <div className="flex items-center gap-1 overflow-x-auto w-full md:w-auto pb-1 md:pb-0 scrollbar-none">
+              {navTabs.map((tab) => {
+                const Icon = tab.icon;
+                const isActive = currentSubTool === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => onNavigate('blaster', tab.id)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition cursor-pointer ${
+                      isActive
+                        ? 'bg-gradient-to-r from-[#E87B1E] to-[#9E1B1E] text-white shadow-xs font-rajdhani uppercase tracking-wider'
+                        : 'text-[#4E5B6A] hover:bg-[#F7F8FA] hover:text-[#1B222C]'
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    <span>{tab.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Action Icons */}
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={handleSaveDraft}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-[#D8DEE5] bg-[#F7F8FA] text-[#4E5B6A] hover:bg-[#FFF4E3] hover:text-[#9E1B1E] text-xs font-semibold transition cursor-pointer"
+                title="Save Draft to Register"
+              >
+                <Save className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Save</span>
+              </button>
+
+              <button
+                onClick={() => setIsPreviewOpen(true)}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-[#E87B1E] to-[#9E1B1E] text-white text-xs font-bold font-rajdhani uppercase tracking-wider shadow-xs hover:opacity-90 transition cursor-pointer"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Dossier</span>
+              </button>
+
+              <button
+                onClick={handleOpenGuideline}
+                className="p-1.5 rounded-lg border border-[#D8DEE5] text-[#7E8B99] hover:text-[#E87B1E] hover:bg-[#FFF4E3] transition cursor-pointer"
+                title="Engineering Guidelines &amp; Standards Reference"
+              >
+                <HelpCircle className="w-4 h-4" />
+              </button>
+            </div>
+
           </div>
-
-          {/* Action Icons */}
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              onClick={handleSaveDraft}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-[#D8DEE5] bg-[#F7F8FA] text-[#4E5B6A] hover:bg-[#FFF4E3] hover:text-[#9E1B1E] text-xs font-semibold transition cursor-pointer"
-              title="Save Draft to Register"
-            >
-              <Save className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Save</span>
-            </button>
-
-            <button
-              onClick={() => setIsPreviewOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-[#E87B1E] to-[#9E1B1E] text-white text-xs font-bold font-rajdhani uppercase tracking-wider shadow-xs hover:opacity-90 transition cursor-pointer"
-            >
-              <Printer className="w-3.5 h-3.5" />
-              <span>Dossier</span>
-            </button>
-
-            <button
-              onClick={handleOpenGuideline}
-              className="p-1.5 rounded-lg border border-[#D8DEE5] text-[#7E8B99] hover:text-[#E87B1E] hover:bg-[#FFF4E3] transition cursor-pointer"
-              title="Engineering Guidelines &amp; Standards Reference"
-            >
-              <HelpCircle className="w-4 h-4" />
-            </button>
-          </div>
-
-        </div>
+        )}
 
         {/* Dynamic Tool Routing */}
         <main className="transition-all">
@@ -456,6 +481,8 @@ export default function BlasterQualificationPage({
                 setState(INITIAL_BLASTER_STATE);
                 if (onNavigate) onNavigate('blaster', 'info');
               }}
+              onOpenPreview={() => setIsPreviewOpen(true)}
+              onOpenPrint={() => window.print()}
             />
           )}
 

@@ -1,280 +1,323 @@
 import React from 'react';
 import {
-  FileSpreadsheet,
-  Layers,
-  Flame,
-  Paintbrush,
-  Users,
-  HardHat,
-  Gauge,
-  Printer,
-  ShieldCheck,
-  ChevronRight,
   Sparkles,
-  ArrowRight,
+  BarChart2,
+  Edit3,
+  CheckCircle2,
   TrendingUp,
-  Award,
-  Zap,
-  Building2,
-  Lock
+  ChevronRight,
+  FileText,
+  Eye,
+  Printer,
+  ArrowRight
 } from 'lucide-react';
 
-export default function ManpowerHub({ state, metrics, onNavigate, onApplyPreset }) {
-  const {
-    grandTotal,
-    costPerM2,
-    blastTotal,
-    paintTotal,
-    rawTotal,
-    area,
-    completionPct,
-    formatCur,
-    formatNum
-  } = metrics;
+export default function ManpowerHub({ 
+  state, 
+  metrics = {}, 
+  onNavigate, 
+  reports = [],
+  onOpenPreview,
+  onOpenPrint
+}) {
+  const totalEstimations = reports.length;
+  const draftEstimations = reports.filter(r => r.status === 'Draft' || !r.status).length;
+  const approvedEstimations = reports.filter(r => r.status === 'Approved').length;
+  
+  // Calculate combined value
+  const combinedTotal = reports.reduce((acc, r) => acc + (parseFloat(r.grand) || 0), 0);
+  const combinedFormatted = combinedTotal > 0 
+    ? `₹${combinedTotal.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`
+    : '₹0';
 
-  const industryPresets = [
-    {
-      title: 'Oil & Gas Storage Tank (20,000 m²)',
-      desc: '3-Coat System: Zinc Silicate (75µm) + Epoxy MIO (125µm) + Aliphatic PU (60µm)',
-      preset: {
-        projectName: 'LPG / Crude Storage Tank Farm',
-        customer: 'PetroChem Global Corp',
-        location: 'Coastal Terminal Facility',
-        area: 20000,
-        tonnage: 450,
-        months: 6,
-        wdays: 26,
-        shifts: 1,
-        blastOutput: 55,
-        paintOutput: 35,
-        pCoats: 3,
-        rawRows: [
-          { name: 'Inorganic Zinc Silicate Primer', dft: 75, vs: 75, thinner: 5, loss: 25, paintPrice: 500, thinnerPrice: 150 },
-          { name: 'Epoxy MIO Intermediate', dft: 125, vs: 80, thinner: 5, loss: 25, paintPrice: 400, thinnerPrice: 150 },
-          { name: 'Polyurethane (Aliphatic PU)', dft: 60, vs: 60, thinner: 8, loss: 30, paintPrice: 650, thinnerPrice: 150 }
-        ]
-      }
-    },
-    {
-      title: 'Marine Offshore Topsides (12,000 m²)',
-      desc: 'Heavy C5-M Spec: Zinc Rich Epoxy + High Build Glass Flake + Polysiloxane',
-      preset: {
-        projectName: 'Offshore Wellhead Platform Rig 04',
-        customer: 'Marine Energy Consortium',
-        location: 'Offshore Basin Sector 7',
-        area: 12000,
-        tonnage: 850,
-        months: 4,
-        wdays: 26,
-        shifts: 2,
-        blastOutput: 45,
-        paintOutput: 25,
-        pCoats: 3,
-        rawRows: [
-          { name: 'Organic Zinc Rich Epoxy Primer', dft: 75, vs: 65, thinner: 5, loss: 25, paintPrice: 480, thinnerPrice: 150 },
-          { name: 'Epoxy Glass Flake', dft: 300, vs: 90, thinner: 0, loss: 20, paintPrice: 650, thinnerPrice: 160 },
-          { name: 'Polysiloxane (CUI Defense)', dft: 75, vs: 75, thinner: 5, loss: 20, paintPrice: 890, thinnerPrice: 180 }
-        ]
-      }
-    },
-    {
-      title: 'Structural Steel Fabrication (30,000 m²)',
-      desc: 'Shop Fabrication 2-Coat: Zinc Phosphate Primer + Epoxy High Build',
-      preset: {
-        projectName: 'Industrial Warehouse Steel Structure',
-        customer: 'Steel Infrastructure Ltd',
-        location: 'Fabrication Yard B',
-        area: 30000,
-        tonnage: 1200,
-        months: 8,
-        wdays: 26,
-        shifts: 1,
-        blastOutput: 70,
-        paintOutput: 45,
-        pCoats: 2,
-        rawRows: [
-          { name: 'Epoxy Zinc Phosphate Primer', dft: 60, vs: 65, thinner: 5, loss: 25, paintPrice: 420, thinnerPrice: 150 },
-          { name: 'Epoxy High Build', dft: 125, vs: 85, thinner: 5, loss: 20, paintPrice: 450, thinnerPrice: 150 }
-        ]
-      }
+  const handleNewGeneration = () => {
+    if (onNavigate) {
+      onNavigate('project-info');
     }
-  ];
-
-  const tools = [
-    {
-      id: 'project-info',
-      title: '01. Project Information & Schedule',
-      desc: 'Define scope, MOC, surface prep grade, schedule duration, shifts, output capacity, and tonnage take-off.',
-      icon: Building2,
-      color: 'from-amber-500/20 to-orange-500/20 text-orange-400 border-orange-500/30'
-    },
-    {
-      id: 'blasting',
-      title: '02. Blasting Cost Engine (A/B/C/D)',
-      desc: 'Consumables (Grit/Diesel/PPE), Crew Labor, Equipment Hire (Compressor/Hopper), and Subcontractor Margin.',
-      icon: Flame,
-      color: 'from-red-500/20 to-amber-500/20 text-red-400 border-red-500/30'
-    },
-    {
-      id: 'painting',
-      title: '03. Paint Application Cost (A/B/C/D)',
-      desc: 'Pass-by-pass spray painter crew, airless spray equipment, inspector, and indirect charges.',
-      icon: Paintbrush,
-      color: 'from-blue-500/20 to-cyan-500/20 text-blue-400 border-blue-500/30'
-    },
-    {
-      id: 'raw-material',
-      title: '04. Paint Raw Material & QRef Library',
-      desc: 'Theoretical & Practical spreading rate, DFT, Volume Solids, Thinner%, Loss%, with 18 common paint system presets.',
-      icon: Layers,
-      color: 'from-emerald-500/20 to-teal-500/20 text-emerald-400 border-emerald-500/30'
-    },
-    {
-      id: 'worker-ctc',
-      title: '05. Individual Worker CTC Engine',
-      desc: 'Fully loaded monthly liability: Wage, Overtime, PF (12.16%), Bonus (8.33%), Leave, PPE, and Camp costs.',
-      icon: Users,
-      color: 'from-purple-500/20 to-pink-500/20 text-purple-400 border-purple-500/30'
-    },
-    {
-      id: 'abrasive-diesel',
-      title: '06. Abrasive & Diesel Dynamics',
-      desc: 'Surface scale condition matrix (Zero, Mild, Heavy, Very Heavy) for Garnet and Copper Slag media.',
-      icon: Gauge,
-      color: 'from-yellow-500/20 to-amber-500/20 text-yellow-400 border-yellow-500/30'
-    },
-    {
-      id: 'summary',
-      title: '07. Front Page Consolidated Summary',
-      desc: 'Complete project cost summary, surface finish comparison (Sa3 / Sa2.5 / Sa2 / Sweep), and validate/approval.',
-      icon: FileSpreadsheet,
-      color: 'from-teal-500/20 to-emerald-500/20 text-teal-400 border-teal-500/30'
-    },
-    {
-      id: 'register',
-      title: '08. Report Register & Archive',
-      desc: 'Local database snapshot persistence, search, column filters, edit/load, duplicate, and Excel export.',
-      icon: HardHat,
-      color: 'from-slate-500/20 to-zinc-500/20 text-slate-300 border-slate-500/30'
-    },
-    {
-      id: 'preview',
-      title: '09. A4 Dossier Preview & Print',
-      desc: 'MNC-grade 2-page quotation dossier with infographic dashboard, per-coat breakdown, and watermark protection.',
-      icon: Printer,
-      color: 'from-amber-600/20 to-orange-600/20 text-amber-300 border-amber-500/30'
-    }
-  ];
+  };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 max-w-6xl mx-auto pb-6 animate-in fade-in duration-200">
       
-      {/* Hero Banner */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#180900] via-[#381605] to-[#120500] border-2 border-[#E8700A]/40 p-6 sm:p-8 text-white shadow-2xl">
-        <div className="absolute -right-10 -bottom-10 w-80 h-80 bg-[#E8700A]/10 rounded-full blur-3xl pointer-events-none" />
+      {/* 1. Hero Card (Exact match to media_1791302836632.png) */}
+      <div className="bg-gradient-to-br from-[#2D160E] via-[#200F09] to-[#170905] border border-[#5A2C18] rounded-2xl md:rounded-3xl p-6 md:p-8 text-center text-white relative shadow-xl max-w-4xl mx-auto">
         
-        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="space-y-2 max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#E8700A]/20 border border-[#E8700A]/40 text-[#F5911F] text-xs font-mono font-bold uppercase tracking-wider">
-              <Sparkles className="w-3.5 h-3.5" />
-              Module 05 · Enterprise Coating Suite
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
-              Painting Project Estimation <span className="text-[#F5911F]">— Manpower Based</span>
+        {/* Top Capsule Badge */}
+        <div className="inline-block mb-4">
+          <span className="bg-[#3D1D10] text-[#E89A3C] border border-[#6B371F] text-[10px] md:text-[11px] font-mono font-bold px-3 py-1 rounded-full uppercase tracking-wider inline-flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#E89A3C]"></span>
+            <span>INDUSTRIAL PROJECT ESTIMATION • MANPOWER BASED</span>
+          </span>
+        </div>
+
+        {/* Title and Logo Row */}
+        <div className="flex flex-col md:flex-row items-center justify-center gap-5 max-w-3xl mx-auto">
+          <div className="w-16 h-16 rounded-2xl bg-white border border-white/20 p-2 shadow-md flex items-center justify-center shrink-0">
+            <img src="/logo-2.png" alt="BG Logo" className="w-full h-full object-contain" />
+          </div>
+
+          <div className="text-center md:text-left">
+            <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">
+              Painting Project <span className="text-[#F7941D]">Estimation System</span>
             </h1>
-            <p className="text-sm text-slate-300 leading-relaxed">
-              Industrial surface preparation and coating cost estimation engine. Computes fully-loaded crew rates, A/B/C/D category bifurcation, abrasive consumption grids, diesel fuel dynamics, and generates executive submission dossiers.
+            <p className="text-xs md:text-[13px] text-slate-300 mt-2 leading-relaxed">
+              A premium manpower-based estimation platform by BG Group of Paint and Coating Consultant — integrates project inputs, blasting cost, paint application, raw material, manpower CTC, abrasives &amp; diesel into one platform with a detailed commercial summary and dashboard.
             </p>
           </div>
-
-          {/* Quick Metrics Badge */}
-          <div className="bg-black/40 border border-[#E8700A]/40 rounded-xl p-4 min-w-[220px] shrink-0 space-y-2 shadow-inner">
-            <div className="text-[10px] uppercase font-bold text-slate-400">Current Grand Total</div>
-            <div className="text-xl sm:text-2xl font-mono font-black text-[#F5911F]">
-              {formatCur(grandTotal)}
-            </div>
-            <div className="flex items-center justify-between text-xs pt-2 border-t border-white/10 text-slate-300">
-              <span>Per m² Cost:</span>
-              <span className="font-mono font-bold text-white">{formatCur(costPerM2)}</span>
-            </div>
-            <div className="flex items-center justify-between text-xs text-slate-300">
-              <span>Completion:</span>
-              <span className="font-mono font-bold text-emerald-400">{completionPct}%</span>
-            </div>
-          </div>
         </div>
 
-        {/* 1-Click Fast Presets */}
-        <div className="mt-6 pt-6 border-t border-white/10">
-          <div className="text-xs font-bold text-[#F5911F] uppercase tracking-wider mb-3 flex items-center gap-2">
-            <Zap className="w-4 h-4 text-amber-400" />
-            1-Click Industry Templates (Instant Sizing)
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {industryPresets.map((ip, idx) => (
-              <button
-                key={idx}
-                onClick={() => onApplyPreset(ip.preset)}
-                className="text-left p-3 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 hover:border-[#E8700A]/50 transition duration-200 group flex flex-col justify-between"
-              >
-                <div>
-                  <div className="text-xs font-bold text-white group-hover:text-[#F5911F] transition flex items-center justify-between">
-                    <span>{ip.title}</span>
-                    <ArrowRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0 transition" />
-                  </div>
-                  <div className="text-[11px] text-slate-400 mt-1 line-clamp-2">
-                    {ip.desc}
-                  </div>
-                </div>
-                <div className="mt-2 text-[10px] font-mono text-amber-300/80">
-                  Load Template →
-                </div>
-              </button>
-            ))}
-          </div>
+        {/* CTA Button */}
+        <div className="mt-6 flex flex-col items-center">
+          <button
+            onClick={handleNewGeneration}
+            className="bg-gradient-to-r from-[#F7941D] to-[#E8700A] hover:from-[#E8700A] hover:to-[#D97706] text-white font-extrabold text-xs md:text-sm px-8 py-3 rounded-full shadow-[0_4px_16px_rgba(247,148,29,0.35)] flex items-center justify-center gap-2 transition hover:scale-[1.02] cursor-pointer"
+          >
+            <Sparkles className="w-4 h-4 fill-white text-white" />
+            <span className="tracking-wide uppercase font-mono">NEW GENERATION</span>
+          </button>
+          <span className="text-[11px] text-[#A37B69] mt-2.5">
+            Start a fresh estimation — all modules ready for guided data entry
+          </span>
         </div>
+
       </div>
 
-      {/* Module Sections Grid */}
+      {/* 2. Estimation Overview (Exact match to media_1791302836632.png) */}
       <div className="space-y-3">
-        <h2 className="text-base font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
-          <Layers className="w-4 h-4 text-[#E8700A]" />
-          Estimation Sheets &amp; Engineering Engines
-        </h2>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="w-1 h-4 bg-[#F7941D] rounded-full inline-block"></span>
+            <h2 className="text-sm md:text-base font-bold text-[#1B222C]">
+              Estimation Overview
+            </h2>
+          </div>
+          <span className="text-[11px] text-[#94A3B8] font-medium">
+            Saved estimations
+          </span>
+        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {tools.map((t) => {
-            const Icon = t.icon;
-            return (
-              <div
-                key={t.id}
-                onClick={() => onNavigate(t.id)}
-                className="group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 hover:border-[#E8700A]/50 hover:shadow-lg transition cursor-pointer flex flex-col justify-between"
-              >
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className={`p-2.5 rounded-lg border bg-gradient-to-br ${t.color}`}>
-                      <Icon className="w-5 h-5" />
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#E8700A] group-hover:translate-x-1 transition" />
-                  </div>
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-[#E8700A] transition">
-                    {t.title}
-                  </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                    {t.desc}
-                  </p>
-                </div>
-
-                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] font-semibold text-[#E8700A]">
-                  <span>Open Sheet</span>
-                  <span className="font-mono">→</span>
-                </div>
+        {/* 4 Overview Metric Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          
+          {/* Card 1: Total Estimations */}
+          <div 
+            onClick={() => onNavigate && onNavigate('register')}
+            className="bg-white rounded-xl border border-[#E6E8EC] border-t-2 border-t-sky-500 p-4 shadow-2xs hover:shadow-sm transition cursor-pointer flex flex-col justify-between"
+          >
+            <div className="flex items-center justify-between">
+              <div className="w-8 h-8 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center">
+                <BarChart2 className="w-4 h-4" />
               </div>
-            );
-          })}
+              <ChevronRight className="w-4 h-4 text-slate-300" />
+            </div>
+            <div className="mt-3">
+              <span className="text-2xl font-extrabold text-[#1B222C] font-mono block">
+                {totalEstimations}
+              </span>
+              <span className="text-xs font-bold text-[#1B222C] block mt-0.5">
+                Total Estimations
+              </span>
+              <span className="text-[10px] text-[#64748B] block">
+                All saved records
+              </span>
+            </div>
+          </div>
+
+          {/* Card 2: Drafts */}
+          <div 
+            onClick={() => onNavigate && onNavigate('register')}
+            className="bg-white rounded-xl border border-[#E6E8EC] border-t-2 border-t-orange-500 p-4 shadow-2xs hover:shadow-sm transition cursor-pointer flex flex-col justify-between"
+          >
+            <div className="flex items-center justify-between">
+              <div className="w-8 h-8 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center">
+                <Edit3 className="w-4 h-4" />
+              </div>
+              <ChevronRight className="w-4 h-4 text-slate-300" />
+            </div>
+            <div className="mt-3">
+              <span className="text-2xl font-extrabold text-[#1B222C] font-mono block">
+                {draftEstimations}
+              </span>
+              <span className="text-xs font-bold text-[#1B222C] block mt-0.5">
+                Drafts
+              </span>
+              <span className="text-[10px] text-[#64748B] block">
+                Work in progress
+              </span>
+            </div>
+          </div>
+
+          {/* Card 3: Approved */}
+          <div 
+            onClick={() => onNavigate && onNavigate('register')}
+            className="bg-white rounded-xl border border-[#E6E8EC] border-t-2 border-t-emerald-500 p-4 shadow-2xs hover:shadow-sm transition cursor-pointer flex flex-col justify-between"
+          >
+            <div className="flex items-center justify-between">
+              <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                <CheckCircle2 className="w-4 h-4" />
+              </div>
+              <ChevronRight className="w-4 h-4 text-slate-300" />
+            </div>
+            <div className="mt-3">
+              <span className="text-2xl font-extrabold text-[#1B222C] font-mono block">
+                {approvedEstimations}
+              </span>
+              <span className="text-xs font-bold text-[#1B222C] block mt-0.5">
+                Approved
+              </span>
+              <span className="text-[10px] text-[#64748B] block">
+                Validated &amp; signed off
+              </span>
+            </div>
+          </div>
+
+          {/* Card 4: Combined Value */}
+          <div 
+            onClick={() => onNavigate && onNavigate('register')}
+            className="bg-white rounded-xl border border-[#E6E8EC] border-t-2 border-t-indigo-500 p-4 shadow-2xs hover:shadow-sm transition cursor-pointer flex flex-col justify-between"
+          >
+            <div className="flex items-center justify-between">
+              <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                <TrendingUp className="w-4 h-4" />
+              </div>
+              <ChevronRight className="w-4 h-4 text-slate-300" />
+            </div>
+            <div className="mt-3">
+              <span className="text-2xl font-extrabold text-[#1B222C] font-mono block">
+                {combinedFormatted}
+              </span>
+              <span className="text-xs font-bold text-[#1B222C] block mt-0.5">
+                Combined Value
+              </span>
+              <span className="text-[10px] text-[#64748B] block">
+                All estimations
+              </span>
+            </div>
+          </div>
+
         </div>
       </div>
+
+      {/* 3. Quick Actions (Exact match to media_1791302836632.png) */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="w-1 h-4 bg-[#F7941D] rounded-full inline-block"></span>
+            <h2 className="text-sm md:text-base font-bold text-[#1B222C]">
+              Quick Actions
+            </h2>
+          </div>
+          <span className="text-[11px] text-[#94A3B8] font-medium">
+            Jump straight in
+          </span>
+        </div>
+
+        {/* 4 Action Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          
+          {/* Action 1: New Generation */}
+          <div 
+            onClick={handleNewGeneration}
+            className="bg-white rounded-xl border border-[#E6E8EC] p-3.5 shadow-2xs hover:shadow-sm hover:border-[#F7941D] transition cursor-pointer flex items-center gap-3 group"
+          >
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#F7941D] to-[#E8700A] text-white flex items-center justify-center shrink-0 shadow-xs">
+              <Sparkles className="w-5 h-5" />
+            </div>
+            <div>
+              <span className="font-bold text-xs text-[#1B222C] group-hover:text-[#F7941D] transition-colors block">
+                New Generation
+              </span>
+              <span className="text-[11px] text-[#64748B] block mt-0.5">
+                Start a fresh estimation
+              </span>
+            </div>
+          </div>
+
+          {/* Action 2: Report Register */}
+          <div 
+            onClick={() => onNavigate && onNavigate('register')}
+            className="bg-white rounded-xl border border-[#E6E8EC] p-3.5 shadow-2xs hover:shadow-sm hover:border-[#F7941D] transition cursor-pointer flex items-center gap-3 group"
+          >
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0284C7] to-[#0369A1] text-white flex items-center justify-center shrink-0 shadow-xs">
+              <FileText className="w-5 h-5" />
+            </div>
+            <div>
+              <span className="font-bold text-xs text-[#1B222C] group-hover:text-[#F7941D] transition-colors block">
+                Report Register
+              </span>
+              <span className="text-[11px] text-[#64748B] block mt-0.5">
+                Open all saved records
+              </span>
+            </div>
+          </div>
+
+          {/* Action 3: Preview Latest */}
+          <div 
+            onClick={onOpenPreview}
+            className="bg-white rounded-xl border border-[#E6E8EC] p-3.5 shadow-2xs hover:shadow-sm hover:border-[#F7941D] transition cursor-pointer flex items-center gap-3 group"
+          >
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D97706] to-[#B45309] text-white flex items-center justify-center shrink-0 shadow-xs">
+              <Eye className="w-5 h-5" />
+            </div>
+            <div>
+              <span className="font-bold text-xs text-[#1B222C] group-hover:text-[#F7941D] transition-colors block">
+                Preview Latest
+              </span>
+              <span className="text-[11px] text-[#64748B] block mt-0.5">
+                Read-only report preview
+              </span>
+            </div>
+          </div>
+
+          {/* Action 4: Print Existing (PRO) */}
+          <div 
+            onClick={onOpenPrint}
+            className="bg-white rounded-xl border border-[#E6E8EC] p-3.5 shadow-2xs hover:shadow-sm hover:border-[#F7941D] transition cursor-pointer flex items-center gap-3 group"
+          >
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#7C2D12] to-[#991B1B] text-white flex items-center justify-center shrink-0 shadow-xs">
+              <Printer className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className="font-bold text-xs text-[#1B222C] group-hover:text-[#F7941D] transition-colors">
+                  Print Existing
+                </span>
+                <span className="bg-amber-500/20 text-[#D97706] text-[9px] font-mono font-bold px-1.5 py-0.2 rounded">
+                  PRO
+                </span>
+              </div>
+              <span className="text-[11px] text-[#64748B] block mt-0.5">
+                Excel-format printable view
+              </span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      {/* 4. Corporate Footer (Exact match to media_1791302836632.png) */}
+      <footer className="bg-[#181E29] text-white py-6 px-6 rounded-2xl text-center space-y-2 select-none shadow-md">
+        <div className="flex items-center justify-center gap-2">
+          <div className="w-6 h-6 rounded-md bg-white p-0.5 flex items-center justify-center shadow-2xs">
+            <img src="/logo-2.png" alt="BG Logo" className="w-full h-full object-contain" />
+          </div>
+          <span className="font-bold text-xs md:text-sm">
+            <span className="text-[#F7941D]">BG GROUP</span> of Paint and Coating Consultant
+          </span>
+        </div>
+
+        <p className="text-[11px] text-slate-300 font-medium">
+          Industrial Cost Estimation • Surface Protection • Coating Engineering
+        </p>
+
+        <p className="text-[10px] text-slate-400">
+          E-102, Akash Echo Point, Bhimrad, Surat - 395007, Gujarat, India &nbsp;|&nbsp; +91 99258 10408 &nbsp;|&nbsp; support@bgcoating.com &nbsp;|&nbsp; www.bgcoating.com
+        </p>
+
+        <p className="text-[9px] text-slate-500 font-mono pt-1">
+          &copy; 2026 BG Group of Paint and Coating Consultant. All rights reserved.
+        </p>
+      </footer>
 
     </div>
   );

@@ -504,218 +504,211 @@ export default function CoatingCalculatorPage({ activeSubTool, setActiveSubTool 
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-200">
+    <div className="space-y-6 animate-in fade-in duration-200">
       
-      {/* 1. Header Banner */}
-      <div className="bg-white border border-[#D8DEE5] rounded-2xl p-5 md:p-6 shadow-[0_2px_8px_rgba(20,24,32,0.06)] flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="bg-[#FFF4E3] text-[#E87B1E] border border-[#F3D2A0] px-2 py-0.5 rounded-md text-[10px] font-bold uppercase font-mono tracking-wider">
-              Module 01
-            </span>
-            <h1 className="text-lg md:text-xl font-extrabold text-[#1B222C] font-rajdhani tracking-wide">
-              Coating Calculator &amp; Take-Off Suite
-            </h1>
+      {/* 1. Top KPI Summary Card */}
+      <div className="flex items-center gap-4">
+        <div 
+          onClick={() => setActiveSubTool('vs-tds')}
+          className="kpi max-w-xs cursor-pointer"
+        >
+          <div className="kpi-top">
+            <div className="kpi-ico">👑</div>
+            <span className="kpi-arr">→</span>
           </div>
-          <p className="text-xs text-[#7E8B99] mt-1 font-sans">
-            44+ specialized industrial coating, surface area, abrasive blasting, QA/QC and commercial calculation engines.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-mono font-bold text-[#E87B1E] bg-[#FFF4E3] border border-[#F3D2A0] px-3 py-1.5 rounded-xl">
-            44 Engineering Tools Active
-          </span>
+          <div className="kpi-num">28</div>
+          <div className="kpi-lbl">Executive Coating — PRO</div>
+          <div className="kpi-sub">44 Engineering Calculation Engines Active</div>
         </div>
       </div>
 
-      {/* 2. Top 5 Category Summary KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        {categoryCards.map((cat, i) => {
-          const Icon = cat.icon;
-          return (
+      {/* 2. Quick Access */}
+      <div>
+        <div className="dash-sec">
+          <span className="ds-bar"></span>
+          <h2>Quick Access</h2>
+          <span className="ds-d">Most-used calculators</span>
+        </div>
+        <div className="qa">
+          <div className="qa-tile cursor-pointer" onClick={() => setActiveSubTool('sp-cov')}>
+            <div className="qa-ic">📐</div>
+            <div>
+              <div className="qa-tt">Coverage</div>
+              <div className="qa-td">TC &amp; PS spread rate (m²/L)</div>
+            </div>
+          </div>
+          <div className="qa-tile cursor-pointer" onClick={() => setActiveSubTool('sp-pc')}>
+            <div className="qa-ic">🧮</div>
+            <div>
+              <div className="qa-tt">WFT Range</div>
+              <div className="qa-td">Min &amp; Max WFT from DFT</div>
+            </div>
+          </div>
+          <div className="qa-tile cursor-pointer" onClick={() => setActiveSubTool('sp-dft')}>
+            <div className="qa-ic">📏</div>
+            <div>
+              <div className="qa-tt">DFT</div>
+              <div className="qa-td">Dry film thickness from WFT</div>
+            </div>
+          </div>
+          <div className="qa-tile cursor-pointer" onClick={() => setActiveSubTool('sa-pipe')}>
+            <div className="qa-ic">🔩</div>
+            <div>
+              <div className="qa-tt">Surface Area</div>
+              <div className="qa-td">Pipe · Tank · Vessel m²</div>
+            </div>
+          </div>
+          <div className="qa-tile cursor-pointer" onClick={() => setActiveSubTool('ab-garnet')}>
+            <div className="qa-ic">💎</div>
+            <div>
+              <div className="qa-tt">Abrasives</div>
+              <div className="qa-td">Garnet &amp; Copper Slag (kg)</div>
+            </div>
+          </div>
+          <div className="qa-tile cursor-pointer" onClick={() => setActiveSubTool('salt-main')}>
+            <div className="qa-ic">🧂</div>
+            <div>
+              <div className="qa-tt">Salt Test</div>
+              <div className="qa-td">Bresle ISO 8502-9 + temp</div>
+            </div>
+          </div>
+          <div className="qa-tile cursor-pointer" onClick={() => setActiveSubTool('vs-tds')}>
+            <div className="qa-ic">👑</div>
+            <div>
+              <div className="qa-tt">Executive PRO</div>
+              <div className="qa-td">Volume Solids verification suite</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. Industry Defaults / Insights */}
+      <div>
+        <div className="dash-sec">
+          <span className="ds-bar"></span>
+          <h2>Industry Defaults</h2>
+          <span className="ds-d">Engineering reference norms</span>
+        </div>
+        <div className="ins">
+          <div className="ins-card">
+            <div className="ins-h">
+              <div className="ins-ic">🛡️</div>
+              <div className="ins-t">Common Paint Systems</div>
+            </div>
+            <div className="ins-row"><span className="ins-k">Inorganic Zinc Silicate</span><span className="ins-v">75 µm</span></div>
+            <div className="ins-row"><span className="ins-k">Epoxy Intermediate</span><span className="ins-v">100 µm</span></div>
+            <div className="ins-row"><span className="ins-k">High-Build Epoxy</span><span className="ins-v">125 µm</span></div>
+            <div className="ins-row"><span className="ins-k">Polyurethane Topcoat</span><span className="ins-v">50 µm</span></div>
+          </div>
+          <div className="ins-card">
+            <div className="ins-h">
+              <div className="ins-ic">📏</div>
+              <div className="ins-t">Typical DFT Ranges</div>
+            </div>
+            <div className="ins-row"><span className="ins-k">Primer Coat</span><span className="ins-v">40–75 µm</span></div>
+            <div className="ins-row"><span className="ins-k">Intermediate</span><span className="ins-v">100–150 µm</span></div>
+            <div className="ins-row"><span className="ins-k">Finish / Topcoat</span><span className="ins-v">50–80 µm</span></div>
+            <div className="ins-row"><span className="ins-k">Coal Tar Epoxy</span><span className="ins-v">200 µm</span></div>
+          </div>
+          <div className="ins-card">
+            <div className="ins-h">
+              <div className="ins-ic">💎</div>
+              <div className="ins-t">Abrasive Factors</div>
+            </div>
+            <div className="ins-row"><span className="ins-k">Garnet · SA 2.5</span><span className="ins-v">20 kg/m²</span></div>
+            <div className="ins-row"><span className="ins-k">Garnet · SA 3.0</span><span className="ins-v">25 kg/m²</span></div>
+            <div className="ins-row"><span className="ins-k">Copper Slag · SA 2.5</span><span className="ins-v">30 kg/m²</span></div>
+            <div className="ins-row"><span className="ins-k">Copper Slag · SA 3.0</span><span className="ins-v">35 kg/m²</span></div>
+          </div>
+          <div className="ins-card">
+            <div className="ins-h">
+              <div className="ins-ic">🧂</div>
+              <div className="ins-t">Salt Test Limits</div>
+            </div>
+            <div className="ins-row"><span className="ins-k">Standard (general)</span><span className="ins-v">≤ 20 mg/m²</span></div>
+            <div className="ins-row"><span className="ins-k">Immersion service</span><span className="ins-v">≤ 10 mg/m²</span></div>
+            <div className="ins-row"><span className="ins-k">High-spec offshore</span><span className="ins-v">≤ 5 mg/m²</span></div>
+            <div className="ins-row"><span className="ins-k">Method Standard</span><span className="ins-v">ISO 8502-9</span></div>
+          </div>
+        </div>
+      </div>
+
+      {/* 4. All Calculators Grid */}
+      <div>
+        <div className="dash-sec">
+          <span className="ds-bar"></span>
+          <h2>All Calculators</h2>
+          <span className="ds-d">Tap any tool to begin</span>
+        </div>
+        <div className="ov">
+          {allCalculatorCards.map((tool) => (
             <div
-              key={i}
-              onClick={() => setActiveSubTool(cat.defaultTool)}
-              className="bg-white border border-[#D8DEE5] hover:border-[#F3D2A0] hover:shadow-md p-4 rounded-2xl shadow-[0_2px_8px_rgba(20,24,32,0.06)] transition cursor-pointer group flex flex-col justify-between"
+              key={tool.id}
+              onClick={() => setActiveSubTool(tool.id)}
+              className="ovc"
             >
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <div className="p-2 rounded-xl bg-[#FFF4E3] text-[#E87B1E] border border-[#F3D2A0] group-hover:scale-110 transition">
-                    <Icon className="w-4 h-4" />
-                  </div>
-                  <span className="text-2xl font-extrabold text-[#1B222C] font-rajdhani">
-                    {cat.count}
-                  </span>
-                </div>
-                <h3 className="text-xs font-extrabold text-[#1B222C] font-rajdhani group-hover:text-[#E87B1E] transition">
-                  {cat.title}
-                </h3>
+              <span className="ovarr">→</span>
+              <div className="ovic">
+                {tool.id === 'sp-pc' && '🧮'}
+                {tool.id === 'sp-dft' && '📏'}
+                {tool.id === 'sp-cov' && '📐'}
+                {tool.id === 'sp-cons' && '🧪'}
+                {tool.id === 'sp-bl' && '💥'}
+                {tool.id === 'sp-mx' && '⚗️'}
+                {tool.id === 'sp-cost' && '💰'}
+                {tool.id === 'sa-pipe' && '🔩'}
+                {tool.id === 'sa-tank' && '🛢️'}
+                {tool.id === 'sa-wws' && '⚖️'}
+                {tool.id === 'sa-plate' && '🔲'}
+                {tool.id === 'sa-de' && '🫙'}
+                {tool.id === 'sa-vessel' && '🏭'}
+                {tool.id === 'ab-garnet' && '💎'}
+                {tool.id === 'ab-cslag' && '⛏️'}
+                {tool.id === 'salt-main' && '🧂'}
+                {tool.id.startsWith('vs') && '👑'}
+                {tool.id === 'pro-recon' && '📊'}
+                {tool.id === 'pro-lcc' && '🪙'}
+                {tool.id === 'pro-abp' && '🔬'}
+                {tool.id === 'pro-arc' && '♻️'}
+                {tool.id === 'pro-dcc' && '🌪️'}
+                {tool.id === 'pro-saw' && '🏗️'}
+                {tool.id === 'qa-pa2' && '🛡️'}
+                {tool.id === 'qa-iso' && '📜'}
+                {tool.id === 'qa-hol' && '⚡'}
+                {tool.id === 'ce-rate' && '⏱️'}
+                {tool.id === 'ce-life' && '⏳'}
+                {tool.id.startsWith('tsa') && '🔥'}
+                {tool.id.startsWith('pfp') && '🧱'}
+                {tool.id.startsWith('bid') && '💼'}
+                {!['sp-pc', 'sp-dft', 'sp-cov', 'sp-cons', 'sp-bl', 'sp-mx', 'sp-cost', 'sa-pipe', 'sa-tank', 'sa-wws', 'sa-plate', 'sa-de', 'sa-vessel', 'ab-garnet', 'ab-cslag', 'salt-main', 'pro-recon', 'pro-lcc', 'pro-abp', 'pro-arc', 'pro-dcc', 'pro-saw', 'qa-pa2', 'qa-iso', 'qa-hol', 'ce-rate', 'ce-life'].includes(tool.id) && !tool.id.startsWith('vs') && !tool.id.startsWith('tsa') && !tool.id.startsWith('pfp') && !tool.id.startsWith('bid') && '🛠️'}
               </div>
-              <p className="text-[10px] text-[#7E8B99] font-mono mt-2 truncate">
-                {cat.subtitle}
-              </p>
+              <div className="ovt">{tool.title}</div>
+              <div className="ovd">{tool.desc}</div>
             </div>
-          );
-        })}
-      </div>
-
-      {/* 3. Quick Access Bar (13 Key Tools) */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider font-mono">
-            ⚡ Quick Access Launchpad
-          </h2>
-          <span className="text-[11px] text-slate-400 font-mono">Single-click field launch</span>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {quickAccessButtons.map((btn) => {
-            const Icon = btn.icon;
-            return (
-              <button
-                key={btn.id}
-                onClick={() => setActiveSubTool(btn.id)}
-                className="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-900 hover:text-white border border-slate-200 text-slate-700 text-xs font-bold transition flex items-center gap-1.5 shadow-2xs group cursor-pointer"
-              >
-                <Icon className="w-3.5 h-3.5 text-[#F7941D] group-hover:text-white transition" />
-                <span>{btn.label}</span>
-              </button>
-            );
-          })}
+          ))}
         </div>
       </div>
 
-      {/* 4. Industry Engineering Insights (4 Benchmark Boxes matching reference lines 950-980) */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider font-mono">
-            💡 Industry Engineering Insights
-          </h2>
-          <span className="text-[11px] text-slate-400 font-mono">Engineering reference norms</span>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          
-          {/* Card 1: Common Paint Systems */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-2xs space-y-2.5">
-            <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
-              <span className="text-base">🛡️</span>
-              <h3 className="text-xs font-extrabold text-slate-900">Common Paint Systems</h3>
-            </div>
-            <div className="space-y-1.5 text-xs font-mono">
-              <div className="flex justify-between text-slate-600"><span>Inorganic Zinc Silicate:</span><b className="text-slate-900">75 µm</b></div>
-              <div className="flex justify-between text-slate-600"><span>Epoxy Intermediate:</span><b className="text-slate-900">100 µm</b></div>
-              <div className="flex justify-between text-slate-600"><span>High-Build Epoxy:</span><b className="text-slate-900">125 µm</b></div>
-              <div className="flex justify-between text-slate-600"><span>Polyurethane Topcoat:</span><b className="text-slate-900">50 µm</b></div>
-            </div>
-          </div>
-
-          {/* Card 2: Typical DFT Ranges */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-2xs space-y-2.5">
-            <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
-              <span className="text-base">📏</span>
-              <h3 className="text-xs font-extrabold text-slate-900">Typical DFT Ranges</h3>
-            </div>
-            <div className="space-y-1.5 text-xs font-mono">
-              <div className="flex justify-between text-slate-600"><span>Primer Coat:</span><b className="text-slate-900">40–75 µm</b></div>
-              <div className="flex justify-between text-slate-600"><span>Intermediate:</span><b className="text-slate-900">100–150 µm</b></div>
-              <div className="flex justify-between text-slate-600"><span>Finish / Topcoat:</span><b className="text-slate-900">50–80 µm</b></div>
-              <div className="flex justify-between text-slate-600"><span>Coal Tar Epoxy:</span><b className="text-slate-900">200 µm</b></div>
-            </div>
-          </div>
-
-          {/* Card 3: Abrasive Factors */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-2xs space-y-2.5">
-            <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
-              <span className="text-base">💎</span>
-              <h3 className="text-xs font-extrabold text-slate-900">Abrasive Factors</h3>
-            </div>
-            <div className="space-y-1.5 text-xs font-mono">
-              <div className="flex justify-between text-slate-600"><span>Garnet · SA 2.5:</span><b className="text-slate-900">20 kg/m²</b></div>
-              <div className="flex justify-between text-slate-600"><span>Garnet · SA 3.0:</span><b className="text-slate-900">25 kg/m²</b></div>
-              <div className="flex justify-between text-slate-600"><span>Copper Slag · SA 2.5:</span><b className="text-slate-900">30 kg/m²</b></div>
-              <div className="flex justify-between text-slate-600"><span>Copper Slag · SA 3.0:</span><b className="text-slate-900">35 kg/m²</b></div>
-            </div>
-          </div>
-
-          {/* Card 4: Salt Test Limits */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-2xs space-y-2.5">
-            <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
-              <span className="text-base">🧂</span>
-              <h3 className="text-xs font-extrabold text-slate-900">Salt Test Limits</h3>
-            </div>
-            <div className="space-y-1.5 text-xs font-mono">
-              <div className="flex justify-between text-slate-600"><span>Standard (general):</span><b className="text-slate-900">≤ 20 mg/m²</b></div>
-              <div className="flex justify-between text-slate-600"><span>Immersion service:</span><b className="text-slate-900">≤ 10 mg/m²</b></div>
-              <div className="flex justify-between text-slate-600"><span>High-spec offshore:</span><b className="text-slate-900">≤ 5 mg/m²</b></div>
-              <div className="flex justify-between text-slate-600"><span>Method Standard:</span><b className="text-[#D97706]">ISO 8502-9</b></div>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-      {/* 5. Complete 44-Calculator Grid */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider font-mono">
-            🛠️ All Calculators (44 Interactive Tools)
-          </h2>
-          <span className="text-[11px] text-slate-400 font-mono">Click any tool to launch</span>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5">
-          {allCalculatorCards.map((tool) => {
-            const Icon = tool.icon;
-            return (
-              <div
-                key={tool.id}
-                onClick={() => setActiveSubTool(tool.id)}
-                className="bg-white border border-slate-200 hover:border-[#F7941D] hover:shadow-md p-4 rounded-2xl transition group cursor-pointer flex items-start gap-3 relative"
-              >
-                <div className="p-2 rounded-xl bg-amber-50 text-[#F7941D] border border-amber-100 group-hover:scale-110 transition shrink-0">
-                  <Icon className="w-4 h-4" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h3 className="text-xs font-bold text-slate-900 group-hover:text-[#F7941D] transition truncate">
-                    {tool.title}
-                  </h3>
-                  <p className="text-[11px] text-slate-400 mt-0.5 line-clamp-1">
-                    {tool.desc}
-                  </p>
-                </div>
-                <span className="text-slate-300 group-hover:text-[#F7941D] group-hover:translate-x-0.5 transition text-xs">
-                  →
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* 6. Quick Reference Table with 1-Click Auto-Fill */}
-      <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+      {/* 5. Quick Reference Table with 1-Click Auto-Fill */}
+      <div className="bg-white border border-[#D8DEE5] rounded-2xl shadow-[0_2px_8px_rgba(20,24,32,0.06)] overflow-hidden">
+        <div className="bg-gradient-to-r from-[#FDF1E6] to-[#FAFBFC] p-4 border-b border-[#D8DEE5] flex items-center gap-3">
+          <div className="text-xl">📋</div>
           <div>
-            <h2 className="text-sm font-extrabold text-slate-900 uppercase font-mono tracking-wider flex items-center gap-2">
-              <span className="text-[#F7941D]">📋</span> Quick Reference — Common Paint Systems
-            </h2>
-            <span className="text-xs text-slate-400">Click any row below to auto-fill the Paint Coverage calculator</span>
+            <div className="font-rajdhani text-base font-bold text-[#1B222C]">Quick Reference — Common Paint Systems</div>
+            <div className="text-xs text-[#7E8B99]">Click any row below to auto-fill the Paint Coverage calculator</div>
           </div>
-          <span className="text-xs font-mono font-bold text-[#D97706] bg-amber-50 px-2.5 py-1 rounded-xl border border-amber-200">
-            Interactive Table
-          </span>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
-            <thead className="bg-slate-50 text-slate-500 font-mono text-[11px] uppercase tracking-wider border-b border-slate-200">
+            <thead className="bg-[#FFF4E3]/60 text-slate-700 font-rajdhani text-xs uppercase tracking-wider border-b border-[#D8DEE5]">
               <tr>
-                <th className="p-3 font-semibold">Paint Type</th>
-                <th className="p-3 font-semibold text-center">VS%</th>
-                <th className="p-3 font-semibold text-center">DFT (µm)</th>
-                <th className="p-3 font-semibold text-center">TC (m²/L)</th>
-                <th className="p-3 font-semibold text-center">Loss%</th>
-                <th className="p-3 font-semibold text-center">PS (m²/L)</th>
+                <th className="p-3 font-bold">Paint Type</th>
+                <th className="p-3 font-bold text-center">VS%</th>
+                <th className="p-3 font-bold text-center">DFT (µm)</th>
+                <th className="p-3 font-bold text-center">TC (m²/L)</th>
+                <th className="p-3 font-bold text-center">Loss%</th>
+                <th className="p-3 font-bold text-center">PS (m²/L)</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-xs">
@@ -723,20 +716,20 @@ export default function CoatingCalculatorPage({ activeSubTool, setActiveSubTool 
                 <tr 
                   key={idx}
                   onClick={() => handleRowClick(sys)}
-                  className="hover:bg-amber-50/50 cursor-pointer transition"
+                  className="hover:bg-[#FFF4E6] cursor-pointer transition"
                 >
-                  <td className="p-3 font-bold text-slate-900 flex items-center gap-2">
-                    <span>{sys.type}</span>
+                  <td className="p-3 font-semibold text-slate-900">
+                    {sys.type}
                   </td>
                   <td className="p-3 text-center font-mono">
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${sys.badgeClass}`}>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
                       {sys.vs}%
                     </span>
                   </td>
-                  <td className="p-3 text-center font-mono text-slate-700 font-bold">{sys.dft}</td>
-                  <td className="p-3 text-center font-mono font-extrabold text-[#9E1B1E]">{sys.tc}</td>
+                  <td className="p-3 text-center font-mono text-slate-700 font-semibold">{sys.dft}</td>
+                  <td className="p-3 text-center font-mono font-bold text-[#9E1B1E]">{sys.tc}</td>
                   <td className="p-3 text-center font-mono text-slate-600">{sys.loss}%</td>
-                  <td className="p-3 text-center font-mono font-extrabold text-[#D97706]">{sys.ps}</td>
+                  <td className="p-3 text-center font-mono font-bold text-[#E87B1E]">{sys.ps}</td>
                 </tr>
               ))}
             </tbody>
@@ -744,6 +737,18 @@ export default function CoatingCalculatorPage({ activeSubTool, setActiveSubTool 
         </div>
       </div>
 
+      {/* 6. Dark Enterprise Footer matching Screenshot 1 & 2 */}
+      <footer className="app-footer-dark">
+        <div className="flex items-center gap-2">
+          <img src="/logo-2.png" alt="BG Group" className="w-5 h-5 object-contain rounded bg-white p-0.5" />
+          <span className="font-mono text-xs font-bold tracking-wider text-white uppercase">
+            BG GROUP · DIGITAL WORKSPACE FOR COATING PROFESSIONALS
+          </span>
+        </div>
+        <div className="text-[11px] text-slate-400 font-sans">
+          Surat, Gujarat, India &nbsp;·&nbsp; <a href="https://bgcoating.com/" target="_blank" rel="noreferrer" className="text-[#F7941D] hover:underline">bgcoating.com</a> &nbsp;·&nbsp; <a href="tel:+919925810408" className="text-slate-300 hover:text-white">+91 99258 10408</a>
+        </div>
+      </footer>
     </div>
   );
 }

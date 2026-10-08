@@ -1,0 +1,52 @@
+<div class="main">
+
+    <div class="frozen-top">
+      <header class="topbar">
+        <button class="tb-burger" onclick="toggleDrawer()" aria-label="Menu"><span></span><span></span><span></span></button>
+        <div class="tb-logo" title="BG Group Logo">
+          <svg viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
+            <rect x="2" y="20" width="32" height="14" rx="1.5" fill="#14181F"></rect>
+            <rect x="4.5" y="14" width="4" height="20" fill="#2A3340"></rect>
+            <rect x="11" y="9" width="4" height="25" fill="#39455A"></rect>
+            <rect x="17.5" y="4" width="4" height="30" fill="#2A3340"></rect>
+            <rect x="24" y="11" width="4" height="23" fill="#39455A"></rect>
+            <path d="M2 22 L18 10 L34 22" fill="none" stroke="#E87B1E" stroke-width="2.4" stroke-linejoin="round"></path>
+            <text x="18" y="31.5" font-family="Rajdhani,sans-serif" font-size="9" font-weight="700" fill="#F39322" text-anchor="middle">BG</text>
+          </svg>
+        </div>
+        <div class="tb-title">BG <span>GROUP</span> OF PAINT &amp; COATING CONSULTANT<small>Surface Treatment &amp; Coating · Specification Reading · Digital Engineering System</small></div>
+        <div class="tb-spacer"></div>
+        <span class="hpill"><span class="dot"></span>Live System</span>
+        <button class="hbtn" onclick="openPreview()" title="Open read-only report preview">👁 <span class="lbl">Preview</span></button>
+        <button class="hbtn" onclick="saveDraft()" title="Save current sheet as draft">💾 <span class="lbl">Save Draft</span></button>
+        <button class="hbtn primary" onclick="navValidate()" title="Validate &amp; generate summary">✓ <span class="lbl">Validate</span></button>
+        <button class="hbtn" onclick="goTab(&#39;report&#39;, document.querySelectorAll(&#39;.app-tab&#39;)[1]); syncSidebar(&#39;report&#39;);" title="Open Report Register">📚 <span class="lbl">Register</span></button>
+        <button class="hbtn" onclick="if(confirm(&#39;Clear all input data?&#39;))clearAll()" title="Reset all fields">↺ <span class="lbl">Reset</span></button>
+      </header>
+
+      <nav class="app-tabs">
+        <div class="app-tabs-in">
+          <button class="app-tab act" onclick="goTab(&#39;input&#39;, this)"><span class="ic">📋</span>Coating Specification Reading</button>
+          <button class="app-tab" onclick="goTab(&#39;report&#39;, this)"><span class="ic">📊</span>Report</button>
+          <button class="app-tab" onclick="goTab(&#39;xlprint&#39;, this)"><span class="ic">📄</span>Excel Format Print</button>
+        </div>
+      </nav>
+
+      <div class="prog-panel" id="prog-panel" style="">
+        <div class="prog-panel-in">
+          <div class="prog-text">
+            <div class="prog-title"><span class="icon">📋</span>Form Completion Progress</div>
+            <div class="prog-bar-wrap"><div class="prog-bar-fill" id="prog-fill" style="width: 0%;"></div></div>
+            <div class="prog-chips" id="prog-chips"><span class="prog-chip " onclick="document.getElementById(&#39;secAB&#39;).scrollIntoView({behavior:&#39;smooth&#39;,block:&#39;start&#39;})">A · Project &amp; Scope</span><span class="prog-chip " onclick="document.getElementById(&#39;secC&#39;).scrollIntoView({behavior:&#39;smooth&#39;,block:&#39;start&#39;})">C · General Req.</span><span class="prog-chip " onclick="document.getElementById(&#39;secD&#39;).scrollIntoView({behavior:&#39;smooth&#39;,block:&#39;start&#39;})">D · Operating Data</span><span class="prog-chip " onclick="document.getElementById(&#39;secE&#39;).scrollIntoView({behavior:&#39;smooth&#39;,block:&#39;start&#39;})">E · Insul. / FP / TSA / Galv / Pickl</span><span class="prog-chip " onclick="document.getElementById(&#39;secF&#39;).scrollIntoView({behavior:&#39;smooth&#39;,block:&#39;start&#39;})">F · Coating Systems</span><span class="prog-chip " onclick="document.getElementById(&#39;secG&#39;).scrollIntoView({behavior:&#39;smooth&#39;,block:&#39;start&#39;})">G · Paint Testing</span><span class="prog-chip " onclick="document.getElementById(&#39;secH&#39;).scrollIntoView({behavior:&#39;smooth&#39;,block:&#39;start&#39;})">H · Manufacturers</span><span class="prog-chip " onclick="document.getElementById(&#39;secI&#39;).scrollIntoView({behavior:&#39;smooth&#39;,block:&#39;start&#39;})">I · Revisions</span></div>
+          </div>
+          <button class="prev-btn" onclick="openPreview()" title="Read-only report preview"><span class="pv-ic">👁</span> Preview</button>
+          <div class="prog-donut">
+            <svg width="72" height="72" viewBox="0 0 74 74">
+              <defs>
+                <lineargradient id="donut-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#F5911F"></stop>
+                  <stop offset="50%" stop-color="#E8700A"></stop>
+                  <stop offset="100%" stop-color="#A50021"></stop>
+                </lineargradient>
+              </defs>
+              <circle class="prog-donut-b

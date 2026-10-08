@@ -1,0 +1,22 @@
+<header class="topbar">
+        <button class="tb-burger" onclick="toggleDrawer()" aria-label="Menu"><span></span><span></span><span></span></button>
+        <div class="tb-logo" title="BG Group Logo">
+          <svg viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
+            <rect x="2" y="20" width="32" height="14" rx="1.5" fill="#14181F"></rect>
+            <rect x="4.5" y="14" width="4" height="20" fill="#2A3340"></rect>
+            <rect x="11" y="9" width="4" height="25" fill="#39455A"></rect>
+            <rect x="17.5" y="4" width="4" height="30" fill="#2A3340"></rect>
+            <rect x="24" y="11" width="4" height="23" fill="#39455A"></rect>
+            <path d="M2 22 L18 10 L34 22" fill="none" stroke="#E87B1E" stroke-width="2.4" stroke-linejoin="round"></path>
+            <text x="18" y="31.5" font-family="Rajdhani,sans-serif" font-size="9" font-weight="700" fill="#F39322" text-anchor="middle">BG</text>
+          </svg>
+        </div>
+        <div class="tb-title">BG <span>GROUP</span> OF PAINT &amp; COATING CONSULTANT<small>Surface Treatment &amp; Coating · Specification Reading · Digital Engineering System</small></div>
+        <div class="tb-spacer"></div>
+        <span class="hpill"><span class="dot"></span>Live System</span>
+        <button class="hbtn" onclick="openPreview()" title="Open read-only report preview">👁 <span class="lbl">Preview</span></button>
+        <button class="hbtn" onclick="saveDraft()" title="Save current sheet as draft">💾 <span class="lbl">Save Draft</span></button>
+        <button class="hbtn primary" onclick="navValidate()" title="Validate &amp; generate summary">✓ <span class="lbl">Validate</span></button>
+        <button class="hbtn" onclick="goTab(&#39;report&#39;, document.querySelectorAll(&#39;.app-tab&#39;)[1]); syncSidebar(&#39;report&#39;);" title="Open Report Register">📚 <span class="lbl">Register</span></button>
+        <button class="hbtn" onclick="if(confirm(&#39;Clear all input data?&#39;))clearAll()" title="Reset all fields">↺ <span class="lbl">Reset</span></button>
+      </header>

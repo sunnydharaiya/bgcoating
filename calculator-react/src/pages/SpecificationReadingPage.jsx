@@ -74,21 +74,87 @@ export default function SpecificationReadingPage({ activeSubSection, onNavigateS
     }
   }, [activeSubSection]);
 
+  // Listen to Global Top Header Action Events
+  useEffect(() => {
+    const handleAction = (e) => {
+      const page = e.detail?.page;
+      if (page === 'specification-reading' || page === 'design') {
+        const action = e.detail?.action;
+        if (action === 'preview') {
+          setPreviewModalOpen(true);
+        } else if (action === 'save-draft') {
+          handleSaveDraft();
+        } else if (action === 'validate') {
+          handleSectionChange('coating_design');
+        } else if (action === 'register') {
+          handleSectionChange('register');
+        } else if (action === 'reset') {
+          handleGlobalReset();
+        } else if (action === 'start-extraction' || action === 'new-generation') {
+          handleSectionChange('scope');
+        }
+      }
+    };
+    window.addEventListener('bg_header_action', handleAction);
+    return () => window.removeEventListener('bg_header_action', handleAction);
+  }, []);
+
   const handleSectionChange = (secId) => {
-    if (secId === 'company_details') {
+    const aliasMap = {
+      'secAB': 'scope',
+      'project-info': 'scope',
+      'scope': 'scope',
+      'secC': 'environment',
+      'general-requirements': 'environment',
+      'environment': 'environment',
+      'secD': 'temperatures',
+      'temp': 'temperatures',
+      'temperatures': 'temperatures',
+      'secE': 'special_systems',
+      'others': 'special_systems',
+      'special_systems': 'special_systems',
+      'secF': 'coating_design',
+      'coating-system': 'coating_design',
+      'coating_design': 'coating_design',
+      'secG': 'testing_qc',
+      'testing': 'testing_qc',
+      'testing_qc': 'testing_qc',
+      'secH': 'manufacturers',
+      'approved-paint': 'manufacturers',
+      'manufacturers': 'manufacturers',
+      'secI': 'revisions_notes',
+      'secN': 'revisions_notes',
+      'revisions': 'revisions_notes',
+      'revisions_notes': 'revisions_notes',
+      'notes': 'revisions_notes',
+      'validate': 'coating_design',
+      'report': 'report_register',
+      'register': 'report_register',
+      'report_register': 'report_register',
+      'xlprint': 'report',
+      'print': 'report',
+      'company': 'company_details',
+      'company_details': 'company_details',
+      'watermark': 'watermark',
+      'hub': 'hub',
+      'home': 'hub'
+    };
+    const target = aliasMap[secId] || secId;
+
+    if (target === 'company_details') {
       setCompanyModalOpen(true);
       if (onNavigateSubSection) onNavigateSubSection('company_details');
       return;
     }
-    if (secId === 'preview') {
+    if (target === 'preview') {
       setPreviewModalOpen(true);
       if (onNavigateSubSection) onNavigateSubSection('preview');
       return;
     }
 
-    setCurrentSection(secId);
+    setCurrentSection(target);
     if (onNavigateSubSection) {
-      onNavigateSubSection(secId);
+      onNavigateSubSection(target);
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };

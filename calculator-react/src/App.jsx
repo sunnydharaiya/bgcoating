@@ -16,6 +16,7 @@ import ContractorManagementPage from './pages/ContractorManagementPage';
 import KnowledgePage from './pages/KnowledgePage';
 import SupportPage from './pages/SupportPage';
 import SettingsPage from './pages/SettingsPage';
+import LoginPage from './pages/LoginPage';
 import ErrorBoundary from './components/ErrorBoundary';
 
 // Context Providers
@@ -32,9 +33,19 @@ import PlanUpgradeModal from './components/PlanUpgradeModal';
 import { parseCurrentUrl, getUrlFor } from './utils/router';
 
 export default function App() {
+  // Check auth state from localStorage
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    return localStorage.getItem('bg_auth_logged_in') === 'true';
+  });
+
   // Initialize state from current URL
   const initialRoute = parseCurrentUrl();
-  const [activePage, setActivePageState] = useState(initialRoute.page);
+  const [activePage, setActivePageState] = useState(() => {
+    if (initialRoute.page === 'login') return 'login';
+    const authStatus = localStorage.getItem('bg_auth_logged_in') === 'true';
+    if (!authStatus) return 'login';
+    return initialRoute.page;
+  });
   const [activeSubTool, setActiveSubToolState] = useState(initialRoute.subTool);
   
   // Mobile Sidebar Drawer state
@@ -71,11 +82,41 @@ export default function App() {
     }
   }, [activePage]);
 
+  // Auth Handlers
+  const handleLoginSuccess = useCallback((userData) => {
+    setIsLoggedIn(true);
+    navigate('dashboard', 'hub');
+  }, [navigate]);
+
+  const handleSkipGuest = useCallback(() => {
+    setIsLoggedIn(true);
+    navigate('dashboard', 'hub');
+  }, [navigate]);
+
+  const handleLogout = useCallback(() => {
+    localStorage.removeItem('bg_auth_logged_in');
+    setIsLoggedIn(false);
+    navigate('login', 'hub');
+  }, [navigate]);
+
+  // Listen for global logout events
+  useEffect(() => {
+    const handleLogoutEvent = () => handleLogout();
+    window.addEventListener('bg_logout', handleLogoutEvent);
+    return () => window.removeEventListener('bg_logout', handleLogoutEvent);
+  }, [handleLogout]);
+
   // Handle browser Back / Forward buttons
   useEffect(() => {
     const handlePopState = () => {
       const { page, subTool } = parseCurrentUrl();
-      setActivePageState(page);
+      const authStatus = localStorage.getItem('bg_auth_logged_in') === 'true';
+      setIsLoggedIn(authStatus);
+      if (!authStatus && page !== 'login') {
+        setActivePageState('login');
+      } else {
+        setActivePageState(page);
+      }
       setActiveSubToolState(subTool);
     };
 
@@ -171,7 +212,14 @@ export default function App() {
       case 'academy-lms':
         return <AcademyLmsPage key="academy" />;
       case 'contractor-management':
-        return <ContractorManagementPage key="contractor" />;
+      case 'contractor':
+        return (
+          <ContractorManagementPage 
+            key={`contractor-${activeSubTool}`}
+            currentSubTool={activeSubTool}
+            onNavigate={(page, subTool) => navigate(page, subTool)}
+          />
+        );
       case 'knowledge':
         return <KnowledgePage key="knowledge" />;
       case 'support':
@@ -185,6 +233,14 @@ export default function App() {
         );
       case 'settings':
         return <SettingsPage key="settings" />;
+      case 'login':
+        return (
+          <LoginPage 
+            key="login"
+            onLoginSuccess={handleLoginSuccess}
+            onSkipGuest={handleSkipGuest}
+          />
+        );
       default:
         return (
           <CoatingCalculatorPage 
@@ -199,54 +255,62 @@ export default function App() {
   return (
     <ToastProvider>
       <GuidelineProvider>
-        <div className="flex min-h-screen bg-slate-100 text-slate-900 antialiased font-sans">
-          
-          {/* Responsive Collapsible Sidebar Rail */}
-          <Sidebar 
-            activePage={activePage} 
-            setActivePage={setActivePage} 
-            activeSubTool={activeSubTool} 
-            setActiveSubTool={setActiveSubTool} 
-            onNavigate={navigate}
-            mobileSidebarOpen={mobileSidebarOpen}
-            setMobileSidebarOpen={setMobileSidebarOpen}
+        {!isLoggedIn || activePage === 'login' ? (
+          <LoginPage 
+            onLoginSuccess={handleLoginSuccess}
+            onSkipGuest={handleSkipGuest}
           />
-
-          {/* Main Workspace Shell */}
-          <div className="flex-1 flex flex-col min-w-0 bg-[#F3F5F8]">
-            <Header 
+        ) : (
+          <div className="flex min-h-screen bg-slate-100 text-slate-900 antialiased font-sans">
+            
+            {/* Responsive Collapsible Sidebar Rail */}
+            <Sidebar 
               activePage={activePage} 
+              setActivePage={setActivePage} 
               activeSubTool={activeSubTool} 
-              setActivePage={setActivePage}
-              setActiveSubTool={setActiveSubTool}
+              setActiveSubTool={setActiveSubTool} 
+              onNavigate={navigate}
+              mobileSidebarOpen={mobileSidebarOpen}
               setMobileSidebarOpen={setMobileSidebarOpen}
-              onOpenHelp={() => setHelpOpen(true)}
-              onOpenUpgrade={() => setUpgradeOpen(true)}
             />
-            <main className="flex-1 p-4 md:p-6 max-w-7xl mx-auto w-full">
-              <ErrorBoundary title="Page View">
-                {renderPage()}
-              </ErrorBoundary>
-            </main>
+
+            {/* Main Workspace Shell */}
+            <div className="flex-1 flex flex-col min-w-0 bg-[#F3F5F8]">
+              <Header 
+                activePage={activePage} 
+                activeSubTool={activeSubTool} 
+                setActivePage={setActivePage}
+                setActiveSubTool={setActiveSubTool}
+                setMobileSidebarOpen={setMobileSidebarOpen}
+                onOpenHelp={() => setHelpOpen(true)}
+                onOpenUpgrade={() => setUpgradeOpen(true)}
+              />
+              <main className="flex-1 p-4 md:p-6 max-w-7xl mx-auto w-full">
+                <ErrorBoundary title="Page View">
+                  {renderPage()}
+                </ErrorBoundary>
+              </main>
+            </div>
+
+            {/* Global Modals & Notifications */}
+            <GuidelineDrawer />
+            <HelpFaqDrawer 
+              isOpen={helpOpen} 
+              onClose={() => setHelpOpen(false)} 
+              onSelectPage={(page, subTool) => {
+                setActivePage(page);
+                if (subTool) setActiveSubTool(subTool);
+              }} 
+            />
+            <PlanUpgradeModal 
+              isOpen={upgradeOpen} 
+              onClose={() => setUpgradeOpen(false)} 
+            />
+
           </div>
+        )}
 
-          {/* Global Modals & Notifications */}
-          <ToastContainer />
-          <GuidelineDrawer />
-          <HelpFaqDrawer 
-            isOpen={helpOpen} 
-            onClose={() => setHelpOpen(false)} 
-            onSelectPage={(page, subTool) => {
-              setActivePage(page);
-              if (subTool) setActiveSubTool(subTool);
-            }} 
-          />
-          <PlanUpgradeModal 
-            isOpen={upgradeOpen} 
-            onClose={() => setUpgradeOpen(false)} 
-          />
-
-        </div>
+        <ToastContainer />
       </GuidelineProvider>
     </ToastProvider>
   );

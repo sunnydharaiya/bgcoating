@@ -1,0 +1,40 @@
+<aside class="sidebar" id="sidebar">
+    <div class="side-brand">
+      <div class="side-logo"><img src="..." alt="BG Group"></div>
+      <div>
+        <div class="side-name"><span>BG</span> GROUP</div>
+        <div class="side-tag">Coating Consultants</div>
+        <div class="side-intro">Paint &amp; Coating Specification Reading, validation &amp; reporting platform.</div>
+      </div>
+    </div>
+
+    <nav class="side-nav">
+      <a class="side-link home" data-nav="home" onclick="goHome()"><span class="li">🏠</span>Coating Specification Reading</a>
+
+      <div class="sec-label">Project Sections</div>
+      <a class="side-link sub active" data-nav="secAB" onclick="navSection(&#39;secAB&#39;)">Project Information &amp; Scope</a>
+      <a class="side-link sub" data-nav="secC" onclick="navSection(&#39;secC&#39;)">General Requirements</a>
+      <a class="side-link sub" data-nav="secD" onclick="navSection(&#39;secD&#39;)">Operating &amp; Design Temperature</a>
+      <a class="side-link sub" data-nav="secE" onclick="navSection(&#39;secE&#39;)">Others Details</a>
+      <a class="side-link sub" data-nav="secF" onclick="navSection(&#39;secF&#39;)">Coating System Design</a>
+      <a class="side-link sub" data-nav="secG" onclick="navSection(&#39;secG&#39;)">Paint Testing Requirements</a>
+      <a class="side-link sub" data-nav="secH" onclick="navSection(&#39;secH&#39;)">Approved Primer &amp; Paint</a>
+      <a class="side-link sub" data-nav="secI" onclick="navSection(&#39;secI&#39;)">Revision History</a>
+      <a class="side-link sub" data-nav="secN" onclick="navSection(&#39;secN&#39;)">General Notes &amp; Comments</a>
+      <a class="side-link sub" data-nav="validate" onclick="navValidate()">Validate / Save Draft</a>
+
+      <div class="sec-label">Register &amp; Output</div>
+      <a class="side-link" data-nav="report" onclick="goTab(&#39;report&#39;, document.querySelectorAll(&#39;.app-tab&#39;)[1])"><span class="li">📊</span>Report Register</a>
+      <a class="side-link" data-nav="preview" onclick="openPreview()"><span class="li">👁</span>Preview</a>
+      <a class="side-link" id="printLink" data-nav="xlprint" onclick="goPrint()"><span class="li">🖨</span>Print <span class="plan-tag pro" id="printPlanTag">Pro</span></a>
+
+      <div class="sec-label">Configuration</div>
+      <a class="side-link" id="companyDetailsLink" data-nav="company" onclick="openCompanyDetails()"><span class="li">🏢</span>Company Details <span class="plan-tag pro" id="companyPlanTag">Pro</span></a>
+      <a class="side-link" id="watermarkLink" data-nav="watermark" onclick="goWatermark()"><span class="li">💧</span>Watermark <span class="plan-tag pro">Pro</span></a>
+    </nav>
+
+    <div class="side-foot">
+      <a href="https://bgcoating.com/" target="_blank">🌐 bgcoating.com</a>
+      <a href="tel:+919925810408">📞 +91 99258 10408</a>
+    </div>
+  </aside>

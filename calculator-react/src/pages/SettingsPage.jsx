@@ -12,7 +12,8 @@ import {
   Camera, 
   RotateCcw,
   Sparkles,
-  ChevronDown
+  ChevronDown,
+  LogOut
 } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 
@@ -353,13 +354,30 @@ export default function SettingsPage() {
 
         {/* Action Buttons Bar */}
         <div className="flex items-center justify-between pt-4 border-t border-[#D8DEE5]">
-          <button
-            type="submit"
-            className="px-6 py-2.5 bg-gradient-to-r from-[#E87B1E] to-[#9E1B1E] hover:opacity-90 text-white font-bold font-rajdhani uppercase tracking-wider rounded-xl text-xs transition shadow-xs flex items-center gap-2 cursor-pointer"
-          >
-            <Save className="w-4 h-4" />
-            <span>Save Changes</span>
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              type="submit"
+              className="px-6 py-2.5 bg-gradient-to-r from-[#E87B1E] to-[#9E1B1E] hover:opacity-90 text-white font-bold font-rajdhani uppercase tracking-wider rounded-xl text-xs transition shadow-xs flex items-center gap-2 cursor-pointer"
+            >
+              <Save className="w-4 h-4" />
+              <span>Save Changes</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                if (window.confirm('Sign out of your BG CoatingOS workspace?')) {
+                  localStorage.removeItem('bg_auth_logged_in');
+                  window.dispatchEvent(new CustomEvent('bg_logout'));
+                }
+              }}
+              className="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold font-rajdhani uppercase tracking-wider rounded-xl text-xs transition shadow-2xs flex items-center gap-2 cursor-pointer"
+              title="Sign out and return to Login portal"
+            >
+              <LogOut className="w-3.5 h-3.5 text-rose-600" />
+              <span>Sign Out</span>
+            </button>
+          </div>
 
           {saved && (
             <span className="text-xs font-bold text-[#2E7D32] font-mono flex items-center gap-1">

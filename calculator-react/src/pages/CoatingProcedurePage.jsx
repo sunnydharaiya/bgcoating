@@ -20,12 +20,63 @@ import ProcPrintDossier from '../tools/procedure/ProcPrintDossier';
 import ProcPreviewModal from '../tools/procedure/ProcPreviewModal';
 import ProcCompanyModal from '../tools/procedure/ProcCompanyModal';
 import ProcWatermarkControl from '../tools/procedure/ProcWatermarkControl';
+import ProcProjectMasterModal from '../tools/procedure/ProcProjectMasterModal';
 
 const DRAFT_KEY = 'bg_os_procedure_draft';
 const RECORDS_KEY = 'bg_os_procedure_records';
 const COMPANY_KEY = 'bg_company_profile';
 
+const ALIAS_MAP = {
+  'sec-2': 'cover-revision',
+  'cover_revision': 'cover-revision',
+  'cover-revision': 'cover-revision',
+  'sec-3': 'scope',
+  'scope': 'scope',
+  'sec-4': 'reference-docs',
+  'reference_docs': 'reference-docs',
+  'reference-docs': 'reference-docs',
+  'ref-docs': 'reference-docs',
+  'sec-5': 'standards',
+  'standards': 'standards',
+  'sec-6': 'exclusions',
+  'exclusions': 'exclusions',
+  'sec-7': 'safety',
+  'safety': 'safety',
+  'sec-8': 'surface-prep',
+  'surface_prep': 'surface-prep',
+  'surface-prep': 'surface-prep',
+  'sec-9': 'coating-app',
+  'coating_app': 'coating-app',
+  'coating-app': 'coating-app',
+  'sec-10': 'repair-plan',
+  'repair_plan': 'repair-plan',
+  'repair-plan': 'repair-plan',
+  'sec-11': 'manufacturers',
+  'manufacturers': 'manufacturers',
+  'sec-12': 'attachments',
+  'annexures': 'attachments',
+  'attachments': 'attachments',
+  'sec-anx-1': 'annexure-coating',
+  'annexure_coating': 'annexure-coating',
+  'annexure-coating': 'annexure-coating',
+  'sec-anx-2': 'annexure-inspection',
+  'annexure_inspection': 'annexure-inspection',
+  'annexure-inspection': 'annexure-inspection',
+  'hub': 'hub',
+  'home': 'hub',
+  'register': 'register',
+  'report': 'report',
+  'print': 'report',
+  'preview': 'preview',
+  'company-details': 'company-details',
+  'company_details': 'company-details',
+  'watermark': 'watermark',
+  'project-master': 'project-master'
+};
+
 export default function CoatingProcedurePage({ currentSubTool = 'hub', onNavigate }) {
+  const resolvedSubTool = ALIAS_MAP[currentSubTool] || currentSubTool || 'hub';
+
   const [state, setState] = useState(() => {
     try {
       const saved = localStorage.getItem(DRAFT_KEY);
@@ -53,21 +104,63 @@ export default function CoatingProcedurePage({ currentSubTool = 'hub', onNavigat
 
   const [showCompanyModal, setShowCompanyModal] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
-  const [saveToast, setSaveToast] = useState(false);
+  const [showProjectMasterModal, setShowProjectMasterModal] = useState(false);
+  const [isApproved, setIsApproved] = useState(false);
+  const [saveToast, setSaveToast] = useState({ show: false, message: '' });
 
-  // Sync sub-tool route with modals
+  // Sync route param with modals
   useEffect(() => {
-    if (currentSubTool === 'company-details' || currentSubTool === 'company_details') {
+    if (resolvedSubTool === 'company-details') {
       setShowCompanyModal(true);
       setShowPreviewModal(false);
-    } else if (currentSubTool === 'preview') {
+      setShowProjectMasterModal(false);
+    } else if (resolvedSubTool === 'preview') {
       setShowPreviewModal(true);
       setShowCompanyModal(false);
+      setShowProjectMasterModal(false);
+    } else if (resolvedSubTool === 'project-master') {
+      setShowProjectMasterModal(true);
+      setShowCompanyModal(false);
+      setShowPreviewModal(false);
     } else {
       setShowCompanyModal(false);
       setShowPreviewModal(false);
+      setShowProjectMasterModal(false);
     }
-  }, [currentSubTool]);
+  }, [resolvedSubTool]);
+
+  // Listen to Global Top Header Action Events
+  useEffect(() => {
+    const handleAction = (e) => {
+      const page = e.detail?.page;
+      if (page === 'coating-procedure' || page === 'procedure') {
+        const action = e.detail?.action;
+        if (action === 'preview') {
+          setShowPreviewModal(true);
+        } else if (action === 'save-draft') {
+          handleSaveDraft();
+        } else if (action === 'validate') {
+          setIsApproved(prev => !prev);
+          triggerToast(!isApproved ? 'Procedure validated and approved!' : 'Reverted to Draft status');
+        } else if (action === 'register') {
+          navigateTo('register');
+        } else if (action === 'reset') {
+          handleResetSection();
+        } else if (action === 'new-generation') {
+          handleNewGeneration();
+        } else if (action === 'continue-editing') {
+          navigateTo('cover-revision');
+        } else if (action === 'copy-procedure') {
+          handleCopyProcedure();
+        } else if (action === 'open-project-master') {
+          setShowProjectMasterModal(true);
+        }
+      }
+    };
+
+    window.addEventListener('bg_header_action', handleAction);
+    return () => window.removeEventListener('bg_header_action', handleAction);
+  }, [state, isApproved]);
 
   // Auto-persist draft
   useEffect(() => {
@@ -88,8 +181,8 @@ export default function CoatingProcedurePage({ currentSubTool = 'hub', onNavigat
         { rev: preset.revNo || '0', date: new Date().toISOString().slice(0, 10), desc: 'Issued for Client Review', prep: 'QA/QC Lead', chk: 'QC Manager', app: 'Client Rep' }
       ]
     }));
-    triggerToast();
-    if (onNavigate) onNavigate('coating-procedure', 'cover-revision');
+    triggerToast('Industry standard procedure preset applied!');
+    navigateTo('cover-revision');
   };
 
   const handleSaveDraft = () => {
@@ -99,149 +192,210 @@ export default function CoatingProcedurePage({ currentSubTool = 'hub', onNavigat
         ...state,
         id: Date.now().toString(),
         createdAt: new Date().toISOString(),
-        status: state.docNo ? 'Draft' : 'Incomplete'
+        status: isApproved ? 'Approved' : (state.docNo ? 'Draft' : 'Incomplete')
       };
       localStorage.setItem(RECORDS_KEY, JSON.stringify([newRec, ...existing]));
-      triggerToast();
+      triggerToast('Procedure saved to register successfully!');
     } catch (e) {}
   };
 
   const handleLoadRecord = (rec) => {
     setState(rec);
-    if (onNavigate) onNavigate('coating-procedure', 'cover-revision');
+    triggerToast(`Loaded procedure: ${rec.docNo || 'Record'}`);
+    navigateTo('cover-revision');
   };
 
   const handleResetSection = () => {
-    if (window.confirm('Reset this section to defaults?')) {
+    if (window.confirm('Reset all procedure fields to initial blank state?')) {
       setState(INITIAL_PROCEDURE_STATE);
+      setIsApproved(false);
+      triggerToast('Procedure reset to defaults.');
     }
+  };
+
+  const handleNewGeneration = () => {
+    setState(INITIAL_PROCEDURE_STATE);
+    setIsApproved(false);
+    triggerToast('Started new procedure — enter cover & revision details.');
+    navigateTo('cover-revision');
+  };
+
+  const handleCopyProcedure = () => {
+    try {
+      const existing = JSON.parse(localStorage.getItem(RECORDS_KEY) || '[]');
+      const cloned = {
+        ...state,
+        id: Date.now().toString(),
+        docNo: `${state.docNo || 'BG-PROC'}-COPY`,
+        createdAt: new Date().toISOString(),
+        status: 'Draft'
+      };
+      localStorage.setItem(RECORDS_KEY, JSON.stringify([cloned, ...existing]));
+      triggerToast('Procedure cloned and saved to register!');
+    } catch (e) {}
+  };
+
+  const handleSelectProjectFromMaster = (proj) => {
+    setState(prev => ({
+      ...prev,
+      projectName: proj.projectName || prev.projectName,
+      clientName: proj.clientName || prev.clientName,
+      docNo: proj.docNo || prev.docNo,
+      equipmentTag: proj.tag || prev.equipmentTag,
+      projectNumber: proj.projectNum || prev.projectNumber,
+      siteLocation: proj.location || prev.siteLocation
+    }));
+    triggerToast(`Project details auto-filled from Master List: ${proj.projectName}`);
   };
 
   const handleSaveCompany = (profile) => {
     setCompanyProfile(profile);
     try {
       localStorage.setItem(COMPANY_KEY, JSON.stringify(profile));
+      triggerToast('Company branding profile updated!');
     } catch (e) {}
   };
 
-  const triggerToast = () => {
-    setSaveToast(true);
-    setTimeout(() => setSaveToast(false), 2500);
+  const triggerToast = (msg = 'Saved successfully!') => {
+    setSaveToast({ show: true, message: msg });
+    setTimeout(() => setSaveToast({ show: false, message: '' }), 2500);
+  };
+
+  const navigateTo = (subTool) => {
+    const target = ALIAS_MAP[subTool] || subTool;
+    if (onNavigate) {
+      onNavigate('coating-procedure', target);
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const subTabs = [
-    { id: 'hub', label: 'Overview Hub', icon: '🏠' },
-    { id: 'cover-revision', label: '01. Cover & Rev', icon: '📋' },
-    { id: 'scope', label: '02. Scope', icon: '🎯' },
-    { id: 'reference-docs', label: '03. Ref Docs', icon: '📑' },
-    { id: 'standards', label: '04. Standards', icon: '⚖️' },
-    { id: 'exclusions', label: '05. Exclusions', icon: '🚫' },
-    { id: 'safety', label: '06. Safety', icon: '🛡️' },
-    { id: 'surface-prep', label: '07. Surface Prep', icon: '✨' },
-    { id: 'coating-app', label: '08. Application', icon: '🎨' },
-    { id: 'repair-plan', label: '09. Repair Plan', icon: '🔧' },
+    { id: 'hub', label: 'Home Overview', icon: '🏠' },
+    { id: 'cover-revision', label: '1. Cover & Rev', icon: '📋' },
+    { id: 'scope', label: '2. Scope', icon: '🎯' },
+    { id: 'reference-docs', label: '3. Ref Docs', icon: '📑' },
+    { id: 'standards', label: '4. Standards', icon: '⚖️' },
+    { id: 'exclusions', label: '5. Exclusions', icon: '🚫' },
+    { id: 'safety', label: '6. Safety', icon: '🛡️' },
+    { id: 'surface-prep', label: '7. Surface Prep', icon: '✨' },
+    { id: 'coating-app', label: '8. Coating App', icon: '🎨' },
+    { id: 'repair-plan', label: '9. Repair Plan', icon: '🔧' },
     { id: 'manufacturers', label: '10. Manufacturers', icon: '🏭' },
-    { id: 'attachments', label: '11. Attachments', icon: '📎' },
-    { id: 'annexure-coating', label: 'A-I Coating Systems', icon: '📊' },
-    { id: 'annexure-inspection', label: 'A-II Inspection', icon: '🔍' },
-    { id: 'register', label: 'Register', icon: '📁' }
+    { id: 'attachments', label: '11. Annexures', icon: '📎' },
+    { id: 'annexure-coating', label: 'A-1 Systems', icon: '📊' },
+    { id: 'annexure-inspection', label: 'A-2 Inspection', icon: '🔍' },
+    { id: 'register', label: 'Register', icon: '📂' }
   ];
 
-  const navigateTo = (subTool) => {
-    if (onNavigate) {
-      onNavigate('coating-procedure', subTool);
-    }
-  };
+  const isEditorView = resolvedSubTool !== 'hub' && resolvedSubTool !== 'register' && resolvedSubTool !== 'report';
 
   return (
     <div className="space-y-6 font-sans">
-      {/* Top Action Bar */}
-      <div className="bg-white border border-[#D8DEE5] rounded-xl px-4 py-3.5 shadow-[0_2px_8px_rgba(20,24,32,0.06)] flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#E87B1E] to-[#9E1B1E] text-white font-bold flex items-center justify-center text-xs shadow-md font-mono">
-            03
-          </div>
-          <div>
-            <h1 className="text-sm font-bold tracking-wide flex items-center gap-2 text-[#1B222C] font-rajdhani uppercase text-base">
-              Coating Procedure Specification Generator
-              <span className="text-[10px] bg-[#FFF4E3] text-[#E87B1E] font-bold px-2 py-0.5 rounded border border-[#F3D2A0] font-mono">
-                EPC Grade
-              </span>
-            </h1>
-            <p className="text-[11px] text-[#7E8B99] font-mono">
-              {state.docNo || 'UNTITLED-PROC'} · Rev {state.revNo || '0'} · {state.projectName || 'Active Project'}
-            </p>
-          </div>
-        </div>
-
-        {/* Global Toolbar Actions */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <button
-            type="button"
-            onClick={() => setShowCompanyModal(true)}
-            className="px-3 py-1.5 bg-[#FFF4E3] hover:bg-[#FEE9C7] border border-[#F3D2A0] text-[#9E1B1E] text-xs font-semibold rounded-lg transition cursor-pointer"
-          >
-            🏢 Company Details [Pro]
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowPreviewModal(true)}
-            className="px-3.5 py-1.5 bg-gradient-to-r from-[#E87B1E] to-[#9E1B1E] hover:opacity-90 text-white text-xs font-bold font-rajdhani uppercase tracking-wider rounded-lg shadow-xs transition cursor-pointer"
-          >
-            👁️ Preview Dossier
-          </button>
-          <button
-            type="button"
-            onClick={() => navigateTo('report')}
-            className="px-3.5 py-1.5 bg-[#F7F8FA] hover:bg-[#FFF4E3] text-[#4E5B6A] hover:text-[#9E1B1E] border border-[#D8DEE5] text-xs font-bold rounded-lg shadow-xs transition cursor-pointer"
-          >
-            🖨️ Print Technical Dossier
-          </button>
-          <button
-            type="button"
-            onClick={handleSaveDraft}
-            className="px-3 py-1.5 bg-[#EAF6EB] hover:bg-[#D4EDDA] border border-[#84C98A] text-[#1B5E20] text-xs font-bold rounded-lg shadow-xs transition cursor-pointer font-mono"
-          >
-            💾 Save Draft
-          </button>
-        </div>
-      </div>
-
-      {/* Sub-Navigation Tabs Rail */}
-      <div className="bg-white border border-[#D8DEE5] rounded-xl p-1.5 shadow-[0_2px_8px_rgba(20,24,32,0.06)] overflow-x-auto">
-        <div className="flex items-center gap-1 min-w-max">
-          {subTabs.map((tab) => {
-            const isActive = currentSubTool === tab.id;
-            return (
+      
+      {/* PROCEDURE EDITOR TOP BARS (When viewing a specific section) */}
+      {isEditorView && (
+        <div className="space-y-3">
+          {/* Approved status banner */}
+          {isApproved && (
+            <div className="bg-emerald-50 border border-emerald-300 rounded-xl p-3.5 flex items-center justify-between text-emerald-900 shadow-xs">
+              <div className="flex items-center gap-3">
+                <div className="w-7 h-7 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shrink-0">
+                  ✓
+                </div>
+                <div>
+                  <div className="text-xs font-bold">
+                    This procedure is APPROVED (Rev {state.revNo || 'R0'}) — workflow locked for controlled printing.
+                  </div>
+                  <div className="text-[11px] text-emerald-700">
+                    Click Validate on the top bar again to revert to Draft for further edits.
+                  </div>
+                </div>
+              </div>
               <button
-                key={tab.id}
                 type="button"
-                onClick={() => navigateTo(tab.id)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
-                  isActive
-                    ? 'bg-gradient-to-r from-[#E87B1E] to-[#9E1B1E] text-white shadow-xs font-rajdhani uppercase tracking-wider'
-                    : 'text-[#4E5B6A] hover:bg-[#F7F8FA] hover:text-[#1B222C]'
-                }`}
+                onClick={() => navigateTo('report')}
+                className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-lg shadow-xs transition cursor-pointer shrink-0"
               >
-                <span>{tab.icon}</span>
-                <span>{tab.label}</span>
+                🖨️ Print Dossier [PRO]
               </button>
-            );
-          })}
-        </div>
-      </div>
+            </div>
+          )}
 
-      {/* Active Sub-Tool Router Component */}
+          {/* Project Setup Action Bar (Matches ref-2.html) */}
+          <div className="bg-gradient-to-r from-[#FFFDF9] via-[#FAF6ED] to-[#F7EFE1] border border-[#E8D7BE] rounded-xl p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-700 flex items-center justify-center text-sm font-bold border border-amber-500/30">
+                🗂
+              </div>
+              <div>
+                <div className="text-xs font-bold text-[#8B0E16]">
+                  Project Setup · Master Integration
+                </div>
+                <div className="text-[11px] text-[#7E634F]">
+                  Create a project once in <strong>Project Creation</strong> to permanently register it. Open <strong>Project Master</strong> to auto-fill metadata.
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => setShowProjectMasterModal(true)}
+                className="px-3 py-1.5 bg-[#8B0E16] hover:bg-[#6E0C12] text-white text-xs font-bold rounded-lg shadow-xs transition cursor-pointer flex items-center gap-1.5"
+              >
+                <span>➕</span>
+                <span>Project Creation</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowProjectMasterModal(true)}
+                className="px-3 py-1.5 bg-white hover:bg-amber-50 border border-[#D8C2A7] text-[#8B0E16] text-xs font-bold rounded-lg shadow-xs transition cursor-pointer flex items-center gap-1.5"
+              >
+                <span>🗂</span>
+                <span>Project Master</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Horizontal Section Rail */}
+          <div className="bg-white border border-[#E6E8EC] rounded-xl p-1.5 shadow-xs overflow-x-auto">
+            <div className="flex items-center gap-1 min-w-max">
+              {subTabs.map((tab) => {
+                const isActive = resolvedSubTool === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => navigateTo(tab.id)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer whitespace-nowrap ${
+                      isActive
+                        ? 'bg-gradient-to-r from-[#F7941D] to-[#8B0E16] text-white shadow-xs font-rajdhani uppercase tracking-wider'
+                        : 'text-[#4E5B6A] hover:bg-[#F7F8FA] hover:text-[#1B222C]'
+                    }`}
+                  >
+                    <span>{tab.icon}</span>
+                    <span>{tab.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ACTIVE SUB-TOOL ROUTER COMPONENT */}
       <div className="min-h-[500px]">
-        {currentSubTool === 'hub' && (
+        {resolvedSubTool === 'hub' && (
           <ProcedureHub
             state={state}
             onNavigate={navigateTo}
             onApplyPreset={handleApplyPreset}
             onReset={handleResetSection}
+            onNewGeneration={handleNewGeneration}
+            onCopyProcedure={handleCopyProcedure}
           />
         )}
-        {currentSubTool === 'cover-revision' && (
+        {resolvedSubTool === 'cover-revision' && (
           <ProcCoverRevision
             state={state}
             onChange={handleStateChange}
@@ -249,7 +403,7 @@ export default function CoatingProcedurePage({ currentSubTool = 'hub', onNavigat
             onReset={handleResetSection}
           />
         )}
-        {currentSubTool === 'scope' && (
+        {resolvedSubTool === 'scope' && (
           <ProcScope
             state={state}
             onChange={handleStateChange}
@@ -258,7 +412,7 @@ export default function CoatingProcedurePage({ currentSubTool = 'hub', onNavigat
             onReset={handleResetSection}
           />
         )}
-        {currentSubTool === 'reference-docs' && (
+        {resolvedSubTool === 'reference-docs' && (
           <ProcRefDocs
             state={state}
             onChange={handleStateChange}
@@ -267,7 +421,7 @@ export default function CoatingProcedurePage({ currentSubTool = 'hub', onNavigat
             onReset={handleResetSection}
           />
         )}
-        {currentSubTool === 'standards' && (
+        {resolvedSubTool === 'standards' && (
           <ProcStandards
             state={state}
             onChange={handleStateChange}
@@ -276,7 +430,7 @@ export default function CoatingProcedurePage({ currentSubTool = 'hub', onNavigat
             onReset={handleResetSection}
           />
         )}
-        {currentSubTool === 'exclusions' && (
+        {resolvedSubTool === 'exclusions' && (
           <ProcExclusions
             state={state}
             onChange={handleStateChange}
@@ -285,7 +439,7 @@ export default function CoatingProcedurePage({ currentSubTool = 'hub', onNavigat
             onReset={handleResetSection}
           />
         )}
-        {currentSubTool === 'safety' && (
+        {resolvedSubTool === 'safety' && (
           <ProcSafety
             state={state}
             onChange={handleStateChange}
@@ -294,7 +448,7 @@ export default function CoatingProcedurePage({ currentSubTool = 'hub', onNavigat
             onReset={handleResetSection}
           />
         )}
-        {currentSubTool === 'surface-prep' && (
+        {resolvedSubTool === 'surface-prep' && (
           <ProcSurfacePrep
             state={state}
             onChange={handleStateChange}
@@ -303,7 +457,7 @@ export default function CoatingProcedurePage({ currentSubTool = 'hub', onNavigat
             onReset={handleResetSection}
           />
         )}
-        {currentSubTool === 'coating-app' && (
+        {resolvedSubTool === 'coating-app' && (
           <ProcCoatingApp
             state={state}
             onChange={handleStateChange}
@@ -312,7 +466,7 @@ export default function CoatingProcedurePage({ currentSubTool = 'hub', onNavigat
             onReset={handleResetSection}
           />
         )}
-        {currentSubTool === 'repair-plan' && (
+        {resolvedSubTool === 'repair-plan' && (
           <ProcRepairPlan
             state={state}
             onChange={handleStateChange}
@@ -321,7 +475,7 @@ export default function CoatingProcedurePage({ currentSubTool = 'hub', onNavigat
             onReset={handleResetSection}
           />
         )}
-        {currentSubTool === 'manufacturers' && (
+        {resolvedSubTool === 'manufacturers' && (
           <ProcManufacturers
             state={state}
             onChange={handleStateChange}
@@ -330,7 +484,7 @@ export default function CoatingProcedurePage({ currentSubTool = 'hub', onNavigat
             onReset={handleResetSection}
           />
         )}
-        {currentSubTool === 'attachments' && (
+        {resolvedSubTool === 'attachments' && (
           <ProcAttachments
             state={state}
             onChange={handleStateChange}
@@ -339,7 +493,7 @@ export default function CoatingProcedurePage({ currentSubTool = 'hub', onNavigat
             onReset={handleResetSection}
           />
         )}
-        {currentSubTool === 'annexure-coating' && (
+        {resolvedSubTool === 'annexure-coating' && (
           <ProcAnnexureCoating
             state={state}
             onChange={handleStateChange}
@@ -348,7 +502,7 @@ export default function CoatingProcedurePage({ currentSubTool = 'hub', onNavigat
             onReset={handleResetSection}
           />
         )}
-        {currentSubTool === 'annexure-inspection' && (
+        {resolvedSubTool === 'annexure-inspection' && (
           <ProcAnnexureInspection
             state={state}
             onChange={handleStateChange}
@@ -357,61 +511,50 @@ export default function CoatingProcedurePage({ currentSubTool = 'hub', onNavigat
             onReset={handleResetSection}
           />
         )}
-        {currentSubTool === 'register' && (
+        {resolvedSubTool === 'register' && (
           <ProcReportRegister
             onLoadRecord={handleLoadRecord}
-            onNewProcedure={() => {
-              setState(INITIAL_PROCEDURE_STATE);
-              navigateTo('cover-revision');
-            }}
+            onNewProcedure={handleNewGeneration}
           />
         )}
-        {currentSubTool === 'report' && (
+        {resolvedSubTool === 'report' && (
           <ProcPrintDossier
             state={state}
             companyProfile={companyProfile}
             watermarkSettings={watermarkSettings}
           />
         )}
-        {currentSubTool === 'preview' && (
+        {resolvedSubTool === 'preview' && (
           <ProcPrintDossier
             state={state}
             companyProfile={companyProfile}
             watermarkSettings={watermarkSettings}
           />
         )}
-        {currentSubTool === 'watermark' && (
+        {resolvedSubTool === 'watermark' && (
           <ProcWatermarkControl
             watermarkSettings={watermarkSettings}
             onChange={setWatermarkSettings}
             onReset={() => setWatermarkSettings({ text: companyProfile?.name || 'BG COATING', opacity: 0.08, rotation: -30, enabled: true })}
           />
         )}
-        {currentSubTool === 'company-details' && (
+        {resolvedSubTool === 'company-details' && (
           <ProcWatermarkControl
             watermarkSettings={watermarkSettings}
             onChange={setWatermarkSettings}
             onReset={() => setWatermarkSettings({ text: companyProfile?.name || 'BG COATING', opacity: 0.08, rotation: -30, enabled: true })}
-          />
-        )}
-        {!subTabs.some(t => t.id === currentSubTool) && !['report', 'preview', 'watermark', 'company-details'].includes(currentSubTool) && (
-          <ProcedureHub
-            state={state}
-            onNavigate={navigateTo}
-            onApplyPreset={handleApplyPreset}
-            onReset={handleResetSection}
           />
         )}
       </div>
 
       {/* Floating Save Toast */}
-      {saveToast && (
-        <div className="fixed bottom-6 right-6 z-50 bg-green-700 text-white px-4 py-2.5 rounded-lg shadow-xl font-semibold text-xs flex items-center gap-2 animate-in fade-in slide-in-from-bottom-3">
-          <span>✓</span> Procedure record saved successfully!
+      {saveToast.show && (
+        <div className="fixed bottom-6 right-6 z-50 bg-[#1E9E50] text-white px-4 py-2.5 rounded-xl shadow-xl font-semibold text-xs flex items-center gap-2 animate-in fade-in slide-in-from-bottom-3">
+          <span>✓</span> {saveToast.message}
         </div>
       )}
 
-      {/* Company Modal */}
+      {/* Company Branding Modal */}
       {showCompanyModal && (
         <ProcCompanyModal
           companyProfile={companyProfile}
@@ -420,7 +563,7 @@ export default function CoatingProcedurePage({ currentSubTool = 'hub', onNavigat
         />
       )}
 
-      {/* Preview Modal */}
+      {/* Dossier Preview Modal */}
       {showPreviewModal && (
         <ProcPreviewModal
           state={state}
@@ -433,6 +576,13 @@ export default function CoatingProcedurePage({ currentSubTool = 'hub', onNavigat
           }}
         />
       )}
+
+      {/* Project Master Modal */}
+      <ProcProjectMasterModal
+        isOpen={showProjectMasterModal}
+        onClose={() => setShowProjectMasterModal(false)}
+        onSelectProject={handleSelectProjectFromMaster}
+      />
     </div>
   );
 }

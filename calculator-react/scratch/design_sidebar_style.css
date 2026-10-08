@@ -1,0 +1,7 @@
+/* sidebar plan tag + locked (paid feature) */
+.plan-tag{margin-left:auto;font-size:7.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;padding:2px 6px;border-radius:5px;}
+.plan-tag.pro{background:linear-gradient(135deg,var(--brand-gold),var(--brand-orange));color:#fff;}
+.plan-tag.locked{background:rgba(255,255,255,.1);color:rgba(255,255,255,.5);}
+.side-link.locked{opacity:.55;cursor:not-allowed;}
+.side-link.locked:hover{background:none;color:rgba(255,255,255,.5);}
+

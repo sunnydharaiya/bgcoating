@@ -293,6 +293,30 @@ export default function InspectionReportingPage({
     });
   };
 
+  // Listen for Top Header Actions (preview, save-draft, register, reset)
+  useEffect(() => {
+    const handleHeaderAction = (e) => {
+      const action = e.detail?.action;
+      if (action === 'save-draft') {
+        try {
+          localStorage.setItem(STORAGE_DRAFT_KEY, JSON.stringify(state));
+          addToast('Draft Saved', 'Daily Coating Inspection draft saved to storage.', 'success');
+        } catch (err) {
+          console.error(err);
+        }
+      } else if (action === 'preview') {
+        setPreviewModalOpen(true);
+      } else if (action === 'register') {
+        handleSectionChange('report_register');
+      } else if (action === 'reset') {
+        handleResetWorkspace();
+      }
+    };
+
+    window.addEventListener('bg_header_action', handleHeaderAction);
+    return () => window.removeEventListener('bg_header_action', handleHeaderAction);
+  }, [state]);
+
   // Sub-Navigation Rail Items
   const railItems = [
     { id: 'hub', label: 'Hub Overview', icon: Sparkles },
@@ -314,88 +338,92 @@ export default function InspectionReportingPage({
   ];
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-16 animate-in fade-in duration-200">
+    <div className={`space-y-6 ${currentSection === 'hub' ? 'max-w-6xl mx-auto' : 'max-w-7xl mx-auto'} pb-16 animate-in fade-in duration-200`}>
       
-      {/* 1. Master Header Action Bar */}
-      <div className="bg-white border border-slate-200 rounded-3xl p-5 md:p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="bg-amber-50 text-[#D97706] border border-amber-200 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase font-mono tracking-wider">
-              QA/QC Module 09 · Coating Inspection &amp; Reporting
-            </span>
-            <h1 className="text-lg md:text-xl font-extrabold text-slate-900">
-              Coating Inspection, Adhesion Test &amp; Photo Reporting
-            </h1>
+      {/* 1. Master Header Action Bar (Hidden on Hub view) */}
+      {currentSection !== 'hub' && (
+        <div className="bg-white border border-slate-200 rounded-3xl p-5 md:p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="bg-amber-50 text-[#D97706] border border-amber-200 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase font-mono tracking-wider">
+                QA/QC Module 09 · Coating Inspection &amp; Reporting
+              </span>
+              <h1 className="text-lg md:text-xl font-extrabold text-slate-900">
+                Coating Inspection, Adhesion Test &amp; Photo Reporting
+              </h1>
+            </div>
+            <p className="text-xs text-slate-500 mt-1">
+              Standardized inspection suite for surface prep, 24-hr psychrometrics, multi-coat DFT, ASTM D4541 pull-off adhesion, and photo reporting.
+            </p>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Standardized inspection suite for surface prep, 24-hr psychrometrics, multi-coat DFT, ASTM D4541 pull-off adhesion, and photo reporting.
-          </p>
-        </div>
 
-        <div className="flex items-center gap-2 flex-wrap">
-          <button
-            onClick={handleOpenGuideline}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer"
-          >
-            <BookOpen className="w-3.5 h-3.5" />
-            Standards Guide
-          </button>
-
-          <button
-            onClick={() => setCompanyModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#F7F8FA] hover:bg-[#FFF4E3] text-[#4E5B6A] hover:text-[#9E1B1E] border border-[#D8DEE5] text-xs font-bold transition cursor-pointer"
-          >
-            <Building2 className="w-3.5 h-3.5 text-[#E87B1E]" />
-            Company Details
-          </button>
-
-          <button
-            onClick={() => setPreviewModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-[#E87B1E] to-[#9E1B1E] hover:opacity-90 text-white text-xs font-bold font-rajdhani uppercase tracking-wider shadow-xs transition cursor-pointer"
-          >
-            <Eye className="w-3.5 h-3.5" />
-            Preview Dossier
-          </button>
-
-          <button
-            onClick={handleResetWorkspace}
-            className="p-2 rounded-xl border border-[#D8DEE5] text-[#7E8B99] hover:text-[#C62828] hover:bg-red-50 transition cursor-pointer"
-            title="Reset Workspace"
-          >
-            <RotateCcw className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-
-      {/* 2. Horizontal Scrollable Sub-Navigation Rail */}
-      <div className="bg-white border border-[#D8DEE5] rounded-2xl p-1.5 shadow-[0_2px_8px_rgba(20,24,32,0.06)] overflow-x-auto select-none flex items-center gap-1">
-        {railItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = currentSection === item.id || (item.id === 'report_register' && currentSection === 'register');
-
-          return (
+          <div className="flex items-center gap-2 flex-wrap">
             <button
-              key={item.id}
-              onClick={() => handleSectionChange(item.id)}
-              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap cursor-pointer ${
-                isActive
-                  ? 'bg-gradient-to-r from-[#E87B1E] to-[#9E1B1E] text-white shadow-xs font-rajdhani uppercase tracking-wider'
-                  : 'text-[#4E5B6A] hover:text-[#1B222C] hover:bg-[#F7F8FA]'
-              }`}
+              onClick={handleOpenGuideline}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer"
             >
-              <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-[#7E8B99]'}`} />
-              <span>{item.label}</span>
-              {item.badge && (
-                <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded-full ${
-                  isActive ? 'bg-white/20 text-white' : 'bg-[#F7F8FA] border border-[#CBD5E1] text-[#4E5B6A]'
-                }`}>
-                  {item.badge}
-                </span>
-              )}
+              <BookOpen className="w-3.5 h-3.5" />
+              Standards Guide
             </button>
-          );
-        })}
-      </div>
+
+            <button
+              onClick={() => setCompanyModalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#F7F8FA] hover:bg-[#FFF4E3] text-[#4E5B6A] hover:text-[#9E1B1E] border border-[#D8DEE5] text-xs font-bold transition cursor-pointer"
+            >
+              <Building2 className="w-3.5 h-3.5 text-[#E87B1E]" />
+              Company Details
+            </button>
+
+            <button
+              onClick={() => setPreviewModalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-[#E87B1E] to-[#9E1B1E] hover:opacity-90 text-white text-xs font-bold font-rajdhani uppercase tracking-wider shadow-xs transition cursor-pointer"
+            >
+              <Eye className="w-3.5 h-3.5" />
+              Preview Dossier
+            </button>
+
+            <button
+              onClick={handleResetWorkspace}
+              className="p-2 rounded-xl border border-[#D8DEE5] text-[#7E8B99] hover:text-[#C62828] hover:bg-red-50 transition cursor-pointer"
+              title="Reset Workspace"
+            >
+              <RotateCcw className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 2. Horizontal Scrollable Sub-Navigation Rail (Hidden on Hub view) */}
+      {currentSection !== 'hub' && (
+        <div className="bg-white border border-[#D8DEE5] rounded-2xl p-1.5 shadow-[0_2px_8px_rgba(20,24,32,0.06)] overflow-x-auto select-none flex items-center gap-1">
+          {railItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = currentSection === item.id || (item.id === 'report_register' && currentSection === 'register');
+
+            return (
+              <button
+                key={item.id}
+                onClick={() => handleSectionChange(item.id)}
+                className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap cursor-pointer ${
+                  isActive
+                    ? 'bg-gradient-to-r from-[#E87B1E] to-[#9E1B1E] text-white shadow-xs font-rajdhani uppercase tracking-wider'
+                    : 'text-[#4E5B6A] hover:text-[#1B222C] hover:bg-[#F7F8FA]'
+                }`}
+              >
+                <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-[#7E8B99]'}`} />
+                <span>{item.label}</span>
+                {item.badge && (
+                  <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded-full ${
+                    isActive ? 'bg-white/20 text-white' : 'bg-[#F7F8FA] border border-[#CBD5E1] text-[#4E5B6A]'
+                  }`}>
+                    {item.badge}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* 3. Sub-Component Router Switcher with Error Boundary */}
       <ErrorBoundary title="Inspection Section">
@@ -407,6 +435,11 @@ export default function InspectionReportingPage({
               onApplyPreset={handleApplyPreset}
               onOpenCompany={() => setCompanyModalOpen(true)}
               onOpenPreview={() => setPreviewModalOpen(true)}
+              onOpenPrint={() => window.print()}
+              onNewGeneration={() => {
+                handleResetWorkspace();
+                handleSectionChange('s1');
+              }}
             />
           )}
 

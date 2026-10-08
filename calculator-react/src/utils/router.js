@@ -441,11 +441,18 @@ export const PAGE_URL_MAP = {
   'knowledge': '/knowledge',
   'support': '/support',
   'settings': '/settings',
+  'login': '/login',
+  'auth': '/login',
 };
 
 // Parse current URL path to { page, subTool }
 export function parseCurrentUrl() {
   const path = window.location.pathname.toLowerCase().replace(/\/$/, '') || '/';
+
+  // 0. Auth / Login Route
+  if (path === '/login' || path === '/auth') {
+    return { page: 'login', subTool: 'hub' };
+  }
 
   // 1. Direct Page matches
   if (path === '' || path === '/' || path === '/dashboard') {

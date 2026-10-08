@@ -1,0 +1,46 @@
+wrap">
+
+<div class="tab-page" id="tab-home">
+  <section class="ng-hero">
+    <div class="ng-hero-bd">
+      <div class="ng-logo"><img src="[BASE64]" alt="BG Group"></div>
+      <div class="ng-hero-tx">
+        <div class="ng-kick"><span class="ng-dot"></span>Specification Reading · NACE / AMPP / ISO / ASTM Aligned</div>
+        <h1 class="ng-title">Surface Treatment &amp; Coating <span>Specification Reading</span></h1>
+        <p class="ng-sub">A premium engineering platform by BG Group of Paint &amp; Coating Consultants — collect, validate &amp; manage MNC-grade coating specification readings for paint, insulation, fireproofing, TSA / FRE / FRP, galvanizing &amp; pickling projects.</p>
+        <button class="ng-btn" onclick="startNewGeneration()"><span class="ng-spark">✨</span> NEW GENERATION</button>
+        <div class="ng-hint">Start a new Coating Specification Reading — all sections open for guided data entry</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="dash-sec"><span class="ds-bar"></span><h2>Report Overview</h2><span class="ds-d">Saved Coating Specification Readings</span></div>
+  <div class="kpis">
+    <div class="kpi" onclick="goTab(&#39;report&#39;, document.querySelectorAll(&#39;.app-tab&#39;)[1])">
+      <div class="kpi-top"><div class="kpi-ico">📊</div><span class="kpi-arr">→</span></div>
+      <div class="kpi-num" id="dash-total">2</div><div class="kpi-lbl">Total Reports</div><div class="kpi-sub">All coating specification readings</div>
+    </div>
+    <div class="kpi" onclick="goTab(&#39;report&#39;, document.querySelectorAll(&#39;.app-tab&#39;)[1])">
+      <div class="kpi-top"><div class="kpi-ico">✏️</div><span class="kpi-arr">→</span></div>
+      <div class="kpi-num" id="dash-draft" style="color:#E65100">1</div><div class="kpi-lbl">Draft Reports</div><div class="kpi-sub">Work in progress</div>
+    </div>
+    <div class="kpi" onclick="goTab(&#39;report&#39;, document.querySelectorAll(&#39;.app-tab&#39;)[1])">
+      <div class="kpi-top"><div class="kpi-ico">✅</div><span class="kpi-arr">→</span></div>
+      <div class="kpi-num" id="dash-approved" style="color:#2E7D32">1</div><div class="kpi-lbl">Approved Reports</div><div class="kpi-sub">Validated &amp; signed off</div>
+    </div>
+    <div class="kpi" onclick="goTab(&#39;report&#39;, document.querySelectorAll(&#39;.app-tab&#39;)[1])">
+      <div class="kpi-top"><div class="kpi-ico">⌛</div><span class="kpi-arr">→</span></div>
+      <div class="kpi-num" id="dash-pending" style="color:#1565C0">1</div><div class="kpi-lbl">Pending Reports</div><div class="kpi-sub">Awaiting approval</div>
+    </div>
+  </div>
+
+  <div class="dash-sec"><span class="ds-bar"></span><h2>Quick Actions</h2><span class="ds-d">Jump straight in</span></div>
+  <div class="qa">
+    <div class="qa-tile" onclick="startNewGeneration()"><div class="qa-ic">✨</div><div><div class="qa-tt">New Generation</div><div class="qa-td">Start a fresh coating specification reading</div></div></div>
+    <div class="qa-tile" onclick="goTab(&#39;report&#39;, document.querySelectorAll(&#39;.app-tab&#39;)[1])"><div class="qa-ic">📊</div><div><div class="qa-tt">Report Register</div><div class="qa-td">Open all saved sheets</div></div></div>
+    <div class="qa-tile" onclick="previewLatest()"><div class="qa-ic">👁</div><div><div class="qa-tt">Preview Latest</div><div class="qa-td">Read-only report preview</div></div></div>
+    <div class="qa-tile" id="printQaTile" onclick="goPrint()"><div class="qa-ic">🖨️</div><div><div class="qa-tt">Print Existing <span class="qa-pro pro" id="printQaPro">Pro</span></div><div class="qa-td">Excel-format printable view</div></div></div>
+  </div>
+</div>
+
+<div class="tab-page act" 

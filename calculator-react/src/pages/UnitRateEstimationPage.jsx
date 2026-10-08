@@ -411,6 +411,40 @@ export default function UnitRateEstimationPage({ currentSubTool = 'hub', onNavig
     }
   };
 
+  // Handle header actions from top bar (Preview, Save Draft, Validate, Register, Reset)
+  useEffect(() => {
+    const handleHeaderAction = (e) => {
+      const { action } = e.detail || {};
+      if (action === 'save-draft') {
+        try {
+          const newRec = {
+            id: Date.now().toString(),
+            estNo: formData.estNo || `EST-${Date.now().toString().slice(-4)}`,
+            projectName: formData.projectName || 'Untitled Estimation',
+            customer: formData.customer || 'Standard Client',
+            status: 'Draft',
+            date: new Date().toISOString().slice(0, 10),
+            data: JSON.parse(JSON.stringify(formData))
+          };
+          setRecords(prev => [newRec, ...prev]);
+          setSaveToast('✓ Saved Draft to Register');
+          setTimeout(() => setSaveToast(''), 3000);
+        } catch {}
+      } else if (action === 'preview') {
+        setPreviewOpen(true);
+      } else if (action === 'validate') {
+        setSaveToast(`✓ Validation: ${completionPct}% complete`);
+        setTimeout(() => setSaveToast(''), 3000);
+      } else if (action === 'register') {
+        navigateTo('register');
+      } else if (action === 'reset') {
+        handleResetCurrent();
+      }
+    };
+    window.addEventListener('bg_header_action', handleHeaderAction);
+    return () => window.removeEventListener('bg_header_action', handleHeaderAction);
+  }, [formData, completionPct, navigateTo]);
+
   const currencyObj = CURRENCY_CONFIG[formData.currency] || CURRENCY_CONFIG.INR;
 
   const subTabs = [
@@ -427,137 +461,43 @@ export default function UnitRateEstimationPage({ currentSubTool = 'hub', onNavig
   ];
 
   return (
-    <div className="min-h-screen bg-[#F3F5F8] text-[#1B222C] flex flex-col font-sans">
+    <div className="w-full text-[#1B222C] flex flex-col font-sans">
       
-      {/* Top Header & Sticky KPI Navigation Rail */}
-      <header className="sticky top-0 z-40 bg-gradient-to-r from-[#14181F] via-[#1E2530] to-[#14181F] border-b-3 border-[#E87B1E] shadow-lg text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-between h-14 gap-3">
-            
-            {/* Title & Badge */}
-            <div className="flex items-center gap-2.5">
-              <div className="p-1.5 rounded-lg bg-gradient-to-r from-[#E87B1E] to-[#9E1B1E] text-white shadow-xs">
-                <Coins className="w-4 h-4" />
-              </div>
-              <div>
-                <span className="text-sm font-bold font-rajdhani tracking-wide uppercase text-white block">
-                  Quick Unit-Rate Estimation
-                </span>
-                <span className="text-[10px] text-amber-400/90 font-mono">
-                  {formData.estNo || 'EST-DRAFT'} • {currencyObj.name}
-                </span>
-              </div>
+      {/* Sub-Navigation Rail (Only visible when activeSubTool !== 'hub') */}
+      {activeSubTool !== 'hub' && (
+        <div className="bg-white border-b border-[#E6E8EC] sticky top-0 z-30 shadow-2xs -mt-4 -mx-4 md:-mx-6 mb-4">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-1 overflow-x-auto py-0.5 no-scrollbar">
+              {subTabs.map((tab) => {
+                const isActive = activeSubTool === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => navigateTo(tab.id)}
+                    className={`px-3 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition cursor-pointer flex items-center gap-1.5 ${
+                      isActive
+                        ? 'bg-gradient-to-r from-[#F7941D] to-[#E8700A] text-white font-bold shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                    }`}
+                  >
+                    <span>{tab.label}</span>
+                  </button>
+                );
+              })}
             </div>
 
-            {/* Currency Selector & Quick Action Strip */}
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 bg-black/40 rounded-lg px-2 py-1 border border-white/15">
-                <DollarSign className="w-3.5 h-3.5 text-amber-400" />
-                <select
-                  value={formData.currency || 'INR'}
-                  onChange={(e) => handleUpdateField('currency', e.target.value)}
-                  className="bg-transparent text-xs font-mono font-bold text-amber-300 focus:outline-none cursor-pointer"
-                >
-                  {Object.entries(CURRENCY_CONFIG).map(([currKey, config]) => (
-                    <option key={currKey} value={currKey} className="bg-slate-900 text-white">
-                      {currKey} ({config.sym})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <button
-                onClick={() => handleSaveToRegister('Draft')}
-                className="px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-semibold flex items-center gap-1 transition border border-white/15 cursor-pointer"
-                title="Save Draft to Register"
-              >
-                <Save className="w-3.5 h-3.5 text-amber-400" />
-                <span className="hidden sm:inline">Save Draft</span>
-              </button>
-
-              <button
-                onClick={() => setPreviewOpen(true)}
-                className="px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-semibold flex items-center gap-1 transition border border-white/15 cursor-pointer"
-                title="Preview Quotation"
-              >
-                <Eye className="w-3.5 h-3.5 text-sky-400" />
-                <span className="hidden sm:inline">Preview</span>
-              </button>
-
-              <button
-                onClick={() => setCompanyOpen(true)}
-                className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs transition border border-white/15 cursor-pointer"
-                title="Company Branding Profile"
-              >
-                <Building2 className="w-3.5 h-3.5 text-amber-400" />
-              </button>
-
-              <button
-                onClick={() => setWatermarkOpen(true)}
-                className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs transition border border-white/15 cursor-pointer"
-                title="Security Watermark Settings"
-              >
-                <Settings className="w-3.5 h-3.5 text-indigo-400" />
-              </button>
-            </div>
-          </div>
-
-          {/* Sub-Tabs Scrollable Navigation Bar */}
-          <div className="flex items-center gap-1 overflow-x-auto pb-1 pt-0.5 no-scrollbar border-t border-white/10">
-            {subTabs.map((tab) => {
-              const isActive = activeSubTool === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => navigateTo(tab.id)}
-                  className={`px-3 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition cursor-pointer flex items-center gap-1.5 ${
-                    isActive
-                      ? 'bg-gradient-to-r from-[#E87B1E] to-[#9E1B1E] text-white font-bold shadow-xs'
-                      : 'text-white/70 hover:text-white hover:bg-white/10'
-                  }`}
-                >
-                  <span>{tab.label}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </header>
-
-      {/* Sticky Progress & Live Cost KPI Panel */}
-      <div className="bg-gradient-to-r from-[#FFFAF0] to-[#FFF3E5] border-b border-[#E6B878] shadow-xs sticky top-[82px] z-30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2 flex flex-wrap items-center justify-between gap-3 text-xs">
-          
-          {/* Progress % */}
-          <div className="flex items-center gap-2">
-            <span className="font-rajdhani font-bold uppercase tracking-wider text-[#4E5B6A] text-[11px]">Take-Off Progress:</span>
-            <div className="w-24 bg-white border border-[#D8DEE5] h-2 rounded-full overflow-hidden">
-              <div className="bg-gradient-to-r from-[#E87B1E] to-[#9E1B1E] h-full rounded-full transition-all duration-300" style={{ width: `${completionPct}%` }} />
-            </div>
-            <span className="font-mono font-bold text-[#9E1B1E] text-[11px]">{completionPct}%</span>
-          </div>
-
-          {/* Metrics Overview */}
-          <div className="flex items-center gap-4 flex-wrap">
-            <div className="flex items-center gap-1">
-              <span className="text-[#7E8B99] uppercase text-[10px] font-bold">Total Area:</span>
-              <span className="font-mono font-bold text-[#1B222C]">{metrics.totalArea.toFixed(1)} m²</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="text-[#7E8B99] uppercase text-[10px] font-bold">Direct Cost:</span>
-              <span className="font-mono font-bold text-[#4E5B6A]">{currencyObj.sym}{metrics.directCostTotal.toLocaleString(currencyObj.loc, { maximumFractionDigits: 0 })}</span>
-            </div>
-            <div className="flex items-center gap-1 bg-white border border-[#E6B878] px-2.5 py-0.5 rounded-lg">
-              <span className="text-[#9E1B1E] uppercase text-[10px] font-extrabold">Grand Total:</span>
-              <span className="font-rajdhani font-extrabold text-[#9E1B1E] text-sm">{currencyObj.sym}{metrics.grandTotalFormatted}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="text-[#7E8B99] uppercase text-[10px] font-bold">Rate/m²:</span>
-              <span className="font-mono font-bold text-[#2E7D32]">{currencyObj.sym}{metrics.costPerM2Formatted}/m²</span>
+            <div className="hidden sm:flex items-center gap-3 shrink-0 text-xs">
+              <span className="font-mono font-bold text-[#D97706]">
+                {completionPct}% Complete
+              </span>
+              <span className="text-slate-400">|</span>
+              <span className="font-mono font-bold text-[#1B222C]">
+                {metrics.totalArea.toFixed(1)} m²
+              </span>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Toast Notification */}
       {saveToast && (
@@ -568,7 +508,7 @@ export default function UnitRateEstimationPage({ currentSubTool = 'hub', onNavig
       )}
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6">
+      <div className="w-full">
         {activeSubTool === 'hub' && (
           <UnitRateHub
             formData={formData}
@@ -578,6 +518,7 @@ export default function UnitRateEstimationPage({ currentSubTool = 'hub', onNavig
             onOpenPrint={() => navigateTo('xlprint')}
             completionPct={completionPct}
             metrics={metrics}
+            records={records}
           />
         )}
 
@@ -697,7 +638,7 @@ export default function UnitRateEstimationPage({ currentSubTool = 'hub', onNavig
             metrics={metrics}
           />
         )}
-      </main>
+      </div>
 
       {/* Floating Modals */}
       <UnitRatePreviewModal
