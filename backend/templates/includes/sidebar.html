@@ -18,7 +18,7 @@
           <button class="grp-toggle" aria-expanded="{% if current_page == 'home' %}true{% else %}false{% endif %}" aria-controls="rg-home" aria-label="Toggle Home sections"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
         </div>
         <div class="grp-sub" id="rg-home"><div class="grp-sub-in">
-          <a href="{% url 'home' %}#sec-services" data-anchor="sec-services"><i class="sdot" aria-hidden="true"></i><span class="slbl">Services Snapshot</span></a>
+          <a href="{% url 'home' %}#sec-services" data-anchor="sec-services"><i class="sdot" aria-hidden="true"></i><span class="slbl">Services</span></a>
           <a href="{% url 'home' %}#process" data-anchor="process"><i class="sdot" aria-hidden="true"></i><span class="slbl">Our Process</span></a>
           <a href="{% url 'home' %}#digital" data-anchor="digital"><i class="sdot" aria-hidden="true"></i><span class="slbl">Digital Platform</span></a>
           <a href="{% url 'home' %}#sec-gallery" data-anchor="sec-gallery"><i class="sdot" aria-hidden="true"></i><span class="slbl">Featured Work</span></a>
@@ -29,8 +29,8 @@
 
       <li class="grp {% if current_page == 'about' %}active open{% endif %}" data-route="about">
         <div class="grp-row">
-          <a class="grp-link {% if current_page == 'about' %}active{% endif %}" href="{% url 'about' %}"><i class="dot" aria-hidden="true"></i>Company</a>
-          <button class="grp-toggle" aria-expanded="{% if current_page == 'about' %}true{% else %}false{% endif %}" aria-controls="rg-about" aria-label="Toggle Company sections"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
+          <a class="grp-link {% if current_page == 'about' %}active{% endif %}" href="{% url 'about' %}"><i class="dot" aria-hidden="true"></i>About Us</a>
+          <button class="grp-toggle" aria-expanded="{% if current_page == 'about' %}true{% else %}false{% endif %}" aria-controls="rg-about" aria-label="Toggle About Us sections"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg></button>
         </div>
         <div class="grp-sub" id="rg-about"><div class="grp-sub-in">
           <a href="{% url 'about' %}#who-we-are" data-anchor="who-we-are"><i class="sdot" aria-hidden="true"></i><span class="slbl">Who We Are</span></a>
@@ -97,6 +97,12 @@
         </div></div>
       </li>
 
+      <li class="grp" data-route="career">
+        <div class="grp-row">
+          <a class="grp-link" href="{{ site_settings.career_form_url|default:'https://forms.gle/v6kCBLKYeeUtMPky8' }}" target="_blank" rel="noopener noreferrer"><i class="dot" aria-hidden="true"></i>Career <svg class="ext" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M7 17L17 7"></path><path d="M7 7h10v10"></path></svg></a>
+        </div>
+      </li>
+
       <li class="grp {% if current_page == 'contact' %}active open{% endif %}" data-route="contact">
         <div class="grp-row">
           <a class="grp-link {% if current_page == 'contact' %}active{% endif %}" href="{% url 'contact' %}"><i class="dot" aria-hidden="true"></i>Contact</a>
@@ -106,13 +112,6 @@
           <a href="{% url 'contact' %}#cnt-info" data-anchor="cnt-info"><i class="sdot" aria-hidden="true"></i><span class="slbl">Office Info</span></a>
           <a href="{% url 'contact' %}#enquiry" data-anchor="enquiry"><i class="sdot" aria-hidden="true"></i><span class="slbl">Send Enquiry</span></a>
         </div></div>
-      </li>
-
-    
-      <li class="grp" data-route="career">
-        <div class="grp-row">
-          <a class="grp-link" href="https://forms.gle/v6kCBLKYeeUtMPky8" target="_blank" rel="noopener noreferrer"><i class="dot" aria-hidden="true"></i>Career <svg class="ext" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M7 17L17 7"></path><path d="M7 7h10v10"></path></svg></a>
-        </div>
       </li>
 
     </ul>

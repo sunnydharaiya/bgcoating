@@ -1,0 +1,48 @@
+<div class="sec collapsed" id="secD">
+  <div class="sec-hd" onclick="tog(&#39;secD&#39;)">
+    <div class="sec-hd-icon">🌡️</div>
+    <div class="sec-hd-text">
+      <div class="sec-hd-t">Operating &amp; Design Temperature Data</div>
+      <div class="sec-hd-s">Component-wise temperatures + scope (Painting / Galvanizing / TSA-FRE-FRP / Insulation / Fireproofing) + Painting Surface</div>
+    </div>
+    <div class="sec-pill">Section D</div>
+    <div class="sec-tog">▼</div>
+  </div>
+  <div class="sec-body">
+    <div class="imp">
+      <div class="imp-ic">🔴</div>
+      <div class="imp-t">
+        <b>Important — Operating / Design Temperature</b>
+        <div class="imp-t-body">Both must be defined, as coating specifications may refer to either. Maintaining both in the table is essential for correct paint selection.</div>
+      </div>
+    </div>
+    <div class="imp" style="background:linear-gradient(135deg,#FFF3E0,#FFE0B2);border-color:#FB8C00;border-left-color:#E65100;">
+      <div class="imp-ic">⚠️</div>
+      <div class="imp-t">
+        <b>Important — Refractory Lining</b>
+        <div class="imp-t-body">For refractory-lined equipment, metal skin temperature shall be entered in the Design Temperature column. Take special care while selecting the coating system from specification.</div>
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead><tr>
+          <th style="width:46px;" class="center">#</th>
+          <th>Component / Surface</th>
+          <th style="width:108px;">Op. Temp. (°C)</th>
+          <th style="width:108px;">Design Temp. (°C)</th>
+          <th style="width:84px;" class="center">Painting</th>
+          <th style="width:96px;" class="center">Galvanizing</th>
+          <th style="width:106px;" class="center">TSA / FRE / FRP</th>
+          <th style="width:90px;" class="center">Insulation</th>
+          <th style="width:96px;" class="center">Fire Proofing</th>
+          <th style="width:118px;" class="center">Painting Surface</th>
+          <th style="width:46px;" class="center">×</th>
+        </tr></thead>
+        <tbody id="dTableBody"><tr><td colspan="11" style="text-align:center;padding:18px;font-style:italic;color:var(--txt3);font-size:11px;">No component rows. Click <strong style="color:var(--o1);">+ Add Component Row</strong> below.</td></tr></tbody>
+      </table>
+    </div>
+    <button class="add-row-btn" onclick="addDRow()">+ Add Component Row</button>
+  </div>
+</div>
+
+<!-- SECTION E -->

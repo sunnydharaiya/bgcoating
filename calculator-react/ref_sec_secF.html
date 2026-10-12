@@ -1,0 +1,54 @@
+<div class="sec collapsed" id="secF">
+  <div class="sec-hd" onclick="tog(&#39;secF&#39;)">
+    <div class="sec-hd-icon">🎨</div>
+    <div class="sec-hd-text">
+      <div class="sec-hd-t">Coating System Design</div>
+      <div class="sec-hd-s">Surface preparation, primer, intermediate, finish coat with DFT and area</div>
+    </div>
+    <div class="sec-pill">Section F</div>
+    <div class="sec-tog">▼</div>
+  </div>
+  <div class="sec-body">
+    <div class="imp" style="background:linear-gradient(135deg,#E3F2FD,#BBDEFB);border-color:#1976D2;border-left-color:#0D47A1;">
+      <div class="imp-ic" style="color:#0D47A1;">ℹ️</div>
+      <div class="imp-t" style="color:#0D47A1;">
+        <b style="color:#0D47A1;">Auto-Linked from Section D</b>
+        <div class="imp-t-body">First column "Coating System For" auto-populates from components in Section D where Painting = YES. Editable as needed.</div>
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead><tr>
+          <th style="width:46px;" class="center">#</th>
+          <th style="min-width:160px;">Coating System For</th>
+          <th style="min-width:170px;">Surface Preparation</th>
+          <th style="width:100px;">Blast Profile <span style="text-transform:none;">(µm)</span></th>
+          <th style="min-width:170px;">Primer Paint</th>
+          <th style="width:74px;">DFT <span style="text-transform:none;">(µm)</span></th>
+          <th style="min-width:170px;">Intermediate Paint</th>
+          <th style="width:74px;">DFT <span style="text-transform:none;">(µm)</span></th>
+          <th style="min-width:170px;">Finish Paint</th>
+          <th style="width:74px;">DFT <span style="text-transform:none;">(µm)</span></th>
+          <th style="width:90px;">Surface Area <span style="text-transform:none;">(m²)</span></th>
+          <th style="width:46px;" class="center">×</th>
+        </tr></thead>
+        <tbody id="fTableBody"><tr><td colspan="13" style="text-align:center;padding:18px;font-style:italic;color:var(--txt3);font-size:11px;">No coating system rows. Use <strong style="color:var(--o1);">+ Add Coating System Row</strong> or <strong style="color:var(--gi);">↻ Sync from Section D</strong>.</td></tr></tbody>
+      </table>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+      <button class="add-row-btn" onclick="addFRow()">+ Add Coating System Row</button>
+      <button class="add-row-btn" onclick="syncFFromD()" style="border-style:solid;border-color:var(--gi);color:var(--gi);">↻ Sync from Section D</button>
+    </div>
+    <div class="area-summary">
+      <div class="area-summary-h">📐 Coating System — Area Summary</div>
+      <div class="area-summary-row"><span class="l">Total Surface Preparation Area:</span><span class="v" id="totalSPArea">— m²</span></div>
+      <div class="area-summary-row"><span class="l">Total Coating Area (rows defined):</span><span class="v" id="totalArea">— m²</span></div>
+      <div class="area-summary-cat">
+        <div class="area-summary-cat-t">Total Area by Specific Paint Item (auto-calculated)</div>
+        <div id="areaByPaint"><div style="font-size:10.5px;color:var(--txt3);font-style:italic;padding:4px 0;">No paint items selected yet.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION G -->

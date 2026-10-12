@@ -21,9 +21,16 @@ router.register('contact-submissions', api_views.ContactSubmissionViewSet, basen
 router.register('calculator/projects', api_views.UserProjectViewSet, basename='userproject')
 router.register('calculator/logs', api_views.CalculationLogViewSet, basename='calculationlog')
 router.register('calculator/products', api_views.PaintProductViewSet, basename='paintproduct')
+router.register('users', api_views.UserViewSet, basename='user')
 
 urlpatterns = [
+    path('api/v1/auth/register/', api_views.api_register, name='api_register'),
     path('api/v1/auth/login/', api_views.api_login, name='api_login'),
+    path('api/v1/auth/google/', api_views.api_google_auth, name='api_google_auth'),
+    path('api/v1/auth/profile/', api_views.api_user_profile, name='api_user_profile'),
+    path('api/v1/auth/profile/avatar/', api_views.api_user_avatar, name='api_user_avatar'),
+    path('api/v1/users/<int:user_id>/toggle-pro/', api_views.api_toggle_user_pro, name='api_toggle_user_pro'),
+    path('api/v1/users/<int:user_id>/delete/', api_views.api_delete_user, name='api_delete_user'),
     path('api/v1/calculator/calculate/', api_views.api_calculate, name='api_calculate'),
     path('api/v1/', include(router.urls)),
     path('', views.home, name='home'),

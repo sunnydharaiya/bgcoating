@@ -1,1122 +1,861 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Sparkles, 
-  Printer, 
-  Copy, 
-  Check, 
-  Calculator, 
-  Info, 
-  BookOpen, 
-  RotateCcw,
-  Play,
-  FileSpreadsheet,
-  Share2,
-  CheckCircle2,
-  AlertTriangle,
-  XCircle,
-  HelpCircle
-} from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
 import { useGuideline } from '../../context/GuidelineContext';
 import { formatNum } from '../../utils/calculations';
 
+function vsSanity(vsCalc) {
+  if (vsCalc > 100) return 'Calculated Volume Solids exceeds 100% — please re-check the input values.';
+  if (vsCalc <= 0) return 'Calculated Volume Solids is zero or negative — please re-check the input values.';
+  return null;
+}
+
+function vsClass(x) {
+  if (x > 90) return 'Solvent Free Coating';
+  if (x >= 80) return 'Ultra High Solids';
+  if (x >= 70) return 'High Solids';
+  if (x >= 60) return 'Medium High Solids';
+  if (x >= 50) return 'Conventional Industrial';
+  if (x >= 35) return 'Low Solids';
+  return 'Very Low Solids';
+}
+
+function vsRec(x) {
+  if (x > 80) return 'Excellent coating efficiency. Low VOC emissions. High DFT achievable per coat. Recommended for offshore, marine, immersion service, storage tanks and heavy-duty industrial environments.';
+  if (x >= 60) return 'Suitable for most industrial protective coating applications. Good balance between application properties and performance.';
+  if (x >= 50) return 'Conventional industrial grade — acceptable for general atmospheric service. For severe exposures, evaluate high-solids alternatives.';
+  return 'Higher solvent content — increased paint consumption and higher VOC emissions. Consider evaluating high-solids alternatives for improved productivity and reduced lifecycle cost.';
+}
+
+function vsStatus(calc, pub) {
+  if (!pub || pub <= 0) return null;
+  const diff = Math.abs(calc - pub);
+  const dev = (diff / pub) * 100;
+  let st, bg, bd, c1, c2, ic;
+  if (diff < 2) {
+    st = 'PASS';
+    bg = '#E8F5E9';
+    bd = 'rgba(46,125,50,.35)';
+    c1 = '#1B5E20';
+    c2 = '#2E7D32';
+    ic = '✅';
+  } else if (diff <= 5) {
+    st = 'REVIEW';
+    bg = '#FFF8E1';
+    bd = 'rgba(245,127,23,.4)';
+    c1 = '#8B4500';
+    c2 = '#B26A00';
+    ic = '⚠️';
+  } else {
+    st = 'FAIL';
+    bg = '#FFEBEE';
+    bd = 'rgba(211,47,47,.35)';
+    c1 = '#B71C1C';
+    c2 = '#C62828';
+    ic = '❌';
+  }
+  return { diff, dev, status: st, bg, bd, c1, c2, ic };
+}
+
 export default function VolumeSolidsSuite({ activeSubTool, onSubToolChange }) {
   const { addToast } = useToast();
   const { openGuideline } = useGuideline();
-  const [subTab, setSubTab] = useState('tds'); // 'tds' | 'density' | 'lab'
-  const [copied, setCopied] = useState(false);
+
+  // Mode: 'tds' | 'den' | 'lab'
+  const [mode, setMode] = useState('tds');
 
   useEffect(() => {
-    if (activeSubTool === 'vs-den' || activeSubTool === 'volume_solids_density') {
-      setSubTab('density');
-    } else if (activeSubTool === 'vs-lab' || activeSubTool === 'volume_solids_lab') {
-      setSubTab('lab');
+    if (activeSubTool === 'vs-den' || activeSubTool === 'vs_den' || activeSubTool === 'volume_solids_density') {
+      setMode('den');
+    } else if (activeSubTool === 'vs-lab' || activeSubTool === 'vs_lab' || activeSubTool === 'volume_solids_lab') {
+      setMode('lab');
     } else {
-      setSubTab('tds');
+      setMode('tds');
     }
   }, [activeSubTool]);
 
   // Method 1: TDS Verification
-  const [vstDft, setVstDft] = useState('');
-  const [vstCov, setVstCov] = useState('');
-  const [vstPub, setVstPub] = useState('');
-  const [vstNm, setVstNm] = useState('');
+  const [vstDft, setVstDft] = useState('125');
+  const [vstCov, setVstCov] = useState('5.6');
+  const [vstPub, setVstPub] = useState('70');
+  const [vstNm, setVstNm] = useState('High-Build Epoxy');
+  const [vstRes, setVstRes] = useState(null);
 
   // Method 2: Density Verification
-  const [vsdWs, setVsdWs] = useState('');
-  const [vsdWd, setVsdWd] = useState('');
-  const [vsdDd, setVsdDd] = useState('');
-  const [vsdPub, setVsdPub] = useState('');
-  const [vsdNm, setVsdNm] = useState('');
+  const [vsdWs, setVsdWs] = useState('80');
+  const [vsdWd, setVsdWd] = useState('1.60');
+  const [vsdDd, setVsdDd] = useState('1.80');
+  const [vsdPub, setVsdPub] = useState('71');
+  const [vsdNm, setVsdNm] = useState('Solvent-Free Epoxy');
+  const [vsdRes, setVsdRes] = useState(null);
 
-  // Method 3: Laboratory Verification (ASTM D2697 / ISO 3233)
-  const [vslWe, setVslWe] = useState('');
-  const [vslWw, setVslWw] = useState('');
-  const [vslWd, setVslWd] = useState('');
-  const [vslDen, setVslDen] = useState('');
-  const [vslDv, setVslDv] = useState('');
-  const [vslPub, setVslPub] = useState('');
-  const [vslNm, setVslNm] = useState('');
+  // Method 3: Lab Verification
+  const [vslWe, setVslWe] = useState('25.000');
+  const [vslWw, setVslWw] = useState('30.000');
+  const [vslWd, setVslWd] = useState('29.000');
+  const [vslDen, setVslDen] = useState('1.60');
+  const [vslDv, setVslDv] = useState('2.200');
+  const [vslPub, setVslPub] = useState('70');
+  const [vslNm, setVslNm] = useState('Batch 4521 — Epoxy MIO');
+  const [vslRes, setVslRes] = useState(null);
 
-  // Classification Helpers
-  const getVsClass = (vs) => {
-    if (vs > 90) return 'Solvent Free Coating';
-    if (vs >= 80) return 'Ultra High Solids';
-    if (vs >= 70) return 'High Solids';
-    if (vs >= 60) return 'Medium High Solids';
-    if (vs >= 50) return 'Conventional Industrial';
-    if (vs >= 35) return 'Low Solids';
-    return 'Very Low Solids';
-  };
+  // Calculate TDS
+  const calcVST = () => {
+    const dft = parseFloat(vstDft);
+    const cov = parseFloat(vstCov);
+    const pub = parseFloat(vstPub) || 0;
 
-  const getVsRec = (vs) => {
-    if (vs > 80) return 'Excellent coating efficiency. Low VOC emissions. High DFT achievable per coat. Recommended for offshore, marine, immersion service, storage tanks and heavy-duty industrial environments.';
-    if (vs >= 60) return 'Suitable for most industrial protective coating applications. Good balance between application properties and performance.';
-    if (vs >= 50) return 'Conventional industrial grade — acceptable for general atmospheric service. For severe exposures, evaluate high-solids alternatives.';
-    return 'Higher solvent content — increased paint consumption and higher VOC emissions. Consider evaluating high-solids alternatives for improved productivity and reduced lifecycle cost.';
-  };
-
-  const getVsStatus = (calc, pub) => {
-    if (!pub || pub <= 0) return null;
-    const diff = Math.abs(calc - pub);
-    const dev = (diff / pub) * 100;
-    let st = 'PASS';
-    let bg = 'bg-emerald-50 border-emerald-300 text-emerald-950';
-    let badgeBg = 'bg-emerald-100 text-emerald-800';
-    let ic = '✅';
-    let text = 'TDS Value Verified';
-
-    if (diff < 2) {
-      st = 'PASS';
-      bg = 'bg-[#E8F5E9] border-[#2E7D32]/40 text-[#1B5E20]';
-      badgeBg = 'bg-emerald-100 text-emerald-800';
-      ic = '✅';
-      text = 'TDS Value Verified (Within ±2% Tolerance)';
-    } else if (diff <= 5) {
-      st = 'REVIEW';
-      bg = 'bg-[#FFF8E1] border-[#F5911F]/50 text-[#8B4500]';
-      badgeBg = 'bg-amber-100 text-amber-900';
-      ic = '⚠️';
-      text = 'Deviation 2–5% — Review with Manufacturer';
-    } else {
-      st = 'FAIL';
-      bg = 'bg-[#FFEBEE] border-[#C62828]/40 text-[#B71C1C]';
-      badgeBg = 'bg-red-100 text-red-900';
-      ic = '❌';
-      text = 'Deviation >5% — Reject / Investigate Formulation';
-    }
-    return { diff, dev, st, bg, badgeBg, ic, text };
-  };
-
-  // Calculations
-  // Method 1: TDS Verification: VS% = DFT × Coverage ÷ 10
-  const dft1 = parseFloat(vstDft) || 0;
-  const cov1 = parseFloat(vstCov) || 0;
-  const pub1 = parseFloat(vstPub) || 0;
-  const vsCalc1 = vstDft && vstCov ? (dft1 * cov1) / 10 : 0;
-  const status1 = vsCalc1 > 0 ? getVsStatus(vsCalc1, pub1) : null;
-
-  // Method 2: Density Verification: VS% = Weight Solids × ( Wet Density ÷ Dry Density )
-  const ws2 = parseFloat(vsdWs) || 0;
-  const wd2 = parseFloat(vsdWd) || 0;
-  const dd2 = parseFloat(vsdDd) || 0;
-  const pub2 = parseFloat(vsdPub) || 0;
-  const vsCalc2 = vsdWs && vsdWd && dd2 > 0 ? ws2 * (wd2 / dd2) : 0;
-  const status2 = vsCalc2 > 0 ? getVsStatus(vsCalc2, pub2) : null;
-
-  // Method 3: Laboratory Verification (ASTM D2697 / ISO 3233)
-  const we3 = parseFloat(vslWe) || 0;
-  const ww3 = parseFloat(vslWw) || 0;
-  const wd3 = parseFloat(vslWd) || 0;
-  const den3 = parseFloat(vslDen) || 0;
-  const dv3 = parseFloat(vslDv) || 0;
-  const pub3 = parseFloat(vslPub) || 0;
-
-  const wetW3 = ww3 - we3;
-  const dryW3 = wd3 - we3;
-  const nv3 = wetW3 > 0 ? (dryW3 / wetW3) * 100 : 0;
-  const wetVol3 = den3 > 0 ? wetW3 / den3 : 0;
-  const vsCalc3 = vslDv && wetVol3 > 0 ? (dv3 / wetVol3) * 100 : 0;
-  const dryDen3 = dv3 > 0 ? dryW3 / dv3 : 0;
-  const status3 = vsCalc3 > 0 ? getVsStatus(vsCalc3, pub3) : null;
-
-  const handleOpenGuideline = () => {
-    if (subTab === 'tds') openGuideline('vs-tds');
-    else if (subTab === 'density') openGuideline('vs-den');
-    else openGuideline('vs-lab');
-  };
-
-  const handleCalculate = (method) => {
-    if (method === 'tds') {
-      if (!vstDft || !vstCov) {
-        addToast('Missing Required Inputs', 'Please enter Specified DFT and Theoretical Coverage.', 'warning');
-        return;
-      }
-      addToast('Calculated Volume Solids (TDS)', 'Volume solids computed from TDS values.', 'success');
-    } else if (method === 'density') {
-      if (!vsdWs || !vsdWd || !vsdDd) {
-        addToast('Missing Required Inputs', 'Please enter Weight Solids, Wet Density, and Dry Film Density.', 'warning');
-        return;
-      }
-      addToast('Calculated Volume Solids (Density)', 'Volume solids computed via density ratio.', 'success');
-    } else {
-      if (!vslWe || !vslWw || !vslWd || !vslDen || !vslDv) {
-        addToast('Missing Required Inputs', 'Please enter all gravimetric and volumetric lab weights.', 'warning');
-        return;
-      }
-      addToast('Calculated Volume Solids (Lab)', 'Volume solids gravimetrically verified.', 'success');
-    }
-  };
-
-  const handleReset = (method) => {
-    if (method === 'tds') {
-      setVstDft('');
-      setVstCov('');
-      setVstPub('');
-      setVstNm('');
-    } else if (method === 'density') {
-      setVsdWs('');
-      setVsdWd('');
-      setVsdDd('');
-      setVsdPub('');
-      setVsdNm('');
-    } else {
-      setVslWe('');
-      setVslWw('');
-      setVslWd('');
-      setVslDen('');
-      setVslDv('');
-      setVslPub('');
-      setVslNm('');
-    }
-    addToast('Form Reset', 'Form fields have been cleared.', 'info');
-  };
-
-  const handleCopy = () => {
-    let summary = '';
-    if (subTab === 'tds') {
-      if (!vstDft || !vstCov) {
-        addToast('No Calculation', 'Please enter parameters first.', 'warning');
-        return;
-      }
-      summary = `Method 1 (TDS Verification): Calculated VS: ${formatNum(vsCalc1, 1)}% | Published TDS: ${vstPub || '—'}% | Status: ${status1?.st || 'N/A'}`;
-    } else if (subTab === 'density') {
-      if (!vsdWs || !vsdWd || !vsdDd) {
-        addToast('No Calculation', 'Please enter parameters first.', 'warning');
-        return;
-      }
-      summary = `Method 2 (Density Verification): Calculated VS: ${formatNum(vsCalc2, 1)}% | Published TDS: ${vsdPub || '—'}% | Status: ${status2?.st || 'N/A'}`;
-    } else {
-      if (!vslWe || !vslWw || !vslWd || !vslDen || !vslDv) {
-        addToast('No Calculation', 'Please enter parameters first.', 'warning');
-        return;
-      }
-      summary = `Method 3 (ASTM D2697 Lab): Calculated VS: ${formatNum(vsCalc3, 1)}% | NV% (Weight Solids): ${formatNum(nv3, 1)}% | Status: ${status3?.st || 'N/A'}`;
+    if (!dft || !cov) {
+      addToast('Missing Required Inputs', 'Please fill DFT and Theoretical Coverage.', 'warning');
+      return;
     }
 
-    navigator.clipboard.writeText(`BG CoatingOS™ — Volume Solids Verification\n${summary}`);
-    setCopied(true);
-    addToast('Copied to Clipboard', 'Volume solids report copied.', 'success');
-    setTimeout(() => setCopied(false), 2000);
+    const vsC = (dft * cov) / 10;
+    const err = vsSanity(vsC);
+    if (err) {
+      addToast('Sanity Error', err, 'error');
+      return;
+    }
+
+    const st = vsStatus(vsC, pub);
+    setVstRes({
+      vsC,
+      cls: vsClass(vsC),
+      rec: vsRec(vsC),
+      pub,
+      diff: st ? st.diff : null,
+      dev: st ? st.dev : null,
+      status: st,
+      dft,
+      cov,
+      name: vstNm || '—'
+    });
+    addToast('Verified Volume Solids', 'Method 1 (TDS) verification calculated.', 'success');
+  };
+
+  const rstVST = () => {
+    setVstDft('');
+    setVstCov('');
+    setVstPub('');
+    setVstNm('');
+    setVstRes(null);
+    addToast('Form Reset', 'Parameters cleared.', 'info');
+  };
+
+  // Calculate Density
+  const calcVSD = () => {
+    const ws = parseFloat(vsdWs);
+    const wd = parseFloat(vsdWd);
+    const dd = parseFloat(vsdDd);
+    const pub = parseFloat(vsdPub) || 0;
+
+    if (!ws || !wd || !dd) {
+      addToast('Missing Required Inputs', 'Please fill Weight Solids, Wet Density and Dry Film Density.', 'warning');
+      return;
+    }
+
+    const vsC = (ws * wd) / dd;
+    const err = vsSanity(vsC);
+    if (err) {
+      addToast('Sanity Error', err, 'error');
+      return;
+    }
+
+    const st = vsStatus(vsC, pub);
+    setVsdRes({
+      vsC,
+      cls: vsClass(vsC),
+      rec: vsRec(vsC),
+      pub,
+      diff: st ? st.diff : null,
+      dev: st ? st.dev : null,
+      status: st,
+      ws,
+      wd,
+      dd,
+      name: vsdNm || '—'
+    });
+    addToast('Calculated Volume Solids', 'Method 2 (Density) verification calculated.', 'success');
+  };
+
+  const rstVSD = () => {
+    setVsdWs('');
+    setVsdWd('');
+    setVsdDd('');
+    setVsdPub('');
+    setVsdNm('');
+    setVsdRes(null);
+    addToast('Form Reset', 'Parameters cleared.', 'info');
+  };
+
+  // Calculate Lab
+  const calcVSL = () => {
+    const we = parseFloat(vslWe);
+    const ww = parseFloat(vslWw);
+    const wd = parseFloat(vslWd);
+    const den = parseFloat(vslDen);
+    const dv = parseFloat(vslDv);
+    const pub = parseFloat(vslPub) || 0;
+
+    if (isNaN(ww) || isNaN(wd) || !den || !dv) {
+      addToast('Missing Required Inputs', 'Please fill Dish+Wet, Dish+Dry, Wet Density and Dry Film Volume.', 'warning');
+      return;
+    }
+
+    const wetW = ww - we;
+    const dryW = wd - we;
+
+    if (wetW <= 0) {
+      addToast('Invalid Weights', 'Dish + Wet Paint must be greater than Empty Dish weight.', 'error');
+      return;
+    }
+    if (dryW < 0) {
+      addToast('Invalid Weights', 'Dish + Dry Film cannot be less than Empty Dish weight.', 'error');
+      return;
+    }
+    if (dryW > wetW) {
+      addToast('Invalid Weights', 'Dry Film weight cannot exceed Wet Paint weight.', 'error');
+      return;
+    }
+
+    const nv = (dryW / wetW) * 100;
+    const wetVol = wetW / den;
+    const vsC = (dv / wetVol) * 100;
+
+    const err = vsSanity(vsC);
+    if (err) {
+      addToast('Sanity Error', err, 'error');
+      return;
+    }
+
+    const dryDen = dv > 0 ? dryW / dv : 0;
+    const st = vsStatus(vsC, pub);
+
+    setVslRes({
+      vsC,
+      cls: vsClass(vsC),
+      rec: vsRec(vsC),
+      nv,
+      wetVol,
+      dryDen,
+      pub,
+      diff: st ? st.diff : null,
+      dev: st ? st.dev : null,
+      status: st,
+      we,
+      ww,
+      wd,
+      wetW,
+      dryW,
+      den,
+      dv,
+      name: vslNm || '—'
+    });
+    addToast('Calculated Laboratory VS', 'Method 3 (ASTM D2697 / ISO 3233) calculated.', 'success');
+  };
+
+  const rstVSL = () => {
+    setVslWe('');
+    setVslWw('');
+    setVslWd('');
+    setVslDen('');
+    setVslDv('');
+    setVslPub('');
+    setVslNm('');
+    setVslRes(null);
+    addToast('Form Reset', 'Parameters cleared.', 'info');
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleShare = (title, text) => {
+    navigator.clipboard.writeText(text);
+    addToast('Copied to Clipboard', `${title} report copied.`, 'success');
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
-      
-      {/* Subnav Method Selector Bar */}
-      <div className="flex flex-wrap gap-2 p-1.5 bg-slate-100/90 rounded-2xl border border-slate-200">
-        <button
-          onClick={() => setSubTab('tds')}
-          className={`flex items-center gap-2 py-2 px-4 rounded-xl text-xs font-bold transition cursor-pointer ${
-            subTab === 'tds' 
-              ? 'bg-gradient-to-r from-[#F5911F] to-[#A50021] text-white shadow-xs' 
-              : 'text-slate-600 hover:bg-slate-200/60'
-          }`}
-        >
-          <span>📋</span>
-          <span>Method 1 — TDS Verification</span>
-        </button>
-
-        <button
-          onClick={() => setSubTab('density')}
-          className={`flex items-center gap-2 py-2 px-4 rounded-xl text-xs font-bold transition cursor-pointer ${
-            subTab === 'density' 
-              ? 'bg-gradient-to-r from-[#F5911F] to-[#A50021] text-white shadow-xs' 
-              : 'text-slate-600 hover:bg-slate-200/60'
-          }`}
-        >
-          <span>⚖️</span>
-          <span>Method 2 — Density Verification</span>
-        </button>
-
-        <button
-          onClick={() => setSubTab('lab')}
-          className={`flex items-center gap-2 py-2 px-4 rounded-xl text-xs font-bold transition cursor-pointer ${
-            subTab === 'lab' 
-              ? 'bg-gradient-to-r from-[#F5911F] to-[#A50021] text-white shadow-xs' 
-              : 'text-slate-600 hover:bg-slate-200/60'
-          }`}
-        >
-          <span>🧫</span>
-          <span>Method 3 — Laboratory Verification</span>
-        </button>
-      </div>
-
-      {/* ───────────────────────────────────────────────────────────── */}
-      {/* METHOD 1: TDS VERIFICATION METHOD                             */}
-      {/* ───────────────────────────────────────────────────────────── */}
-      {subTab === 'tds' && (
-        <div className="bg-white border border-slate-200 rounded-3xl p-5 md:p-6 shadow-xs space-y-6">
-          
-          {/* Card Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center text-xl shrink-0">
-                📋
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h2 className="text-base md:text-lg font-extrabold text-slate-900">
-                    Method 1 — TDS Verification
-                  </h2>
-                  <span className="bg-amber-50 text-[#D97706] border border-amber-200 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase font-mono tracking-wider">
-                    PRO · VS-1
-                  </span>
-                </div>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Cross-check the manufacturer's Product Data Sheet: VS% = DFT × Coverage ÷ 10
-                </p>
-              </div>
+    <>
+      {/* METHOD 1 — TDS VERIFICATION */}
+      {mode === 'tds' && (
+        <div className="sub-sec card active" id="vs-tds">
+          <div className="ch">
+            <div className="ci">📋</div>
+            <div>
+              <div className="ct">Method 1 — TDS Verification</div>
+              <div className="cs">Cross-check the manufacturer's Product Data Sheet: VS% = DFT × Coverage ÷ 10</div>
             </div>
-
-            <button
-              onClick={handleOpenGuideline}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-[#1565C0] to-[#0D47A1] text-white text-xs font-extrabold tracking-wider uppercase shadow-xs hover:shadow-sm transition cursor-pointer shrink-0"
-            >
-              <BookOpen className="w-3.5 h-3.5" />
-              <span>📖 Guideline</span>
-            </button>
+            <button className="gd-btn" onClick={() => openGuideline('volume_solids_tds')}>📖 Guideline</button>
+            <div className="ctag">PRO · VS-1</div>
           </div>
+          <div className="cb">
+            <div className="input-section">
+              <div className="g2">
+                <div className="field">
+                  <label>DFT (from TDS) <span className="lh">µm</span></label>
+                  <div className="iw">
+                    <input 
+                      type="number" 
+                      id="vst-dft" 
+                      placeholder="e.g. 125" 
+                      min="0" 
+                      value={vstDft} 
+                      onChange={(e) => setVstDft(e.target.value)} 
+                    />
+                    <span className="uu">µm</span>
+                  </div>
+                </div>
 
-          {/* Form Inputs Grid */}
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  DFT (from TDS) <span className="text-slate-400 font-mono text-[10px] ml-1">µm</span>
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    value={vstDft}
-                    onChange={e => setVstDft(e.target.value)}
-                    placeholder="e.g. 125"
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D] pr-10"
-                  />
-                  <span className="absolute right-3 top-2.5 text-xs text-slate-400 font-mono">µm</span>
+                <div className="field">
+                  <label>Theoretical Coverage <span className="lh">m²/L</span></label>
+                  <div className="iw">
+                    <input 
+                      type="number" 
+                      id="vst-cov" 
+                      placeholder="e.g. 5.6" 
+                      min="0" 
+                      step="any" 
+                      value={vstCov} 
+                      onChange={(e) => setVstCov(e.target.value)} 
+                    />
+                    <span className="uu">m²/L</span>
+                  </div>
+                </div>
+
+                <div className="field">
+                  <label>Published Volume Solids <span className="lh">% · optional</span></label>
+                  <div className="iw">
+                    <input 
+                      type="number" 
+                      id="vst-pub" 
+                      placeholder="e.g. 70" 
+                      min="0" 
+                      max="100" 
+                      step="any" 
+                      value={vstPub} 
+                      onChange={(e) => setVstPub(e.target.value)} 
+                    />
+                    <span className="uu">%</span>
+                  </div>
+                </div>
+
+                <div className="field">
+                  <label>Product Name <span className="lh">optional</span></label>
+                  <div className="iw">
+                    <input 
+                      type="text" 
+                      id="vst-nm" 
+                      placeholder="e.g. High-Build Epoxy" 
+                      value={vstNm} 
+                      onChange={(e) => setVstNm(e.target.value)} 
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Theoretical Coverage <span className="text-slate-400 font-mono text-[10px] ml-1">m²/L</span>
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    step="0.1"
-                    value={vstCov}
-                    onChange={e => setVstCov(e.target.value)}
-                    placeholder="e.g. 5.6"
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D] pr-12"
-                  />
-                  <span className="absolute right-3 top-2.5 text-xs text-slate-400 font-mono">m²/L</span>
-                </div>
+              <div style={{ marginTop: '10px', padding: '10px 14px', background: '#FFF9EE', border: '1px dashed var(--in-bdr)', borderRadius: 'var(--r)', fontSize: '12px', color: 'var(--txt2)' }}>
+                <strong style={{ color: 'var(--in-lbl)' }}>Formula:</strong> Volume Solids (%) = ( DFT × Theoretical Coverage ) ÷ 10 &nbsp;·&nbsp; Example: 125 µm × 5.6 m²/L ÷ 10 = <strong>70%</strong>
               </div>
+            </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Published Volume Solids <span className="text-slate-400 font-mono text-[10px] ml-1">% · optional</span>
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    value={vstPub}
-                    onChange={e => setVstPub(e.target.value)}
-                    placeholder="e.g. 70"
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D] pr-8"
-                  />
-                  <span className="absolute right-3 top-2.5 text-xs text-slate-400 font-mono">%</span>
+            <div className="btn-row">
+              <button className="btn" onClick={calcVST}>▶ Verify Volume Solids</button>
+              <button className="btn-reset" onClick={rstVST}>↺ Reset</button>
+            </div>
+
+            {vstRes && (
+              <div className="res show" id="r-vst">
+                <div className="output-section">
+                  <div className="rh"><span className="pd"></span>Volume Solids Result</div>
+
+                  {vstRes.status && (
+                    <div style={{ background: vstRes.status.bg, border: `1.5px solid ${vstRes.status.bd}`, borderRadius: 'var(--r)', padding: '13px 16px', textAlign: 'center', marginBottom: '10px' }}>
+                      <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '19px', fontWeight: 700, color: vstRes.status.c1 }}>
+                        {vstRes.status.ic} {vstRes.status.status} — {vstRes.status.status === 'PASS' ? 'TDS Value Verified' : vstRes.status.status === 'REVIEW' ? 'Deviation 2–5% — Review with Manufacturer' : 'Deviation > 5% — Discrepancy Flagged'}
+                      </div>
+                      <div style={{ fontSize: '12px', color: vstRes.status.c2, marginTop: '3px' }}>
+                        Calculated {formatNum(vstRes.vsC, 1)}% vs Published {formatNum(vstRes.pub, 1)}% &nbsp;·&nbsp; Difference: {formatNum(vstRes.diff, 1)}% &nbsp;·&nbsp; Deviation: {formatNum(vstRes.dev, 1)}%
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="tls">
+                    <div className="tile tp">
+                      <div className="tl">Calculated Volume Solids</div>
+                      <div>
+                        <span className="tv" id="vst-r">{formatNum(vstRes.vsC, 1)}</span>
+                        <span className="tu">%</span>
+                      </div>
+                      <div className="tn" id="vst-cls">{vstRes.cls}</div>
+                    </div>
+                    <div className="tile ts">
+                      <div className="tl">Published VS (TDS)</div>
+                      <div>
+                        <span className="tv" id="vst-rpub">{vstRes.pub ? formatNum(vstRes.pub, 1) : '—'}</span>
+                        <span className="tu">%</span>
+                      </div>
+                    </div>
+                    <div className="tile ti">
+                      <div className="tl">Difference</div>
+                      <div>
+                        <span className="tv" id="vst-rdiff">{vstRes.diff !== null ? formatNum(vstRes.diff, 1) : '—'}</span>
+                        <span className="tu">%</span>
+                      </div>
+                    </div>
+                    <div className="tile tg">
+                      <div className="tl">Deviation</div>
+                      <div>
+                        <span className="tv" id="vst-rdev">{vstRes.dev !== null ? formatNum(vstRes.dev, 1) : '—'}</span>
+                        <span className="tu">%</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="input-summary">
+                    <div className="input-summary-label">📝 Input Data (Provided by User)</div>
+                    <div className="dr"><span className="dk">Product Name</span><span className="dv" id="vst-rnm">{vstRes.name}</span></div>
+                    <div className="dr"><span className="dk">DFT</span><span className="dv" id="vst-rdft">{vstRes.dft} µm</span></div>
+                    <div className="dr"><span className="dk">Theoretical Coverage</span><span className="dv" id="vst-rcov">{vstRes.cov} m²/L</span></div>
+                  </div>
+
+                  <div style={{ marginTop: '12px', padding: '11px 14px', background: '#FDF1E4', border: '1px solid var(--bdr2)', borderLeft: '3px solid var(--brand-orange)', borderRadius: 'var(--r)', fontSize: '12px', color: 'var(--txt2)', lineHeight: 1.7 }}>
+                    <strong style={{ color: 'var(--brand-crimson)' }}>🛠 Smart Engineering Recommendation — {vstRes.cls}:</strong><br />
+                    {vstRes.rec}
+                  </div>
+
+                  <div style={{ marginTop: '12px', padding: '10px 14px', background: '#E1F5FE', borderRadius: 'var(--r)', borderLeft: '3px solid var(--gi)', fontSize: '11.5px', color: 'var(--txt2)' }}>
+                    <strong style={{ color: 'var(--gi)' }}>Validation Criteria:</strong> Difference &lt; ±2% → <strong>PASS</strong> · 2–5% → <strong>REVIEW</strong> · &gt; 5% → <strong>FAIL</strong>. Engineering verification only — not a substitute for ASTM D2697 / ISO 3233 laboratory testing.
+                  </div>
                 </div>
-              </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Product Name <span className="text-slate-400 font-mono text-[10px] ml-1">optional</span>
-                </label>
-                <input
-                  type="text"
-                  value={vstNm}
-                  onChange={e => setVstNm(e.target.value)}
-                  placeholder="e.g. High-Build Epoxy"
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-                />
-              </div>
-
-            </div>
-
-            {/* Formula Callout Banner */}
-            <div className="p-3 bg-[#FFF9EE] border border-dashed border-[#F2DEC3] rounded-2xl text-xs text-stone-700 leading-relaxed font-mono">
-              <strong className="text-[#A34E00]">Formula:</strong> Volume Solids (%) = ( DFT × Theoretical Coverage ) ÷ 10 &nbsp;·&nbsp; Example: 125 µm × 5.6 m²/L ÷ 10 = <strong>70%</strong>
-            </div>
-
-            {/* Action Button Row */}
-            <div className="flex gap-2.5 pt-2">
-              <button
-                type="button"
-                onClick={() => handleCalculate('tds')}
-                className="flex-[2] py-3 px-4 bg-gradient-to-r from-[#F7941D] to-[#A50021] hover:from-[#E8700A] hover:to-[#8B0018] text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-xs transition hover:brightness-105 active:scale-98 flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <Play className="w-3.5 h-3.5 fill-white" />
-                <span>Verify Volume Solids</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleReset('tds')}
-                className="flex-1 py-3 px-4 bg-white hover:bg-red-50 text-[#A50021] border border-[#A50021]/30 font-bold text-xs uppercase tracking-wider rounded-xl shadow-2xs transition hover:border-[#A50021] active:scale-98 flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span>Reset</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Results Output Section */}
-          <div className="space-y-4 pt-4 border-t border-slate-100">
-            <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider font-mono">
-              <span className="w-2 h-2 rounded-full bg-[#A50021]"></span>
-              Volume Solids Result
-            </div>
-
-            {/* Live Verdict Banner */}
-            {status1 && (
-              <div className={`p-4 rounded-2xl border ${status1.bg} text-center space-y-1`}>
-                <div className="text-base md:text-lg font-black tracking-tight flex items-center justify-center gap-2">
-                  <span>{status1.ic}</span>
-                  <span>{status1.st} — {status1.text}</span>
-                </div>
-                <div className="text-xs font-bold opacity-90 font-mono">
-                  Calculated {formatNum(vsCalc1, 1)}% vs Published {formatNum(pub1, 1)}% · Δ {formatNum(status1.diff, 1)}% ({formatNum(status1.dev, 1)}% deviation)
+                <div className="action-bar">
+                  <button className="btn-print" onClick={handlePrint}>🖨 Print PDF</button>
+                  <button 
+                    className="btn-share" 
+                    onClick={() => handleShare('TDS Volume Solids', `BG CoatingOS™ — Volume Solids TDS Verification\nProduct: ${vstRes.name}\nDFT: ${vstRes.dft} µm | Coverage: ${vstRes.cov} m²/L\nCalculated VS: ${formatNum(vstRes.vsC, 1)}% (${vstRes.cls})\nStatus: ${vstRes.status ? vstRes.status.status : 'N/A'}`)}
+                  >
+                    📤 Share Text
+                  </button>
+                  <button className="btn-print xls-btn" onClick={() => addToast('Excel Export', 'Exporting VS report to Excel...', 'info')}>
+                    📊 Excel Report
+                  </button>
                 </div>
               </div>
             )}
-
-            {/* 4 Output Tiles */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-              <div className="bg-[#FFFDF9] border border-amber-200/80 rounded-2xl p-3.5 text-center shadow-2xs">
-                <div className="text-[11px] font-bold text-stone-500">Calculated Volume Solids</div>
-                <div className="text-2xl font-black text-[#A34E00] font-mono mt-1">
-                  {formatNum(vsCalc1, 1)}<span className="text-xs font-normal ml-0.5">%</span>
-                </div>
-                <div className="text-[10px] font-bold text-stone-500 mt-1 font-mono">
-                  {getVsClass(vsCalc1)}
-                </div>
-              </div>
-
-              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 text-center shadow-2xs">
-                <div className="text-[11px] font-bold text-slate-500">Published VS (TDS)</div>
-                <div className="text-2xl font-black text-slate-800 font-mono mt-1">
-                  {pub1 > 0 ? formatNum(pub1, 1) : '—'}<span className="text-xs font-normal ml-0.5">%</span>
-                </div>
-                <div className="text-[10px] text-slate-400 mt-1 font-mono">
-                  Specified in TDS
-                </div>
-              </div>
-
-              <div className="bg-blue-50/60 border border-blue-200 rounded-2xl p-3.5 text-center shadow-2xs">
-                <div className="text-[11px] font-bold text-blue-900">Difference</div>
-                <div className="text-2xl font-black text-blue-700 font-mono mt-1">
-                  {status1 ? `${formatNum(status1.diff, 1)}` : '—'}<span className="text-xs font-normal ml-0.5">%</span>
-                </div>
-                <div className="text-[10px] text-blue-600 mt-1 font-mono">
-                  Absolute Variance
-                </div>
-              </div>
-
-              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 text-center shadow-2xs">
-                <div className="text-[11px] font-bold text-slate-500">Deviation</div>
-                <div className="text-2xl font-black text-slate-800 font-mono mt-1">
-                  {status1 ? `${formatNum(status1.dev, 1)}` : '—'}<span className="text-xs font-normal ml-0.5">%</span>
-                </div>
-                <div className="text-[10px] text-slate-400 mt-1 font-mono">
-                  Percentage of TDS
-                </div>
-              </div>
-            </div>
-
-            {/* Input Summary Box */}
-            <div className="bg-stone-50/70 border border-stone-200 rounded-2xl p-4 text-xs space-y-2">
-              <div className="font-bold text-stone-700 pb-1 border-b border-stone-200">
-                📝 Input Data (Provided by User)
-              </div>
-              <div className="flex justify-between py-1 border-b border-dashed border-stone-200 text-stone-600">
-                <span>Product Name</span>
-                <span className="font-bold text-stone-900">{vstNm || '—'}</span>
-              </div>
-              <div className="flex justify-between py-1 border-b border-dashed border-stone-200 text-stone-600">
-                <span>DFT</span>
-                <span className="font-mono font-bold text-stone-900">{vstDft} µm</span>
-              </div>
-              <div className="flex justify-between py-1 text-stone-600">
-                <span>Theoretical Coverage</span>
-                <span className="font-mono font-bold text-stone-900">{vstCov} m²/L</span>
-              </div>
-            </div>
-
-            {/* Smart Recommendation Box */}
-            <div className="p-3.5 bg-[#FDF1E4] border border-[#F2DEC3] border-l-4 border-l-[#F5911F] rounded-2xl text-xs text-stone-800 leading-relaxed space-y-1">
-              <strong className="text-[#A50021] block">
-                🛠 Smart Engineering Recommendation — {getVsClass(vsCalc1)}:
-              </strong>
-              <p>{getVsRec(vsCalc1)}</p>
-            </div>
-
-            {/* Validation Criteria Alert */}
-            <div className="p-3.5 bg-[#E1F5FE] border-l-4 border-l-[#0288D1] rounded-2xl text-xs text-slate-700 leading-relaxed font-mono">
-              <strong className="text-[#0288D1]">Validation Criteria:</strong> Difference &lt; ±2% → <strong>PASS</strong> · 2–5% → <strong>REVIEW</strong> · &gt; 5% → <strong>FAIL</strong>. Engineering verification only — not a substitute for ASTM D2697 / ISO 3233 laboratory testing.
-            </div>
-
-            {/* Action Bar */}
-            <div className="flex flex-wrap items-center gap-2 pt-2">
-              <button
-                onClick={() => window.print()}
-                className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
-              >
-                <Printer className="w-3.5 h-3.5" />
-                <span>🖨 Print PDF</span>
-              </button>
-              <button
-                onClick={handleCopy}
-                className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
-              >
-                {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Share2 className="w-3.5 h-3.5" />}
-                <span>📤 Share Text</span>
-              </button>
-              <button
-                onClick={() => addToast('Excel Export', 'CSV report prepared for download.', 'info')}
-                className="px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
-              >
-                <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
-                <span>📊 Excel Report</span>
-              </button>
-            </div>
-
           </div>
-
         </div>
       )}
 
-      {/* ───────────────────────────────────────────────────────────── */}
-      {/* METHOD 2: DENSITY VERIFICATION METHOD                         */}
-      {/* ───────────────────────────────────────────────────────────── */}
-      {subTab === 'density' && (
-        <div className="bg-white border border-slate-200 rounded-3xl p-5 md:p-6 shadow-xs space-y-6">
-          
-          {/* Card Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-600 flex items-center justify-center text-xl shrink-0">
-                ⚖️
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h2 className="text-base md:text-lg font-extrabold text-slate-900">
-                    Method 2 — Density Verification
-                  </h2>
-                  <span className="bg-purple-50 text-purple-700 border border-purple-200 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase font-mono tracking-wider">
-                    PRO · VS-2
-                  </span>
-                </div>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Paint-manufacturing method: VS = Weight Solids × Wet Density ÷ Dry Film Density
-                </p>
-              </div>
+      {/* METHOD 2 — DENSITY VERIFICATION */}
+      {mode === 'den' && (
+        <div className="sub-sec card active" id="vs-den">
+          <div className="ch">
+            <div className="ci">⚖️</div>
+            <div>
+              <div className="ct">Method 2 — Density Verification</div>
+              <div className="cs">Paint-manufacturing method: VS = Weight Solids × Wet Density ÷ Dry Film Density</div>
             </div>
-
-            <button
-              onClick={handleOpenGuideline}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-[#1565C0] to-[#0D47A1] text-white text-xs font-extrabold tracking-wider uppercase shadow-xs hover:shadow-sm transition cursor-pointer shrink-0"
-            >
-              <BookOpen className="w-3.5 h-3.5" />
-              <span>📖 Guideline</span>
-            </button>
+            <button className="gd-btn" onClick={() => openGuideline('volume_solids_density')}>📖 Guideline</button>
+            <div className="ctag">PRO · VS-2</div>
           </div>
+          <div className="cb">
+            <div className="input-section">
+              <div className="g2">
+                <div className="field">
+                  <label>Weight Solids <span className="lh">%</span></label>
+                  <div className="iw">
+                    <input 
+                      type="number" 
+                      id="vsd-ws" 
+                      placeholder="e.g. 80" 
+                      min="0" 
+                      max="100" 
+                      step="any" 
+                      value={vsdWs} 
+                      onChange={(e) => setVsdWs(e.target.value)} 
+                    />
+                    <span className="uu">%</span>
+                  </div>
+                </div>
 
-          {/* Form Inputs Grid */}
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Weight Solids <span className="text-slate-400 font-mono text-[10px] ml-1">%</span>
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    value={vsdWs}
-                    onChange={e => setVsdWs(e.target.value)}
-                    placeholder="e.g. 80"
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D] pr-8"
-                  />
-                  <span className="absolute right-3 top-2.5 text-xs text-slate-400 font-mono">%</span>
+                <div className="field">
+                  <label>Wet Paint Density <span className="lh">kg/L · ASTM D1475</span></label>
+                  <div className="iw">
+                    <input 
+                      type="number" 
+                      id="vsd-wd" 
+                      placeholder="e.g. 1.60" 
+                      min="0" 
+                      step="any" 
+                      value={vsdWd} 
+                      onChange={(e) => setVsdWd(e.target.value)} 
+                    />
+                    <span className="uu">kg/L</span>
+                  </div>
+                </div>
+
+                <div className="field">
+                  <label>Dry Film Density <span className="lh">kg/L</span></label>
+                  <div className="iw">
+                    <input 
+                      type="number" 
+                      id="vsd-dd" 
+                      placeholder="e.g. 1.80" 
+                      min="0" 
+                      step="any" 
+                      value={vsdDd} 
+                      onChange={(e) => setVsdDd(e.target.value)} 
+                    />
+                    <span className="uu">kg/L</span>
+                  </div>
+                </div>
+
+                <div className="field">
+                  <label>Published Volume Solids <span className="lh">% · optional</span></label>
+                  <div className="iw">
+                    <input 
+                      type="number" 
+                      id="vsd-pub" 
+                      placeholder="e.g. 71" 
+                      min="0" 
+                      max="100" 
+                      step="any" 
+                      value={vsdPub} 
+                      onChange={(e) => setVsdPub(e.target.value)} 
+                    />
+                    <span className="uu">%</span>
+                  </div>
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Wet Paint Density <span className="text-slate-400 font-mono text-[10px] ml-1">kg/L · ASTM D1475</span>
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={vsdWd}
-                    onChange={e => setVsdWd(e.target.value)}
-                    placeholder="e.g. 1.60"
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D] pr-12"
+              <div className="field" style={{ marginTop: '10px' }}>
+                <label>Product Name <span className="lh">optional</span></label>
+                <div className="iw">
+                  <input 
+                    type="text" 
+                    id="vsd-nm" 
+                    placeholder="e.g. Solvent-Free Epoxy" 
+                    value={vsdNm} 
+                    onChange={(e) => setVsdNm(e.target.value)} 
                   />
-                  <span className="absolute right-3 top-2.5 text-xs text-slate-400 font-mono">kg/L</span>
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Dry Film Density <span className="text-slate-400 font-mono text-[10px] ml-1">kg/L</span>
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={vsdDd}
-                    onChange={e => setVsdDd(e.target.value)}
-                    placeholder="e.g. 1.80"
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D] pr-12"
-                  />
-                  <span className="absolute right-3 top-2.5 text-xs text-slate-400 font-mono">kg/L</span>
-                </div>
+              <div style={{ marginTop: '10px', padding: '10px 14px', background: '#FFF9EE', border: '1px dashed var(--in-bdr)', borderRadius: 'var(--r)', fontSize: '12px', color: 'var(--txt2)' }}>
+                <strong style={{ color: 'var(--in-lbl)' }}>Formula:</strong> VS% = Weight Solids × ( Wet Density ÷ Dry Film Density ) &nbsp;·&nbsp; Example: 0.80 × 1.60 ÷ 1.80 = <strong>71.1%</strong>
               </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Published Volume Solids <span className="text-slate-400 font-mono text-[10px] ml-1">% · optional</span>
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    value={vsdPub}
-                    onChange={e => setVsdPub(e.target.value)}
-                    placeholder="e.g. 71"
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D] pr-8"
-                  />
-                  <span className="absolute right-3 top-2.5 text-xs text-slate-400 font-mono">%</span>
-                </div>
-              </div>
-
-              <div className="sm:col-span-2">
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Product Name <span className="text-slate-400 font-mono text-[10px] ml-1">optional</span>
-                </label>
-                <input
-                  type="text"
-                  value={vsdNm}
-                  onChange={e => setVsdNm(e.target.value)}
-                  placeholder="e.g. Solvent-Free Epoxy"
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-                />
-              </div>
-
             </div>
 
-            {/* Formula Callout Banner */}
-            <div className="p-3 bg-[#FFF9EE] border border-dashed border-[#F2DEC3] rounded-2xl text-xs text-stone-700 leading-relaxed font-mono">
-              <strong className="text-[#A34E00]">Formula:</strong> VS% = Weight Solids × ( Wet Density ÷ Dry Film Density ) &nbsp;·&nbsp; Example: 0.80 × 1.60 ÷ 1.80 = <strong>71.1%</strong>
+            <div className="btn-row">
+              <button className="btn" onClick={calcVSD}>▶ Calculate Volume Solids</button>
+              <button className="btn-reset" onClick={rstVSD}>↺ Reset</button>
             </div>
 
-            {/* Action Button Row */}
-            <div className="flex gap-2.5 pt-2">
-              <button
-                type="button"
-                onClick={() => handleCalculate('density')}
-                className="flex-[2] py-3 px-4 bg-gradient-to-r from-[#F7941D] to-[#A50021] hover:from-[#E8700A] hover:to-[#8B0018] text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-xs transition hover:brightness-105 active:scale-98 flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <Play className="w-3.5 h-3.5 fill-white" />
-                <span>Calculate Volume Solids</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleReset('density')}
-                className="flex-1 py-3 px-4 bg-white hover:bg-red-50 text-[#A50021] border border-[#A50021]/30 font-bold text-xs uppercase tracking-wider rounded-xl shadow-2xs transition hover:border-[#A50021] active:scale-98 flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span>Reset</span>
-              </button>
-            </div>
-          </div>
+            {vsdRes && (
+              <div className="res show" id="r-vsd">
+                <div className="output-section">
+                  <div className="rh"><span className="pd"></span>Volume Solids Result</div>
 
-          {/* Results Output Section */}
-          <div className="space-y-4 pt-4 border-t border-slate-100">
-            <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider font-mono">
-              <span className="w-2 h-2 rounded-full bg-[#A50021]"></span>
-              Volume Solids Result
-            </div>
+                  {vsdRes.status && (
+                    <div style={{ background: vsdRes.status.bg, border: `1.5px solid ${vsdRes.status.bd}`, borderRadius: 'var(--r)', padding: '13px 16px', textAlign: 'center', marginBottom: '10px' }}>
+                      <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '19px', fontWeight: 700, color: vsdRes.status.c1 }}>
+                        {vsdRes.status.ic} {vsdRes.status.status} — {vsdRes.status.status === 'PASS' ? 'Density Method Verified' : vsdRes.status.status === 'REVIEW' ? 'Deviation 2–5% — Review Parameters' : 'Deviation > 5% — Discrepancy Flagged'}
+                      </div>
+                      <div style={{ fontSize: '12px', color: vsdRes.status.c2, marginTop: '3px' }}>
+                        Calculated {formatNum(vsdRes.vsC, 1)}% vs Published {formatNum(vsdRes.pub, 1)}% &nbsp;·&nbsp; Difference: {formatNum(vsdRes.diff, 1)}% &nbsp;·&nbsp; Deviation: {formatNum(vsdRes.dev, 1)}%
+                      </div>
+                    </div>
+                  )}
 
-            {/* Live Verdict Banner */}
-            {status2 && (
-              <div className={`p-4 rounded-2xl border ${status2.bg} text-center space-y-1`}>
-                <div className="text-base md:text-lg font-black tracking-tight flex items-center justify-center gap-2">
-                  <span>{status2.ic}</span>
-                  <span>{status2.st} — {status2.text}</span>
+                  <div className="tls">
+                    <div className="tile tp">
+                      <div className="tl">Calculated Volume Solids</div>
+                      <div>
+                        <span className="tv" id="vsd-r">{formatNum(vsdRes.vsC, 1)}</span>
+                        <span className="tu">%</span>
+                      </div>
+                      <div className="tn" id="vsd-cls">{vsdRes.cls}</div>
+                    </div>
+                    <div className="tile ts">
+                      <div className="tl">Published VS (TDS)</div>
+                      <div>
+                        <span className="tv" id="vsd-rpub">{vsdRes.pub ? formatNum(vsdRes.pub, 1) : '—'}</span>
+                        <span className="tu">%</span>
+                      </div>
+                    </div>
+                    <div className="tile ti">
+                      <div className="tl">Difference</div>
+                      <div>
+                        <span className="tv" id="vsd-rdiff">{vsdRes.diff !== null ? formatNum(vsdRes.diff, 1) : '—'}</span>
+                        <span className="tu">%</span>
+                      </div>
+                    </div>
+                    <div className="tile tg">
+                      <div className="tl">Deviation</div>
+                      <div>
+                        <span className="tv" id="vsd-rdev">{vsdRes.dev !== null ? formatNum(vsdRes.dev, 1) : '—'}</span>
+                        <span className="tu">%</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="input-summary">
+                    <div className="input-summary-label">📝 Input Data (Provided by User)</div>
+                    <div className="dr"><span className="dk">Product Name</span><span className="dv" id="vsd-rnm">{vsdRes.name}</span></div>
+                    <div className="dr"><span className="dk">Weight Solids</span><span className="dv" id="vsd-rws">{vsdRes.ws}%</span></div>
+                    <div className="dr"><span className="dk">Wet Density</span><span className="dv" id="vsd-rwd">{vsdRes.wd} kg/L</span></div>
+                    <div className="dr"><span className="dk">Dry Film Density</span><span className="dv" id="vsd-rdd">{vsdRes.dd} kg/L</span></div>
+                  </div>
+
+                  <div style={{ marginTop: '12px', padding: '11px 14px', background: '#FDF1E4', border: '1px solid var(--bdr2)', borderLeft: '3px solid var(--brand-orange)', borderRadius: 'var(--r)', fontSize: '12px', color: 'var(--txt2)', lineHeight: 1.7 }}>
+                    <strong style={{ color: 'var(--brand-crimson)' }}>🛠 Smart Engineering Recommendation — {vsdRes.cls}:</strong><br />
+                    {vsdRes.rec}
+                  </div>
                 </div>
-                <div className="text-xs font-bold opacity-90 font-mono">
-                  Calculated {formatNum(vsCalc2, 1)}% vs Published {formatNum(pub2, 1)}% · Δ {formatNum(status2.diff, 1)}% ({formatNum(status2.dev, 1)}% deviation)
+
+                <div className="action-bar">
+                  <button className="btn-print" onClick={handlePrint}>🖨 Print PDF</button>
+                  <button 
+                    className="btn-share" 
+                    onClick={() => handleShare('Density Volume Solids', `BG CoatingOS™ — Volume Solids Density Verification\nProduct: ${vsdRes.name}\nWS: ${vsdRes.ws}% | Wet Density: ${vsdRes.wd} kg/L | Dry Density: ${vsdRes.dd} kg/L\nCalculated VS: ${formatNum(vsdRes.vsC, 1)}% (${vsdRes.cls})`)}
+                  >
+                    📤 Share Text
+                  </button>
+                  <button className="btn-print xls-btn" onClick={() => addToast('Excel Export', 'Exporting VS report to Excel...', 'info')}>
+                    📊 Excel Report
+                  </button>
                 </div>
               </div>
             )}
-
-            {/* 4 Output Tiles */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-              <div className="bg-[#FFFDF9] border border-amber-200/80 rounded-2xl p-3.5 text-center shadow-2xs">
-                <div className="text-[11px] font-bold text-stone-500">Calculated Volume Solids</div>
-                <div className="text-2xl font-black text-[#A34E00] font-mono mt-1">
-                  {formatNum(vsCalc2, 1)}<span className="text-xs font-normal ml-0.5">%</span>
-                </div>
-                <div className="text-[10px] font-bold text-stone-500 mt-1 font-mono">
-                  {getVsClass(vsCalc2)}
-                </div>
-              </div>
-
-              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 text-center shadow-2xs">
-                <div className="text-[11px] font-bold text-slate-500">Published VS (TDS)</div>
-                <div className="text-2xl font-black text-slate-800 font-mono mt-1">
-                  {pub2 > 0 ? formatNum(pub2, 1) : '—'}<span className="text-xs font-normal ml-0.5">%</span>
-                </div>
-                <div className="text-[10px] text-slate-400 mt-1 font-mono">
-                  Specified in TDS
-                </div>
-              </div>
-
-              <div className="bg-blue-50/60 border border-blue-200 rounded-2xl p-3.5 text-center shadow-2xs">
-                <div className="text-[11px] font-bold text-blue-900">Difference</div>
-                <div className="text-2xl font-black text-blue-700 font-mono mt-1">
-                  {status2 ? `${formatNum(status2.diff, 1)}` : '—'}<span className="text-xs font-normal ml-0.5">%</span>
-                </div>
-                <div className="text-[10px] text-blue-600 mt-1 font-mono">
-                  Absolute Variance
-                </div>
-              </div>
-
-              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 text-center shadow-2xs">
-                <div className="text-[11px] font-bold text-slate-500">Deviation</div>
-                <div className="text-2xl font-black text-slate-800 font-mono mt-1">
-                  {status2 ? `${formatNum(status2.dev, 1)}` : '—'}<span className="text-xs font-normal ml-0.5">%</span>
-                </div>
-                <div className="text-[10px] text-slate-400 mt-1 font-mono">
-                  Percentage of TDS
-                </div>
-              </div>
-            </div>
-
-            {/* Input Summary Box */}
-            <div className="bg-stone-50/70 border border-stone-200 rounded-2xl p-4 text-xs space-y-2">
-              <div className="font-bold text-stone-700 pb-1 border-b border-stone-200">
-                📝 Input Data (Provided by User)
-              </div>
-              <div className="flex justify-between py-1 border-b border-dashed border-stone-200 text-stone-600">
-                <span>Product Name</span>
-                <span className="font-bold text-stone-900">{vsdNm || '—'}</span>
-              </div>
-              <div className="flex justify-between py-1 border-b border-dashed border-stone-200 text-stone-600">
-                <span>Weight Solids</span>
-                <span className="font-mono font-bold text-stone-900">{vsdWs}%</span>
-              </div>
-              <div className="flex justify-between py-1 border-b border-dashed border-stone-200 text-stone-600">
-                <span>Wet Density</span>
-                <span className="font-mono font-bold text-stone-900">{vsdWd} kg/L</span>
-              </div>
-              <div className="flex justify-between py-1 text-stone-600">
-                <span>Dry Film Density</span>
-                <span className="font-mono font-bold text-stone-900">{vsdDd} kg/L</span>
-              </div>
-            </div>
-
-            {/* Smart Recommendation Box */}
-            <div className="p-3.5 bg-[#FDF1E4] border border-[#F2DEC3] border-l-4 border-l-[#F5911F] rounded-2xl text-xs text-stone-800 leading-relaxed space-y-1">
-              <strong className="text-[#A50021] block">
-                🛠 Smart Engineering Recommendation — {getVsClass(vsCalc2)}:
-              </strong>
-              <p>{getVsRec(vsCalc2)}</p>
-            </div>
-
-            {/* Action Bar */}
-            <div className="flex flex-wrap items-center gap-2 pt-2">
-              <button
-                onClick={() => window.print()}
-                className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
-              >
-                <Printer className="w-3.5 h-3.5" />
-                <span>🖨 Print PDF</span>
-              </button>
-              <button
-                onClick={handleCopy}
-                className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
-              >
-                {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Share2 className="w-3.5 h-3.5" />}
-                <span>📤 Share Text</span>
-              </button>
-              <button
-                onClick={() => addToast('Excel Export', 'CSV report prepared for download.', 'info')}
-                className="px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
-              >
-                <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
-                <span>📊 Excel Report</span>
-              </button>
-            </div>
-
           </div>
-
         </div>
       )}
 
-      {/* ───────────────────────────────────────────────────────────── */}
-      {/* METHOD 3: LABORATORY VERIFICATION (ASTM D2697 / ISO 3233)     */}
-      {/* ───────────────────────────────────────────────────────────── */}
-      {subTab === 'lab' && (
-        <div className="bg-white border border-slate-200 rounded-3xl p-5 md:p-6 shadow-xs space-y-6">
-          
-          {/* Card Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center text-xl shrink-0">
-                🧫
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h2 className="text-base md:text-lg font-extrabold text-slate-900">
-                    Method 3 — Laboratory Verification
-                  </h2>
-                  <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase font-mono tracking-wider">
-                    PRO · VS-3
-                  </span>
-                </div>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  ASTM D2697 / ISO 3233 — most accurate: gravimetric weights + measured dry film volume
-                </p>
-              </div>
+      {/* METHOD 3 — LABORATORY VERIFICATION */}
+      {mode === 'lab' && (
+        <div className="sub-sec card active" id="vs-lab">
+          <div className="ch">
+            <div className="ci">🧫</div>
+            <div>
+              <div className="ct">Method 3 — Laboratory Verification</div>
+              <div className="cs">ASTM D2697 / ISO 3233 — most accurate: gravimetric weights + measured dry film volume</div>
             </div>
-
-            <button
-              onClick={handleOpenGuideline}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-[#1565C0] to-[#0D47A1] text-white text-xs font-extrabold tracking-wider uppercase shadow-xs hover:shadow-sm transition cursor-pointer shrink-0"
-            >
-              <BookOpen className="w-3.5 h-3.5" />
-              <span>📖 Guideline</span>
-            </button>
+            <button className="gd-btn" onClick={() => openGuideline('volume_solids_lab')}>📖 Guideline</button>
+            <div className="ctag">PRO · VS-3</div>
           </div>
+          <div className="cb">
+            <div className="input-section">
+              <div className="g2">
+                <div className="field">
+                  <label>Weight of Empty Dish <span className="lh">g</span></label>
+                  <div className="iw">
+                    <input 
+                      type="number" 
+                      id="vsl-we" 
+                      placeholder="e.g. 25.000" 
+                      min="0" 
+                      step="any" 
+                      value={vslWe} 
+                      onChange={(e) => setVslWe(e.target.value)} 
+                    />
+                    <span className="uu">g</span>
+                  </div>
+                </div>
 
-          {/* Form Inputs Grid */}
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Weight of Empty Dish <span className="text-slate-400 font-mono text-[10px] ml-1">g</span>
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    step="0.001"
-                    value={vslWe}
-                    onChange={e => setVslWe(e.target.value)}
-                    placeholder="e.g. 25.000"
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D] pr-8"
-                  />
-                  <span className="absolute right-3 top-2.5 text-xs text-slate-400 font-mono">g</span>
+                <div className="field">
+                  <label>Dish + Wet Paint <span className="lh">g</span></label>
+                  <div className="iw">
+                    <input 
+                      type="number" 
+                      id="vsl-ww" 
+                      placeholder="e.g. 30.000" 
+                      min="0" 
+                      step="any" 
+                      value={vslWw} 
+                      onChange={(e) => setVslWw(e.target.value)} 
+                    />
+                    <span className="uu">g</span>
+                  </div>
+                </div>
+
+                <div className="field">
+                  <label>Dish + Dry Film <span className="lh">g · after full cure</span></label>
+                  <div className="iw">
+                    <input 
+                      type="number" 
+                      id="vsl-wd" 
+                      placeholder="e.g. 29.000" 
+                      min="0" 
+                      step="any" 
+                      value={vslWd} 
+                      onChange={(e) => setVslWd(e.target.value)} 
+                    />
+                    <span className="uu">g</span>
+                  </div>
+                </div>
+
+                <div className="field">
+                  <label>Wet Paint Density <span className="lh">kg/L · ASTM D1475</span></label>
+                  <div className="iw">
+                    <input 
+                      type="number" 
+                      id="vsl-den" 
+                      placeholder="e.g. 1.60" 
+                      min="0" 
+                      step="any" 
+                      value={vslDen} 
+                      onChange={(e) => setVslDen(e.target.value)} 
+                    />
+                    <span className="uu">kg/L</span>
+                  </div>
+                </div>
+
+                <div className="field">
+                  <label>Measured Dry Film Volume <span className="lh">cm³ · D2697/ISO 3233</span></label>
+                  <div className="iw">
+                    <input 
+                      type="number" 
+                      id="vsl-dv" 
+                      placeholder="e.g. 2.200" 
+                      min="0" 
+                      step="any" 
+                      value={vslDv} 
+                      onChange={(e) => setVslDv(e.target.value)} 
+                    />
+                    <span className="uu">cm³</span>
+                  </div>
+                </div>
+
+                <div className="field">
+                  <label>Published Volume Solids <span className="lh">% · optional</span></label>
+                  <div className="iw">
+                    <input 
+                      type="number" 
+                      id="vsl-pub" 
+                      placeholder="e.g. 70" 
+                      min="0" 
+                      max="100" 
+                      step="any" 
+                      value={vslPub} 
+                      onChange={(e) => setVslPub(e.target.value)} 
+                    />
+                    <span className="uu">%</span>
+                  </div>
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Dish + Wet Paint <span className="text-slate-400 font-mono text-[10px] ml-1">g</span>
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    step="0.001"
-                    value={vslWw}
-                    onChange={e => setVslWw(e.target.value)}
-                    placeholder="e.g. 30.000"
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D] pr-8"
+              <div className="field" style={{ marginTop: '10px' }}>
+                <label>Product / Lab Reference <span className="lh">optional</span></label>
+                <div className="iw">
+                  <input 
+                    type="text" 
+                    id="vsl-nm" 
+                    placeholder="e.g. Batch 4521 — Epoxy MIO" 
+                    value={vslNm} 
+                    onChange={(e) => setVslNm(e.target.value)} 
                   />
-                  <span className="absolute right-3 top-2.5 text-xs text-slate-400 font-mono">g</span>
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Dish + Dry Film <span className="text-slate-400 font-mono text-[10px] ml-1">g · after cure</span>
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    step="0.001"
-                    value={vslWd}
-                    onChange={e => setVslWd(e.target.value)}
-                    placeholder="e.g. 29.000"
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D] pr-8"
-                  />
-                  <span className="absolute right-3 top-2.5 text-xs text-slate-400 font-mono">g</span>
-                </div>
+              <div style={{ marginTop: '10px', padding: '10px 14px', background: '#FFF9EE', border: '1px dashed var(--in-bdr)', borderRadius: 'var(--r)', fontSize: '12px', color: 'var(--txt2)', lineHeight: 1.7 }}>
+                <strong style={{ color: 'var(--in-lbl)' }}>Calculation Steps:</strong><br />
+                ① Wet Wt = (Dish+Wet) − Dish &nbsp;·&nbsp;
+                ② Dry Wt = (Dish+Dry) − Dish &nbsp;·&nbsp;
+                ③ Non-Volatile % = Dry ÷ Wet × 100 &nbsp;·&nbsp;
+                ④ Wet Volume = Wet Wt ÷ Density &nbsp;·&nbsp;
+                ⑤ <strong>VS% = Dry Film Volume ÷ Wet Volume × 100</strong>
               </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Wet Paint Density <span className="text-slate-400 font-mono text-[10px] ml-1">kg/L · ASTM D1475</span>
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={vslDen}
-                    onChange={e => setVslDen(e.target.value)}
-                    placeholder="e.g. 1.60"
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D] pr-12"
-                  />
-                  <span className="absolute right-3 top-2.5 text-xs text-slate-400 font-mono">kg/L</span>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Measured Dry Film Volume <span className="text-slate-400 font-mono text-[10px] ml-1">cm³ · D2697</span>
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    step="0.001"
-                    value={vslDv}
-                    onChange={e => setVslDv(e.target.value)}
-                    placeholder="e.g. 2.200"
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D] pr-10"
-                  />
-                  <span className="absolute right-3 top-2.5 text-xs text-slate-400 font-mono">cm³</span>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Published Volume Solids <span className="text-slate-400 font-mono text-[10px] ml-1">% · optional</span>
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    value={vslPub}
-                    onChange={e => setVslPub(e.target.value)}
-                    placeholder="e.g. 70"
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D] pr-8"
-                  />
-                  <span className="absolute right-3 top-2.5 text-xs text-slate-400 font-mono">%</span>
-                </div>
-              </div>
-
-              <div className="sm:col-span-2 lg:col-span-3">
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Product / Lab Reference <span className="text-slate-400 font-mono text-[10px] ml-1">optional</span>
-                </label>
-                <input
-                  type="text"
-                  value={vslNm}
-                  onChange={e => setVslNm(e.target.value)}
-                  placeholder="e.g. Batch 4521 — Epoxy MIO"
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-                />
-              </div>
-
             </div>
 
-            {/* Calculation Steps Callout */}
-            <div className="p-3.5 bg-[#FFF9EE] border border-dashed border-[#F2DEC3] rounded-2xl text-xs text-stone-700 leading-relaxed font-mono">
-              <strong className="text-[#A34E00] block mb-1">Calculation Steps:</strong>
-              ① Wet Wt = (Dish+Wet) − Dish &nbsp;·&nbsp;
-              ② Dry Wt = (Dish+Dry) − Dish &nbsp;·&nbsp;
-              ③ Non-Volatile % = Dry ÷ Wet × 100 &nbsp;·&nbsp;
-              ④ Wet Volume = Wet Wt ÷ Density &nbsp;·&nbsp;
-              ⑤ <strong>VS% = Dry Film Volume ÷ Wet Volume × 100</strong>
+            <div className="btn-row">
+              <button className="btn" onClick={calcVSL}>▶ Calculate Volume Solids (Lab)</button>
+              <button className="btn-reset" onClick={rstVSL}>↺ Reset</button>
             </div>
 
-            {/* Action Button Row */}
-            <div className="flex gap-2.5 pt-2">
-              <button
-                type="button"
-                onClick={() => handleCalculate('lab')}
-                className="flex-[2] py-3 px-4 bg-gradient-to-r from-[#F7941D] to-[#A50021] hover:from-[#E8700A] hover:to-[#8B0018] text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-xs transition hover:brightness-105 active:scale-98 flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <Play className="w-3.5 h-3.5 fill-white" />
-                <span>Calculate Volume Solids (Lab)</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleReset('lab')}
-                className="flex-1 py-3 px-4 bg-white hover:bg-red-50 text-[#A50021] border border-[#A50021]/30 font-bold text-xs uppercase tracking-wider rounded-xl shadow-2xs transition hover:border-[#A50021] active:scale-98 flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span>Reset</span>
-              </button>
-            </div>
-          </div>
+            {vslRes && (
+              <div className="res show" id="r-vsl">
+                <div className="output-section">
+                  <div className="rh"><span className="pd"></span>Laboratory Volume Solids Result</div>
 
-          {/* Results Output Section */}
-          <div className="space-y-4 pt-4 border-t border-slate-100">
-            <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider font-mono">
-              <span className="w-2 h-2 rounded-full bg-[#A50021]"></span>
-              Laboratory Volume Solids Result
-            </div>
+                  {vslRes.status && (
+                    <div style={{ background: vslRes.status.bg, border: `1.5px solid ${vslRes.status.bd}`, borderRadius: 'var(--r)', padding: '13px 16px', textAlign: 'center', marginBottom: '10px' }}>
+                      <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '19px', fontWeight: 700, color: vslRes.status.c1 }}>
+                        {vslRes.status.ic} {vslRes.status.status} — {vslRes.status.status === 'PASS' ? 'Laboratory VS Verified' : vslRes.status.status === 'REVIEW' ? 'Deviation 2–5% — Review with Lab' : 'Deviation > 5% — Discrepancy Flagged'}
+                      </div>
+                      <div style={{ fontSize: '12px', color: vslRes.status.c2, marginTop: '3px' }}>
+                        Calculated {formatNum(vslRes.vsC, 1)}% vs Published {formatNum(vslRes.pub, 1)}% &nbsp;·&nbsp; Difference: {formatNum(vslRes.diff, 1)}% &nbsp;·&nbsp; Deviation: {formatNum(vslRes.dev, 1)}%
+                      </div>
+                    </div>
+                  )}
 
-            {/* Live Verdict Banner */}
-            {status3 && (
-              <div className={`p-4 rounded-2xl border ${status3.bg} text-center space-y-1`}>
-                <div className="text-base md:text-lg font-black tracking-tight flex items-center justify-center gap-2">
-                  <span>{status3.ic}</span>
-                  <span>{status3.st} — {status3.text}</span>
+                  <div className="tls">
+                    <div className="tile tp">
+                      <div className="tl">Volume Solids (Lab)</div>
+                      <div>
+                        <span className="tv" id="vsl-r">{formatNum(vslRes.vsC, 1)}</span>
+                        <span className="tu">%</span>
+                      </div>
+                      <div className="tn" id="vsl-cls">{vslRes.cls}</div>
+                    </div>
+                    <div className="tile ts">
+                      <div className="tl">Weight Solids (NV%)</div>
+                      <div>
+                        <span className="tv" id="vsl-rnv">{formatNum(vslRes.nv, 1)}</span>
+                        <span className="tu">%</span>
+                      </div>
+                    </div>
+                    <div className="tile ti">
+                      <div className="tl">Wet Paint Volume</div>
+                      <div>
+                        <span className="tv" id="vsl-rwv">{formatNum(vslRes.wetVol, 3)}</span>
+                        <span className="tu">cm³</span>
+                      </div>
+                    </div>
+                    <div className="tile tg">
+                      <div className="tl">Dry Film Density</div>
+                      <div>
+                        <span className="tv" id="vsl-rdd">{formatNum(vslRes.dryDen, 3)}</span>
+                        <span className="tu">kg/L</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="input-summary">
+                    <div className="input-summary-label">📝 Input Data (Provided by User)</div>
+                    <div className="dr"><span className="dk">Product / Lab Ref</span><span className="dv" id="vsl-rnm">{vslRes.name}</span></div>
+                    <div className="dr"><span className="dk">Empty Dish</span><span className="dv" id="vsl-rwe">{formatNum(vslRes.we, 3)} g</span></div>
+                    <div className="dr"><span className="dk">Dish + Wet Paint</span><span className="dv" id="vsl-rww">{formatNum(vslRes.ww, 3)} g</span></div>
+                    <div className="dr"><span className="dk">Dish + Dry Film</span><span className="dv" id="vsl-rwdd">{formatNum(vslRes.wd, 3)} g</span></div>
+                    <div className="dr"><span className="dk">Wet Paint Weight</span><span className="dv" id="vsl-rwetw">{formatNum(vslRes.wetW, 3)} g</span></div>
+                    <div className="dr"><span className="dk">Dry Film Weight</span><span className="dv" id="vsl-rdryw">{formatNum(vslRes.dryW, 3)} g</span></div>
+                    <div className="dr"><span className="dk">Wet Density</span><span className="dv" id="vsl-rden">{vslRes.den} kg/L</span></div>
+                    <div className="dr"><span className="dk">Dry Film Volume (Measured)</span><span className="dv" id="vsl-rdv">{vslRes.dv} cm³</span></div>
+                    <div className="dr"><span className="dk">Published VS (TDS)</span><span className="dv" id="vsl-rpub">{vslRes.pub ? `${vslRes.pub}%` : '—'}</span></div>
+                  </div>
+
+                  <div style={{ marginTop: '12px', padding: '11px 14px', background: '#FDF1E4', border: '1px solid var(--bdr2)', borderLeft: '3px solid var(--brand-orange)', borderRadius: 'var(--r)', fontSize: '12px', color: 'var(--txt2)', lineHeight: 1.7 }}>
+                    <strong style={{ color: 'var(--brand-crimson)' }}>🛠 Smart Engineering Recommendation — {vslRes.cls}:</strong><br />
+                    {vslRes.rec}
+                  </div>
                 </div>
-                <div className="text-xs font-bold opacity-90 font-mono">
-                  Calculated {formatNum(vsCalc3, 1)}% vs Published {formatNum(pub3, 1)}% · Δ {formatNum(status3.diff, 1)}% ({formatNum(status3.dev, 1)}% deviation)
+
+                <div className="action-bar">
+                  <button className="btn-print" onClick={handlePrint}>🖨 Print PDF</button>
+                  <button 
+                    className="btn-share" 
+                    onClick={() => handleShare('Lab Volume Solids', `BG CoatingOS™ — Volume Solids ASTM D2697 / ISO 3233 Laboratory Verification\nProduct: ${vslRes.name}\nCalculated Lab VS: ${formatNum(vslRes.vsC, 1)}% (${vslRes.cls})\nNV%: ${formatNum(vslRes.nv, 1)}% | Dry Density: ${formatNum(vslRes.dryDen, 3)} kg/L`)}
+                  >
+                    📤 Share Text
+                  </button>
+                  <button className="btn-print xls-btn" onClick={() => addToast('Excel Export', 'Exporting VS report to Excel...', 'info')}>
+                    📊 Excel Report
+                  </button>
                 </div>
               </div>
             )}
-
-            {/* 4 Output Tiles */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-              <div className="bg-[#FFFDF9] border border-amber-200/80 rounded-2xl p-3.5 text-center shadow-2xs">
-                <div className="text-[11px] font-bold text-stone-500">Volume Solids (Lab)</div>
-                <div className="text-2xl font-black text-[#A34E00] font-mono mt-1">
-                  {formatNum(vsCalc3, 1)}<span className="text-xs font-normal ml-0.5">%</span>
-                </div>
-                <div className="text-[10px] font-bold text-stone-500 mt-1 font-mono">
-                  {getVsClass(vsCalc3)}
-                </div>
-              </div>
-
-              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 text-center shadow-2xs">
-                <div className="text-[11px] font-bold text-slate-500">Weight Solids (NV%)</div>
-                <div className="text-2xl font-black text-slate-800 font-mono mt-1">
-                  {formatNum(nv3, 1)}<span className="text-xs font-normal ml-0.5">%</span>
-                </div>
-                <div className="text-[10px] text-slate-400 mt-1 font-mono">
-                  Non-Volatile Matter
-                </div>
-              </div>
-
-              <div className="bg-blue-50/60 border border-blue-200 rounded-2xl p-3.5 text-center shadow-2xs">
-                <div className="text-[11px] font-bold text-blue-900">Wet Paint Volume</div>
-                <div className="text-2xl font-black text-blue-700 font-mono mt-1">
-                  {formatNum(wetVol3, 3)}<span className="text-xs font-normal ml-0.5">cm³</span>
-                </div>
-                <div className="text-[10px] text-blue-600 mt-1 font-mono">
-                  Wet Mass ÷ Density
-                </div>
-              </div>
-
-              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 text-center shadow-2xs">
-                <div className="text-[11px] font-bold text-slate-500">Dry Film Density</div>
-                <div className="text-2xl font-black text-slate-800 font-mono mt-1">
-                  {formatNum(dryDen3, 3)}<span className="text-xs font-normal ml-0.5">kg/L</span>
-                </div>
-                <div className="text-[10px] text-slate-400 mt-1 font-mono">
-                  Derived Gravimetric
-                </div>
-              </div>
-            </div>
-
-            {/* Input Summary Box */}
-            <div className="bg-stone-50/70 border border-stone-200 rounded-2xl p-4 text-xs space-y-2">
-              <div className="font-bold text-stone-700 pb-1 border-b border-stone-200">
-                📝 Input Data (Provided by User)
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-stone-600">
-                <div className="flex justify-between py-1 border-b border-dashed border-stone-200">
-                  <span>Product / Lab Ref</span>
-                  <span className="font-bold text-stone-900">{vslNm || '—'}</span>
-                </div>
-                <div className="flex justify-between py-1 border-b border-dashed border-stone-200">
-                  <span>Empty Dish</span>
-                  <span className="font-mono font-bold text-stone-900">{vslWe} g</span>
-                </div>
-                <div className="flex justify-between py-1 border-b border-dashed border-stone-200">
-                  <span>Dish + Wet Paint</span>
-                  <span className="font-mono font-bold text-stone-900">{vslWw} g</span>
-                </div>
-                <div className="flex justify-between py-1 border-b border-dashed border-stone-200">
-                  <span>Dish + Dry Film</span>
-                  <span className="font-mono font-bold text-stone-900">{vslWd} g</span>
-                </div>
-                <div className="flex justify-between py-1 border-b border-dashed border-stone-200">
-                  <span>Wet Paint Weight</span>
-                  <span className="font-mono font-bold text-stone-900">{formatNum(wetW3, 3)} g</span>
-                </div>
-                <div className="flex justify-between py-1 border-b border-dashed border-stone-200">
-                  <span>Dry Film Weight</span>
-                  <span className="font-mono font-bold text-stone-900">{formatNum(dryW3, 3)} g</span>
-                </div>
-                <div className="flex justify-between py-1 border-b border-dashed border-stone-200">
-                  <span>Wet Density</span>
-                  <span className="font-mono font-bold text-stone-900">{vslDen} kg/L</span>
-                </div>
-                <div className="flex justify-between py-1 border-b border-dashed border-stone-200">
-                  <span>Dry Film Volume (Measured)</span>
-                  <span className="font-mono font-bold text-stone-900">{vslDv} cm³</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Smart Recommendation Box */}
-            <div className="p-3.5 bg-[#FDF1E4] border border-[#F2DEC3] border-l-4 border-l-[#F5911F] rounded-2xl text-xs text-stone-800 leading-relaxed space-y-1">
-              <strong className="text-[#A50021] block">
-                🛠 Smart Engineering Recommendation — {getVsClass(vsCalc3)}:
-              </strong>
-              <p>{getVsRec(vsCalc3)}</p>
-            </div>
-
-            {/* Action Bar */}
-            <div className="flex flex-wrap items-center gap-2 pt-2">
-              <button
-                onClick={() => window.print()}
-                className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
-              >
-                <Printer className="w-3.5 h-3.5" />
-                <span>🖨 Print PDF</span>
-              </button>
-              <button
-                onClick={handleCopy}
-                className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
-              >
-                {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Share2 className="w-3.5 h-3.5" />}
-                <span>📤 Share Text</span>
-              </button>
-              <button
-                onClick={() => addToast('Excel Export', 'CSV report prepared for download.', 'info')}
-                className="px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
-              >
-                <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
-                <span>📊 Excel Report</span>
-              </button>
-            </div>
-
           </div>
-
         </div>
       )}
-
-    </div>
+    </>
   );
 }

@@ -95,40 +95,54 @@ export const TOOL_URL_MAP = {
   'qa_pa2': '/coating-calculator/pro/dft-sspc-pa2',
   'dft_sspc_pa2': '/coating-calculator/pro/dft-sspc-pa2',
   'sspc_pa2': '/coating-calculator/pro/dft-sspc-pa2',
+  'dft-sspc-pa2': '/coating-calculator/pro/dft-sspc-pa2',
+  'sspc-pa2': '/coating-calculator/pro/dft-sspc-pa2',
   'qa-iso': '/coating-calculator/pro/dft-iso-19840',
   'qa_iso': '/coating-calculator/pro/dft-iso-19840',
   'dft_iso_19840': '/coating-calculator/pro/dft-iso-19840',
   'iso_19840': '/coating-calculator/pro/dft-iso-19840',
+  'dft-iso-19840': '/coating-calculator/pro/dft-iso-19840',
+  'iso-19840': '/coating-calculator/pro/dft-iso-19840',
   'qa-hol': '/coating-calculator/pro/holiday-voltage',
   'qa_hol': '/coating-calculator/pro/holiday-voltage',
   'holiday_voltage': '/coating-calculator/pro/holiday-voltage',
+  'holiday-voltage': '/coating-calculator/pro/holiday-voltage',
+  'holiday': '/coating-calculator/pro/holiday-voltage',
 
   // Section 9: Corrosion Engineering
   'ce-rate': '/coating-calculator/pro/corrosion-rate',
   'ce_rate': '/coating-calculator/pro/corrosion-rate',
   'corrosion_rate': '/coating-calculator/pro/corrosion-rate',
+  'corrosion-rate': '/coating-calculator/pro/corrosion-rate',
   'ce-life': '/coating-calculator/pro/coating-life-durability',
   'ce_life': '/coating-calculator/pro/coating-life-durability',
   'coating_life': '/coating-calculator/pro/coating-life-durability',
+  'coating-life': '/coating-calculator/pro/coating-life-durability',
   'coating_life_durability': '/coating-calculator/pro/coating-life-durability',
+  'coating-life-durability': '/coating-calculator/pro/coating-life-durability',
 
   // Section 10: Thermal Spray Aluminium (TSA)
   'tsa-wire': '/coating-calculator/pro/tsa-wire-consumption',
   'tsa_wire': '/coating-calculator/pro/tsa-wire-consumption',
   'tsa_wire_consumption': '/coating-calculator/pro/tsa-wire-consumption',
+  'tsa-wire-consumption': '/coating-calculator/pro/tsa-wire-consumption',
   'tsa-cov': '/coating-calculator/pro/tsa-area-coverage',
   'tsa_cov': '/coating-calculator/pro/tsa-area-coverage',
   'tsa_area_coverage': '/coating-calculator/pro/tsa-area-coverage',
+  'tsa-area-coverage': '/coating-calculator/pro/tsa-area-coverage',
   'tsa-eff': '/coating-calculator/pro/tsa-deposition-efficiency',
   'tsa_eff': '/coating-calculator/pro/tsa-deposition-efficiency',
   'tsa_deposition': '/coating-calculator/pro/tsa-deposition-efficiency',
+  'tsa-deposition-efficiency': '/coating-calculator/pro/tsa-deposition-efficiency',
   'tsa-thk': '/coating-calculator/pro/tsa-thickness-verification',
   'tsa_thk': '/coating-calculator/pro/tsa-thickness-verification',
   'tsa_thickness': '/coating-calculator/pro/tsa-thickness-verification',
   'tsa_thickness_verify': '/coating-calculator/pro/tsa-thickness-verification',
+  'tsa-thickness-verification': '/coating-calculator/pro/tsa-thickness-verification',
   'tsa-prod': '/coating-calculator/pro/tsa-productivity',
   'tsa_prod': '/coating-calculator/pro/tsa-productivity',
   'tsa_productivity': '/coating-calculator/pro/tsa-productivity',
+  'tsa-productivity': '/coating-calculator/pro/tsa-productivity',
   'tsa-cost': '/coating-calculator/pro/tsa-cost',
   'tsa_cost': '/coating-calculator/pro/tsa-cost',
   'tsa_sealer_calc': '/coating-calculator/pro/tsa-sealer-calc',
@@ -142,22 +156,27 @@ export const TOOL_URL_MAP = {
   'pfp-mat': '/coating-calculator/pro/pfp-material',
   'pfp_mat': '/coating-calculator/pro/pfp-material',
   'pfp_material': '/coating-calculator/pro/pfp-material',
+  'pfp-material': '/coating-calculator/pro/pfp-material',
   'pfp-thk': '/coating-calculator/pro/pfp-thickness',
   'pfp_thk': '/coating-calculator/pro/pfp-thickness',
   'pfp_thickness': '/coating-calculator/pro/pfp-thickness',
+  'pfp-thickness': '/coating-calculator/pro/pfp-thickness',
   'pfp_dft_matrix': '/coating-calculator/pro/pfp-thickness',
   'pfp-den': '/coating-calculator/pro/pfp-density',
   'pfp_den': '/coating-calculator/pro/pfp-density',
   'pfp_density': '/coating-calculator/pro/pfp-density',
+  'pfp-density': '/coating-calculator/pro/pfp-density',
   'pfp-mesh': '/coating-calculator/pro/pfp-mesh-quantity',
   'pfp_mesh': '/coating-calculator/pro/pfp-mesh-quantity',
   'pfp_mesh_qty': '/coating-calculator/pro/pfp-mesh-quantity',
+  'pfp-mesh-quantity': '/coating-calculator/pro/pfp-mesh-quantity',
   'pfp_reinforce_mesh': '/coating-calculator/pro/pfp-mesh-quantity',
   'pfp-cost': '/coating-calculator/pro/pfp-cost',
   'pfp_cost': '/coating-calculator/pro/pfp-cost',
   'pfp-rep': '/coating-calculator/pro/pfp-repair-quantity',
   'pfp_rep': '/coating-calculator/pro/pfp-repair-quantity',
   'pfp_repair': '/coating-calculator/pro/pfp-repair-quantity',
+  'pfp-repair-quantity': '/coating-calculator/pro/pfp-repair-quantity',
   'pfp_hp_a_calc': '/coating-calculator/pro/pfp-hp-a-calc',
   'pfp_volume_quote': '/coating-calculator/pro/pfp-volume-quote',
   'pfp_intumescent': '/coating-calculator/pro/pfp-material',
@@ -167,10 +186,12 @@ export const TOOL_URL_MAP = {
   'bid-proc': '/coating-calculator/pro/paint-procurement',
   'bid_proc': '/coating-calculator/pro/paint-procurement',
   'paint_procurement': '/coating-calculator/pro/paint-procurement',
+  'paint-procurement': '/coating-calculator/pro/paint-procurement',
   'procurement_suite': '/coating-calculator/pro/paint-procurement',
   'bid-comp': '/coating-calculator/pro/bid-comparison',
   'bid_comp': '/coating-calculator/pro/bid-comparison',
   'bid_comparison': '/coating-calculator/pro/bid-comparison',
+  'bid-comparison': '/coating-calculator/pro/bid-comparison',
   'contractor_bid_builder': '/coating-calculator/pro/contractor-bid-builder',
   'batch_ticket_generator': '/coating-calculator/pro/batch-ticket-generator',
   'executive_cost_summary': '/coating-calculator/pro/executive-cost-summary',
@@ -581,11 +602,42 @@ export function parseCurrentUrl() {
 
   // 10. Coating Calculator Sub-Tool match
   if (path.startsWith('/coating-calculator') || path.startsWith('/calc')) {
+    // Exact match in TOOL_URL_MAP
     for (const [toolId, url] of Object.entries(TOOL_URL_MAP)) {
       if (path === url.toLowerCase()) {
         return { page: 'coating-calculator', subTool: toolId };
       }
     }
+
+    // Fallback: extract trailing sub-slug and match intelligently
+    const subSlug = path
+      .replace(/^\/(coating-calculator|calc)(\/(paint|area|abrasive|salt|pro))?\/?/, '')
+      .replace(/\/$/, '')
+      .trim();
+
+    if (subSlug && subSlug !== 'hub') {
+      const slugCandidates = [
+        subSlug,
+        subSlug.replace(/-/g, '_'),
+        subSlug.replace(/_/g, '-')
+      ];
+
+      for (const cand of slugCandidates) {
+        if (TOOL_URL_MAP[cand]) return { page: 'coating-calculator', subTool: cand };
+      }
+
+      for (const [toolId, url] of Object.entries(TOOL_URL_MAP)) {
+        const urlSlug = url.toLowerCase().split('/').pop();
+        for (const cand of slugCandidates) {
+          if (urlSlug === cand || urlSlug.startsWith(cand) || cand.startsWith(urlSlug)) {
+            return { page: 'coating-calculator', subTool: toolId };
+          }
+        }
+      }
+
+      return { page: 'coating-calculator', subTool: subSlug };
+    }
+
     return { page: 'coating-calculator', subTool: 'hub' };
   }
 

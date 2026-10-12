@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 
 class SiteSettings(models.Model):
@@ -27,6 +29,40 @@ class SiteSettings(models.Model):
         max_length=255,
         default="© 2026 BG GROUP OF PAINT & COATINGS CONSULTANT · ALL RIGHTS RESERVED · SITE BY TRYON INFOSOFT"
     )
+
+    # Dynamic Trust Dashboard Metrics
+    total_visitors_baseline = models.PositiveIntegerField(default=160222, help_text="Baseline count for Total Visitors")
+    unique_visitors_baseline = models.PositiveIntegerField(default=40000, help_text="Baseline count for Unique Visitors")
+    total_enquiries_baseline = models.PositiveIntegerField(default=6115, help_text="Baseline count for Total Enquiries")
+    customer_feedback_count = models.PositiveIntegerField(default=69, help_text="Customer feedback count displayed on trust dashboard")
+    live_visitor_count = models.PositiveIntegerField(default=0, help_text="Live incrementing visitor counter")
+    live_unique_visitor_count = models.PositiveIntegerField(default=0, help_text="Live unique visitor counter")
+
+    @property
+    def total_visitors_count(self):
+        return f"{self.total_visitors_baseline + self.live_visitor_count:,}"
+
+    @property
+    def unique_visitors_count(self):
+        return f"{self.unique_visitors_baseline + self.live_unique_visitor_count:,}"
+
+    @property
+    def enquiries_count(self):
+        try:
+            from .models import ContactSubmission
+            sub_count = ContactSubmission.objects.count()
+        except Exception:
+            sub_count = 0
+        return f"{self.total_enquiries_baseline + sub_count:,}"
+
+    @property
+    def feedback_count(self):
+        try:
+            from .models import ClientTestimonial
+            t_count = ClientTestimonial.objects.count()
+        except Exception:
+            t_count = 0
+        return f"{max(self.customer_feedback_count, t_count):,}"
 
     class Meta:
         verbose_name = "Site Settings"
@@ -242,6 +278,8 @@ class ClientTestimonial(models.Model):
     company_name = models.CharField(max_length=150)
     testimonial_text = models.TextField()
     rating = models.IntegerField(default=5)
+    client_photo = models.ImageField(upload_to='testimonials/', blank=True, null=True, help_text="Uploaded client avatar")
+    client_avatar = models.CharField(max_length=255, blank=True, help_text="Static asset image filename e.g. Nirav_Lad___Image.png")
     order = models.IntegerField(default=0)
 
     class Meta:
@@ -370,5 +408,97 @@ class PaintProduct(models.Model):
 
     def __str__(self):
         return f"{self.manufacturer} — {self.name} (VS {self.volume_solids_pct}%)"
+
+
+class UserProfile(models.Model):
+    """Extended profile for calculator users storing credentials, organization, engineering & settings preferences."""
+    AUTH_PROVIDER_CHOICES = [
+        ('email', 'Email / Password'),
+        ('google', 'Google OAuth'),
+        ('microsoft', 'Microsoft OAuth'),
+    ]
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    auth_provider = models.CharField(max_length=50, choices=AUTH_PROVIDER_CHOICES, default='email')
+    avatar_url = models.TextField(blank=True, null=True, help_text="Avatar image URL or data URI")
+    google_id = models.CharField(max_length=255, blank=True, null=True, unique=True)
+    
+    # Membership & Pro Access
+    is_pro = models.BooleanField(default=False, help_text="Pro membership granting access to Executive PRO modules")
+    pro_activated_at = models.DateTimeField(null=True, blank=True)
+    
+    # Personal & Identity
+    full_name = models.CharField(max_length=255, blank=True)
+    mobile = models.CharField(max_length=30, blank=True)
+    country_code = models.CharField(max_length=10, default='+91')
+    designation = models.CharField(max_length=150, blank=True, default='Senior Coating Inspector & Consultant')
+    department = models.CharField(max_length=150, blank=True, default='QA / QC & Protective Coatings')
+    emp_id = models.CharField(max_length=50, blank=True)
+    role = models.CharField(max_length=100, default='Coating Inspector')
+    
+    # Organization Details
+    company = models.CharField(max_length=255, blank=True, default='BG Coating & Inspection Services')
+    bu = models.CharField(max_length=255, blank=True, help_text="Business Unit")
+    office_location = models.CharField(max_length=255, blank=True)
+    branch = models.CharField(max_length=100, blank=True)
+    website = models.CharField(max_length=255, blank=True)
+    
+    # Alternate Contact & Address
+    alt_mobile = models.CharField(max_length=30, blank=True)
+    alt_email = models.EmailField(blank=True)
+    address = models.TextField(blank=True)
+    city = models.CharField(max_length=100, blank=True)
+    state = models.CharField(max_length=100, blank=True)
+    country = models.CharField(max_length=100, default='India')
+    zip_code = models.CharField(max_length=20, blank=True)
+    
+    # Professional Qualifications
+    experience_years = models.IntegerField(default=0)
+    discipline = models.CharField(max_length=150, blank=True, default='Corrosion / Materials')
+    expertise = models.TextField(blank=True)
+    certifications = models.JSONField(default=list, blank=True, help_text="List of certifications e.g. ['AMPP', 'NACE']")
+    preferred_standards = models.JSONField(default=list, blank=True, help_text="Preferred standards e.g. ['ISO', 'ASTM']")
+    
+    # Workspace & Calculation Preferences
+    default_dashboard = models.CharField(max_length=100, default='coating-calculator')
+    unit_system = models.CharField(max_length=50, default='Metric (SI)')
+    language = models.CharField(max_length=50, default='English')
+    theme = models.CharField(max_length=50, default='Light')
+    time_zone = models.CharField(max_length=100, default='Asia/Kolkata (GMT+5:30)')
+    date_format = models.CharField(max_length=50, default='DD/MM/YYYY')
+    
+    # Activity tracking
+    last_login_at = models.DateTimeField(null=True, blank=True)
+    last_login_ip = models.GenericIPAddressField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "User Profile"
+        verbose_name_plural = "User Profiles"
+
+    def __str__(self):
+        name_display = self.full_name or self.user.get_full_name() or self.user.username
+        return f"{name_display} ({self.user.email or self.user.username}) - [{self.auth_provider}]"
+
+
+@receiver(post_save, sender=User)
+def create_or_update_user_profile(sender, instance, created, **kwargs):
+    """Automatically create or update UserProfile whenever User is created/saved."""
+    if created:
+        full_name = f"{instance.first_name} {instance.last_name}".strip()
+        UserProfile.objects.create(
+            user=instance,
+            full_name=full_name or instance.username,
+        )
+    else:
+        # Ensure profile exists if user was created earlier without one
+        if not hasattr(instance, 'profile'):
+            full_name = f"{instance.first_name} {instance.last_name}".strip()
+            UserProfile.objects.create(
+                user=instance,
+                full_name=full_name or instance.username,
+            )
 
 

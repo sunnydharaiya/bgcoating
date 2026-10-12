@@ -32,6 +32,12 @@ DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 'yes')
 allowed_hosts_env = os.environ.get('ALLOWED_HOSTS', '*')
 ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_env.split(',') if host.strip()]
 
+# Google OAuth 2.0 Client ID for Identity Verification
+GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', '').strip()
+
+# CoatingOS Platform URL (Engineering suite & calculators)
+OS_URL = os.environ.get('OS_URL', os.environ.get('os_url', 'http://localhost:3000')).strip()
+
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -90,9 +96,11 @@ else:
         'http://localhost:3000',
         'http://localhost:3001',
         'http://localhost:5173',
+        'http://localhost:7777',
         'http://127.0.0.1:3000',
         'http://127.0.0.1:3001',
         'http://127.0.0.1:5173',
+        'http://127.0.0.1:7777',
     ]
 
 # Reverse Proxy / SSL Detection (for Nginx / Cloudflare)
@@ -171,6 +179,10 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 # Django REST Framework Configuration
 REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',
     ],

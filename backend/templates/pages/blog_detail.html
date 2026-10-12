@@ -6,91 +6,245 @@
 <section class="spa-page" id="page-blog-detail" data-page="blog-detail" style="display:block;" aria-label="Blog Article Detail">
 
   <!-- ======================= HERO SECTION ======================= -->
-  <section class="page-hero grid-bg" id="blog-detail-top">
+  <section class="page-hero grid-bg" id="blog-detail-top" style="position:relative; overflow:hidden; padding-bottom:3.5rem">
     <div class="wrap">
-      <div class="rv in" style="max-width:850px">
+      <div class="rv in" style="max-width:880px">
         <p class="crumbs">
           <a href="{% url 'home' %}">HOME</a> <i>›</i>
           <a href="{% url 'blog' %}">BLOG</a> <i>›</i>
-          <span>{{ post.title|upper }}</span>
+          <span style="color:var(--accent)">{{ post.category_name|upper }}</span>
         </p>
-        <p class="eyebrow">{{ post.category_name|default:"TECHNICAL INSIGHTS" }} · {{ post.read_time_minutes|default:5 }} MIN READ</p>
-        <h1 class="h-display" style="margin-top:1.1rem">{{ post.title }}</h1>
+
+        <div style="display:flex; flex-wrap:wrap; align-items:center; gap:0.6rem; margin:1.2rem 0 0.8rem">
+          <span class="pill" style="font-size:0.75rem; letter-spacing:0.08em; text-transform:uppercase">{{ post.category_name }}</span>
+          <span style="font-family:var(--font-mono); font-size:0.76rem; color:#9AA7BD; background:rgba(255,255,255,0.06); padding:0.25rem 0.65rem; border-radius:999px; border:1px solid rgba(255,255,255,0.1)">
+            ⏱ {{ post.read_time_minutes|default:6 }} MIN READ
+          </span>
+          {% if post.is_featured %}
+          <span style="font-family:var(--font-mono); font-size:0.74rem; color:#FFC24B; background:rgba(255,194,75,0.12); padding:0.25rem 0.65rem; border-radius:999px; border:1px solid rgba(255,194,75,0.3); font-weight:600">
+            ★ EDITOR'S CHOICE
+          </span>
+          {% endif %}
+        </div>
+
+        <h1 class="h-display" style="margin-top:0.8rem; font-size:clamp(1.9rem, 3.4vw, 2.75rem); line-height:1.25">
+          {{ post.title }}
+        </h1>
+
         {% if post.excerpt %}
-        <p class="lead" style="margin-top:1.4rem">{{ post.excerpt }}</p>
+        <p class="lead" style="margin-top:1.2rem; font-size:1.15rem; color:#BDCCE0; line-height:1.65; max-width:820px">
+          {{ post.excerpt }}
+        </p>
         {% endif %}
-        <div style="margin-top:1.4rem; font-family:var(--font-mono); font-size:.78rem; color:var(--txt-lo); display:flex; gap:1.2rem; align-items:center">
-          <span>Published: {{ post.publish_date|date:"d M Y" }}</span>
-          <span>·</span>
-          <span>Author: BG Group Field Engineers</span>
+
+        <!-- Meta Author & Share Bar -->
+        <div class="blog-meta-bar" style="margin-top:2rem; padding-top:1.4rem; border-top:1px solid rgba(255,255,255,0.12); display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:1.2rem">
+          <div style="display:flex; align-items:center; gap:0.85rem">
+            <div style="width:42px; height:42px; border-radius:50%; background:linear-gradient(135deg, #F7941E, #FFC24B); display:flex; align-items:center; justify-content:center; color:#0A111F; font-weight:800; font-family:var(--font-mono); font-size:0.85rem; box-shadow:0 0 0 2px rgba(255,255,255,0.15)">
+              BG
+            </div>
+            <div>
+              <div style="font-size:0.88rem; font-weight:700; color:#FFFFFF; letter-spacing:0.02em">BG Group Field Engineering</div>
+              <div style="font-family:var(--font-mono); font-size:0.75rem; color:#9AA7BD">
+                Published {{ post.publish_date|date:"d M Y" }} · Certified NACE/AMPP Standards
+              </div>
+            </div>
+          </div>
+
+          <!-- Share Actions -->
+          <div style="display:flex; align-items:center; gap:0.5rem">
+            <button type="button" onclick="copyArticleLink()" id="btnCopyLink" class="share-btn" title="Copy article link" aria-label="Copy article link">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+              <span>Copy Link</span>
+            </button>
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener noreferrer" class="share-btn" title="Share on LinkedIn" aria-label="Share on LinkedIn">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 8.76a1.64 1.64 0 1 0 0-3.27 1.64 1.64 0 0 0 0 3.27m1.4 9.74V9.96H5.06v8.54h2.8z"></path></svg>
+            </a>
+            <a href="https://api.whatsapp.com/send?text={{ post.title|urlencode }}%20{{ request.build_absolute_uri|urlencode }}" target="_blank" rel="noopener noreferrer" class="share-btn" title="Share via WhatsApp" aria-label="Share via WhatsApp">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.19 8.19 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24m4.52 11.64c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.03-1.25-.75-.67-1.26-1.5-1.41-1.75-.14-.25-.02-.39.11-.51.11-.11.25-.29.37-.44.13-.14.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.34-.76-1.84-.2-.49-.4-.42-.56-.43h-.47c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.24.9 2.44 1.03 2.61.13.17 1.78 2.71 4.3 3.8.6.26 1.07.41 1.44.53.61.19 1.16.17 1.6.1.49-.07 1.47-.6 1.68-1.19.21-.58.21-1.08.15-1.19-.06-.1-.23-.17-.48-.29z"></path></svg>
+            </a>
+          </div>
         </div>
       </div>
     </div>
   </section>
 
   <!-- ======================= MAIN ARTICLE BODY ======================= -->
-  <section class="grid-bg hex-bg" style="background:#FFFFFF; color:#16202F; padding:4rem 0">
+  <section class="grid-bg hex-bg" style="background:#FFFFFF; color:#16202F; padding:3.5rem 0 5rem">
     <div class="wrap">
-      <div style="display:grid; grid-template-columns:1fr 340px; gap:3rem; align-items:start">
+      <div class="blog-detail-layout">
         
-        <!-- Article Container -->
-        <div style="background:#FFFFFF; border:1px solid var(--line-lt); border-radius:18px; padding:2.5rem; box-shadow:var(--shadow-1)">
+        <!-- Article Main Container -->
+        <article class="article-card-main">
           
           {% if post.featured_image %}
-          <div style="border-radius:14px; overflow:hidden; margin-bottom:2.5rem; max-height:440px; border:1px solid var(--line-lt); box-shadow:var(--shadow-1)">
-            <img src="{% if 'assets/images' in post.featured_image.name %}{% static post.featured_image.name %}{% else %}{{ post.featured_image.url }}{% endif %}" alt="{{ post.title }}" style="width:100%; height:100%; object-fit:cover">
+          <div class="article-hero-media">
+            <img src="{% if 'assets/images' in post.featured_image.name or 'static/' in post.featured_image.name %}{% static post.featured_image.name %}{% else %}{{ post.featured_image.url }}{% endif %}" alt="{{ post.title }}">
+            <div class="media-caption">
+              <span>BG Coating Engineering Knowledge Hub</span>
+              <span>ISO 12944 · AMPP · SSPC Technical Resource</span>
+            </div>
           </div>
           {% endif %}
 
-          <div class="article-text-body" style="font-size:1.05rem; line-height:1.8; color:var(--txt-ink)">
+          <!-- Key Highlights Callout -->
+          <div class="article-highlights-box">
+            <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.75rem">
+              <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--accent)"></span>
+              <strong style="font-family:var(--font-mono); font-size:0.78rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--accent-deep)">
+                Executive Engineering Brief
+              </strong>
+            </div>
+            <p style="font-size:0.95rem; line-height:1.65; color:#334155; margin:0">
+              {{ post.excerpt|default:"A comprehensive field engineering analysis prepared for asset managers, QA/QC coating inspectors, and technical specification writers." }}
+            </p>
+          </div>
+
+          <!-- Rich Content Body -->
+          <div class="article-text-body">
             {% if post.content %}
               {{ post.content|safe }}
             {% else %}
-              <p style="font-size:1.1rem; color:var(--txt-ink); line-height:1.8">{{ post.excerpt }}</p>
+              <p style="font-size:1.1rem; line-height:1.8; color:#334155">{{ post.excerpt }}</p>
             {% endif %}
           </div>
 
+          <!-- External Resource Reference Box (if applicable) -->
           {% if post.external_url %}
-          <div style="margin-top:3rem; padding:1.4rem; background:var(--mist); border-radius:14px; border:1px solid var(--line-lt); display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap">
-            <div>
-              <strong style="display:block; color:#0E1726; font-size:.92rem">External Technical Standard Reference</strong>
-              <span style="font-size:.82rem; color:var(--txt-mut)">View official documentation or publication source for this topic.</span>
+          <div class="external-ref-box">
+            <div style="flex:1">
+              <strong style="display:block; color:#0A111F; font-size:0.95rem; margin-bottom:0.2rem">
+                External Technical Standard Reference
+              </strong>
+              <span style="font-size:0.84rem; color:var(--txt-mut); line-height:1.5; display:block">
+                View the official standard guidelines, publisher repository, or extended publication source for this topic.
+              </span>
             </div>
-            <a class="btn btn-primary" href="{{ post.external_url }}" target="_blank" rel="noopener">View Source <span class="arr">→</span></a>
+            <a class="btn btn-primary" href="{{ post.external_url }}" target="_blank" rel="noopener" style="shrink-0">
+              View Source <span class="arr">→</span>
+            </a>
           </div>
           {% endif %}
 
-        </div>
+          <!-- Author Bio & Credentials Card -->
+          <div class="author-credentials-card">
+            <div style="width:58px; height:58px; border-radius:14px; background:#0A111F; border:1px solid rgba(247,148,30,0.3); display:flex; align-items:center; justify-content:center; color:#FFC24B; font-weight:800; font-family:var(--font-mono); font-size:1.1rem; shrink-0">
+              BG
+            </div>
+            <div>
+              <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap">
+                <h4 style="font-size:1rem; font-weight:700; color:#0A111F; margin:0">BG Group Engineering Advisory</h4>
+                <span class="pill" style="font-size:0.65rem">NACE / AMPP Level 3 Certified</span>
+              </div>
+              <p style="font-size:0.86rem; color:#475569; line-height:1.6; margin:0.4rem 0 0">
+                Specialized in protective coating surveys, third-party QA/QC audits, failure analysis, and surface preparation consulting for refineries, offshore platforms, petrochemical complexes, and heavy infrastructure.
+              </p>
+            </div>
+          </div>
+
+          <!-- Article Prev/Next Navigation -->
+          <div class="article-pagination-nav">
+            {% if prev_post %}
+            <a href="{% url 'blog_detail' prev_post.slug %}" class="nav-article-card prev">
+              <span class="nav-dir">← PREVIOUS ARTICLE</span>
+              <span class="nav-title">{{ prev_post.title }}</span>
+            </a>
+            {% else %}
+            <div class="nav-article-card disabled">
+              <span class="nav-dir">FIRST ARTICLE</span>
+              <span class="nav-title">No earlier articles published</span>
+            </div>
+            {% endif %}
+
+            {% if next_post %}
+            <a href="{% url 'blog_detail' next_post.slug %}" class="nav-article-card next">
+              <span class="nav-dir">NEXT ARTICLE →</span>
+              <span class="nav-title">{{ next_post.title }}</span>
+            </a>
+            {% else %}
+            <div class="nav-article-card disabled">
+              <span class="nav-dir">LATEST ARTICLE</span>
+              <span class="nav-title">You are on the most recent insight</span>
+            </div>
+            {% endif %}
+          </div>
+
+          <!-- Back to Hub Button -->
+          <div style="margin-top:2.5rem; text-align:center">
+            <a href="{% url 'blog' %}" class="btn" style="background:#F1F5F9; color:#0A111F; border:1px solid #CBD5E1; padding:0.65rem 1.6rem; font-size:0.86rem">
+              ← Return To All Articles &amp; Insights
+            </a>
+          </div>
+
+        </article>
 
         <!-- Sidebar -->
-        <div style="display:flex; flex-direction:column; gap:2rem">
+        <aside class="blog-sidebar">
           
           <!-- Consultancy Box -->
-          <div style="background:#0A111F; border:1px solid rgba(255,255,255,.1); border-radius:18px; padding:2rem; color:#EDF2FA">
-            <p class="eyebrow" style="margin-bottom:1rem">Third-Party Advisory</p>
-            <h3 style="font-family:var(--font-display); font-size:1.2rem; color:#FFFFFF; margin-bottom:.6rem; font-weight:700">Need Inspection Services?</h3>
-            <p style="font-size:.86rem; color:#9AA7BD; line-height:1.6; margin-bottom:1.4rem">BG Group provides NACE / AMPP Level 3 certified inspection, surface preparation QA/QC, and failure investigation consultancy across India &amp; Asia.</p>
+          <div class="side-card side-consultancy">
+            <span class="eyebrow" style="color:#FFC24B; margin-bottom:0.6rem; font-size:0.72rem">Independent Inspection</span>
+            <h3 style="font-family:var(--font-display); font-size:1.25rem; color:#FFFFFF; margin-bottom:0.6rem; font-weight:700; line-height:1.35">
+              Need Field Inspection Or Failure Analysis?
+            </h3>
+            <p style="font-size:0.85rem; color:#9AA7BD; line-height:1.6; margin-bottom:1.4rem">
+              BG Group provides certified NACE / AMPP Level 3 inspection, DFT validation, blast profile QA/QC, and forensic paint failure investigations.
+            </p>
             <div>
-              <a class="btn btn-primary" style="width:100%; text-align:center; justify-content:center" href="{% url 'contact' %}">Contact Technical Team <span class="arr">→</span></a>
+              <a class="btn btn-primary" style="width:100%; text-align:center; justify-content:center" href="{% url 'contact' %}">
+                Contact Technical Team <span class="arr">→</span>
+              </a>
             </div>
+          </div>
+
+          <!-- CoatingOS Suite Calculator Box -->
+          <div class="side-card" style="background:#FFFFFF; border:1px solid var(--line-lt); box-shadow:var(--shadow-1)">
+            <div style="display:flex; align-items:center; gap:0.6rem; margin-bottom:0.7rem">
+              <div style="width:28px; height:28px; border-radius:6px; background:linear-gradient(135deg, #F7941E, #FFC24B); display:flex; align-items:center; justify-content:center; color:#0A111F; font-weight:900; font-size:0.8rem">
+                ∑
+              </div>
+              <span style="font-family:var(--font-mono); font-size:0.72rem; color:var(--accent-deep); text-transform:uppercase; font-weight:700">
+                Coating Engineering OS
+              </span>
+            </div>
+            <h4 style="font-size:1.05rem; font-family:var(--font-display); font-weight:700; color:#0A111F; margin-bottom:0.5rem">
+              Calculate Paint Area &amp; DFT
+            </h4>
+            <p style="font-size:0.84rem; color:var(--txt-mut); line-height:1.55; margin-bottom:1.2rem">
+              Accurately estimate wet film thickness (WFT), dry film thickness (DFT), dead volume profile loss, and theoretical coverage online.
+            </p>
+            <a href="{% url 'calculator' %}" class="btn" style="width:100%; text-align:center; justify-content:center; background:#0A111F; color:#FFFFFF; border:1px solid rgba(255,255,255,0.1); font-size:0.82rem; padding:0.65rem">
+              Open Coating Calculator <span class="arr" style="color:#FFC24B">→</span>
+            </a>
           </div>
 
           <!-- Related Insights -->
           {% if related_posts %}
-          <div style="background:#FFFFFF; border:1px solid var(--line-lt); border-radius:18px; padding:1.8rem; box-shadow:var(--shadow-1)">
-            <p class="eyebrow" style="color:var(--txt-ink); margin-bottom:1rem">Related Technical Insights</p>
-            <div style="display:flex; flex-direction:column; gap:.9rem">
+          <div class="side-card" style="background:#FFFFFF; border:1px solid var(--line-lt); box-shadow:var(--shadow-1)">
+            <p class="eyebrow" style="color:var(--txt-ink); margin-bottom:1rem; font-size:0.72rem">Related Technical Insights</p>
+            <div style="display:flex; flex-direction:column; gap:0.85rem">
               {% for rel in related_posts %}
-              <a href="{% url 'blog_detail' rel.slug %}" style="display:block; padding:.9rem; border-radius:12px; background:var(--mist); border:1px solid var(--line-lt); transition:all .3s" onmouseover="this.style.borderColor='var(--accent)';" onmouseout="this.style.borderColor='var(--line-lt)';">
-                <span style="font-family:var(--font-mono); font-size:.68rem; color:var(--accent-deep); text-transform:uppercase; font-weight:600; display:block">{{ rel.category_name }}</span>
-                <h4 style="font-size:.92rem; color:#0E1726; margin:.2rem 0; font-family:var(--font-display); font-weight:700">{{ rel.title }}</h4>
+              <a href="{% url 'blog_detail' rel.slug %}" class="related-post-item">
+                <span class="rel-cat">{{ rel.category_name }}</span>
+                <h5 class="rel-title">{{ rel.title }}</h5>
+                <span class="rel-date">{{ rel.publish_date|date:"d M Y" }} · {{ rel.read_time_minutes|default:5 }} min read</span>
               </a>
               {% endfor %}
             </div>
           </div>
           {% endif %}
 
-        </div>
+          <!-- Quick Share Card -->
+          <div class="side-card" style="background:#F8FAFC; border:1px solid #E2E8F0">
+            <h4 style="font-size:0.88rem; font-weight:700; color:#0A111F; margin-bottom:0.3rem">Share This Knowledge</h4>
+            <p style="font-size:0.8rem; color:#64748B; margin-bottom:0.9rem">Have a colleague or contractor working on this specification? Share this standard guide.</p>
+            <button type="button" onclick="copyArticleLink()" id="btnSideCopyLink" style="width:100%; display:inline-flex; align-items:center; justify-content:center; gap:0.5rem; background:#FFFFFF; border:1px solid #CBD5E1; color:#1E293B; padding:0.6rem; border-radius:8px; font-size:0.82rem; font-weight:600; cursor:pointer; transition:all 0.2s">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+              <span>Copy Article URL</span>
+            </button>
+          </div>
+
+        </aside>
 
       </div>
     </div>
@@ -98,4 +252,385 @@
 
 </section>
 </main>
+
+<!-- Scoped Styling for Blog Detail Layout & Typography -->
+<style>
+.blog-detail-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 3.5rem;
+  align-items: start;
+}
+
+@media (max-width: 992px) {
+  .blog-detail-layout {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+}
+
+.article-card-main {
+  background: #FFFFFF;
+  border: 1px solid var(--line-lt, #E2E8F0);
+  border-radius: 20px;
+  padding: 2.8rem;
+  box-shadow: 0 4px 20px rgba(10, 17, 31, 0.04);
+}
+
+@media (max-width: 640px) {
+  .article-card-main {
+    padding: 1.5rem;
+    border-radius: 14px;
+  }
+}
+
+.article-hero-media {
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 2.5rem;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+  background: #0A111F;
+}
+
+.article-hero-media img {
+  width: 100%;
+  max-height: 440px;
+  object-fit: cover;
+  display: block;
+}
+
+.media-caption {
+  background: #0A111F;
+  color: #9AA7BD;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.72rem;
+  padding: 0.6rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+@media (max-width: 600px) {
+  .media-caption {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.3rem;
+  }
+}
+
+.article-highlights-box {
+  background: linear-gradient(135deg, rgba(247, 148, 30, 0.08), rgba(255, 194, 75, 0.04));
+  border: 1px solid rgba(247, 148, 30, 0.28);
+  border-left: 4px solid var(--accent, #F7941E);
+  border-radius: 12px;
+  padding: 1.3rem 1.6rem;
+  margin-bottom: 2.4rem;
+}
+
+/* Article Typography Styling */
+.article-text-body {
+  font-size: 1.05rem;
+  line-height: 1.85;
+  color: #2D3748;
+}
+
+.article-text-body h2 {
+  font-family: var(--font-display, inherit);
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: #0A111F;
+  margin: 2.4rem 0 0.9rem;
+  letter-spacing: -0.01em;
+  padding-bottom: 0.45rem;
+  border-bottom: 2px solid #EDF2F7;
+}
+
+.article-text-body h3 {
+  font-family: var(--font-display, inherit);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0A111F;
+  margin: 2rem 0 0.7rem;
+}
+
+.article-text-body p {
+  margin-bottom: 1.35rem;
+  color: #334155;
+  font-size: 1.05rem;
+  line-height: 1.85;
+}
+
+.article-text-body strong {
+  color: #0A111F;
+  font-weight: 700;
+}
+
+.article-text-body ul, .article-text-body ol {
+  margin: 1.2rem 0 1.6rem 1.6rem;
+  color: #334155;
+}
+
+.article-text-body li {
+  margin-bottom: 0.55rem;
+  line-height: 1.75;
+}
+
+.article-text-body blockquote {
+  margin: 2rem 0;
+  padding: 1.2rem 1.6rem;
+  background: #F8FAFC;
+  border-left: 4px solid var(--accent, #F7941E);
+  border-radius: 0 12px 12px 0;
+  font-style: italic;
+  color: #1E293B;
+  font-size: 1.05rem;
+}
+
+.article-text-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 2rem 0;
+  font-size: 0.92rem;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+}
+
+.article-text-body th {
+  background: #0A111F;
+  color: #FFFFFF;
+  text-align: left;
+  padding: 0.85rem 1rem;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.article-text-body td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid #E2E8F0;
+  color: #334155;
+}
+
+.article-text-body tr:nth-child(even) td {
+  background: #F8FAFC;
+}
+
+.article-text-body code {
+  font-family: var(--font-mono, monospace);
+  background: #F1F5F9;
+  color: #0F172A;
+  padding: 0.18rem 0.45rem;
+  border-radius: 5px;
+  font-size: 0.88em;
+  border: 1px solid #E2E8F0;
+}
+
+.article-text-body .callout-box {
+  background: #F8FAFC;
+  border: 1px solid #CBD5E1;
+  border-left: 4px solid #0284C7;
+  border-radius: 10px;
+  padding: 1.3rem 1.5rem;
+  margin: 2.2rem 0;
+}
+
+.external-ref-box {
+  margin-top: 3rem;
+  padding: 1.4rem 1.6rem;
+  background: #F8FAFC;
+  border-radius: 14px;
+  border: 1px solid #E2E8F0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.2rem;
+  flex-wrap: wrap;
+}
+
+.author-credentials-card {
+  margin-top: 3.5rem;
+  padding: 1.8rem;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  display: flex;
+  gap: 1.4rem;
+  align-items: flex-start;
+}
+
+@media (max-width: 600px) {
+  .author-credentials-card {
+    flex-direction: column;
+    padding: 1.3rem;
+  }
+}
+
+.article-pagination-nav {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid #E2E8F0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.2rem;
+}
+
+@media (max-width: 600px) {
+  .article-pagination-nav {
+    grid-template-columns: 1fr;
+  }
+}
+
+.nav-article-card {
+  padding: 1.2rem;
+  border-radius: 12px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  transition: all 0.25s ease;
+  text-decoration: none;
+}
+
+.nav-article-card:hover {
+  border-color: var(--accent, #F7941E);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(247, 148, 30, 0.1);
+}
+
+.nav-article-card.disabled {
+  background: #F8FAFC;
+  opacity: 0.6;
+  cursor: default;
+}
+
+.nav-dir {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.72rem;
+  color: var(--accent-deep, #C86909);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.nav-title {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #0A111F;
+  line-height: 1.4;
+}
+
+/* Sidebar Styles */
+.blog-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1.8rem;
+  position: sticky;
+  top: 90px;
+}
+
+.side-card {
+  border-radius: 16px;
+  padding: 1.8rem;
+}
+
+.side-consultancy {
+  background: #0A111F;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #EDF2FA;
+}
+
+.related-post-item {
+  display: block;
+  padding: 1rem;
+  border-radius: 12px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  transition: all 0.25s ease;
+  text-decoration: none;
+}
+
+.related-post-item:hover {
+  border-color: var(--accent, #F7941E);
+  background: #FFFFFF;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+}
+
+.rel-cat {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.68rem;
+  color: var(--accent-deep, #C86909);
+  text-transform: uppercase;
+  font-weight: 700;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.rel-title {
+  font-size: 0.92rem;
+  color: #0E1726;
+  margin: 0;
+  font-family: var(--font-display, inherit);
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.rel-date {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.7rem;
+  color: #94A3B8;
+  display: block;
+  margin-top: 0.4rem;
+}
+
+.share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.85rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  color: #EDF2FA;
+  font-size: 0.78rem;
+  font-family: var(--font-mono, monospace);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.share-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: #FFC24B;
+  color: #FFC24B;
+}
+</style>
+
+<script>
+function copyArticleLink() {
+  const url = window.location.href;
+  navigator.clipboard.writeText(url).then(function() {
+    const btn = document.getElementById('btnCopyLink');
+    const sideBtn = document.getElementById('btnSideCopyLink');
+    if (btn) {
+      const orig = btn.innerHTML;
+      btn.innerHTML = '<span>✓ Copied!</span>';
+      setTimeout(() => { btn.innerHTML = orig; }, 2200);
+    }
+    if (sideBtn) {
+      const origSide = sideBtn.innerHTML;
+      sideBtn.innerHTML = '<span>✓ Copied to clipboard!</span>';
+      setTimeout(() => { sideBtn.innerHTML = origSide; }, 2200);
+    }
+  }).catch(function() {
+    prompt('Copy article URL:', window.location.href);
+  });
+}
+</script>
 {% endblock %}

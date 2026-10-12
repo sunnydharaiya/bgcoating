@@ -1,6 +1,6 @@
 import json
 from django.shortcuts import render, get_object_or_404, redirect
-from django.http import JsonResponse
+from django.http import JsonResponse, Http404
 from .models import (
     PageSEO,
     ServiceCategory,
@@ -44,9 +44,26 @@ def home(request):
         'BG GROUP Of Paint & Coatings Consultant | Industrial Coating Experts',
         'Protective coatings, surface preparation, corrosion assessment & NACE/AMPP-aligned coating inspection for refinery, oil & gas, petrochemical and industrial assets. BG Group, Surat, India.',
     )
+
+    # Dynamic visitor tracking
+    try:
+        from .models import SiteSettings
+        site_cfg = SiteSettings.load()
+        site_cfg.live_visitor_count += 1
+        if not request.session.get('bg_unique_visitor_counted'):
+            site_cfg.live_unique_visitor_count += 1
+            request.session['bg_unique_visitor_counted'] = True
+        site_cfg.save(update_fields=['live_visitor_count', 'live_unique_visitor_count'])
+    except Exception:
+        pass
+
+    # All 12 services in exact order
+    all_services = Service.objects.all().select_related('category').order_by('order', 'id')
+
     context.update({
-        'featured_services': Service.objects.filter(is_featured=True).select_related('category')[:6],
-        'testimonials': ClientTestimonial.objects.all()[:6],
+        'featured_services': all_services,
+        'home_gallery': ProjectGallery.objects.all().order_by('order', '-id')[:6],
+        'testimonials': ClientTestimonial.objects.all().order_by('order', 'id')[:8],
         'latest_blogs': BlogPost.objects.all()[:3],
     })
     return render(request, 'pages/index.html', context)
@@ -298,15 +315,36 @@ def service_detail(request, slug):
 
 
 def blog_detail(request, slug):
-    post = get_object_or_404(BlogPost, slug=slug)
+    post = BlogPost.objects.filter(slug=slug).first()
+    if not post and slug.isdigit():
+        post = BlogPost.objects.filter(id=int(slug)).first()
+    if not post:
+        raise Http404("No Blog Article matches the requested URL.")
+
     context = _get_page_seo(
         request,
         'blog',
         f'{post.title} | BG Group Insights',
         post.excerpt,
     )
+    # Prefer articles from same category, then fallback to other recent articles
+    same_cat = list(BlogPost.objects.filter(category_name=post.category_name).exclude(id=post.id)[:3])
+    needed = 3 - len(same_cat)
+    if needed > 0:
+        exclude_ids = [post.id] + [p.id for p in same_cat]
+        others = list(BlogPost.objects.exclude(id__in=exclude_ids)[:needed])
+        related_posts = same_cat + others
+    else:
+        related_posts = same_cat
+
+    prev_post = BlogPost.objects.filter(publish_date__lt=post.publish_date).order_by('-publish_date').first()
+    next_post = BlogPost.objects.filter(publish_date__gt=post.publish_date).order_by('publish_date').first()
+
     context.update({
         'post': post,
-        'related_posts': BlogPost.objects.exclude(id=post.id)[:3],
+        'related_posts': related_posts,
+        'prev_post': prev_post,
+        'next_post': next_post,
     })
     return render(request, 'pages/blog_detail.html', context)
+

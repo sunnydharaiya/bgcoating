@@ -38,27 +38,29 @@
     <div class="section-head rv"><p class="eyebrow">Featured Article</p><h2 class="h-section">Editor's Choice</h2></div>
     <article class="featured rv">
       <div class="fmedia">
-        {% if featured_article and featured_article.featured_image %}
-        <img src="{% if 'static/' in featured_article.featured_image.name %}{% static featured_article.featured_image.name %}{% else %}{{ featured_article.featured_image.url }}{% endif %}" alt="{{ featured_article.title }}" style="width:100%;height:100%;object-fit:cover">
-        {% else %}
-        <svg viewBox="0 0 700 460" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Abrasive blasting surface profile illustration">
-          <defs>
-            <lineargradient id="fbg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#101A2E"></stop><stop offset="1" stop-color="#0A111F"></stop></lineargradient>
-            <lineargradient id="famber" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FFC24B"></stop><stop offset="1" stop-color="#F7941E"></stop></lineargradient>
-          </defs>
-          <rect width="700" height="460" fill="url(#fbg)"></rect>
-          <path d="M60 340 l30 -34 l26 30 l30 -40 l28 34 l30 -30 l26 32 l30 -36 l28 30 l30 -28 l26 26 L400 340 Z" fill="#2C3850" opacity=".9"></path>
-          <path d="M400 250 q80 -10 150 0 q60 8 90 -6 V400 H400 Z" fill="url(#famber)" opacity=".92"></path>
-          <text x="470" y="330" font-family="IBM Plex Mono, monospace" font-size="15" fill="#12100A">COATED</text>
-        </svg>
-        {% endif %}
+        <a href="{% if featured_article and featured_article.external_url %}{{ featured_article.external_url }}{% elif featured_article %}{% url 'blog_detail' featured_article.slug %}{% else %}#{% endif %}" {% if featured_article and featured_article.external_url %}target="_blank" rel="noopener"{% endif %} style="display:block;width:100%;height:100%;">
+          {% if featured_article and featured_article.featured_image %}
+          <img src="{% if 'assets/images' in featured_article.featured_image.name or 'static/' in featured_article.featured_image.name %}{% static featured_article.featured_image.name %}{% else %}{{ featured_article.featured_image.url }}{% endif %}" alt="{{ featured_article.title }}" style="width:100%;height:100%;object-fit:cover;display:block;">
+          {% else %}
+          <svg viewBox="0 0 700 460" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Abrasive blasting surface profile illustration">
+            <defs>
+              <lineargradient id="fbg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#101A2E"></stop><stop offset="1" stop-color="#0A111F"></stop></lineargradient>
+              <lineargradient id="famber" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FFC24B"></stop><stop offset="1" stop-color="#F7941E"></stop></lineargradient>
+            </defs>
+            <rect width="700" height="460" fill="url(#fbg)"></rect>
+            <path d="M60 340 l30 -34 l26 30 l30 -40 l28 34 l30 -30 l26 32 l30 -36 l28 30 l30 -28 l26 26 L400 340 Z" fill="#2C3850" opacity=".9"></path>
+            <path d="M400 250 q80 -10 150 0 q60 8 90 -6 V400 H400 Z" fill="url(#famber)" opacity=".92"></path>
+            <text x="470" y="330" font-family="IBM Plex Mono, monospace" font-size="15" fill="#12100A">COATED</text>
+          </svg>
+          {% endif %}
+        </a>
       </div>
       <div class="fbody">
         <span class="ftag"><span class="pill">{{ featured_article.category_name|default:"Surface Preparation" }}</span> · {{ featured_article.read_time_minutes|default:8 }} MIN READ</span>
-        <h2>{{ featured_article.title|default:"The Unexplored Depths Of Abrasive Blasting Profiles: Ra, Rm And Rz" }}</h2>
+        <h2><a href="{% if featured_article and featured_article.external_url %}{{ featured_article.external_url }}{% elif featured_article %}{% url 'blog_detail' featured_article.slug %}{% else %}#{% endif %}" {% if featured_article and featured_article.external_url %}target="_blank" rel="noopener"{% endif %} style="color:inherit;text-decoration:none;">{{ featured_article.title|default:"The Unexplored Depths Of Abrasive Blasting Profiles: Ra, Rm And Rz" }}</a></h2>
         <p>{{ featured_article.excerpt|default:"Surface profile is the foundation every coating system depends on. This deep dive explains the roughness parameters that decide adhesion." }}</p>
         <div class="fmeta"><span><i>By</i> BG Group</span><span><i>Published</i> {{ featured_article.publish_date|date:"d M Y"|default:"21 Sep 2023" }}</span><span><i>Category</i> {{ featured_article.category_name|default:"Surface Prep" }}</span></div>
-        <a class="btn btn-primary" href="{% if featured_article and featured_article.external_url %}{{ featured_article.external_url }}{% else %}{% url 'blog' %}{% endif %}" data-route="" {% if featured_article and featured_article.external_url %}target="_blank" rel="noopener"{% endif %}>Read Full Article <span class="arr">→</span></a>
+        <a class="btn btn-primary" href="{% if featured_article and featured_article.external_url %}{{ featured_article.external_url }}{% elif featured_article %}{% url 'blog_detail' featured_article.slug %}{% else %}#{% endif %}" {% if featured_article and featured_article.external_url %}target="_blank" rel="noopener"{% endif %}>Read Full Article <span class="arr">→</span></a>
       </div>
     </article>
   </div>
@@ -82,15 +84,19 @@
       <article class="bcard" data-cat="{{ post.category_name|lower }}" data-search="{{ post.title }} {{ post.excerpt }} {{ post.search_keywords }}">
         <div class="bmedia">
           <span class="bcat">{{ post.category_name }}</span>
-          {% if post.featured_image %}
-          <img loading="lazy" src="{% if 'assets/images' in post.featured_image.name %}{% static post.featured_image.name %}{% else %}{{ post.featured_image.url }}{% endif %}" alt="{{ post.title }}" style="translate: none; rotate: none; scale: none; transform: translate(0%, 5%) scale(1.12, 1.12);">
-          {% endif %}
+          <a href="{% if post.external_url %}{{ post.external_url }}{% else %}{% url 'blog_detail' post.slug %}{% endif %}" {% if post.external_url %}target="_blank" rel="noopener"{% endif %} style="display:block;width:100%;height:100%;overflow:hidden;">
+            {% if post.featured_image %}
+            <img loading="lazy" src="{% if 'assets/images' in post.featured_image.name or 'static/' in post.featured_image.name %}{% static post.featured_image.name %}{% else %}{{ post.featured_image.url }}{% endif %}" alt="{{ post.title }}" style="width:100%;height:100%;object-fit:cover;display:block;">
+            {% else %}
+            <div style="width:100%;height:100%;background:#0A111F;display:flex;align-items:center;justify-content:center;color:#FFC24B;font-family:var(--font-mono);font-size:.85rem;letter-spacing:1px">BG COATING INSIGHTS</div>
+            {% endif %}
+          </a>
         </div>
         <div class="bbody">
           <div class="bmeta"><span>{{ post.publish_date|date:"d M Y"|upper }}</span><span>· {{ post.read_time_minutes }} min read</span></div>
-          <h3>{{ post.title }}</h3>
+          <h3><a href="{% if post.external_url %}{{ post.external_url }}{% else %}{% url 'blog_detail' post.slug %}{% endif %}" {% if post.external_url %}target="_blank" rel="noopener"{% endif %} style="color:inherit;text-decoration:none;">{{ post.title }}</a></h3>
           <p>{{ post.excerpt }}</p>
-          <a class="bread" href="{% if post.external_url %}{{ post.external_url }}{% else %}{% url 'blog' %}{% endif %}" target="_blank" rel="noopener">Read Article <span class="arr">→</span></a>
+          <a class="bread" href="{% if post.external_url %}{{ post.external_url }}{% else %}{% url 'blog_detail' post.slug %}{% endif %}" {% if post.external_url %}target="_blank" rel="noopener"{% endif %}>Read Article <span class="arr">→</span></a>
         </div>
       </article>
       {% empty %}

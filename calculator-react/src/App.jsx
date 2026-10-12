@@ -17,6 +17,7 @@ import KnowledgePage from './pages/KnowledgePage';
 import SupportPage from './pages/SupportPage';
 import SettingsPage from './pages/SettingsPage';
 import LoginPage from './pages/LoginPage';
+import AuthModal from './components/AuthModal';
 import ErrorBoundary from './components/ErrorBoundary';
 
 // Context Providers
@@ -31,6 +32,7 @@ import PlanUpgradeModal from './components/PlanUpgradeModal';
 
 // Router Utilities
 import { parseCurrentUrl, getUrlFor } from './utils/router';
+import { fetchUserProfile } from './utils/api';
 
 export default function App() {
   // Check auth state from localStorage
@@ -38,15 +40,34 @@ export default function App() {
     return localStorage.getItem('bg_auth_logged_in') === 'true';
   });
 
-  // Initialize state from current URL
+  // Initialize state from current URL - open any dashboard or tool URL directly
   const initialRoute = parseCurrentUrl();
   const [activePage, setActivePageState] = useState(() => {
-    if (initialRoute.page === 'login') return 'login';
-    const authStatus = localStorage.getItem('bg_auth_logged_in') === 'true';
-    if (!authStatus) return 'login';
+    if (initialRoute.page === 'login') return 'dashboard';
     return initialRoute.page;
   });
   const [activeSubTool, setActiveSubToolState] = useState(initialRoute.subTool);
+
+  // Auth modal state - starts open if initial URL is /login, or triggered after 10s / manually
+  const [authModalOpen, setAuthModalOpen] = useState(() => {
+    return initialRoute.page === 'login';
+  });
+
+  // Auto-trigger Auth Modal after 10 seconds of unauthenticated browsing
+  useEffect(() => {
+    if (isLoggedIn) return;
+    const timer = setTimeout(() => {
+      setAuthModalOpen(true);
+    }, 10000);
+    return () => clearTimeout(timer);
+  }, [isLoggedIn]);
+
+  // Listen for global auth modal open event
+  useEffect(() => {
+    const handleOpenAuth = () => setAuthModalOpen(true);
+    window.addEventListener('bg_open_auth_modal', handleOpenAuth);
+    return () => window.removeEventListener('bg_open_auth_modal', handleOpenAuth);
+  }, []);
   
   // Mobile Sidebar Drawer state
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -85,19 +106,21 @@ export default function App() {
   // Auth Handlers
   const handleLoginSuccess = useCallback((userData) => {
     setIsLoggedIn(true);
-    navigate('dashboard', 'hub');
-  }, [navigate]);
+    setAuthModalOpen(false);
+    if (activePage === 'login') {
+      navigate('dashboard', 'hub');
+    }
+  }, [activePage, navigate]);
 
   const handleSkipGuest = useCallback(() => {
-    setIsLoggedIn(true);
-    navigate('dashboard', 'hub');
-  }, [navigate]);
+    setAuthModalOpen(false);
+  }, []);
 
   const handleLogout = useCallback(() => {
     localStorage.removeItem('bg_auth_logged_in');
     setIsLoggedIn(false);
-    navigate('login', 'hub');
-  }, [navigate]);
+    setAuthModalOpen(true);
+  }, []);
 
   // Listen for global logout events
   useEffect(() => {
@@ -106,14 +129,22 @@ export default function App() {
     return () => window.removeEventListener('bg_logout', handleLogoutEvent);
   }, [handleLogout]);
 
-  // Handle browser Back / Forward buttons
+  // Sync latest user profile and Pro permissions from backend
+  useEffect(() => {
+    if (localStorage.getItem('bg_auth_logged_in') === 'true') {
+      fetchUserProfile().catch(() => {});
+    }
+  }, []);
+
+  // Handle browser Back / Forward buttons without blocking unauthenticated users
   useEffect(() => {
     const handlePopState = () => {
       const { page, subTool } = parseCurrentUrl();
       const authStatus = localStorage.getItem('bg_auth_logged_in') === 'true';
       setIsLoggedIn(authStatus);
-      if (!authStatus && page !== 'login') {
-        setActivePageState('login');
+      if (page === 'login') {
+        setActivePageState('dashboard');
+        setAuthModalOpen(true);
       } else {
         setActivePageState(page);
       }
@@ -255,60 +286,62 @@ export default function App() {
   return (
     <ToastProvider>
       <GuidelineProvider>
-        {!isLoggedIn || activePage === 'login' ? (
-          <LoginPage 
-            onLoginSuccess={handleLoginSuccess}
-            onSkipGuest={handleSkipGuest}
+        <div className="flex min-h-screen bg-slate-100 text-slate-900 antialiased font-sans">
+          
+          {/* Responsive Collapsible Sidebar Rail */}
+          <Sidebar 
+            activePage={activePage} 
+            setActivePage={setActivePage} 
+            activeSubTool={activeSubTool} 
+            setActiveSubTool={setActiveSubTool} 
+            onNavigate={navigate}
+            mobileSidebarOpen={mobileSidebarOpen}
+            setMobileSidebarOpen={setMobileSidebarOpen}
+            isLoggedIn={isLoggedIn}
+            onOpenAuthModal={() => setAuthModalOpen(true)}
           />
-        ) : (
-          <div className="flex min-h-screen bg-slate-100 text-slate-900 antialiased font-sans">
-            
-            {/* Responsive Collapsible Sidebar Rail */}
-            <Sidebar 
+
+          {/* Main Workspace Shell */}
+          <div className="flex-1 flex flex-col min-w-0 bg-[#F3F5F8]">
+            <Header 
               activePage={activePage} 
-              setActivePage={setActivePage} 
               activeSubTool={activeSubTool} 
-              setActiveSubTool={setActiveSubTool} 
-              onNavigate={navigate}
-              mobileSidebarOpen={mobileSidebarOpen}
+              setActivePage={setActivePage}
+              setActiveSubTool={setActiveSubTool}
               setMobileSidebarOpen={setMobileSidebarOpen}
+              onOpenHelp={() => setHelpOpen(true)}
+              onOpenUpgrade={() => setUpgradeOpen(true)}
+              isLoggedIn={isLoggedIn}
+              onOpenAuthModal={() => setAuthModalOpen(true)}
             />
-
-            {/* Main Workspace Shell */}
-            <div className="flex-1 flex flex-col min-w-0 bg-[#F3F5F8]">
-              <Header 
-                activePage={activePage} 
-                activeSubTool={activeSubTool} 
-                setActivePage={setActivePage}
-                setActiveSubTool={setActiveSubTool}
-                setMobileSidebarOpen={setMobileSidebarOpen}
-                onOpenHelp={() => setHelpOpen(true)}
-                onOpenUpgrade={() => setUpgradeOpen(true)}
-              />
-              <main className="flex-1 p-4 md:p-6 max-w-7xl mx-auto w-full">
-                <ErrorBoundary title="Page View">
-                  {renderPage()}
-                </ErrorBoundary>
-              </main>
-            </div>
-
-            {/* Global Modals & Notifications */}
-            <GuidelineDrawer />
-            <HelpFaqDrawer 
-              isOpen={helpOpen} 
-              onClose={() => setHelpOpen(false)} 
-              onSelectPage={(page, subTool) => {
-                setActivePage(page);
-                if (subTool) setActiveSubTool(subTool);
-              }} 
-            />
-            <PlanUpgradeModal 
-              isOpen={upgradeOpen} 
-              onClose={() => setUpgradeOpen(false)} 
-            />
-
+            <main className="flex-1 p-4 md:p-6 max-w-7xl mx-auto w-full">
+              <ErrorBoundary title="Page View">
+                {renderPage()}
+              </ErrorBoundary>
+            </main>
           </div>
-        )}
+
+          {/* Global Modals & Notifications */}
+          <AuthModal 
+            isOpen={authModalOpen} 
+            onClose={() => setAuthModalOpen(false)} 
+            onLoginSuccess={handleLoginSuccess} 
+          />
+          <GuidelineDrawer />
+          <HelpFaqDrawer 
+            isOpen={helpOpen} 
+            onClose={() => setHelpOpen(false)} 
+            onSelectPage={(page, subTool) => {
+              setActivePage(page);
+              if (subTool) setActiveSubTool(subTool);
+            }} 
+          />
+          <PlanUpgradeModal 
+            isOpen={upgradeOpen} 
+            onClose={() => setUpgradeOpen(false)} 
+          />
+
+        </div>
 
         <ToastContainer />
       </GuidelineProvider>

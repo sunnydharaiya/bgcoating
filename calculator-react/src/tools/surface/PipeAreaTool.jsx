@@ -1,356 +1,254 @@
 import React, { useState } from 'react';
-import { Sparkles, Printer, Copy, Check, Calculator, Info, RotateCcw, BookOpen, Play } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
-import { useGuideline } from '../../context/GuidelineContext';
 import { formatNum } from '../../utils/calculations';
 
 export default function PipeAreaTool() {
   const { addToast } = useToast();
-  const { openGuideline } = useGuideline();
   const [itemName, setItemName] = useState('');
-  const [nps, setNps] = useState('12');
-  const [od, setOd] = useState('323.8'); // 12" pipe OD in mm
-  const [length, setLength] = useState('');
+  const [lengthMm, setLengthMm] = useState('');
+  const [insideDiaMm, setInsideDiaMm] = useState('');
+  const [thicknessMm, setThicknessMm] = useState('');
   const [qty, setQty] = useState('1');
-  const [surfaceType, setSurfaceType] = useState('external'); // 'external' | 'internal' | 'both'
-  const [copied, setCopied] = useState(false);
+  const [hasCalculated, setHasCalculated] = useState(false);
 
-  const npsList = [
-    { label: 'Custom OD (Enter manually)', val: 'custom', od: 323.8 },
-    { label: '1/2" NPS (21.3 mm)', val: '0.5', od: 21.3 },
-    { label: '3/4" NPS (26.7 mm)', val: '0.75', od: 26.7 },
-    { label: '1" NPS (33.4 mm)', val: '1', od: 33.4 },
-    { label: '1.5" NPS (48.3 mm)', val: '1.5', od: 48.3 },
-    { label: '2" NPS (60.3 mm)', val: '2', od: 60.3 },
-    { label: '3" NPS (88.9 mm)', val: '3', od: 88.9 },
-    { label: '4" NPS (114.3 mm)', val: '4', od: 114.3 },
-    { label: '6" NPS (168.3 mm)', val: '6', od: 168.3 },
-    { label: '8" NPS (219.1 mm)', val: '8', od: 219.1 },
-    { label: '10" NPS (273.0 mm)', val: '10', od: 273.0 },
-    { label: '12" NPS (323.8 mm)', val: '12', od: 323.8 },
-    { label: '14" NPS (355.6 mm)', val: '14', od: 355.6 },
-    { label: '16" NPS (406.4 mm)', val: '16', od: 406.4 },
-    { label: '18" NPS (457.0 mm)', val: '18', od: 457.0 },
-    { label: '20" NPS (508.0 mm)', val: '20', od: 508.0 },
-    { label: '24" NPS (610.0 mm)', val: '24', od: 610.0 },
-    { label: '30" NPS (762.0 mm)', val: '30', od: 762.0 },
-    { label: '36" NPS (914.0 mm)', val: '36', od: 914.0 },
-    { label: '48" NPS (1219.0 mm)', val: '48', od: 1219.0 }
-  ];
+  // Calculations from dimensions in mm
+  const L = parseFloat(lengthMm) || 0;
+  const ID = parseFloat(insideDiaMm) || 0;
+  const T = parseFloat(thicknessMm) || 0;
+  const Q = parseFloat(qty) || 1;
+  const OD = ID + 2 * T;
 
-  const handleNpsChange = (selectedNps) => {
-    setNps(selectedNps);
-    const item = npsList.find(n => n.val === selectedNps);
-    if (item && item.val !== 'custom') {
-      setOd(item.od);
-    }
-  };
+  // Areas in m²: π * D(m) * L(m) * Q
+  const insideArea = (Math.PI * (ID / 1000) * (L / 1000)) * Q;
+  const outsideArea = (Math.PI * (OD / 1000) * (L / 1000)) * Q;
+  const combinedArea = insideArea + outsideArea;
+  // Ends area: 2 * π * ((OD/2)^2 - (ID/2)^2) in m² * Q
+  const endsArea = (2 * Math.PI * (Math.pow(OD / 2000, 2) - Math.pow(ID / 2000, 2))) * Q;
 
   const handleCalculate = () => {
-    if (!od || !length) {
-      addToast('Missing Required Inputs', 'Please enter Pipe OD and Spool Length.', 'warning');
+    if (!lengthMm || !insideDiaMm || !thicknessMm) {
+      addToast('Missing Required Inputs', 'Please enter Pipe Length, Inside Diameter, and Thickness in mm.', 'warning');
       return;
     }
-    addToast('Calculated Pipe Area', 'Surface area take-off computed.', 'success');
+    setHasCalculated(true);
+    addToast('Calculated Pipe Area', 'Inside, outside, and total areas computed successfully.', 'success');
   };
 
   const handleReset = () => {
     setItemName('');
-    setNps('12');
-    setOd('323.8');
-    setLength('');
+    setLengthMm('');
+    setInsideDiaMm('');
+    setThicknessMm('');
     setQty('1');
-    setSurfaceType('external');
-    addToast('Form Reset', 'All input parameters have been cleared.', 'info');
+    setHasCalculated(false);
+    addToast('Form Reset', 'All input parameters cleared.', 'info');
   };
 
-  // Calculations
-  const odM = Number(od || 0) / 1000;
-  const singleExternalArea = Math.PI * odM * Number(length || 0);
-  const singleInternalArea = Math.PI * (odM * 0.95) * Number(length || 0); // Approx assuming standard wall
-  const totalExternal = singleExternalArea * Number(qty || 1);
-  const totalInternal = singleInternalArea * Number(qty || 1);
+  const handlePrint = () => {
+    window.print();
+  };
 
-  let activeArea = totalExternal;
-  if (surfaceType === 'internal') activeArea = totalInternal;
-  if (surfaceType === 'both') activeArea = totalExternal + totalInternal;
-
-  const handleCopy = () => {
-    if (!length) {
-      addToast('No Calculation', 'Please enter spool length first.', 'warning');
+  const handleShare = () => {
+    if (!hasCalculated) {
+      addToast('No Calculation', 'Please calculate first.', 'warning');
       return;
     }
-    const text = `BG CoatingOS™ — Pipe Spool Surface Area Calculation
-${itemName ? `Item Name: ${itemName}\n` : ''}Pipe: ${nps === 'custom' ? 'Custom OD' : `${nps}" NPS`} (OD ${od} mm) | Length: ${length} m × ${qty} Nos.
-Coating Scope: ${surfaceType.toUpperCase()}
+    const text = `BG CoatingOS™ — Pipe Surface Area (A-1)
+Item: ${itemName || 'Pipe'} | Qty: ${Q}
+Length: ${L} mm | Inside Dia: ${ID} mm | Thickness: ${T} mm | Outside Dia: ${OD} mm
 --------------------------------------------------
-External Surface Area: ${formatNum(totalExternal, 2)} m²
-Internal Surface Area: ${formatNum(totalInternal, 2)} m²
-Total Paintable Area: ${formatNum(activeArea, 2)} m²`;
+Inside Area (Total): ${formatNum(insideArea, 2)} m²
+Outside Area (Total): ${formatNum(outsideArea, 2)} m²
+In + Out Combined: ${formatNum(combinedArea, 2)} m²
+Thickness Ends: ${formatNum(endsArea, 3)} m²`;
+
     navigator.clipboard.writeText(text);
-    setCopied(true);
-    addToast('Copied to Clipboard', 'Pipe area calculation copied.', 'success');
-    setTimeout(() => setCopied(false), 2000);
+    addToast('Copied to Clipboard', 'Calculation summary copied.', 'success');
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
-      
-      {/* Tool Header Card */}
-      <div className="bg-white border border-slate-200 rounded-3xl p-5 md:p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="sub-sec card active" id="sa-pipe">
+      {/* Card Header (Screenshot 8) */}
+      <div className="ch">
+        <div className="ci">🔩</div>
         <div>
-          <div className="flex items-center gap-2">
-            <span className="bg-amber-50 text-[#D97706] border border-amber-200 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase font-mono tracking-wider">
-              Tool A-1
-            </span>
-            <h1 className="text-lg md:text-xl font-extrabold text-slate-900">
-              Pipe Spool Surface Area Calculator
-            </h1>
-          </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Calculate external, internal, or dual pipe surface areas with standard ASME B36.10M NPS library.
-          </p>
+          <div className="ct">Pipe Surface Area Calculator</div>
+          <div className="cs">Inside, outside and thickness face areas</div>
         </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => openGuideline('pipe_spool')}
-            className="px-3.5 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-[#D97706] border border-amber-200 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
-          >
-            <BookOpen className="w-3.5 h-3.5" />
-            <span>📖 Guideline</span>
-          </button>
-          <button
-            onClick={handleCopy}
-            className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
-          >
-            {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-            <span>{copied ? 'Copied' : 'Share'}</span>
-          </button>
-          <button
-            onClick={() => window.print()}
-            className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
-          >
-            <Printer className="w-3.5 h-3.5" />
-            <span>Print PDF</span>
-          </button>
-        </div>
+        <div className="ctag">A-1</div>
       </div>
 
-      {/* Main Grid: Inputs + Output */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        {/* Left Inputs Section */}
-        <div className="lg:col-span-6 bg-white border border-slate-200 rounded-3xl p-5 md:p-6 shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider font-mono">
-              Pipe Geometry &amp; Scope
-            </h2>
-            <button
-              onClick={handleReset}
-              className="text-xs text-slate-400 hover:text-slate-600 font-mono flex items-center gap-1 cursor-pointer"
-            >
-              <RotateCcw className="w-3 h-3" />
-              <span>Reset</span>
-            </button>
-          </div>
-
-          <div className="space-y-4">
-            
-            {/* Optional Item Name */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                Item Name <span className="text-slate-400 font-mono text-[10px] ml-1">optional</span>
-              </label>
-              <input
-                type="text"
-                value={itemName}
-                onChange={e => setItemName(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-                placeholder="e.g. Carbon Steel Pipe"
-              />
+      <div className="cb">
+        {/* User Inputs Section (Orange Border & Top Badge) */}
+        <div className="input-section">
+          <div className="g2">
+            <div className="field">
+              <label>Pipe Length <span className="lh">mm</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="pp-l" 
+                  value={lengthMm} 
+                  onChange={e => setLengthMm(e.target.value)} 
+                  placeholder="e.g. 5000" 
+                />
+                <span className="uu">mm</span>
+              </div>
             </div>
 
-            {/* NPS Dropdown Selector */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                Nominal Pipe Size (NPS / NB)
-              </label>
-              <select
-                value={nps}
-                onChange={e => handleNpsChange(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-              >
-                {npsList.map(n => (
-                  <option key={n.val} value={n.val}>
-                    {n.label}
-                  </option>
-                ))}
-              </select>
+            <div className="field">
+              <label>Inside Diameter <span className="lh">mm</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="pp-id" 
+                  value={insideDiaMm} 
+                  onChange={e => setInsideDiaMm(e.target.value)} 
+                  placeholder="e.g. 4500" 
+                />
+                <span className="uu">mm</span>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Pipe OD (mm)
-                </label>
-                <input
-                  type="number"
-                  value={od}
-                  onChange={e => {
-                    setOd(e.target.value);
-                    setNps('custom');
-                  }}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-                  placeholder="323.8"
+            <div className="field">
+              <label>Thickness <span className="lh">mm</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="pp-t" 
+                  value={thicknessMm} 
+                  onChange={e => setThicknessMm(e.target.value)} 
+                  placeholder="e.g. 75" 
                 />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Single Spool Length (metres)
-                </label>
-                <input
-                  type="number"
-                  value={length}
-                  onChange={e => setLength(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-                  placeholder="12"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Quantity (Number of Spools)
-                </label>
-                <input
-                  type="number"
-                  value={qty}
-                  onChange={e => setQty(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-                  placeholder="10"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Coating Application Scope
-                </label>
-                <select
-                  value={surfaceType}
-                  onChange={e => setSurfaceType(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-                >
-                  <option value="external">External Surface Only</option>
-                  <option value="internal">Internal Lining Only</option>
-                  <option value="both">Both External &amp; Internal</option>
-                </select>
+                <span className="uu">mm</span>
               </div>
             </div>
-          </div>
 
-          {/* Form Actions: Calculate & Reset */}
-          <div className="flex gap-2.5 pt-2">
-            <button
-              type="button"
-              onClick={handleCalculate}
-              className="flex-[2] py-3 px-4 bg-gradient-to-r from-[#F7941D] to-[#A50021] hover:from-[#E8700A] hover:to-[#8B0018] text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-xs transition hover:brightness-105 active:scale-98 flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <Play className="w-3.5 h-3.5 fill-white" />
-              <span>Calculate Pipe Area</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleReset}
-              className="flex-1 py-3 px-4 bg-white hover:bg-red-50 text-[#A50021] border border-[#A50021]/30 font-bold text-xs uppercase tracking-wider rounded-xl shadow-2xs transition hover:border-[#A50021] active:scale-98 flex items-center justify-center gap-1.5 cursor-pointer"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>Reset</span>
-            </button>
-          </div>
+            <div className="field">
+              <label>Quantity <span className="lh">nos.</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="pp-q" 
+                  value={qty} 
+                  onChange={e => setQty(e.target.value)} 
+                  placeholder="1" 
+                  min="1" 
+                />
+                <span className="uu">nos</span>
+              </div>
+            </div>
 
-          <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/70 text-xs text-slate-500 flex items-start gap-2">
-            <Info className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
-            <span className="leading-relaxed">
-              Formula: <code>External Area = π × (OD/1000) × Length × Quantity</code>.
-            </span>
+            <div className="field">
+              <label>Item Name <span className="lh">optional</span></label>
+              <div className="iw">
+                <input 
+                  type="text" 
+                  id="pp-nm" 
+                  value={itemName} 
+                  onChange={e => setItemName(e.target.value)} 
+                  placeholder="e.g. Carbon Steel Pipe" 
+                />
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Right Output Verdict Section */}
-        <div className="lg:col-span-6 space-y-4">
-          <div className="bg-gradient-to-br from-white to-amber-50/20 border-2 border-amber-200/80 rounded-3xl p-6 shadow-sm space-y-5">
-            
-            <div className="flex items-center justify-between border-b border-amber-100 pb-3">
-              <span className="text-[10px] font-mono font-extrabold text-[#D97706] uppercase tracking-wider">
-                Surface Area Results
-              </span>
-              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-mono">
-                {qty} Spool{qty > 1 ? 's' : ''} ({Number(length) * Number(qty)} m Total Run)
-              </span>
-            </div>
+        {/* Buttons Row */}
+        <div className="btn-row">
+          <button type="button" className="btn" onClick={handleCalculate}>
+            ▶ Calculate Area
+          </button>
+          <button type="button" className="btn-reset" onClick={handleReset}>
+            ↺ Reset
+          </button>
+        </div>
 
-            {/* Main Total Paintable Area Tile */}
-            <div className="bg-slate-900 text-white p-5 rounded-2xl space-y-1">
-              <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">
-                Total Paintable Area ({surfaceType.toUpperCase()})
-              </span>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl md:text-4xl font-extrabold text-white">
-                  {formatNum(activeArea, 2)}
-                </span>
-                <span className="text-sm font-bold text-slate-400 font-mono">m²</span>
-                <span className="text-xs text-slate-400 ml-auto font-mono">
-                  ({formatNum(activeArea * 10.7639, 1)} sq ft)
-                </span>
+        {/* Calculated Results Section */}
+        {hasCalculated && (
+          <div className="res" id="r-pipe" style={{ display: 'block' }}>
+            <div className="output-section">
+              <div className="rh">
+                <span className="pd"></span>
+                <span>Pipe Area Result</span>
               </div>
-            </div>
 
-            {/* Breakdown Grid */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-white border border-slate-200 p-4 rounded-2xl shadow-2xs space-y-1">
-                <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">
-                  Outside Coating Area
-                </span>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-xl font-extrabold text-slate-900">
-                    {formatNum(totalExternal, 2)}
-                  </span>
-                  <span className="text-xs font-bold text-slate-400 font-mono">m²</span>
+              <div className="tls">
+                <div className="tile tp">
+                  <div className="tl">Inside Area (Total)</div>
+                  <div>
+                    <span className="tv" id="pp-ria">{formatNum(insideArea, 2)}</span>
+                    <span className="tu">m²</span>
+                  </div>
+                </div>
+
+                <div className="tile ts">
+                  <div className="tl">Outside Area (Total)</div>
+                  <div>
+                    <span className="tv" id="pp-roa">{formatNum(outsideArea, 2)}</span>
+                    <span className="tu">m²</span>
+                  </div>
+                </div>
+
+                <div className="tile ti">
+                  <div className="tl">In + Out Combined</div>
+                  <div>
+                    <span className="tv" id="pp-rtot">{formatNum(combinedArea, 2)}</span>
+                    <span className="tu">m²</span>
+                  </div>
+                </div>
+
+                <div className="tile tg">
+                  <div className="tl">Thickness Ends</div>
+                  <div>
+                    <span className="tv" id="pp-rte">{formatNum(endsArea, 3)}</span>
+                    <span className="tu">m²</span>
+                  </div>
                 </div>
               </div>
 
-              <div className="bg-white border border-slate-200 p-4 rounded-2xl shadow-2xs space-y-1">
-                <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">
-                  Inside Lining Area
-                </span>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-xl font-extrabold text-slate-900">
-                    {formatNum(totalInternal, 2)}
-                  </span>
-                  <span className="text-xs font-bold text-slate-400 font-mono">m²</span>
+              {/* User Input Data Summary */}
+              <div className="input-summary">
+                <div className="input-summary-label">📝 Input Data (Provided by User)</div>
+                <div className="dr">
+                  <span className="dk">Item Name</span>
+                  <span className="dv" id="pp-rnm">{itemName || '—'}</span>
+                </div>
+                <div className="dr">
+                  <span className="dk">Inside Dia</span>
+                  <span className="dv" id="pp-rid">{insideDiaMm} mm</span>
+                </div>
+                <div className="dr">
+                  <span className="dk">Outside Dia</span>
+                  <span className="dv" id="pp-rod">{OD} mm</span>
+                </div>
+                <div className="dr">
+                  <span className="dk">Pipe Length</span>
+                  <span className="dv" id="pp-rl">{lengthMm} mm</span>
+                </div>
+                <div className="dr">
+                  <span className="dk">Thickness</span>
+                  <span className="dv" id="pp-rt">{thicknessMm} mm</span>
+                </div>
+                <div className="dr">
+                  <span className="dk">Quantity</span>
+                  <span className="dv" id="pp-rq">{qty} nos</span>
                 </div>
               </div>
-            </div>
 
-            {/* Input Data Summary Card */}
-            <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 space-y-2 text-xs">
-              <span className="font-bold text-slate-800 block text-[11px] font-mono uppercase tracking-wider">
-                📝 Provided Geometry Summary
-              </span>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 font-mono text-[11px] text-slate-600">
-                <div className="flex justify-between"><span>Nominal Size:</span><b className="text-slate-900">{nps === 'custom' ? 'Custom' : `${nps}" NPS`}</b></div>
-                <div className="flex justify-between"><span>Outside Dia:</span><b className="text-slate-900">{od} mm</b></div>
-                <div className="flex justify-between"><span>Spool Length:</span><b className="text-slate-900">{length} m</b></div>
-                <div className="flex justify-between"><span>Quantity:</span><b className="text-slate-900">{qty} Nos</b></div>
+              {/* Action Bar */}
+              <div className="action-bar">
+                <button type="button" className="btn-print" onClick={handlePrint}>
+                  🖨 Print PDF
+                </button>
+                <button type="button" className="btn-share" onClick={handleShare}>
+                  📤 Share Text
+                </button>
               </div>
             </div>
-
           </div>
-        </div>
-
+        )}
       </div>
-
     </div>
   );
 }

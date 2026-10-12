@@ -1,0 +1,5 @@
+
+/* On narrow widths, trim header button labels so icons stay tappable */
+@media(max-width:1180px){
+  .topbar .hbtn .lbl{display:none;}
+}

@@ -18,3 +18,7 @@ python-dotenv>=1.0.0
 # Database & Media (Optional / Extensible)
 Pillow>=10.2.0
 psycopg2-binary>=2.9.9
+
+# Google Auth & HTTP Requests
+google-auth>=2.20.0
+requests>=2.31.0

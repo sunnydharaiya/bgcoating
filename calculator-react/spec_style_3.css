@@ -1,0 +1,318 @@
+
+/* ==================================================================
+   BG CoatingOS(tm) — ONE DESIGN SYSTEM  ·  Coating Specification Reading
+   Inherits the platform's palette, charcoal rail, typography, cards,
+   buttons and 220ms motion. SCREEN ONLY — print/PDF keep the original
+   branded output. Form logic and markup untouched.
+   ================================================================== */
+@media screen{
+
+  /* 1 - platform palette */
+  :root{
+    --brand-crimson:#A41E22; --brand-maroon:#7E1418; --brand-maroon-d:#5E0F12;
+    --brand-orange:#F7941D; --brand-gold:#FFB347; --brand-gold-l:#FFD9A0;
+    --graphite:#2B303A; --graphite-2:#343A45; --graphite-3:#3E4652; --graphite-4:#59626F;
+    --o1:#A41E22; --o2:#F7941D; --o3:#FFB347; --o4:#FFD9A0; --o5:#FFF0DC;
+    --bg:#F3F5F8; --bg2:#F7F8FA; --bg3:#FFFFFF; --bg4:#FFF4E3; --bg5:#FFFAF3;
+    --bg-met:linear-gradient(135deg,#FAFBFC 0%,#F1F3F7 50%,#FAFBFC 100%);
+    --bdr:#E6E8EC; --bdr2:#D5DAE2; --bdr3:#AEB4BD;
+    --txt:#222222; --txt2:#5F6672; --txt3:#8A9099; --txt4:#AEB4BD;
+    --side-w:250px;
+  }
+
+  /* 2 - one typography system */
+  body,button,input,select,textarea,a,.hbtn,.side-link{font-family:'IBM Plex Sans',system-ui,sans-serif !important}
+  h1,h2,h3,h4,h5,.side-name,.tb-title,.sec-t,.prog-title{font-family:'Sora','IBM Plex Sans',sans-serif !important}
+
+  /* 3 - workspace canvas */
+  body{background:var(--bg) !important;
+    background-image:
+      radial-gradient(circle at 100% 0,rgba(247,148,29,.05),transparent 38%),
+      radial-gradient(circle at 0 100%,rgba(164,30,34,.04),transparent 40%) !important;}
+
+  /* 4 - SIDEBAR: the platform's Charcoal Blue rail, pixel for pixel */
+  .sidebar{background:
+      radial-gradient(120% 55% at 50% 0%,rgba(255,255,255,.06),transparent 62%),
+      radial-gradient(90% 40% at 50% 100%,rgba(247,148,29,.05),transparent 70%),
+      linear-gradient(180deg,#343A45 0%,#2B303A 42%,#252A33 78%,#22262E 100%) !important;
+    border-right:1px solid rgba(0,0,0,.22) !important;
+    box-shadow:inset -1px 0 0 rgba(255,255,255,.04) !important}
+  .sidebar::after{background:none !important}
+  .side-brand{border-bottom:1px solid rgba(255,255,255,.09) !important;align-items:center !important;
+    padding:0 .95rem !important;height:64px !important;gap:.7rem !important}
+  .side-logo{width:42px !important;height:42px !important;border-radius:11px !important;background:#FFFFFF !important;
+    border:1px solid rgba(255,255,255,.14) !important;padding:3px !important;box-shadow:0 2px 8px rgba(0,0,0,.25) !important}
+  .side-name{font-size:1rem !important;font-weight:700 !important;letter-spacing:.01em !important;color:#FFFFFF !important}
+  .side-tag{font-family:'IBM Plex Mono',monospace !important;font-size:.6rem !important;letter-spacing:.3em !important;
+    text-transform:uppercase !important;color:#FFB347 !important;margin-top:2px !important}
+  .side-intro{display:none !important}          /* platform header already explains the module */
+  .sec-label{font-family:'IBM Plex Mono',monospace !important;font-size:.58rem !important;font-weight:400 !important;
+    letter-spacing:.26em !important;color:rgba(255,255,255,.38) !important}
+  .sec-label::after{background:rgba(255,255,255,.10) !important}
+  /* nav items = platform .sb-item */
+  .side-link{color:rgba(255,255,255,.74) !important;font-size:.88rem !important;font-weight:400 !important;
+    border:0 !important;border-radius:12px !important;padding:.68rem .68rem !important;margin-bottom:.15rem !important;
+    transition:background .22s,color .22s,transform .15s !important}
+  .side-link:hover{background:rgba(255,255,255,.06) !important;color:#FFFFFF !important;transform:none !important}
+  .side-link .li{color:rgba(255,255,255,.42) !important;transition:color .22s,transform .22s cubic-bezier(.22,1,.36,1) !important;
+    width:17px !important;height:17px !important;display:inline-flex !important;align-items:center;justify-content:center;
+    flex:none;font-size:0 !important}
+  .side-link .li svg{width:17px;height:17px;stroke-width:1.9;display:block}
+  .side-link:hover .li{color:#FFB347 !important;transform:translateX(2px) !important}
+  .side-link.home{font-weight:600 !important;font-size:.88rem !important}
+  .side-link.sub{padding-left:2.5rem !important;font-size:.82rem !important;color:rgba(255,255,255,.55) !important}
+  .side-link.sub:hover{color:#FFFFFF !important;background:rgba(255,255,255,.06) !important}
+  .side-link.active{background:rgba(247,148,29,.16) !important;color:#FFFFFF !important;font-weight:600 !important;
+    position:relative;box-shadow:none !important}
+  .side-link.active::before{content:'' !important;position:absolute !important;left:-.55rem !important;top:18% !important;bottom:18% !important;
+    width:3px !important;border-radius:3px !important;background:#F7941D !important}
+  .side-link.active .li{color:#FFB347 !important}
+  .side-nav{scrollbar-width:thin !important;scrollbar-color:rgba(255,255,255,.18) transparent !important}
+  .side-nav::-webkit-scrollbar{width:8px}
+  .side-nav::-webkit-scrollbar-track{background:transparent}
+  .side-nav::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14) !important;border-radius:99px;border:2px solid transparent;background-clip:padding-box}
+  .side-foot{border-top:1px solid rgba(255,255,255,.09) !important;padding:10px 8px !important;position:relative !important}
+  .side-foot > a{display:none !important}
+
+  /* 5 - TOPBAR: white, like the platform header (actions kept) */
+  .topbar{background:rgba(255,255,255,.94) !important;backdrop-filter:blur(12px) !important;
+    border-bottom:1px solid var(--bdr) !important;box-shadow:0 1px 6px rgba(20,24,32,.05) !important;
+    height:56px !important;gap:.5rem !important}
+  .tb-logo,.tb-title{display:none !important}        /* the OS header already names the module */
+  .tb-burger{border:1px solid var(--bdr) !important;background:#FFFFFF !important;border-radius:11px !important}
+  .tb-burger span{background:var(--txt2) !important}
+  .hpill{background:var(--bg4) !important;color:#B05E00 !important;border:1px solid #F3D2A0 !important;
+    box-shadow:none !important;font-family:'IBM Plex Mono',monospace !important;font-size:.62rem !important;
+    letter-spacing:.16em !important;font-weight:500 !important}
+  .hpill .dot{background:#F7941D !important;box-shadow:none !important;animation:none !important}
+  /* header actions = platform ghost buttons */
+  .hbtn{background:#FFFFFF !important;border:1px solid var(--bdr2) !important;color:var(--graphite) !important;
+    border-radius:999px !important;padding:.5rem 1rem !important;font-size:.8rem !important;font-weight:600 !important;
+    font-family:'Sora',sans-serif !important;box-shadow:none !important;
+    transition:transform .22s cubic-bezier(.22,1,.36,1),border-color .22s,color .22s,box-shadow .22s !important}
+  .hbtn:hover{background:#FFFFFF !important;border-color:var(--brand-orange) !important;color:#D97706 !important;
+    transform:translateY(-2px) !important;box-shadow:0 6px 18px rgba(20,24,32,.08) !important}
+  .hbtn .lbl{color:inherit !important;font-weight:600 !important}
+  .hbtn .ai{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;flex:none;margin-right:.15rem}
+  .hbtn .ai svg{width:15px;height:15px;display:block}
+  /* every header action shares one style — no odd orange button in the row */
+  .hbtn.primary{background:#FFFFFF !important;border:1px solid var(--bdr2) !important;color:var(--graphite) !important;
+    box-shadow:none !important}
+  .hbtn.primary:hover{background:#FFFFFF !important;border-color:var(--brand-orange) !important;color:#D97706 !important;
+    transform:translateY(-2px) !important;box-shadow:0 6px 18px rgba(20,24,32,.08) !important}
+  .hbtn.primary .lbl{color:inherit !important}
+  .hbtn.primary .ai{color:var(--brand-orange)}          /* accent lives in the icon, not the whole button */
+
+  /* 6 - BUTTONS in body = platform pills */
+  .btn{background:linear-gradient(120deg,#F7941D 0%,#FFB347 60%,#F7941D 100%) !important;background-size:200% 100% !important;
+    color:#FFFFFF !important;border-radius:999px !important;font-family:'Sora',sans-serif !important;
+    font-size:14px !important;font-weight:600 !important;letter-spacing:0 !important;text-transform:none !important;
+    box-shadow:0 4px 12px rgba(247,148,29,.28) !important;
+    transition:transform .22s cubic-bezier(.2,.7,.2,1),box-shadow .22s,background .22s !important}
+  .btn:hover{transform:translateY(-2px) !important;box-shadow:0 8px 20px rgba(247,148,29,.38) !important;background-position:100% 0 !important}
+
+  /* 7 - cards, forms, elevation identical to the platform */
+  .card,.sec{border:1px solid var(--bdr) !important;border-radius:16px !important;
+    box-shadow:0 2px 8px rgba(20,24,32,.06) !important;background:#FFFFFF !important}
+  input[type=text],input[type=number],input[type=date],input[type=email],select,textarea{
+    background:#FFFFFF !important;border:1px solid var(--bdr) !important;border-radius:12px !important;
+    color:var(--txt) !important;font-family:'IBM Plex Sans',sans-serif !important;
+    transition:border-color .22s,box-shadow .22s !important}
+  input:focus,select:focus,textarea:focus{outline:none !important;border-color:var(--brand-orange) !important;
+    box-shadow:0 0 0 3px rgba(247,148,29,.18) !important}
+  ::placeholder{color:#B4BAC3 !important}
+  select option{background:#FFFFFF !important;color:var(--txt) !important}
+
+    /* account block — same pattern as the platform sidebar */
+  #bgos-user{display:block}
+  #bgos-user .bgos-up{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:9px 9px;margin-bottom:6px;
+    border:1px solid rgba(247,148,29,.28);background:rgba(247,148,29,.10);border-radius:12px;cursor:pointer;
+    transition:background .22s,border-color .22s,transform .15s;font-family:'IBM Plex Sans',sans-serif}
+  #bgos-user .bgos-up:hover{background:rgba(247,148,29,.18);border-color:rgba(247,148,29,.5)}
+  #bgos-user .bgos-up:active{transform:scale(.985)}
+  #bgos-user .bgos-up .ic{width:30px;height:30px;flex:none;border-radius:9px;display:grid;place-items:center;
+    background:linear-gradient(120deg,#F7941D,#FFB347);color:#fff;box-shadow:0 3px 10px rgba(247,148,29,.35)}
+  #bgos-user .bgos-up .tx{line-height:1.25;overflow:hidden}
+  #bgos-user .bgos-up .tx b{display:block;font-family:'Sora',sans-serif;font-size:12.5px;font-weight:600;color:#fff;white-space:nowrap}
+  #bgos-user .bgos-up .tx span{font-size:11px;color:rgba(255,255,255,.42);white-space:nowrap}
+  #bgos-user .bgos-acct{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:8px 9px;
+    border:0;background:transparent;border-radius:12px;cursor:pointer;transition:background .22s;font-family:'IBM Plex Sans',sans-serif}
+  #bgos-user .bgos-acct:hover{background:rgba(255,255,255,.06)}
+  #bgos-user .bgos-acct .av{width:34px;height:34px;flex:none;border-radius:10px;display:grid;place-items:center;
+    background:linear-gradient(135deg,#A41E22,#7E1418);color:#fff;font-family:'Sora',sans-serif;font-weight:700;font-size:12.5px;
+    box-shadow:0 3px 8px rgba(164,30,34,.3)}
+  #bgos-user .bgos-acct .mt{line-height:1.2;overflow:hidden}
+  #bgos-user .bgos-acct .mt b{display:block;color:#fff;font-size:12.5px;white-space:nowrap}
+  #bgos-user .bgos-acct .mt span{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.14em;
+    color:#FFB347;text-transform:uppercase;white-space:nowrap}
+  #bgos-user .bgos-acct .dots{margin-left:auto;color:rgba(255,255,255,.42);flex:none}
+  /* account menu — identical to the platform's profile dropdown */
+  .side-foot{position:relative !important}
+  #bgos-menu{position:absolute;bottom:calc(100% + 8px);left:8px;right:8px;z-index:99;
+    background:#FFFFFF;border:1px solid #E6E8EC;border-radius:16px;box-shadow:0 10px 30px rgba(20,24,32,.14);
+    opacity:0;visibility:hidden;transform:translateY(8px) scale(.98);
+    transition:opacity .25s cubic-bezier(.22,1,.36,1),transform .25s cubic-bezier(.22,1,.36,1),visibility .25s}
+  #bgos-menu.open{opacity:1;visibility:visible;transform:none}
+  #bgos-menu .hd{padding:13px 15px;border-bottom:1px solid #E6E8EC;font-size:12.5px;color:#222;font-family:'IBM Plex Sans',sans-serif}
+  #bgos-menu .hd span{display:block;font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#8A9099;letter-spacing:.1em;margin-top:2px}
+  #bgos-menu .bd{padding:6px}
+  #bgos-menu .mi{display:flex;gap:10px;align-items:center;width:100%;text-align:left;padding:9px 10px;border:0;background:none;
+    border-radius:12px;font-size:13px;color:#5F6672;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;transition:background .22s,color .22s}
+  #bgos-menu .mi:hover{background:#F7F8FA;color:#222}
+  #bgos-menu .mi svg{color:#8A9099;flex:none}
+
+
+  /* ── Two independent workspace containers (identical to the platform shell) ──
+     Navigation rail and working canvas are separate rounded boxes on the grey
+     canvas, with a consistent gutter. The OS header is overlaid by the shell as
+     this canvas box's header row, so --barh must match the platform. */
+  html,body{height:100% !important;overflow:hidden !important}
+  .app,#app{height:100% !important;overflow:hidden !important;display:block !important}
+  .sidebar{top:12px !important;left:12px !important;bottom:12px !important;height:auto !important;
+    border-radius:12px !important;overflow:hidden !important;
+    border:1px solid rgba(0,0,0,.14) !important;
+    box-shadow:0 8px 28px rgba(20,24,32,.14), inset 0 1px 0 rgba(255,255,255,.05) !important}
+  .main{margin:12px 12px 12px calc(var(--side-w) + 24px) !important;height:calc(100% - 24px) !important;
+    background:#FFFFFF !important;border:1px solid var(--bdr) !important;border-radius:12px !important;
+    box-shadow:0 6px 24px rgba(20,24,32,.07) !important;overflow-y:auto !important;overflow-x:hidden !important;
+    padding-top:48px !important}          /* clears the overlaid OS header */
+
+  /* ── Unified brand logo — identical box in platform + every module ──
+     The logo must feel anchored: same size, same place, no jump on transition. */
+  .side-brand{align-items:center !important;height:64px !important;
+    padding:0 16px !important;box-sizing:border-box !important}
+  .side-logo{width:46px !important;height:46px !important;flex:none !important;
+    border-radius:11px !important;background:#FFFFFF !important;border:1px solid rgba(0,0,0,.06) !important;
+    padding:3px !important;box-shadow:0 4px 16px rgba(20,24,32,.14) !important;
+    display:flex !important;align-items:center !important;justify-content:center !important;overflow:hidden !important}
+  .side-logo img{width:100% !important;height:100% !important;object-fit:contain !important;padding:0 !important}
+
+  .frozen-top{top:0 !important}          /* .main padding already clears the OS header */
+  .topbar{border-radius:0 !important}
+
+  /* 4 - the header already has Preview; the panel duplicate is removed */
+  .prev-btn{display:none !important}
+  .prog-panel-in{gap:14px !important}
+
+  /* 6 - landing hero joins the platform family (was black/crimson) */
+  .ng-hero{background:linear-gradient(120deg,#FFFFFF 0%,#FFF9F1 55%,#FFF4E3 100%) !important;
+    border:1px solid var(--bdr) !important;border-radius:16px !important;
+    box-shadow:0 2px 8px rgba(20,24,32,.06) !important;padding:24px 26px !important;margin-bottom:18px !important}
+  .ng-hero::before{background:radial-gradient(circle,rgba(247,148,29,.10),transparent 62%) !important;
+    width:320px !important;height:320px !important;top:-120px !important;right:-60px !important}
+  .ng-hero::after{height:3px !important;background:linear-gradient(90deg,#F7941D,#FFB347,#F7941D) !important;
+    top:0 !important;bottom:auto !important;border-radius:16px 16px 0 0 !important}
+  .ng-hero-bd{gap:18px !important}
+  .ng-logo{width:64px !important;height:64px !important;border-radius:14px !important;
+    box-shadow:0 2px 8px rgba(20,24,32,.08) !important;border:1px solid var(--bdr) !important}
+  .ng-kick{background:var(--bg4) !important;border:1px solid #F3D2A0 !important;color:#B05E00 !important;
+    font-family:'IBM Plex Mono',monospace !important;font-weight:500 !important;letter-spacing:.16em !important}
+  .ng-dot{background:#F7941D !important;animation:none !important}
+  .ng-title{font-family:'Sora',sans-serif !important;font-size:clamp(19px,2.2vw,26px) !important;
+    color:var(--txt) !important;letter-spacing:-.01em !important;line-height:1.18 !important}
+  .ng-title span{color:#F7941D !important}
+  .ng-sub{color:var(--txt2) !important;font-size:12.5px !important;margin-top:7px !important}
+  .ng-hint{color:var(--txt3) !important;margin-top:8px !important}
+  .ng-btn{background:linear-gradient(120deg,#F7941D 0%,#FFB347 60%,#F7941D 100%) !important;
+    background-size:200% 100% !important;color:#FFFFFF !important;border:none !important;border-radius:999px !important;
+    font-family:'Sora',sans-serif !important;font-size:14px !important;font-weight:600 !important;
+    letter-spacing:0 !important;text-transform:none !important;padding:12px 26px !important;margin-top:14px !important;
+    box-shadow:0 4px 12px rgba(247,148,29,.28) !important;
+    transition:transform .22s cubic-bezier(.2,.7,.2,1),box-shadow .22s,background .22s !important}
+  .ng-btn:hover{transform:translateY(-2px) !important;scale:1 !important;
+    box-shadow:0 8px 20px rgba(247,148,29,.38) !important;background-position:100% 0 !important}
+
+
+  /* Multiple company profiles — strip inside Company Details + print picker */
+  #cp-strip{margin:0 0 14px}
+  #cp-strip .cp-lbl{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--txt3);margin-bottom:7px}
+  #cp-strip .cp-lbl span{letter-spacing:0;text-transform:none;font-family:'IBM Plex Sans',sans-serif;font-size:10.5px}
+  .cp-chips{display:flex;flex-wrap:wrap;gap:6px}
+  .cp-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;cursor:pointer;
+    background:#FFFFFF;border:1px solid var(--bdr);color:var(--txt2);font-size:12px;
+    transition:border-color .22s,color .22s,background .22s}
+  .cp-chip:hover{border-color:#F3D2A0;color:#B05E00}
+  .cp-chip.on{background:var(--bg4);border-color:#F3D2A0;color:var(--brand-crimson);font-weight:600}
+  .cp-chip i{font-style:normal;color:#1E9E50;font-size:9px}
+  .cp-chip b{font-weight:400;color:var(--txt4);margin-left:2px;padding:0 2px;border-radius:4px}
+  .cp-chip b:hover{color:#C62828;background:#FBECEC}
+  #cp-pick{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;
+    background:rgba(34,38,44,.45);backdrop-filter:blur(4px);padding:20px}
+  #cp-pick.show{display:flex}
+  .cp-pick-in{width:min(440px,100%);background:#FFFFFF;border:1px solid var(--bdr);border-radius:16px;
+    box-shadow:0 20px 60px rgba(20,24,32,.28);overflow:hidden;font-family:'IBM Plex Sans',sans-serif}
+  .cp-pick-h{padding:16px 18px;border-bottom:1px solid var(--bdr);font-family:'Sora',sans-serif;font-weight:700;
+    font-size:15px;color:var(--txt)}
+  .cp-pick-h span{display:block;font-family:'IBM Plex Sans',sans-serif;font-weight:400;font-size:11.5px;color:var(--txt3);margin-top:2px}
+  .cp-pick-list{padding:8px;max-height:280px;overflow-y:auto}
+  .cp-pick-row{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;cursor:pointer;
+    transition:background .18s}
+  .cp-pick-row:hover{background:var(--bg2)}
+  .cp-pick-row .cp-r{width:15px;height:15px;flex:none;border-radius:50%;border:2px solid var(--bdr2);transition:all .18s}
+  .cp-pick-row.on .cp-r{border-color:#F7941D;box-shadow:inset 0 0 0 3px #F7941D}
+  .cp-pick-row.on{background:var(--bg4)}
+  .cp-pick-row .cp-n{font-size:13px;color:var(--txt)}
+  .cp-pick-row .cp-n em{font-style:normal;color:var(--txt3);font-size:11px}
+  .cp-pick-f{display:flex;justify-content:flex-end;gap:8px;padding:12px 14px;border-top:1px solid var(--bdr);background:var(--bg2)}
+  .cp-pick-f button{border-radius:999px;padding:9px 18px;font-family:'Sora',sans-serif;font-size:13px;font-weight:600;cursor:pointer;
+    transition:transform .22s cubic-bezier(.22,1,.36,1),box-shadow .22s,border-color .22s}
+  .cp-pick-f .cp-x{background:#FFFFFF;border:1px solid var(--bdr2);color:var(--graphite)}
+  .cp-pick-f .cp-x:hover{border-color:#F7941D;color:#D97706;transform:translateY(-2px)}
+  .cp-pick-f .cp-go{background:linear-gradient(120deg,#F7941D,#FFB347);border:none;color:#fff;
+    box-shadow:0 4px 12px rgba(247,148,29,.28)}
+  .cp-pick-f .cp-go:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(247,148,29,.38)}
+
+  /* ── Section headings must never land under the sticky chrome ──
+     scrollIntoView({block:'start'}) aligns to the scrollport edge, which sits
+     behind the OS header + module toolbar + progress panel. scroll-margin-top is
+     the native way to reserve that space, and it applies to EVERY navigation
+     source (sidebar, progress chips, next/prev, validation jumps) without
+     touching the module's own scrolling code. The value is measured live by the
+     bridge, so it stays correct at any zoom or screen size. */
+  #tab-input .sec, .tab-page .sec, .sec[id^="sec"]{
+    scroll-margin-top:var(--bgos-scroll-off,180px) !important}
+
+  /* ── Preview must live INSIDE the workspace, not over the whole screen ──
+     Full-screen it hid its own Close button under the OS header and stranded the
+     user with no way back. Framing it in the canvas box keeps the rail, the
+     breadcrumb and Close all reachable. */
+  .preview-modal{
+    top:calc(12px + 48px) !important; left:calc(var(--side-w) + 24px) !important;
+    right:12px !important; bottom:12px !important; width:auto !important; height:auto !important;
+    border-radius:0 0 12px 12px !important; overflow:hidden !important;
+    background:var(--bg) !important; box-shadow:none !important;
+    border:1px solid var(--bdr) !important; border-top:none !important}
+  .preview-modal .preview-h{
+    background:#FFFFFF !important; border-bottom:1px solid var(--bdr) !important;
+    color:var(--txt) !important; padding:10px 14px !important; gap:12px !important}
+  .preview-modal .ph-logo{background:#FFFFFF !important;border:1px solid var(--bdr) !important;
+    color:var(--brand-crimson) !important;border-radius:8px !important}
+  .preview-modal .ph-t{font-family:'Sora',sans-serif !important;color:var(--txt) !important;font-size:14px !important}
+  .preview-modal .ph-t span{color:#F7941D !important}
+  .preview-modal .ph-t small{color:var(--txt3) !important;font-family:'IBM Plex Sans',sans-serif !important}
+  .preview-modal .preview-badge{background:var(--bg4) !important;border:1px solid #F3D2A0 !important;
+    color:#B05E00 !important;font-family:'IBM Plex Mono',monospace !important;font-size:10px !important;
+    letter-spacing:.12em !important}
+  /* the way back — an unmistakable control, not a hidden ✕ */
+  .preview-modal .preview-close{
+    background:linear-gradient(120deg,#F7941D 0%,#FFB347 60%,#F7941D 100%) !important;background-size:200% 100% !important;
+    color:#FFFFFF !important;border:none !important;border-radius:999px !important;
+    font-family:'Sora',sans-serif !important;font-size:12.5px !important;font-weight:600 !important;
+    padding:8px 16px !important;box-shadow:0 4px 12px rgba(247,148,29,.28) !important;
+    transition:transform .22s cubic-bezier(.2,.7,.2,1),box-shadow .22s,background .22s !important}
+  .preview-modal .preview-close:hover{transform:translateY(-2px) !important;
+    box-shadow:0 8px 20px rgba(247,148,29,.38) !important;background-position:100% 0 !important}
+  .preview-modal .preview-scroll{background:var(--bg) !important;padding:14px !important}
+  .preview-modal .preview-foot,.preview-modal .preview-note{
+    background:#FFFFFF !important;border-top:1px solid var(--bdr) !important;color:var(--txt3) !important}
+  @media (max-width:960px){
+    .preview-modal{left:12px !important}
+  }
+
+  /* 8 - scrollbars */
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-track{background:var(--bg)}
+  ::-webkit-scrollbar-thumb{background:#C9CFD8;border-radius:99px;border:2px solid var(--bg)}
+  ::-webkit-scrollbar-thumb:hover{background:var(--brand-orange)}
+}

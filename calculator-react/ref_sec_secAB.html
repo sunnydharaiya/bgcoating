@@ -1,0 +1,95 @@
+<div class="sec" id="secAB">
+  <div class="sec-hd" onclick="tog(&#39;secAB&#39;)">
+    <div class="sec-hd-icon">📋</div>
+    <div class="sec-hd-text">
+      <div class="sec-hd-t">Project Information &amp; Scope</div>
+      <div class="sec-hd-s">Project No., Design Input No., Customer, Specifications &amp; Company Scope</div>
+    </div>
+    <div class="sec-pill">A · B</div>
+    <div class="sec-tog">▼</div>
+  </div>
+  <div class="sec-body">
+    <div class="grid g3">
+      <div class="fld"><label class="lbl">Project No. <span class="req">*</span></label><input class="inp" type="text" id="projNo" placeholder="e.g. S041515"></div>
+      <div class="fld"><label class="lbl">Design Input No.</label><input class="inp" type="text" id="dinNo" placeholder="e.g. DIN-2026-001"></div>
+      <div class="fld"><label class="lbl">Project Description <span class="req">*</span></label><input class="inp" type="text" id="projDesc" placeholder="e.g. 2nd Stage Reactor Hot Feed / Combined Effluent Exchanger"></div>
+    </div>
+    <div class="grid g2" style="margin-top:11px;">
+      <div class="fld"><label class="lbl">Details of Customer</label><input class="inp" type="text" id="custName" placeholder="e.g. TECNICAS REUNIDAS"></div>
+      <div class="fld"><label class="lbl">Prepared By <span class="hint">(auto-fills Report)</span></label><input class="inp" type="text" id="preparedBy" placeholder="Name &amp; designation"></div>
+    </div>
+    <div class="fld" style="margin-top:11px;">
+      <label class="lbl">Applicable Specification No. <span class="hint">(add multiple as needed)</span></label>
+      <div class="spec-list" id="specList">
+    <div class="spec-row">
+      <input class="inp" type="text" value="" placeholder="e.g. 80080-GEN-TCH-0000-SPE-002_Rev02" oninput="updSpec(0,this.value)">
+      
+    </div></div>
+      <button class="spec-add" onclick="addSpec()">+ Add Specification</button>
+    </div>
+    <div class="fld" style="margin-top:11px;">
+      <label class="lbl">Scope Description</label>
+      <textarea class="txa" id="scopeDesc" placeholder="Paint coating system recommendation and confirmation based on operation and design parameter of equipment..."></textarea>
+    </div>
+    <div style="margin-top:14px;border-top:1.5px solid var(--bdr);padding-top:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:9px;">
+        <div style="width:30px;height:30px;background:linear-gradient(135deg,#43A047,#2E7D32);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;">✓</div>
+        <div>
+          <div style="font-family:&#39;Rajdhani&#39;,sans-serif;font-size:13px;font-weight:700;color:var(--txt);text-transform:uppercase;letter-spacing:.4px;">Company Scope</div>
+          <div style="font-size:10px;color:var(--txt3);">Painting · Insulation · Fireproofing · Special Treatment · Galvanizing · Pickling &amp; Passivation</div>
+        </div>
+      </div>
+      <div class="scope-grid" id="scopeGrid"><div class="scope-it is-no">
+      <div class="scope-it-icon">🛠️</div>
+      <div class="scope-it-l">Surface Preparation &amp; Painting</div>
+      <div class="yno-wrap" data-scope="painting">
+        <button type="button" class="yno-btn " data-v="YES" onclick="ynoSet(this)">YES</button>
+        <button type="button" class="yno-btn on-no" data-v="NO" onclick="ynoSet(this)">NO</button>
+        <button type="button" class="yno-btn " data-v="NA" onclick="ynoSet(this)">NA</button>
+      </div>
+    </div><div class="scope-it is-no">
+      <div class="scope-it-icon">🧥</div>
+      <div class="scope-it-l">Insulation</div>
+      <div class="yno-wrap" data-scope="insulation">
+        <button type="button" class="yno-btn " data-v="YES" onclick="ynoSet(this)">YES</button>
+        <button type="button" class="yno-btn on-no" data-v="NO" onclick="ynoSet(this)">NO</button>
+        <button type="button" class="yno-btn " data-v="NA" onclick="ynoSet(this)">NA</button>
+      </div>
+    </div><div class="scope-it is-no">
+      <div class="scope-it-icon">🔥</div>
+      <div class="scope-it-l">Fire Proofing</div>
+      <div class="yno-wrap" data-scope="fireproof">
+        <button type="button" class="yno-btn " data-v="YES" onclick="ynoSet(this)">YES</button>
+        <button type="button" class="yno-btn on-no" data-v="NO" onclick="ynoSet(this)">NO</button>
+        <button type="button" class="yno-btn " data-v="NA" onclick="ynoSet(this)">NA</button>
+      </div>
+    </div><div class="scope-it ">
+      <div class="scope-it-icon">⚡</div>
+      <div class="scope-it-l">Special Treatment (TSA / FRE / FRP)</div>
+      <div class="yno-wrap" data-scope="tsa">
+        <button type="button" class="yno-btn " data-v="YES" onclick="ynoSet(this)">YES</button>
+        <button type="button" class="yno-btn " data-v="NO" onclick="ynoSet(this)">NO</button>
+        <button type="button" class="yno-btn on-na" data-v="NA" onclick="ynoSet(this)">NA</button>
+      </div>
+    </div><div class="scope-it is-no">
+      <div class="scope-it-icon">🔩</div>
+      <div class="scope-it-l">Galvanizing</div>
+      <div class="yno-wrap" data-scope="galv">
+        <button type="button" class="yno-btn " data-v="YES" onclick="ynoSet(this)">YES</button>
+        <button type="button" class="yno-btn on-no" data-v="NO" onclick="ynoSet(this)">NO</button>
+        <button type="button" class="yno-btn " data-v="NA" onclick="ynoSet(this)">NA</button>
+      </div>
+    </div><div class="scope-it is-no">
+      <div class="scope-it-icon">🧪</div>
+      <div class="scope-it-l">Pickling &amp; Passivation</div>
+      <div class="yno-wrap" data-scope="pickling">
+        <button type="button" class="yno-btn " data-v="YES" onclick="ynoSet(this)">YES</button>
+        <button type="button" class="yno-btn on-no" data-v="NO" onclick="ynoSet(this)">NO</button>
+        <button type="button" class="yno-btn " data-v="NA" onclick="ynoSet(this)">NA</button>
+      </div>
+    </div></div>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION C -->

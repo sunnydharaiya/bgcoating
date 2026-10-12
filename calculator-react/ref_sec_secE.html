@@ -1,0 +1,65 @@
+<div class="sec collapsed" id="secE">
+  <div class="sec-hd" onclick="tog(&#39;secE&#39;)">
+    <div class="sec-hd-icon">🧱</div>
+    <div class="sec-hd-text">
+      <div class="sec-hd-t">Insulation / Fireproofing / TSA · FRE · FRP / Galvanizing / Pickling Details</div>
+      <div class="sec-hd-s">Thickness, type, description per scope category</div>
+    </div>
+    <div class="sec-pill">Section E</div>
+    <div class="sec-tog">▼</div>
+  </div>
+  <div class="sec-body">
+    <div style="margin-bottom:12px;padding:11px;background:var(--bg5);border:1.5px solid var(--bdr);border-radius:8px;">
+      <div style="font-family:&#39;Rajdhani&#39;,sans-serif;font-size:12px;font-weight:700;color:var(--o1);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">🧥 1. Insulation Details</div>
+      <div class="grid g3">
+        <div class="fld"><label class="lbl">Insulation Thickness</label><input class="inp" type="text" id="insThk" placeholder="e.g. 150 / 150 mm (Shell/Tube)"><div class="subhint">Shell side / Tube side</div></div>
+        <div class="fld"><label class="lbl">Insulation Type <span class="hint">(editable)</span></label><input class="inp" type="text" id="insType" placeholder="Select or type" list="ins-list">
+          <datalist id="ins-list"><option value="Mineral Wool / Rockwool"></option><option value="Calcium Silicate"></option><option value="Cellular Glass (Foamglas)"></option><option value="Glass Wool"></option><option value="Aerogel Insulation"></option><option value="Polyurethane Foam (PUF)"></option><option value="Polyisocyanurate (PIR)"></option><option value="Perlite (Expanded)"></option><option value="Ceramic Fiber"></option><option value="Microporous Insulation"></option><option value="Vacuum Insulation Panel"></option><option value="Foam Glass"></option><option value="Others (specify)"></option></datalist>
+        </div>
+        <div class="fld"><label class="lbl">Details of Insulation — Description</label><input class="inp" type="text" id="insDesc" placeholder="Manual entry — specific description / brand / spec"></div>
+      </div>
+    </div>
+    <div style="margin-bottom:12px;padding:11px;background:var(--bg5);border:1.5px solid var(--bdr);border-radius:8px;">
+      <div style="font-family:&#39;Rajdhani&#39;,sans-serif;font-size:12px;font-weight:700;color:var(--o1);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">🔥 2. Fireproofing Details</div>
+      <div class="grid g3">
+        <div class="fld"><label class="lbl">Fireproofing Thickness</label><input class="inp" type="text" id="fpThk" placeholder="e.g. 25 mm / 1 hr rating"></div>
+        <div class="fld"><label class="lbl">Type of Fireproofing <span class="hint">(editable)</span></label><input class="inp" type="text" id="fpType" placeholder="Select or type" list="fp-list">
+          <datalist id="fp-list"><option value="Intumescent (Thin Film)"></option><option value="Intumescent (Epoxy-Based)"></option><option value="Cementitious (Lightweight)"></option><option value="Cementitious (Dense Concrete)"></option><option value="Vermiculite Cementitious"></option><option value="Magnesium Oxychloride (Chartek 7 / 1709)"></option><option value="Subliming Compound"></option><option value="Mineral Wool Board"></option><option value="Calcium Silicate Board"></option><option value="Sprayed Cementitious"></option><option value="Ablative Coating"></option><option value="Others (specify)"></option></datalist>
+        </div>
+        <div class="fld"><label class="lbl">Details of Fireproofing — Description</label><input class="inp" type="text" id="fpDesc" placeholder="Manual entry — fire rating / spec"></div>
+      </div>
+    </div>
+    <div style="margin-bottom:12px;padding:11px;background:var(--bg5);border:1.5px solid var(--bdr);border-radius:8px;">
+      <div style="font-family:&#39;Rajdhani&#39;,sans-serif;font-size:12px;font-weight:700;color:var(--o1);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">⚡ 3. TSA / FRP / FRE Details</div>
+      <div class="grid g3">
+        <div class="fld"><label class="lbl">TSA / FRP / FRE Thickness</label><input class="inp" type="text" id="tsaThk" placeholder="e.g. TSA 250 µm + Sealer 25 µm"></div>
+        <div class="fld"><label class="lbl">Type <span class="hint">(editable)</span></label><input class="inp" type="text" id="tsaType" placeholder="Select or type" list="tsa-list">
+          <datalist id="tsa-list"><option value="Thermal Spray Aluminum (TSA)"></option><option value="Thermal Spray Zinc (TSZ)"></option><option value="Thermal Spray Zinc-Aluminum (TSZA)"></option><option value="Fiberglass Reinforced Epoxy (FRE)"></option><option value="Fiberglass Reinforced Plastic (FRP)"></option><option value="Glass Flake Epoxy"></option><option value="Vinyl Ester Lining"></option><option value="Phenolic Lining"></option><option value="Rubber Lining"></option><option value="Others (specify)"></option></datalist>
+        </div>
+        <div class="fld"><label class="lbl">Details / Description</label><input class="inp" type="text" id="tsaDesc" placeholder="Manual entry — sealer, topcoat, layer build-up"></div>
+      </div>
+    </div>
+    <div style="margin-bottom:12px;padding:11px;background:var(--bg5);border:1.5px solid var(--bdr);border-radius:8px;">
+      <div style="font-family:&#39;Rajdhani&#39;,sans-serif;font-size:12px;font-weight:700;color:var(--o1);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">🔩 4. Galvanizing Details</div>
+      <div class="grid g3">
+        <div class="fld"><label class="lbl">Galvanizing Thickness</label><input class="inp" type="text" id="galvThk" placeholder="e.g. 85 µm minimum (per ASTM A123)"></div>
+        <div class="fld"><label class="lbl">Type <span class="hint">(editable)</span></label><input class="inp" type="text" id="galvType" placeholder="Select or type" list="galv-list">
+          <datalist id="galv-list"><option value="Hot-Dip Galvanizing (HDG) — ASTM A123"></option><option value="Hot-Dip Galvanizing — ASTM A153 (Hardware)"></option><option value="Continuous Galvanizing — ASTM A653"></option><option value="Mechanical Galvanizing — ASTM B695"></option><option value="Electroplating (Zinc) — ASTM B633"></option><option value="Sherardizing — ASTM A1059"></option><option value="Zinc Spraying (Metallizing)"></option><option value="Others (specify)"></option></datalist>
+        </div>
+        <div class="fld"><label class="lbl">Details / Description</label><input class="inp" type="text" id="galvDesc" placeholder="Manual entry — pre/post-treatment, specs"></div>
+      </div>
+    </div>
+    <div style="padding:11px;background:var(--bg5);border:1.5px solid var(--bdr);border-radius:8px;">
+      <div style="font-family:&#39;Rajdhani&#39;,sans-serif;font-size:12px;font-weight:700;color:var(--o1);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">🧪 5. Pickling &amp; Passivation Details</div>
+      <div class="grid g3">
+        <div class="fld"><label class="lbl">Process Specification</label><input class="inp" type="text" id="pickThk" placeholder="e.g. ASTM A380 / A967"></div>
+        <div class="fld"><label class="lbl">Type <span class="hint">(editable)</span></label><input class="inp" type="text" id="pickType" placeholder="Select or type" list="pick-list">
+          <datalist id="pick-list"><option value="Acid Pickling (HF + HNO3)"></option><option value="Acid Pickling (Sulphuric)"></option><option value="Acid Pickling (Hydrochloric)"></option><option value="Citric Acid Passivation"></option><option value="Nitric Acid Passivation"></option><option value="Electropolishing"></option><option value="Pickling Paste / Gel"></option><option value="Others (specify)"></option></datalist>
+        </div>
+        <div class="fld"><label class="lbl">Details / Description</label><input class="inp" type="text" id="pickDesc" placeholder="Manual entry — concentration, time, neutralization"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION F -->

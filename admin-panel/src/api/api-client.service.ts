@@ -225,8 +225,13 @@ export class ApiClientService {
           return { message: data.error, statusCode: status };
         }
         // Field validation errors object (e.g. { title: ["This field is required."] })
+        const errorEntries = Object.entries(data);
+        const detailedErrors = errorEntries
+          .map(([key, val]) => `${key}: ${Array.isArray(val) ? val.join(', ') : val}`)
+          .join('; ');
+
         return {
-          message: 'Validation failed for one or more input fields.',
+          message: detailedErrors ? `Validation failed: ${detailedErrors}` : 'Validation failed for one or more input fields.',
           statusCode: status,
           fieldErrors: data,
         };

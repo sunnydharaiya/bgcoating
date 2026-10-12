@@ -1,0 +1,83 @@
+
+/* ==================================================================
+   BG CoatingOS(tm) — corporate report format (Preview + Excel Print)
+   Applies to SCREEN *and* PRINT: this is the deliverable the client
+   sees, so it must look the same on paper as on screen.
+   Content and structure untouched — typography, rules and rhythm only.
+   ================================================================== */
+.xlp-paper{
+  font-family:'IBM Plex Sans','Segoe UI',Arial,sans-serif !important;
+  color:#14181F !important; font-size:9.8pt !important; line-height:1.45 !important;
+  padding:15mm 13mm !important; border:1px solid #D5DAE2 !important;
+  box-shadow:0 8px 32px rgba(20,24,32,.10) !important;
+  font-variant-numeric:tabular-nums;
+}
+/* ── letterhead ── */
+.xlp-paper .xlp-header{
+  display:flex !important; align-items:center !important; gap:15px !important;
+  border-bottom:none !important; padding:0 0 11px !important; margin:0 0 2px !important; position:relative;
+}
+.xlp-paper .xlp-header::after{
+  content:''; position:absolute; left:0; right:0; bottom:0; height:2.4pt;
+  background:linear-gradient(90deg,#2B303A 0 68%,#F7941D 68% 100%);
+}
+.xlp-header-logo{
+  width:56px !important; height:56px !important; border:1px solid #D5DAE2 !important; border-radius:3px !important;
+  font-family:'Sora','Segoe UI',sans-serif !important; font-size:15px !important; font-weight:700 !important;
+  color:#2B303A !important; background:#fff !important; padding:3px !important;
+}
+.xlp-header-co{
+  font-family:'Sora','Segoe UI',sans-serif !important; font-size:14pt !important; font-weight:700 !important;
+  letter-spacing:.2px !important; color:#14181F !important; line-height:1.15 !important;
+}
+.xlp-header-co-sub{
+  font-size:8pt !important; color:#5F6672 !important; font-style:normal !important;
+  letter-spacing:.15px !important; margin-top:3px !important;
+}
+/* ── document title band ── */
+.xlp-paper h1{
+  font-family:'Sora','Segoe UI',sans-serif !important; font-size:11pt !important; font-weight:700 !important;
+  color:#FFFFFF !important; background:#2B303A !important; text-decoration:none !important;
+  letter-spacing:1.1px !important; text-align:center !important;
+  padding:7px 10px !important; margin:10px 0 0 !important; border-radius:2px !important;
+}
+/* ── key/value block ── */
+.xlp-info{ margin:10px 0 4px !important; font-size:9.2pt !important; }
+.xlp-info td{ border:.5pt solid #B9BFC9 !important; padding:5px 8px !important; vertical-align:top !important; }
+.xlp-info td.l{ background:#F1F3F7 !important; font-weight:600 !important; color:#2B303A !important;
+  font-size:8.6pt !important; letter-spacing:.2px !important; }
+.xlp-info td.v{ color:#14181F !important; }
+/* ── section bands ── */
+.xlp-sec{
+  background:#2B303A !important; color:#FFFFFF !important; border:none !important; border-radius:2px !important;
+  padding:5px 10px !important; font-family:'Sora','Segoe UI',sans-serif !important; font-size:9pt !important;
+  font-weight:600 !important; letter-spacing:.9px !important; margin:12px 0 0 !important;
+}
+/* ── data tables ── */
+.xlp-tbl{ font-size:8.8pt !important; margin-top:0 !important; }
+.xlp-tbl th{
+  background:#EDEFF3 !important; color:#2B303A !important; border:.5pt solid #B9BFC9 !important;
+  padding:5px 7px !important; font-weight:600 !important; font-size:8.2pt !important;
+  letter-spacing:.3px !important; text-transform:uppercase !important;
+}
+.xlp-tbl td{ border:.5pt solid #B9BFC9 !important; padding:4px 7px !important; color:#14181F !important; }
+.xlp-tbl tbody tr:nth-child(even) td{ background:#FAFBFC !important; }
+.xlp-tbl td.lbl{ background:#F1F3F7 !important; font-weight:600 !important; color:#2B303A !important; font-size:8.4pt !important; }
+.xlp-tbl tr.total-row td{ background:#E4E7EC !important; font-weight:700 !important; border-top:1pt solid #2B303A !important; }
+/* ── footer ── */
+.xlp-footer{
+  margin-top:14px !important; padding-top:7px !important; border-top:1.5pt solid #2B303A !important;
+  font-size:7.6pt !important; color:#5F6672 !important; font-style:normal !important; letter-spacing:.2px !important;
+}
+/* ── paper behaviour ── */
+@media print{
+  .xlp-paper{ box-shadow:none !important; border:none !important; padding:0 !important; }
+  .xlp-paper h1,.xlp-sec,.xlp-tbl th,.xlp-info td.l,.xlp-tbl td.lbl,.xlp-tbl tbody tr:nth-child(even) td,
+  .xlp-tbl tr.total-row td,.xlp-header::after{
+    -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important;
+  }
+  .xlp-tbl thead{ display:table-header-group; }        /* repeat headers on every page */
+  .xlp-tbl tr,.xlp-info tr{ page-break-inside:avoid; }  /* never split a row */
+  .xlp-sec{ page-break-after:avoid; }                   /* a band never ends a page */
+  .xlp-header{ page-break-after:avoid; }
+}

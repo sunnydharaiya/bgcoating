@@ -1,0 +1,290 @@
+<!-- Page Header -->
+<div class="bg-white border border-slate-200 rounded-md p-5 sm:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-2xs">
+  <div class="space-y-1">
+    <div class="flex items-center gap-2">
+      <span class="text-[11px] font-mono font-semibold text-purple-600 uppercase tracking-wider">User Directory</span>
+      <span class="px-2 py-0.5 text-[10px] font-bold font-mono bg-purple-50 text-purple-700 border border-purple-200 rounded-full">
+        {{totalUsers}} Users
+      </span>
+    </div>
+    <h2 class="text-xl sm:text-2xl font-bold text-slate-900">Registered Users &amp; Profiles</h2>
+    <p class="text-xs text-slate-500 max-w-xl">
+      List of coating specialists, QA/QC engineers, inspectors and consultants registered via BG CoatingOS Calculator &amp; Google SSO.
+    </p>
+  </div>
+  
+  <div class="flex items-center gap-2">
+    <a href="/admin/dashboard" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-md transition flex items-center gap-1.5">
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+      <span>Dashboard</span>
+    </a>
+  </div>
+</div>
+
+<!-- Search & Filtering Bar -->
+<div class="bg-white border border-slate-200 rounded-md p-4 shadow-2xs">
+  <form method="GET" action="/admin/users" class="flex flex-col sm:flex-row items-center gap-3">
+    <!-- Search Input -->
+    <div class="relative flex-1 w-full">
+      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+      </div>
+      <input
+        type="text"
+        name="q"
+        value="{{searchQuery}}"
+        placeholder="Search by name, email, company, mobile, or designation..."
+        className="w-full pl-9 pr-3 py-2 text-xs border border-slate-300 rounded-md focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none"
+        style="width: 100%; padding-left: 2.25rem; padding-right: 0.75rem; padding-top: 0.5rem; padding-bottom: 0.5rem; font-size: 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.375rem;"
+      />
+    </div>
+
+    <!-- Provider Filter Dropdown -->
+    <div class="w-full sm:w-48">
+      <select
+        name="provider"
+        class="w-full px-3 py-2 text-xs border border-slate-300 rounded-md focus:border-purple-500 outline-none"
+        style="width: 100%; padding: 0.5rem 0.75rem; font-size: 0.75rem; border: 1px solid #cbd5e1; border-radius: 0.375rem;"
+        onchange="this.form.submit()"
+      >
+        <option value="">All Auth Methods</option>
+        <option value="google" {{#if (eq selectedProvider 'google')}}selected{{/if}}>Google OAuth</option>
+        <option value="email" {{#if (eq selectedProvider 'email')}}selected{{/if}}>Email / Password</option>
+      </select>
+    </div>
+
+    <!-- Submit Search Button -->
+    <button
+      type="submit"
+      class="w-full sm:w-auto px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold rounded-md transition cursor-pointer flex items-center justify-center gap-1.5"
+    >
+      <span>Filter</span>
+    </button>
+
+    {{#if (or searchQuery selectedProvider)}}
+      <a
+        href="/admin/users"
+        class="w-full sm:w-auto px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-medium rounded-md transition text-center"
+      >
+        Reset
+      </a>
+    {{/if}}
+  </form>
+</div>
+
+<!-- Users Table Card -->
+<div class="bg-white border border-slate-200 rounded-md overflow-hidden shadow-2xs">
+  <div class="overflow-x-auto">
+    <table class="w-full text-left border-collapse text-xs">
+      <thead>
+        <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase tracking-wider text-[11px]">
+          <th class="py-3 px-4">User / Professional</th>
+          <th class="py-3 px-4">Auth Method</th>
+          <th class="py-3 px-4">Role &amp; Company</th>
+          <th class="py-3 px-4">Contact &amp; Location</th>
+          <th class="py-3 px-4">Certifications</th>
+          <th class="py-3 px-4">Activity Timeline</th>
+          <th class="py-3 px-4 text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {{#each users}}
+          <tr class="hover:bg-slate-50/70 transition">
+            
+            <!-- User / Professional Column -->
+            <td class="py-3.5 px-4">
+              <div class="flex items-center gap-3">
+                {{#if profile.avatar_url}}
+                  <img src="{{profile.avatar_url}}" alt="{{full_name}}" class="w-8 h-8 rounded-full object-cover border border-slate-200 shadow-2xs shrink-0" />
+                {{else}}
+                  <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 text-white font-bold text-xs flex items-center justify-center shadow-2xs shrink-0 font-mono">
+                    {{#if full_name}}{{full_name.[0]}}{{else}}{{username.[0]}}{{/if}}
+                  </div>
+                {{/if}}
+                <div class="min-w-0">
+                  <div class="font-bold text-slate-900 truncate">
+                    {{#if full_name}}{{full_name}}{{else}}{{username}}{{/if}}
+                  </div>
+                  <div class="flex items-center gap-1.5 mt-0.5">
+                    {{#if profile.is_pro}}
+                      <span class="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-300 font-mono">
+                        👑 PRO
+                      </span>
+                    {{else}}
+                      <span class="inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-semibold bg-slate-100 text-slate-500 border border-slate-200 font-mono">
+                        FREE
+                      </span>
+                    {{/if}}
+                    {{#if is_superuser}}
+                      <span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-rose-50 text-rose-700 border border-rose-200 font-mono">
+                        SUPERADMIN
+                      </span>
+                    {{/if}}
+                  </div>
+                </div>
+              </div>
+            </td>
+
+            <!-- Auth Method Column -->
+            <td class="py-3.5 px-4 whitespace-nowrap">
+              {{#if (eq profile.auth_provider 'google')}}
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200 font-mono">
+                  <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M23.5 12.3c0-.9-.1-1.5-.3-2.2H12v4.1h6.5c-.1 1.1-.8 2.7-2.4 3.8l3.7 2.9c2.3-2.1 3.7-5.1 3.7-8.6z"/>
+                    <path fill="#34A853" d="M12 24c3.2 0 6-1.1 7.9-2.9l-3.7-2.9c-1 .7-2.4 1.2-4.2 1.2-3.2 0-6-2.1-6.9-5.1L1.2 17C3.1 21.1 7.2 24 12 24z"/>
+                    <path fill="#FBBC05" d="M5.1 14.3c-.3-.7-.4-1.5-.4-2.3s.1-1.6.4-2.3L1.2 6.7C.4 8.3 0 10.1 0 12s.4 3.7 1.2 5.3l3.9-3z"/>
+                    <path fill="#EA4335" d="M12 4.7c1.8 0 3 .8 3.7 1.4l3.3-3.2C17.9 1.1 15.2 0 12 0 7.2 0 3.1 2.9 1.2 6.7l3.9 3C6 6.8 8.8 4.7 12 4.7z"/>
+                  </svg>
+                  <span>Google SSO</span>
+                </span>
+              {{else}}
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200 font-mono">
+                  <svg class="w-3.5 h-3.5 text-slate-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                  </svg>
+                  <span>Email / Pass</span>
+                </span>
+              {{/if}}
+            </td>
+
+            <!-- Role & Company Column -->
+            <td class="py-3.5 px-4">
+              <div class="font-semibold text-slate-800">
+                {{#if profile.role}}{{profile.role}}{{else}}Coating Inspector{{/if}}
+              </div>
+              <div class="text-[11px] text-slate-500 truncate max-w-[200px]">
+                {{#if profile.company}}{{profile.company}}{{else}}—{{/if}}
+              </div>
+              {{#if profile.designation}}
+                <div class="text-[10px] text-slate-400 font-mono truncate max-w-[200px]">
+                  {{profile.designation}}
+                </div>
+              {{/if}}
+            </td>
+
+            <!-- Contact & Location Column -->
+            <td class="py-3.5 px-4">
+              <div class="font-mono text-slate-800 text-xs">
+                {{#if profile.mobile}}
+                  {{profile.country_code}} {{profile.mobile}}
+                {{else}}
+                  <span class="text-slate-400">No mobile</span>
+                {{/if}}
+              </div>
+              <div class="text-[11px] text-slate-600 font-medium">
+                {{#if profile.city}}
+                  {{profile.city}}{{#if profile.state}}, {{profile.state}}{{/if}}{{#if profile.country}}, {{profile.country}}{{/if}}
+                {{else}}
+                  <span class="text-slate-400">Location not set</span>
+                {{/if}}
+              </div>
+              {{#if profile.address}}
+                <div class="text-[10px] text-slate-400 truncate max-w-[220px] mt-0.5" title="{{profile.address}}{{#if profile.zip_code}} ({{profile.zip_code}}){{/if}}">
+                  📍 {{profile.address}}{{#if profile.zip_code}} ({{profile.zip_code}}){{/if}}
+                </div>
+              {{/if}}
+            </td>
+
+            <!-- Certifications Badges -->
+            <td class="py-3.5 px-4">
+              {{#if profile.certifications}}
+                <div class="flex flex-wrap gap-1 max-w-[180px]">
+                  {{#each profile.certifications}}
+                    <span class="px-1.5 py-0.5 rounded text-[10px] font-bold font-mono bg-amber-50 text-amber-700 border border-amber-200">
+                      {{this}}
+                    </span>
+                  {{/each}}
+                </div>
+              {{else}}
+                <span class="text-slate-400 text-[11px]">—</span>
+              {{/if}}
+            </td>
+
+            <!-- Activity Timeline Column -->
+            <td class="py-3.5 px-4 whitespace-nowrap">
+              <div class="text-[11px] text-slate-700">
+                <span class="text-slate-400">Joined:</span> {{formatDate date_joined}}
+              </div>
+              {{#if profile.last_login_at}}
+                <div class="text-[10px] text-emerald-600 font-mono mt-0.5">
+                  <span class="text-slate-400">Active:</span> {{formatDate profile.last_login_at}}
+                </div>
+              {{/if}}
+            </td>
+
+            <!-- Actions Column -->
+            <td class="py-3.5 px-4 text-right whitespace-nowrap">
+              <div class="inline-flex items-center gap-1.5 justify-end">
+                <!-- Pro Toggle Form Button -->
+                <form action="/admin/users/{{id}}/toggle-pro" method="POST" class="inline-block m-0">
+                  {{#if profile.is_pro}}
+                    <button
+                      type="submit"
+                      title="Click to Revoke Pro Access"
+                      class="px-2 py-1 bg-amber-50 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-300 text-amber-800 text-[11px] font-bold rounded border border-amber-300 transition inline-flex items-center gap-1 cursor-pointer shadow-2xs"
+                    >
+                      <span>👑 Pro: Active</span>
+                    </button>
+                  {{else}}
+                    <button
+                      type="submit"
+                      title="Click to Grant Pro Access"
+                      class="px-2 py-1 bg-slate-50 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 text-slate-600 text-[11px] font-bold rounded border border-slate-200 transition inline-flex items-center gap-1 cursor-pointer shadow-2xs"
+                    >
+                      <span>+ Enable Pro</span>
+                    </button>
+                  {{/if}}
+                </form>
+
+                <!-- Action View Button -->
+                <a
+                  href="/admin/users/{{id}}"
+                  class="px-2.5 py-1 bg-slate-100 hover:bg-purple-50 hover:text-purple-700 text-slate-700 text-[11px] font-bold rounded border border-slate-200 transition inline-flex items-center gap-1 cursor-pointer"
+                  title="View User Details"
+                >
+                  <span>Action</span>
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </a>
+
+                <!-- Delete User Button -->
+                {{#unless is_superuser}}
+                  <form action="/admin/users/{{id}}/delete" method="POST" class="inline-block m-0" onsubmit="return confirm('Are you sure you want to permanently delete user {{#if full_name}}{{full_name}}{{else}}{{username}}{{/if}} (#{{id}})? This action cannot be undone.');">
+                    <button
+                      type="submit"
+                      title="Permanently Delete User"
+                      class="p-1 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded border border-transparent hover:border-rose-200 transition inline-flex items-center cursor-pointer"
+                    >
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    </button>
+                  </form>
+                {{/unless}}
+              </div>
+            </td>
+
+          </tr>
+        {{else}}
+          <tr>
+            <td colspan="7" class="py-8 text-center text-slate-500">
+              <div class="flex flex-col items-center justify-center space-y-2">
+                <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                </div>
+                <div class="font-bold text-slate-800 text-sm">No registered users found</div>
+                <p class="text-xs text-slate-400 max-w-sm">No user accounts matched your search criteria or auth method filter.</p>
+              </div>
+            </td>
+          </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination Bar -->
+  {{#if pagination}}
+    {{#if (or pagination.hasNext pagination.hasPrev)}}
+      <div class="p-3 border-t border-slate-100 bg-slate-50/50">
+        {{> pagination pagination=pagination}}
+      </div>
+    {{/if}}
+  {{/if}}
+</div>

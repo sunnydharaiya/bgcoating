@@ -1,0 +1,48 @@
+<div class="sec collapsed" id="secH">
+  <div class="sec-hd" onclick="tog(&#39;secH&#39;)">
+    <div class="sec-hd-icon">🏭</div>
+    <div class="sec-hd-text">
+      <div class="sec-hd-t">Approved Primer &amp; Paint Manufacturers</div>
+      <div class="sec-hd-s">Editable manufacturer list — auto-populated from Section F selections</div>
+    </div>
+    <div class="sec-pill">Section H</div>
+    <div class="sec-tog">▼</div>
+  </div>
+  <div class="sec-body">
+    <div class="imp" style="background:linear-gradient(135deg,#E3F2FD,#BBDEFB);border-color:#1976D2;border-left-color:#0D47A1;">
+      <div class="imp-ic" style="color:#0D47A1;">ℹ️</div>
+      <div class="imp-t" style="color:#0D47A1;">
+        <b style="color:#0D47A1;">Auto-Linked from Section F</b>
+        <div class="imp-t-body">Only paint generic types selected in Section F appear here. All product names are editable. Click <strong>↻ Sync from Section F</strong> to refresh.</div>
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table class="mfr-tbl">
+        <thead><tr>
+          <th style="width:200px;">Generic Paint Type</th>
+          <th>International / AkzoNobel</th>
+          <th>Jotun</th>
+          <th>Asian Paints / PPG</th>
+          <th>Carboline</th>
+          <th>Hempel</th>
+          <th>Sigma (PPG)</th>
+          <th><input type="text" id="h-other-col-name" value="Other" placeholder="Other (editable column name)" style="width:100%;border:none;background:transparent;font:inherit;color:inherit;font-size:inherit;font-weight:inherit;text-transform:inherit;letter-spacing:inherit;text-align:inherit;outline:none;padding:0;" oninput="updOtherColName(this.value)" onblur="updOtherColName(this.value)" title="Click to edit column name"></th>
+          <th><input type="text" id="h-other2-col-name" value="Other 2" placeholder="Other 2 (editable column name)" style="width:100%;border:none;background:transparent;font:inherit;color:inherit;font-size:inherit;font-weight:inherit;text-transform:inherit;letter-spacing:inherit;text-align:inherit;outline:none;padding:0;" oninput="updOther2ColName(this.value)" onblur="updOther2ColName(this.value)" title="Click to edit column name"></th>
+          <th style="width:42px;text-align:center;">×</th>
+        </tr></thead>
+        <tbody id="hTableBody"><tr><td colspan="10" style="text-align:center;padding:18px;font-style:italic;color:var(--txt3);font-size:11px;">No paint manufacturer rows. Use <strong style="color:var(--gi);">↻ Sync from Section F</strong>.</td></tr></tbody>
+      </table>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+      <button class="add-row-btn" onclick="addHRow()">+ Add Custom Row</button>
+      <button class="add-row-btn" onclick="syncHFromF()" style="border-style:solid;border-color:var(--gi);color:var(--gi);">↻ Sync from Section F</button>
+    </div>
+    <div class="special-comment" id="specialCommentBox" style="display:none;">
+      <div class="special-comment-h">💬 Specialized Coating Material — Comment</div>
+      <div style="font-size:10.5px;color:var(--txt2);margin-bottom:6px;">Specialized Coating Material has been selected in coating system. If you want to add a comment, you may add accordingly below.</div>
+      <textarea class="txa" id="specialComment" placeholder="e.g. Specific MNC requirements, alternate manufacturer approvals, technical justifications…"></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION I -->

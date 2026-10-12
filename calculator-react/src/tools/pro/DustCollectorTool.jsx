@@ -1,353 +1,530 @@
 import React, { useState } from 'react';
-import { Sparkles, Printer, Copy, Check, Calculator, Info, BookOpen, Wind, Play, RotateCcw } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
 import { useGuideline } from '../../context/GuidelineContext';
-import { DC_DB, NOZZLE_AIR_DB } from '../../utils/standardsDatabase';
 import { formatNum } from '../../utils/calculations';
+
+const CFM2M3H = 1.699;
+const NOZZLE_AIR_DB = {
+  '6': { name: '6 mm (No.4)', cfm: [180, 220], pr: [6, 7.5] },
+  '8': { name: '8 mm (No.5)', cfm: [300, 400], pr: [6, 7.5] },
+  '9.5': { name: '9.5 mm (No.6)', cfm: [450, 550], pr: [6, 7.5] },
+  '11': { name: '11 mm (No.7)', cfm: [600, 750], pr: [6, 7.5] },
+  '12.5': { name: '12.5 mm (No.8)', cfm: [700, 900], pr: [6, 7.5] }
+};
+const A2C_DB = {
+  'Pulse Jet': [1.0, 0.8, 1.2],
+  'Reverse Air': [0.8, 0.6, 1.0],
+  'Shaker Type': [0.7, 0.5, 0.9]
+};
+const STD_MOTORS = [
+  [3, 2.2], [5, 3.7], [7.5, 5.5], [10, 7.5], [15, 11],
+  [20, 15], [25, 18.5], [30, 22], [40, 30], [50, 37],
+  [60, 45], [75, 55], [100, 75], [125, 90]
+];
 
 export default function DustCollectorTool() {
   const { addToast } = useToast();
   const { openGuideline } = useGuideline();
 
-  // Section A: Project & Enclosure
-  const [projectName, setProjectName] = useState('');
-  const [client, setClient] = useState('');
-  const [roomTag, setRoomTag] = useState('');
+  // A · Project Info
+  const [proj, setProj] = useState('New Blast Facility Phase-1');
+  const [cli, setCli] = useState('Godrej Process Equipment');
+  const [room, setRoom] = useState('Blast Room BR-01');
 
-  const [roomL, setRoomL] = useState('');
-  const [roomW, setRoomW] = useState('');
-  const [roomH, setRoomH] = useState('');
-  const [nozzleSize, setNozzleSize] = useState('9.5'); // 9.5mm #6
-  const [nozzlesCount, setNozzlesCount] = useState('1');
-  const [targetAch, setTargetAch] = useState('60'); // Air changes per hour (60–90 typical)
-  const [safetyFactor, setSafetyFactor] = useState('15'); // %
-  const [copied, setCopied] = useState(false);
+  // B · Blast Room Details
+  const [len, setLen] = useState('12');
+  const [wid, setWid] = useState('6');
+  const [ht, setHt] = useState('5');
 
-  // Calculations
-  const hasInputs = roomL && roomW && roomH;
-  const roomVolM3 = hasInputs ? Number(roomL) * Number(roomW) * Number(roomH) : 0;
-  const roomVolCuFt = roomVolM3 * 35.3147;
+  // C · Operating Parameters
+  const [nozzles, setNozzles] = useState('1');
+  const [nozKey, setNozKey] = useState('9.5');
+  const [comp, setComp] = useState('1100');
+  const [pressure, setPressure] = useState('7');
+  const [fv, setFv] = useState('20');
+  const [ach, setAch] = useState('45');
 
-  // 1. ACH Airflow Demand: CFM = (Volume Cu Ft × ACH) / 60
-  const qAchCfm = (roomVolCuFt * Number(targetAch || 60)) / 60;
+  // D · Dust Collection Parameters
+  const [dust, setDust] = useState('8');
+  const [filterType, setFilterType] = useState('Pulse Jet');
+  const [sf, setSf] = useState('15');
+  const [staticPress, setStaticPress] = useState('150');
 
-  // 2. Cross-draft Face Velocity Demand: CFM = Face Area (W × H sq ft) × Velocity (ft/min)
-  const faceAreaSqFt = hasInputs ? (Number(roomW) * 3.28084) * (Number(roomH) * 3.28084) : 0;
-  const qFaceCfm = faceAreaSqFt * 60; // 60 ft/min standard
-
-  // 3. Nozzle Compressed Air Supply Demand
-  const nozzleAir = NOZZLE_AIR_DB[nozzleSize]?.cfm[1] || 500;
-  const qNozzlesCfm = nozzleAir * Number(nozzlesCount || 1);
-
-  // Governing airflow + safety factor
-  const baseGoverningCfm = hasInputs ? Math.max(qAchCfm, qFaceCfm, qNozzlesCfm * 1.5) : 0;
-  const totalRequiredCfm = baseGoverningCfm * (1 + Number(safetyFactor || 0) / 100);
-
-  // Recommended Standard Dust Collector Model matching
-  const matchedModel = DC_DB.find(m => m.cap >= totalRequiredCfm) || DC_DB[DC_DB.length - 1];
-
-  const handleOpenGuideline = () => {
-    openGuideline('pro-dcc');
-  };
+  const [res, setRes] = useState(null);
 
   const handleCalculate = () => {
-    if (!roomL || !roomW || !roomH) {
-      addToast('Missing Required Inputs', 'Please enter Blast Chamber Length, Width, and Height.', 'warning');
+    const L = parseFloat(len);
+    const W = parseFloat(wid);
+    const H = parseFloat(ht);
+
+    if (!L || !W || !H) {
+      addToast('Missing Required Inputs', 'Please fill Blast Room Length, Width and Height.', 'warning');
       return;
     }
-    addToast('Calculated Ventilation Sizing', 'Dust collector airflow and equipment sizing evaluated.', 'success');
+
+    const n = parseInt(nozzles, 10) || 1;
+    const compVal = parseFloat(comp) || 0;
+    const prVal = parseFloat(pressure) || 7;
+    const fvVal = parseFloat(fv);
+    const achVal = parseFloat(ach);
+
+    if (!fvVal || !achVal) {
+      addToast('Missing Required Inputs', 'Please fill Face Velocity and Air Changes per Hour.', 'warning');
+      return;
+    }
+
+    const dustVal = parseFloat(dust) || 0;
+    const sfVal = parseFloat(sf) || 15;
+    const spVal = parseFloat(staticPress) || 150;
+
+    const vol = L * W * H;
+    const qAchM3 = vol * achVal;
+    const qAchC = qAchM3 / CFM2M3H;
+
+    const qFvM3 = W * H * fvVal * 60;
+    const qFvC = qFvM3 / CFM2M3H;
+
+    const nd = NOZZLE_AIR_DB[nozKey] || NOZZLE_AIR_DB['9.5'];
+    const pf = (prVal + 1) / 8;
+    const perNoz = ((nd.cfm[0] + nd.cfm[1]) / 2) * pf;
+    const qNozC = perNoz * n;
+    const qNozBasisC = Math.max(qNozC, compVal);
+
+    const reqC = Math.max(qAchC, qFvC, qNozBasisC);
+    const gov = reqC === qAchC ? `Air Changes (${achVal} ACH)` : (reqC === qFvC ? `Face Velocity (${fvVal} m/min)` : 'Nozzle / Compressor Air');
+    const finC = reqC * (1 + sfVal / 100);
+    const finM3 = finC * CFM2M3H;
+
+    const a2cArr = A2C_DB[filterType] || A2C_DB['Pulse Jet'];
+    const a2c = dustVal > 10 ? a2cArr[1] : a2cArr[0];
+    const fa = (finM3 / 60) / a2c;
+
+    const dpPa = spVal * 9.81;
+    const pKw = ((finM3 / 3600) * dpPa) / (0.65 * 0.9) / 1000;
+    const mot = STD_MOTORS.find(m => m[1] >= pKw * 1.15) || STD_MOTORS[STD_MOTORS.length - 1];
+
+    setRes({
+      vol,
+      reqC,
+      finC,
+      finM3,
+      gov,
+      fa,
+      pKw,
+      mot,
+      L,
+      W,
+      H,
+      n,
+      nozKey,
+      sfVal,
+      spVal
+    });
+    addToast('Sizing Complete', 'Dust collector capacity and motor power calculated.', 'success');
   };
 
   const handleReset = () => {
-    setProjectName('');
-    setClient('');
-    setRoomTag('');
-    setRoomL('');
-    setRoomW('');
-    setRoomH('');
-    setNozzleSize('9.5');
-    setNozzlesCount('1');
-    setTargetAch('60');
-    setSafetyFactor('15');
-    addToast('Form Reset', 'All input parameters have been cleared.', 'info');
+    setProj('');
+    setCli('');
+    setRoom('');
+    setLen('12');
+    setWid('6');
+    setHt('5');
+    setNozzles('1');
+    setNozKey('9.5');
+    setComp('1100');
+    setPressure('7');
+    setFv('20');
+    setAch('45');
+    setDust('8');
+    setFilterType('Pulse Jet');
+    setSf('15');
+    setStaticPress('150');
+    setRes(null);
+    addToast('Form Reset', 'Parameters cleared.', 'info');
   };
 
-  const handleCopy = () => {
-    if (!hasInputs) {
-      addToast('No Calculation', 'Please enter parameters first.', 'warning');
-      return;
-    }
-    const text = `BG CoatingOS™ — Dust Collector Sizing Report
-${projectName ? `Project: ${projectName}\n` : ''}${client ? `Client: ${client}\n` : ''}${roomTag ? `Facility/Chamber: ${roomTag}\n` : ''}Blast Room: ${roomL} m × ${roomW} m × ${roomH} m (${formatNum(roomVolM3, 1)} m³) | Nozzles: ${nozzlesCount} × #${nozzleSize}
-Airflow by ACH (${targetAch} ACH): ${formatNum(qAchCfm, 0)} CFM
-Airflow by Cross-Draft Face Velocity: ${formatNum(qFaceCfm, 0)} CFM
---------------------------------------
-Total Recommended Airflow (+${safetyFactor}% SF): ${formatNum(totalRequiredCfm, 0)} CFM
-Suggested Equipment Model: ${matchedModel.model} (${matchedModel.cap} CFM · ${matchedModel.hp} HP / ${matchedModel.kw} kW · ${matchedModel.fa} m² filter)`;
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleShare = () => {
+    if (!res) return;
+    const text = `BG CoatingOS™ — Dust Collector Sizing Analysis
+Blast Room: ${res.L} × ${res.W} × ${res.H} m (${res.vol} m³)
+Nozzles: ${res.n} × Ø${res.nozKey} mm
+--------------------------------------------------
+Recommended Collector Capacity: ${Math.round(res.finC).toLocaleString()} CFM (${Math.round(res.finM3).toLocaleString()} m³/hr)
+Governing Criteria: ${res.gov}
+Recommended Filter Area: ${formatNum(res.fa, 1)} m²
+Fan Motor Rating: ${res.mot[0]} HP (${res.mot[1]} kW)`;
+
     navigator.clipboard.writeText(text);
-    setCopied(true);
-    addToast('Copied to Clipboard', 'Dust collector sizing report copied.', 'success');
-    setTimeout(() => setCopied(false), 2000);
+    addToast('Copied to Clipboard', 'Dust collector sizing copied.', 'success');
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
-      
-      {/* Tool Header Card */}
-      <div className="bg-white border border-slate-200 rounded-3xl p-5 md:p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="sub-sec card active" id="pro-dcc">
+      <div className="ch">
+        <div className="ci">🌀</div>
         <div>
-          <div className="flex items-center gap-2">
-            <span className="bg-amber-50 text-[#D97706] border border-amber-200 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase font-mono tracking-wider">
-              Tool PRO-DCC-1 · ACGIH
-            </span>
-            <h1 className="text-lg md:text-xl font-extrabold text-slate-900">
-              Dust Collector &amp; Blast Room Ventilation Sizing
-            </h1>
-          </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Determine required exhaust airflow (CFM &amp; m³/hr), filter cloth area (m²), fan motor (HP/kW), and standard equipment model matching.
-          </p>
+          <div className="ct">Dust Collector System Capacity Calculator</div>
+          <div className="cs">Required airflow · filter area · fan motor · recommended collector model — ACGIH / OSHA / NFPA</div>
         </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleOpenGuideline}
-            className="px-3 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-[#D97706] border border-amber-200 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
-          >
-            <BookOpen className="w-3.5 h-3.5" />
-            <span>📖 Guideline</span>
-          </button>
-          <button
-            onClick={handleCopy}
-            className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
-          >
-            {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-            <span>{copied ? 'Copied' : 'Copy'}</span>
-          </button>
-          <button
-            onClick={() => window.print()}
-            className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
-          >
-            <Printer className="w-3.5 h-3.5" />
-            <span>Print Report</span>
-          </button>
-        </div>
+        <button className="gd-btn" onClick={() => openGuideline('pro-dcc')}>📖 Guideline</button>
+        <div className="ctag">PRO · DCC-1</div>
       </div>
 
-      {/* Main Grid: Inputs + Output */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        {/* Left Inputs Section */}
-        <div className="lg:col-span-6 bg-white border border-slate-200 rounded-3xl p-5 md:p-6 shadow-xs space-y-5">
-          
-          {/* Section A: Project & Enclosure */}
-          <div>
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2 mb-3">
-              <h2 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider font-mono">
-                A · Project &amp; Enclosure Information
-              </h2>
-              <Calculator className="w-4 h-4 text-[#F7941D]" />
+      <div className="cb">
+        <div className="input-section">
+          {/* Section A */}
+          <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--in-lbl)', marginBottom: '8px' }}>
+            A · Project Information
+          </div>
+          <div className="g2">
+            <div className="field">
+              <label>Project Name <span className="lh">optional</span></label>
+              <div className="iw">
+                <input 
+                  type="text" 
+                  id="dcc-proj" 
+                  placeholder="e.g. New Blast Facility Phase-1" 
+                  value={proj} 
+                  onChange={(e) => setProj(e.target.value)} 
+                />
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs">
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">
-                  Project Name <span className="text-slate-400 font-mono text-[10px] ml-1">optional</span>
-                </label>
-                <input
-                  type="text"
-                  value={projectName}
-                  onChange={e => setProjectName(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-                  placeholder="e.g. New Blast Facility Phase-1"
+            <div className="field">
+              <label>Client <span className="lh">optional</span></label>
+              <div className="iw">
+                <input 
+                  type="text" 
+                  id="dcc-cli" 
+                  placeholder="e.g. Godrej Process Equipment" 
+                  value={cli} 
+                  onChange={(e) => setCli(e.target.value)} 
                 />
               </div>
+            </div>
 
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">
-                  Client <span className="text-slate-400 font-mono text-[10px] ml-1">optional</span>
-                </label>
-                <input
-                  type="text"
-                  value={client}
-                  onChange={e => setClient(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-                  placeholder="e.g. Mazagon Dock Shipbuilders"
-                />
-              </div>
-
-              <div className="sm:col-span-2">
-                <label className="block font-bold text-slate-700 mb-1">
-                  Facility / Room Tag <span className="text-slate-400 font-mono text-[10px] ml-1">optional</span>
-                </label>
-                <input
-                  type="text"
-                  value={roomTag}
-                  onChange={e => setRoomTag(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-                  placeholder="e.g. Blast Chamber #4"
+            <div className="field">
+              <label>Blast Room Name <span className="lh">optional</span></label>
+              <div className="iw">
+                <input 
+                  type="text" 
+                  id="dcc-room" 
+                  placeholder="e.g. Blast Room BR-01" 
+                  value={room} 
+                  onChange={(e) => setRoom(e.target.value)} 
                 />
               </div>
             </div>
           </div>
 
-          {/* Section B: Blast Chamber Dimensions */}
-          <div className="border-t border-slate-100 pt-4">
-            <h2 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider font-mono mb-3">
-              B · Blast Chamber Dimensions &amp; Nozzle Setup
-            </h2>
-
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">Length (m)</label>
-                  <input
-                    type="number"
-                    value={roomL}
-                    onChange={e => setRoomL(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-                    placeholder="e.g. 12"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">Width (m)</label>
-                  <input
-                    type="number"
-                    value={roomW}
-                    onChange={e => setRoomW(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-                    placeholder="e.g. 6"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">Height (m)</label>
-                  <input
-                    type="number"
-                    value={roomH}
-                    onChange={e => setRoomH(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-                    placeholder="e.g. 5"
-                  />
-                </div>
+          {/* Section B */}
+          <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--in-lbl)', margin: '14px 0 8px' }}>
+            B · Blast Room Details
+          </div>
+          <div className="g2">
+            <div className="field">
+              <label>Blast Room Length <span className="lh">m</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="dcc-l" 
+                  placeholder="e.g. 12" 
+                  min="0" 
+                  step="any" 
+                  value={len} 
+                  onChange={(e) => setLen(e.target.value)} 
+                />
+                <span className="uu">m</span>
               </div>
+            </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">Blast Nozzle Size</label>
-                  <select
-                    value={nozzleSize}
-                    onChange={e => setNozzleSize(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-                  >
-                    {Object.keys(NOZZLE_AIR_DB).map(n => (
-                      <option key={n} value={n}>{NOZZLE_AIR_DB[n].name}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">Nozzles Operating (Nos.)</label>
-                  <input
-                    type="number"
-                    value={nozzlesCount}
-                    onChange={e => setNozzlesCount(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-                    placeholder="e.g. 2"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">Target Air Changes (ACH)</label>
-                  <input
-                    type="number"
-                    value={targetAch}
-                    onChange={e => setTargetAch(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-                    placeholder="e.g. 60"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">Design Safety Factor (%)</label>
-                  <input
-                    type="number"
-                    value={safetyFactor}
-                    onChange={e => setSafetyFactor(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-                    placeholder="e.g. 15"
-                  />
-                </div>
+            <div className="field">
+              <label>Blast Room Width <span className="lh">m</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="dcc-w" 
+                  placeholder="e.g. 6" 
+                  min="0" 
+                  step="any" 
+                  value={wid} 
+                  onChange={(e) => setWid(e.target.value)} 
+                />
+                <span className="uu">m</span>
               </div>
+            </div>
 
-              {/* Form Actions: Calculate & Reset */}
-              <div className="flex gap-2.5 pt-2">
-                <button
-                  type="button"
-                  onClick={handleCalculate}
-                  className="flex-[2] py-3 px-4 bg-gradient-to-r from-[#F7941D] to-[#A50021] hover:from-[#E8700A] hover:to-[#8B0018] text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-xs transition hover:brightness-105 active:scale-98 flex items-center justify-center gap-2 cursor-pointer"
+            <div className="field">
+              <label>Blast Room Height <span className="lh">m</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="dcc-h" 
+                  placeholder="e.g. 5" 
+                  min="0" 
+                  step="any" 
+                  value={ht} 
+                  onChange={(e) => setHt(e.target.value)} 
+                />
+                <span className="uu">m</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Section C */}
+          <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--in-lbl)', margin: '14px 0 8px' }}>
+            C · Operating Parameters
+          </div>
+          <div className="g2">
+            <div className="field">
+              <label>Number of Blast Nozzles</label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="dcc-n" 
+                  value={nozzles} 
+                  min="1" 
+                  step="1" 
+                  onChange={(e) => setNozzles(e.target.value)} 
+                />
+                <span className="uu">nos</span>
+              </div>
+            </div>
+
+            <div className="field">
+              <label>Nozzle Diameter <span className="lh">mm</span></label>
+              <div className="iw">
+                <select 
+                  id="dcc-noz" 
+                  value={nozKey} 
+                  onChange={(e) => setNozKey(e.target.value)}
+                  style={{ width: '100%', border: 'none', background: 'transparent', font: 'inherit', color: 'inherit', outline: 'none' }}
                 >
-                  <Play className="w-3.5 h-3.5 fill-white" />
-                  <span>Calculate Dust Collector</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={handleReset}
-                  className="flex-1 py-3 px-4 bg-white hover:bg-red-50 text-[#A50021] border border-[#A50021]/30 font-bold text-xs uppercase tracking-wider rounded-xl shadow-2xs transition hover:border-[#A50021] active:scale-98 flex items-center justify-center gap-1.5 cursor-pointer"
+                  <option value="6">6 mm (No.4) — ≈ 200 CFM</option>
+                  <option value="8">8 mm (No.5) — ≈ 350 CFM</option>
+                  <option value="9.5">9.5 mm (No.6) — ≈ 500 CFM</option>
+                  <option value="11">11 mm (No.7) — ≈ 675 CFM</option>
+                  <option value="12.5">12.5 mm (No.8) — ≈ 800 CFM</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="field">
+              <label>Compressor Capacity <span className="lh">total CFM available</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="dcc-comp" 
+                  placeholder="e.g. 1100" 
+                  min="0" 
+                  step="any" 
+                  value={comp} 
+                  onChange={(e) => setComp(e.target.value)} 
+                />
+                <span className="uu">CFM</span>
+              </div>
+            </div>
+
+            <div className="field">
+              <label>Blast Pressure <span className="lh">bar</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="dcc-pr" 
+                  value={pressure} 
+                  min="2" 
+                  max="12" 
+                  step="any" 
+                  onChange={(e) => setPressure(e.target.value)} 
+                />
+                <span className="uu">bar</span>
+              </div>
+            </div>
+
+            <div className="field">
+              <label>Face Velocity <span className="lh">m/min · typ. 18–25</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="dcc-fv" 
+                  value={fv} 
+                  min="5" 
+                  max="60" 
+                  step="any" 
+                  onChange={(e) => setFv(e.target.value)} 
+                />
+                <span className="uu">m/min</span>
+              </div>
+            </div>
+
+            <div className="field">
+              <label>Air Changes per Hour <span className="lh">typ. 30–60 ACH</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="dcc-ach" 
+                  value={ach} 
+                  min="5" 
+                  max="120" 
+                  step="any" 
+                  onChange={(e) => setAch(e.target.value)} 
+                />
+                <span className="uu">ACH</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Section D */}
+          <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--in-lbl)', margin: '14px 0 8px' }}>
+            D · Dust Collection Parameters
+          </div>
+          <div className="g2">
+            <div className="field">
+              <label>Dust Loading <span className="lh">g/m³ · optional</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="dcc-dust" 
+                  placeholder="e.g. 8" 
+                  min="0" 
+                  step="any" 
+                  value={dust} 
+                  onChange={(e) => setDust(e.target.value)} 
+                />
+                <span className="uu">g/m³</span>
+              </div>
+            </div>
+
+            <div className="field">
+              <label>Filter Cleaning System</label>
+              <div className="iw">
+                <select 
+                  id="dcc-filt" 
+                  value={filterType} 
+                  onChange={(e) => setFilterType(e.target.value)}
+                  style={{ width: '100%', border: 'none', background: 'transparent', font: 'inherit', color: 'inherit', outline: 'none' }}
                 >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                  <span>Reset</span>
-                </button>
+                  <option>Pulse Jet</option>
+                  <option>Reverse Air</option>
+                  <option>Shaker Type</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="field">
+              <label>Safety Factor <span className="lh">% · typ. 10–20</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="dcc-sf" 
+                  value={sf} 
+                  min="0" 
+                  max="50" 
+                  step="any" 
+                  onChange={(e) => setSf(e.target.value)} 
+                />
+                <span className="uu">%</span>
+              </div>
+            </div>
+
+            <div className="field">
+              <label>Est. System Static Pressure <span className="lh">mm WG · for fan sizing</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="dcc-sp" 
+                  value={staticPress} 
+                  min="50" 
+                  max="400" 
+                  step="any" 
+                  onChange={(e) => setStaticPress(e.target.value)} 
+                />
+                <span className="uu">mmWG</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Right Output Section */}
-        <div className="lg:col-span-6 space-y-4">
-          <div className="bg-gradient-to-br from-white to-amber-50/20 border-2 border-amber-200/80 rounded-3xl p-6 shadow-sm space-y-5">
-            
-            <div className="flex items-center justify-between border-b border-amber-100 pb-3">
-              <span className="text-[10px] font-mono font-extrabold text-[#D97706] uppercase tracking-wider">
-                Exhaust Airflow Demand
-              </span>
-              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-mono flex items-center gap-1">
-                <Wind className="w-3.5 h-3.5" />
-                <span>ACGIH Sizing</span>
-              </span>
-            </div>
-
-            {/* Target Output Highlight Box */}
-            <div className="bg-white border border-amber-200 rounded-2xl p-5 text-center shadow-xs">
-              <span className="text-xs text-slate-400 font-mono">Recommended Dust Collector Airflow</span>
-              <div className="text-4xl md:text-5xl font-black text-slate-900 font-mono mt-1 text-[#D97706]">
-                {formatNum(totalRequiredCfm, 0)} CFM
-              </div>
-              <p className="text-xs text-slate-500 mt-2 font-mono font-bold">
-                Suggested Standard Unit: {matchedModel.model} ({matchedModel.cap} CFM)
-              </p>
-            </div>
-
-            {/* Equipment Matching Box */}
-            <div className="p-4 bg-white border border-slate-200 rounded-2xl shadow-xs space-y-2">
-              <div className="text-xs font-bold text-slate-800 flex justify-between">
-                <span>Fan Motor Power:</span>
-                <span className="font-mono text-[#D97706]">{matchedModel.hp} HP / {matchedModel.kw} kW</span>
-              </div>
-              <div className="text-xs font-bold text-slate-800 flex justify-between">
-                <span>Filter Cloth Area:</span>
-                <span className="font-mono text-slate-700">{matchedModel.fa} m² (Pulse-Jet Cartridge)</span>
-              </div>
-              <div className="text-xs font-bold text-slate-800 flex justify-between">
-                <span>Suitable Room Envelope:</span>
-                <span className="font-mono text-slate-500">{matchedModel.room}</span>
-              </div>
-            </div>
-
-          </div>
+        <div className="btn-row">
+          <button className="btn" onClick={handleCalculate}>▶ Calculate Dust Collector Capacity</button>
+          <button className="btn-reset" onClick={handleReset}>↺ Reset</button>
         </div>
 
+        {res && (
+          <div className="res show" id="r-dcc">
+            <div className="output-section">
+              <div className="rh"><span className="pd"></span>Dust Collector Sizing Result</div>
+
+              {/* Primary Tiles */}
+              <div className="tls">
+                <div className="tile tp">
+                  <div className="tl">Recommended Collector Capacity</div>
+                  <div>
+                    <span className="tv" id="dcc-rcap">{Math.round(res.finC).toLocaleString()}</span>
+                    <span className="tu">CFM</span>
+                  </div>
+                  <div className="tn" id="dcc-rcapm">{Math.round(res.finM3).toLocaleString()} m³/hr (incl. {res.sfVal}% SF)</div>
+                </div>
+
+                <div className="tile ts">
+                  <div className="tl">Required Airflow (before SF)</div>
+                  <div>
+                    <span className="tv" id="dcc-rreq">{Math.round(res.reqC).toLocaleString()}</span>
+                    <span className="tu">CFM</span>
+                  </div>
+                  <div className="tn" id="dcc-rreqm">Governed by: {res.gov}</div>
+                </div>
+
+                <div className="tile ti">
+                  <div className="tl">Recommended Filter Area</div>
+                  <div>
+                    <span className="tv" id="dcc-rfa">{formatNum(res.fa, 1)}</span>
+                    <span className="tu">m²</span>
+                  </div>
+                  <div className="tn" id="dcc-rfan">{filterType} media</div>
+                </div>
+
+                <div className="tile tg">
+                  <div className="tl">Fan Motor Rating</div>
+                  <div>
+                    <span className="tv" id="dcc-rmot">{res.mot[0]} HP</span>
+                  </div>
+                  <div className="tn" id="dcc-rmotn">{res.mot[1]} kW motor @ {res.spVal} mmWG static</div>
+                </div>
+              </div>
+
+              {/* Input Summary */}
+              <div className="input-summary" style={{ marginTop: '14px' }}>
+                <div className="input-summary-label">📝 Dust Collection Sizing Summary</div>
+                <div className="dr"><span className="dk">Blast Room Enclosure</span><span className="dv">{res.L} × {res.W} × {res.H} m ({res.vol} m³)</span></div>
+                <div className="dr"><span className="dk">Nozzle Configuration</span><span className="dv">{res.n} × Ø{res.nozKey} mm</span></div>
+                <div className="dr"><span className="dk">Governing Ventilation Requirement</span><span className="dv">{res.gov}</span></div>
+                <div className="dr"><span className="dk">Design Airflow (CFM / m³·h)</span><span className="dv">{Math.round(res.finC).toLocaleString()} CFM / {Math.round(res.finM3).toLocaleString()} m³/h</span></div>
+                <div className="dr"><span className="dk">Air-to-Cloth Media Ratio</span><span className="dv">{filterType} ({formatNum(res.fa, 1)} m² cloth)</span></div>
+                <div className="dr"><span className="dk">Blower Power Requirement</span><span className="dv">{res.mot[0]} HP ({res.mot[1]} kW)</span></div>
+              </div>
+
+              <div style={{ marginTop: '12px', padding: '10px 14px', background: '#E1F5FE', borderRadius: 'var(--r)', borderLeft: '3px solid var(--gi)', fontSize: '11.5px', color: 'var(--txt2)' }}>
+                <strong style={{ color: 'var(--gi)' }}>References:</strong> ACGIH Industrial Ventilation Manual · OSHA 29 CFR 1910.94 · NFPA 652 / 654 (Combustible Dusts) · Project Safety Specification.
+              </div>
+            </div>
+
+            <div className="action-bar">
+              <button className="btn-print" onClick={handlePrint}>🖨 Print PDF</button>
+              <button className="btn-share" onClick={handleShare}>📤 Share Text</button>
+              <button className="btn-print" onClick={handlePrint}>⬇ Export Excel (CSV)</button>
+              <button className="btn-print xls-btn" onClick={() => addToast('Excel Export', 'Exporting dust collector sizing...', 'info')}>
+                📊 Excel Report
+              </button>
+            </div>
+          </div>
+        )}
       </div>
-
     </div>
   );
 }

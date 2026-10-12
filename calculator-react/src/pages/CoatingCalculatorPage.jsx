@@ -30,7 +30,8 @@ import {
   ArrowLeft,
   Gem,
   Disc,
-  Check
+  Check,
+  Lock
 } from 'lucide-react';
 
 // Paint Suite
@@ -77,8 +78,84 @@ import ProcurementSuite from '../tools/specialized/ProcurementSuite';
 
 // Shared PRO Reference & Classification Component
 import ProReferenceCard from '../components/ProReferenceCard';
+import { fetchUserProfile } from '../utils/api';
 
 export default function CoatingCalculatorPage({ activeSubTool, setActiveSubTool }) {
+  // Read authenticated user state
+  const [currentUser, setCurrentUser] = React.useState(() => {
+    try {
+      const stored = localStorage.getItem('bg_user');
+      return stored ? JSON.parse(stored) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+
+  const [checkingPro, setCheckingPro] = React.useState(false);
+
+  const refreshUserStatus = React.useCallback(async () => {
+    setCheckingPro(true);
+    try {
+      const refreshed = await fetchUserProfile();
+      if (refreshed) {
+        setCurrentUser(refreshed);
+      }
+    } catch (e) {
+      console.warn('Failed to refresh user profile:', e);
+    } finally {
+      setCheckingPro(false);
+    }
+  }, []);
+
+  // 1. Listen for background user updates within window
+  React.useEffect(() => {
+    const handleUserUpdate = (e) => {
+      try {
+        if (e?.detail) {
+          setCurrentUser(e.detail);
+        } else {
+          const stored = localStorage.getItem('bg_user');
+          if (stored) setCurrentUser(JSON.parse(stored));
+          else setCurrentUser(null);
+        }
+      } catch (e) {}
+    };
+    window.addEventListener('bg_user_updated', handleUserUpdate);
+    return () => window.removeEventListener('bg_user_updated', handleUserUpdate);
+  }, []);
+
+  // 2. Refresh on mount to get live status from Django backend
+  React.useEffect(() => {
+    refreshUserStatus();
+  }, [refreshUserStatus]);
+
+  // 3. Auto-refresh when user switches back to this browser tab from Admin Panel
+  React.useEffect(() => {
+    const handleTabFocus = () => {
+      if (document.visibilityState === 'visible') {
+        refreshUserStatus();
+      }
+    };
+    document.addEventListener('visibilitychange', handleTabFocus);
+    window.addEventListener('focus', handleTabFocus);
+    return () => {
+      document.removeEventListener('visibilitychange', handleTabFocus);
+      window.removeEventListener('focus', handleTabFocus);
+    };
+  }, [refreshUserStatus]);
+
+  const isUserPro = Boolean(
+    currentUser?.is_pro || 
+    currentUser?.profile?.is_pro || 
+    currentUser?.is_superuser
+  );
+
+  // 4. If user selects a Pro tool and is not yet marked Pro, auto-verify with server
+  React.useEffect(() => {
+    if (activeSubTool && !isUserPro) {
+      refreshUserStatus();
+    }
+  }, [activeSubTool, isUserPro, refreshUserStatus]);
   
   // Tool Mapping
   const toolComponents = {
@@ -188,34 +265,44 @@ export default function CoatingCalculatorPage({ activeSubTool, setActiveSubTool 
     'qa-hol': { component: HolidayVoltageTool, title: 'Holiday Test Voltage (ASTM G62 / NACE SP0188)', group: 'pro' },
     'qa_hol': { component: HolidayVoltageTool, title: 'Holiday Test Voltage (ASTM G62 / NACE SP0188)', group: 'pro' },
     'holiday_voltage': { component: HolidayVoltageTool, title: 'Holiday Test Voltage (ASTM G62 / NACE SP0188)', group: 'pro' },
+    'holiday-voltage': { component: HolidayVoltageTool, title: 'Holiday Test Voltage (ASTM G62 / NACE SP0188)', group: 'pro' },
+    'holiday': { component: HolidayVoltageTool, title: 'Holiday Test Voltage (ASTM G62 / NACE SP0188)', group: 'pro' },
 
     // Section 9: Corrosion Engineering
     'ce-rate': { component: CorrosionRateTool, title: 'Corrosion Rate & Remaining Asset Life', group: 'pro' },
     'ce_rate': { component: CorrosionRateTool, title: 'Corrosion Rate & Remaining Asset Life', group: 'pro' },
     'corrosion_rate': { component: CorrosionRateTool, title: 'Corrosion Rate & Remaining Asset Life', group: 'pro' },
+    'corrosion-rate': { component: CorrosionRateTool, title: 'Corrosion Rate & Remaining Asset Life', group: 'pro' },
     'ce-life': { component: CoatingLifePredictionTool, title: 'Coating Life Prediction & Health Index', group: 'pro' },
     'ce_life': { component: CoatingLifePredictionTool, title: 'Coating Life Prediction & Health Index', group: 'pro' },
     'coating_life': { component: CoatingLifePredictionTool, title: 'Coating Life Prediction & Health Index', group: 'pro' },
+    'coating-life': { component: CoatingLifePredictionTool, title: 'Coating Life Prediction & Health Index', group: 'pro' },
     'coating_life_durability': { component: CoatingLifePredictionTool, title: 'Coating Life Prediction & Health Index', group: 'pro' },
+    'coating-life-durability': { component: CoatingLifePredictionTool, title: 'Coating Life Prediction & Health Index', group: 'pro' },
     'env_conditions': { component: CoatingLifePredictionTool, title: 'Coating Life Prediction & Health Index', group: 'pro' },
 
     // Section 10: Thermal Spray Aluminium (TSA)
     'tsa-wire': { component: TSASuite, title: 'TSA Wire Consumption', group: 'pro' },
     'tsa_wire': { component: TSASuite, title: 'TSA Wire Consumption', group: 'pro' },
     'tsa_wire_consumption': { component: TSASuite, title: 'TSA Wire Consumption', group: 'pro' },
+    'tsa-wire-consumption': { component: TSASuite, title: 'TSA Wire Consumption', group: 'pro' },
     'tsa-cov': { component: TSASuite, title: 'TSA Area Coverage', group: 'pro' },
     'tsa_cov': { component: TSASuite, title: 'TSA Area Coverage', group: 'pro' },
     'tsa_area_coverage': { component: TSASuite, title: 'TSA Area Coverage', group: 'pro' },
+    'tsa-area-coverage': { component: TSASuite, title: 'TSA Area Coverage', group: 'pro' },
     'tsa-eff': { component: TSASuite, title: 'TSA Deposition Efficiency', group: 'pro' },
     'tsa_eff': { component: TSASuite, title: 'TSA Deposition Efficiency', group: 'pro' },
     'tsa_deposition': { component: TSASuite, title: 'TSA Deposition Efficiency', group: 'pro' },
+    'tsa-deposition-efficiency': { component: TSASuite, title: 'TSA Deposition Efficiency', group: 'pro' },
     'tsa-thk': { component: TSASuite, title: 'TSA Thickness Verification', group: 'pro' },
     'tsa_thk': { component: TSASuite, title: 'TSA Thickness Verification', group: 'pro' },
     'tsa_thickness': { component: TSASuite, title: 'TSA Thickness Verification', group: 'pro' },
     'tsa_thickness_verify': { component: TSASuite, title: 'TSA Thickness Verification', group: 'pro' },
+    'tsa-thickness-verification': { component: TSASuite, title: 'TSA Thickness Verification', group: 'pro' },
     'tsa-prod': { component: TSASuite, title: 'TSA Productivity (m²/hr & kg/hr)', group: 'pro' },
     'tsa_prod': { component: TSASuite, title: 'TSA Productivity (m²/hr & kg/hr)', group: 'pro' },
     'tsa_productivity': { component: TSASuite, title: 'TSA Productivity (m²/hr & kg/hr)', group: 'pro' },
+    'tsa-productivity': { component: TSASuite, title: 'TSA Productivity (m²/hr & kg/hr)', group: 'pro' },
     'tsa-cost': { component: TSASuite, title: 'TSA Cost Estimation (₹/m²)', group: 'pro' },
     'tsa_cost': { component: TSASuite, title: 'TSA Cost Estimation (₹/m²)', group: 'pro' },
     'tsa_sealer_calc': { component: TSASuite, title: 'TSA Sealer Paint Coverage', group: 'pro' },
@@ -229,22 +316,28 @@ export default function CoatingCalculatorPage({ activeSubTool, setActiveSubTool 
     'pfp-mat': { component: PFPSuite, title: 'PFP Material Consumption', group: 'pro' },
     'pfp_mat': { component: PFPSuite, title: 'PFP Material Consumption', group: 'pro' },
     'pfp_material': { component: PFPSuite, title: 'PFP Material Consumption', group: 'pro' },
+    'pfp-material': { component: PFPSuite, title: 'PFP Material Consumption', group: 'pro' },
     'pfp-thk': { component: PFPSuite, title: 'PFP Thickness (Fire Rating & Hp/A)', group: 'pro' },
     'pfp_thk': { component: PFPSuite, title: 'PFP Thickness (Fire Rating & Hp/A)', group: 'pro' },
     'pfp_thickness': { component: PFPSuite, title: 'PFP Thickness (Fire Rating & Hp/A)', group: 'pro' },
+    'pfp-thickness': { component: PFPSuite, title: 'PFP Thickness (Fire Rating & Hp/A)', group: 'pro' },
     'pfp_dft_matrix': { component: PFPSuite, title: 'PFP Thickness (Fire Rating & Hp/A)', group: 'pro' },
     'pfp-den': { component: PFPSuite, title: 'PFP Density Verification (ASTM E605)', group: 'pro' },
     'pfp_den': { component: PFPSuite, title: 'PFP Density Verification (ASTM E605)', group: 'pro' },
     'pfp_density': { component: PFPSuite, title: 'PFP Density Verification (ASTM E605)', group: 'pro' },
+    'pfp-density': { component: PFPSuite, title: 'PFP Density Verification (ASTM E605)', group: 'pro' },
     'pfp-mesh': { component: PFPSuite, title: 'PFP Reinforcement Mesh Quantity', group: 'pro' },
     'pfp_mesh': { component: PFPSuite, title: 'PFP Reinforcement Mesh Quantity', group: 'pro' },
     'pfp_mesh_qty': { component: PFPSuite, title: 'PFP Reinforcement Mesh Quantity', group: 'pro' },
+    'pfp-mesh-quantity': { component: PFPSuite, title: 'PFP Reinforcement Mesh Quantity', group: 'pro' },
     'pfp_reinforce_mesh': { component: PFPSuite, title: 'PFP Reinforcement Mesh Quantity', group: 'pro' },
     'pfp-cost': { component: PFPSuite, title: 'PFP Cost Breakdown Across 9 Heads', group: 'pro' },
     'pfp_cost': { component: PFPSuite, title: 'PFP Cost Breakdown Across 9 Heads', group: 'pro' },
     'pfp-rep': { component: PFPSuite, title: 'PFP Repair Quantity & CUF Check', group: 'pro' },
     'pfp_rep': { component: PFPSuite, title: 'PFP Repair Quantity & CUF Check', group: 'pro' },
     'pfp_repair': { component: PFPSuite, title: 'PFP Repair Quantity & CUF Check', group: 'pro' },
+    'pfp-repair': { component: PFPSuite, title: 'PFP Repair Quantity & CUF Check', group: 'pro' },
+    'pfp-repair-quantity': { component: PFPSuite, title: 'PFP Repair Quantity & CUF Check', group: 'pro' },
     'pfp_hp_a_calc': { component: PFPSuite, title: 'PFP Section Factor (Hp/A)', group: 'pro' },
     'pfp_volume_quote': { component: PFPSuite, title: 'PFP Volume & Weight Take-Off', group: 'pro' },
     'pfp_intumescent': { component: PFPSuite, title: 'Passive Fire Protection (PFP)', group: 'pro' },
@@ -254,10 +347,12 @@ export default function CoatingCalculatorPage({ activeSubTool, setActiveSubTool 
     'bid-proc': { component: ProcurementSuite, title: 'Paint Procurement Quantity (Multi-Coat Matrix)', group: 'pro' },
     'bid_proc': { component: ProcurementSuite, title: 'Paint Procurement Quantity (Multi-Coat Matrix)', group: 'pro' },
     'paint_procurement': { component: ProcurementSuite, title: 'Paint Procurement Quantity (Multi-Coat Matrix)', group: 'pro' },
+    'paint-procurement': { component: ProcurementSuite, title: 'Paint Procurement Quantity (Multi-Coat Matrix)', group: 'pro' },
     'procurement_suite': { component: ProcurementSuite, title: 'Paint Procurement Quantity (Multi-Coat Matrix)', group: 'pro' },
     'bid-comp': { component: ProcurementSuite, title: 'Multi-Manufacturer Bid Comparison (QCBS Scoring)', group: 'pro' },
     'bid_comp': { component: ProcurementSuite, title: 'Multi-Manufacturer Bid Comparison (QCBS Scoring)', group: 'pro' },
     'bid_comparison': { component: ProcurementSuite, title: 'Multi-Manufacturer Bid Comparison (QCBS Scoring)', group: 'pro' },
+    'bid-comparison': { component: ProcurementSuite, title: 'Multi-Manufacturer Bid Comparison (QCBS Scoring)', group: 'pro' },
     'contractor_bid_builder': { component: ProcurementSuite, title: 'Commercial Bid Builder', group: 'pro' },
     'batch_ticket_generator': { component: ProcurementSuite, title: 'Batch Inspection Ticket', group: 'pro' },
     'executive_cost_summary': { component: LifeCycleCostTool, title: 'Executive Cost Summary', group: 'pro' },
@@ -369,40 +464,167 @@ export default function CoatingCalculatorPage({ activeSubTool, setActiveSubTool 
                 </p>
               </div>
             </div>
-            <span className="px-2.5 py-1 rounded-full bg-gradient-to-r from-[#E87B1E] to-[#9E1B1E] text-white text-[9.5px] font-bold uppercase font-mono tracking-widest self-end md:self-auto shrink-0 shadow-xs">
-              Modular · Expanding (28 Tools)
-            </span>
+            {isUserPro ? (
+              <span className="px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-500 to-[#E87B1E] text-white text-[9.5px] font-bold uppercase font-mono tracking-widest self-end md:self-auto shrink-0 shadow-xs flex items-center gap-1.5">
+                <span>👑</span> PRO ACCESS ACTIVE
+              </span>
+            ) : (
+              <span className="px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[9.5px] font-bold uppercase font-mono tracking-widest self-end md:self-auto shrink-0 shadow-xs flex items-center gap-1.5">
+                <Lock className="w-3 h-3 text-amber-400" /> PRO MEMBERSHIP REQUIRED
+              </span>
+            )}
           </div>
         )}
 
-        {/* Top Horizontal Sub-Navigation Tab Bar */}
+        {/* Top Horizontal Sub-Navigation Tab Bar matching reference .subnav */}
         {currentNavList.length > 0 && (
-          <div className="bg-white p-1.5 rounded-xl border border-[#D8DEE5] shadow-[0_2px_8px_rgba(20,24,32,0.06)] flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+          <div className="subnav">
             {currentNavList.map(tab => {
               const isActive = activeSubTool === tab.id;
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveSubTool(tab.id)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition cursor-pointer flex items-center gap-1.5 ${
-                    isActive 
-                      ? 'bg-gradient-to-r from-[#E87B1E] to-[#9E1B1E] text-white shadow-xs font-rajdhani uppercase tracking-wider' 
-                      : 'text-[#4E5B6A] hover:bg-[#F7F8FA] hover:text-[#1B222C]'
-                  }`}
+                  className={`snb ${isActive ? 'active' : ''}`}
                 >
                   <span>{tab.label}</span>
+                  {activeGroup === 'pro' && !isUserPro && (
+                    <span className="ml-1 text-[9px] text-amber-400 font-mono">🔒</span>
+                  )}
                 </button>
               );
             })}
           </div>
         )}
 
-        {/* Active Tool Form Component */}
-        <ActiveTool activeSubTool={activeSubTool} onSubToolChange={setActiveSubTool} />
+        {/* PRO Tool Access Check: Only active Pro users can view Pro tools */}
+        {activeGroup === 'pro' && !isUserPro ? (
+          <div className="bg-white rounded-3xl border border-amber-300/80 p-6 md:p-10 shadow-xl text-center max-w-2xl mx-auto my-6 animate-in zoom-in-95 duration-200">
+            {/* Glowing Crown Lock Badge */}
+            <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-amber-500 via-[#F7941D] to-[#8B0E16] text-white flex items-center justify-center mx-auto shadow-lg shadow-amber-500/20 mb-5">
+              <Lock className="w-8 h-8" />
+            </div>
 
-        {/* Reference Standards & Smart Classification Component (Always visible under all PRO pages) */}
-        {activeGroup === 'pro' && (
-          <ProReferenceCard />
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-300 text-amber-900 text-xs font-mono font-bold uppercase tracking-wider mb-3">
+              <span>👑 Executive Pro Module Locked</span>
+            </div>
+
+            <h2 className="text-xl md:text-2xl font-extrabold text-slate-900 font-rajdhani uppercase tracking-tight">
+              {toolTitle}
+            </h2>
+            <p className="text-xs md:text-sm text-slate-600 mt-2 max-w-lg mx-auto leading-relaxed">
+              This advanced engineering module is part of the <strong>Executive Coating Calculation PRO Suite</strong>. Access is restricted to users with active PRO membership.
+            </p>
+
+            {/* Account Status Card */}
+            <div className="my-6 p-4 rounded-2xl bg-slate-50 border border-slate-200 text-left text-xs max-w-md mx-auto">
+              {currentUser ? (
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-200">
+                    <span className="text-slate-500">Signed In Account:</span>
+                    <span className="font-bold text-slate-900 font-mono">{currentUser.email || currentUser.name}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500">Membership Tier:</span>
+                    <span className="font-bold text-slate-600 bg-slate-200 px-2 py-0.5 rounded text-[10px] uppercase font-mono">
+                      Standard (Free)
+                    </span>
+                  </div>
+                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-950 text-[11px] leading-relaxed">
+                    <p className="font-bold text-amber-900 flex items-center gap-1 mb-1">
+                      <span>💡</span> Administrator Approval Required
+                    </p>
+                    Ask your platform administrator to toggle <strong>PRO</strong> access for <strong>{currentUser.email || currentUser.username}</strong> in the admin panel. Once enabled, you can immediately access all 28 Executive PRO modules.
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-2 space-y-3">
+                  <p className="text-slate-700 font-medium text-xs leading-relaxed">
+                    You are currently browsing as a guest. Please sign in with an account that has PRO privileges enabled.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      window.dispatchEvent(new CustomEvent('bg_open_auth_modal'));
+                    }}
+                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#F7941D] to-[#E87B1E] hover:from-[#E87B1E] hover:to-[#D97706] text-white text-xs font-bold rounded-xl shadow-md transition cursor-pointer"
+                  >
+                    <span>Sign In with Google / Email</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Quick Actions */}
+            <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={refreshUserStatus}
+                disabled={checkingPro}
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-[#E87B1E] hover:from-amber-600 hover:to-[#D97706] text-white text-xs font-bold transition cursor-pointer flex items-center gap-1.5 shadow-xs disabled:opacity-50"
+              >
+                <span>{checkingPro ? 'Checking Server Access...' : '🔄 Verify Pro Access Now'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveSubTool('hub')}
+                className="px-4 py-2 rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-bold transition cursor-pointer"
+              >
+                Return to Calculator Hub
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveSubTool('sp-pc')}
+                className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition cursor-pointer"
+              >
+                Browse Standard Tools
+              </button>
+            </div>
+
+            {/* Executive PRO Suite Features Overview */}
+            <div className="mt-8 pt-6 border-t border-slate-100 text-left">
+              <p className="text-[11px] font-bold text-slate-500 uppercase font-mono tracking-wider mb-3 text-center">
+                Executive PRO Suite Includes 28 Modules:
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-700">
+                <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 border border-slate-100">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                  <span>DFT Acceptance — SSPC-PA 2 &amp; ISO 19840</span>
+                </div>
+                <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 border border-slate-100">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                  <span>Theoretical vs Actual Paint Reconciliation</span>
+                </div>
+                <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 border border-slate-100">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                  <span>Coating Life Cycle Cost (LCC) Analysis</span>
+                </div>
+                <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 border border-slate-100">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                  <span>Passive Fire Protection (PFP) Material &amp; Hp/A</span>
+                </div>
+                <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 border border-slate-100">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                  <span>Thermal Spray Aluminium (TSA) Calculations</span>
+                </div>
+                <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 border border-slate-100">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                  <span>QCBS Multi-Manufacturer Bid Comparison</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Active Tool Form Component */}
+            <ActiveTool activeSubTool={activeSubTool} onSubToolChange={setActiveSubTool} />
+
+            {/* Reference Standards & Smart Classification Component (Always visible under all PRO pages) */}
+            {activeGroup === 'pro' && (
+              <ProReferenceCard />
+            )}
+          </>
         )}
       </div>
     );
@@ -575,8 +797,13 @@ export default function CoatingCalculatorPage({ activeSubTool, setActiveSubTool 
           <div className="qa-tile cursor-pointer" onClick={() => setActiveSubTool('vs-tds')}>
             <div className="qa-ic">👑</div>
             <div>
-              <div className="qa-tt">Executive PRO</div>
-              <div className="qa-td">Volume Solids verification suite</div>
+              <div className="qa-tt flex items-center gap-1.5">
+                Executive PRO
+                <span className={`text-[10px] px-1.5 py-0.2 rounded font-bold ${isUserPro ? 'bg-amber-100 text-amber-700' : 'bg-slate-200 text-slate-600'}`}>
+                  {isUserPro ? 'PRO ACTIVE' : 'LOCKED 🔒'}
+                </span>
+              </div>
+              <div className="qa-td">{isUserPro ? 'Volume Solids verification suite' : 'Pro membership required'}</div>
             </div>
           </div>
         </div>
@@ -648,6 +875,15 @@ export default function CoatingCalculatorPage({ activeSubTool, setActiveSubTool 
               className="ovc"
             >
               <span className="ovarr">→</span>
+              {toolComponents[tool.id]?.group === 'pro' && (
+                <span className={`absolute top-2.5 right-7 text-[9px] font-bold px-1.5 py-0.5 rounded tracking-wide ${
+                  isUserPro 
+                    ? 'bg-amber-100 text-amber-800 border border-amber-300' 
+                    : 'bg-slate-100 text-slate-500 border border-slate-300'
+                }`}>
+                  {isUserPro ? '👑 PRO' : '🔒 PRO'}
+                </span>
+              )}
               <div className="ovic">
                 {tool.id === 'sp-pc' && '🧮'}
                 {tool.id === 'sp-dft' && '📏'}

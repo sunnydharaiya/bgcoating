@@ -1,302 +1,306 @@
 import React, { useState } from 'react';
-import { Sparkles, Printer, Copy, Check, Calculator, Info, BookOpen, Zap, AlertTriangle, Play, RotateCcw } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
 import { useGuideline } from '../../context/GuidelineContext';
 import { formatNum } from '../../utils/calculations';
+
+const HOL_TABLE = [
+  [250, 1.5],
+  [500, 2.5],
+  [1000, 3.5],
+  [1500, 4.5],
+  [2000, 5.5],
+  [3000, 7.0]
+];
+
+function holTableLookup(dft) {
+  if (!dft || dft <= 0) return 0;
+  const t = HOL_TABLE;
+  if (dft <= t[0][0]) return t[0][1] * dft / t[0][0] < 0.5 ? 0.5 : t[0][1] * Math.max(0.4, dft / t[0][0]);
+  if (dft >= t[t.length - 1][0]) {
+    const [d1, v1] = t[t.length - 2];
+    const [d2, v2] = t[t.length - 1];
+    return v2 + (dft - d2) * (v2 - v1) / (d2 - d1);
+  }
+  for (let i = 0; i < t.length - 1; i++) {
+    if (dft >= t[i][0] && dft <= t[i + 1][0]) {
+      const [d1, v1] = t[i];
+      const [d2, v2] = t[i + 1];
+      return v1 + (dft - d1) * (v2 - v1) / (d2 - d1);
+    }
+  }
+  return t[0][1];
+}
 
 export default function HolidayVoltageTool() {
   const { addToast } = useToast();
   const { openGuideline } = useGuideline();
 
-  // Section A: Project & Material
-  const [projectName, setProjectName] = useState('');
-  const [client, setClient] = useState('');
-  const [coatingType, setCoatingType] = useState('');
+  const [proj, setProj] = useState('');
+  const [coatingType, setCoatingType] = useState('Epoxy');
+  const [dft, setDft] = useState('1500');
+  const [method, setMethod] = useState('ASTM G62 — Formula (V = 525 × √t mils)');
+  const [hasCalculated, setHasCalculated] = useState(true);
 
-  const [dft, setDft] = useState(''); // microns
-  const [method, setMethod] = useState('g62'); // 'g62' | 'sp0188'
-  const [copied, setCopied] = useState(false);
-
-  const mils = dft ? Number(dft) / 25.4 : 0;
-
-  // ASTM G62: V = 525 * sqrt(mils)
+  const dftVal = parseFloat(dft) || 0;
+  const useG62 = method.includes('G62');
+  const mils = dftVal > 0 ? dftVal / 25.4 : 0;
   const vG62 = mils > 0 ? 525 * Math.sqrt(mils) : 0;
   const kvG62 = vG62 / 1000;
-
-  // NACE SP0188 Table lookup / interpolation
-  const holTable = (d) => {
-    if (!d || d <= 0) return 0;
-    const table = [[250, 1.5], [500, 2.5], [1000, 3.5], [1500, 4.5], [2000, 5.5], [3000, 7.0]];
-    if (d <= table[0][0]) return table[0][1] * Math.max(0.4, d / table[0][0]);
-    if (d >= table[table.length - 1][0]) {
-      const [d1, v1] = table[table.length - 2];
-      const [d2, v2] = table[table.length - 1];
-      return v2 + (d - d2) * (v2 - v1) / (d2 - d1);
-    }
-    for (let i = 0; i < table.length - 1; i++) {
-      if (d >= table[i][0] && d <= table[i + 1][0]) {
-        const [d1, v1] = table[i];
-        const [d2, v2] = table[i + 1];
-        return v1 + (d - d1) * (v2 - v1) / (d2 - d1);
-      }
-    }
-    return 2.5;
-  };
-
-  const kvSp0188 = holTable(Number(dft || 0));
-  const recommendedKv = method === 'g62' ? kvG62 : kvSp0188;
-  const isThinFilm = dft && Number(dft) <= 500 && Number(dft) > 0;
-
-  const handleOpenGuideline = () => {
-    openGuideline('qa-hol');
-  };
+  const kvTab = holTableLookup(dftVal);
+  const kvSel = useG62 ? kvG62 : kvTab;
+  const lowV = dftVal <= 500 && dftVal > 0;
 
   const handleCalculate = () => {
-    if (!dft) {
-      addToast('Missing Required Inputs', 'Please enter Total Dry Film Thickness (DFT).', 'warning');
+    if (!dftVal) {
+      addToast('Missing Input', 'Enter DFT in microns.', 'warning');
       return;
     }
-    addToast('Calculated Test Voltage', 'Holiday test voltage computed.', 'success');
+    setHasCalculated(true);
+    addToast('Calculated Test Voltage', `Recommended: ${formatNum(kvSel, 1)} kV`, 'success');
   };
 
   const handleReset = () => {
-    setProjectName('');
-    setClient('');
-    setCoatingType('');
+    setProj('');
+    setCoatingType('Fusion Bonded Epoxy');
     setDft('');
-    setMethod('g62');
-    addToast('Form Reset', 'All input parameters have been cleared.', 'info');
+    setMethod('ASTM G62 — Formula (V = 525 × √t mils)');
+    setHasCalculated(false);
+    addToast('Reset', 'Form cleared.', 'info');
   };
 
-  const handleCopy = () => {
-    if (!dft) {
-      addToast('No Calculation', 'Please enter DFT first.', 'warning');
+  const handleExportCSV = () => {
+    if (!dftVal) {
+      addToast('No Data', 'Enter DFT first.', 'warning');
       return;
     }
-    const text = `BG CoatingOS™ — Holiday Detection Voltage Report
-${projectName ? `Project: ${projectName}\n` : ''}${client ? `Client: ${client}\n` : ''}${coatingType ? `Coating Type: ${coatingType}\n` : ''}Coating DFT: ${dft} µm (${formatNum(mils, 1)} mils) | Standard: ${method === 'g62' ? 'ASTM G62 Formula' : 'NACE SP0188 Table'}
---------------------------------------
-Recommended Test Voltage: ${formatNum(recommendedKv, 2)} kV (${formatNum(recommendedKv * 1000, 0)} Volts)
-ASTM G62 Calc: ${formatNum(kvG62, 2)} kV | NACE SP0188 Calc: ${formatNum(kvSp0188, 2)} kV
-Test Type: ${isThinFilm ? 'Consider Low-Voltage Wet Sponge (<=500 um)' : 'High-Voltage Spark Detector'}`;
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    addToast('Copied to Clipboard', 'Holiday voltage report copied.', 'success');
-    setTimeout(() => setCopied(false), 2000);
+    const rows = [
+      ['Project Name', proj || '—'],
+      ['Coating Type', coatingType],
+      ['Specified DFT (µm)', dftVal],
+      ['Thickness (mils)', formatNum(mils, 1)],
+      ['Preferred Method', method],
+      ['Recommended Test Voltage (kV)', formatNum(kvSel, 2)],
+      ['ASTM G62 Formula Voltage (kV)', formatNum(kvG62, 2)],
+      ['NACE SP0188 Table Voltage (kV)', formatNum(kvTab, 2)]
+    ];
+    const csvContent = 'data:text/csv;charset=utf-8,' + rows.map(e => e.join(',')).join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `Holiday_Voltage_${proj || 'Report'}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    addToast('Export Successful', 'Exported to CSV.', 'success');
   };
 
-  return (
-    <div className="space-y-6 animate-in fade-in duration-200">
-      
-      {/* Tool Header Card */}
-      <div className="bg-white border border-slate-200 rounded-3xl p-5 md:p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="bg-amber-50 text-[#D97706] border border-amber-200 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase font-mono tracking-wider">
-              Tool PRO-QA-3 · NACE SP0188 / ASTM G62
-            </span>
-            <h1 className="text-lg md:text-xl font-extrabold text-slate-900">
-              Holiday Spark Test Voltage Calculator
-            </h1>
-          </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Determine high-voltage dielectric spark testing settings to detect pinholes without puncturing or burning the protective coating film.
-          </p>
-        </div>
+  // Generate SVG curve points 100–3500 µm
+  const pts = [];
+  for (let d = 100; d <= 3500; d += 100) pts.push(d);
+  const maxKv = Math.max(525 * Math.sqrt(3500 / 25.4) / 1000, holTableLookup(3500), kvSel) * 1.1 || 10;
+  const X = d => ((d - 100) / (3500 - 100)) * 100;
+  const Y = k => 100 - (k / maxKv) * 100;
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleOpenGuideline}
-            className="px-3 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-[#D97706] border border-amber-200 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
-          >
-            <BookOpen className="w-3.5 h-3.5" />
-            <span>📖 Guideline</span>
-          </button>
-          <button
-            onClick={handleCopy}
-            className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
-          >
-            {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-            <span>{copied ? 'Copied' : 'Copy'}</span>
-          </button>
-          <button
-            onClick={() => window.print()}
-            className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
-          >
-            <Printer className="w-3.5 h-3.5" />
-            <span>Print Report</span>
-          </button>
+  const pathG62 = pts.map(d => `${X(d).toFixed(1)},${Y(525 * Math.sqrt(d / 25.4) / 1000).toFixed(1)}`).join(' ');
+  const pathTab = pts.map(d => `${X(d).toFixed(1)},${Y(holTableLookup(d)).toFixed(1)}`).join(' ');
+  const curX = X(Math.min(3500, Math.max(100, dftVal))).toFixed(1);
+  const curY = Y(kvSel).toFixed(1);
+
+  return (
+    <div className="sub-sec card active" id="qa-hol">
+      <div className="ch">
+        <div className="ci">⚡</div>
+        <div>
+          <div className="ct">Holiday Detection Voltage Calculator</div>
+          <div className="cs">High-voltage spark test — ASTM G62 formula &amp; NACE/AMPP SP0188 lookup</div>
         </div>
+        <button className="gd-btn" onClick={() => openGuideline('qa-hol')}>📖 Guideline</button>
+        <div className="ctag">PRO · QA-3</div>
       </div>
 
-      {/* Main Grid: Inputs + Output */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        {/* Left Inputs Section */}
-        <div className="lg:col-span-6 bg-white border border-slate-200 rounded-3xl p-5 md:p-6 shadow-xs space-y-5">
-          
-          {/* Section A: Project & Material */}
-          <div>
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2 mb-3">
-              <h2 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider font-mono">
-                A · Project &amp; Material Information
-              </h2>
-              <Calculator className="w-4 h-4 text-[#F7941D]" />
+      <div className="cb">
+        <div className="input-section">
+          <div className="g2">
+            <div className="field">
+              <label>Project Name <span className="lh">optional</span></label>
+              <div className="iw">
+                <input
+                  type="text"
+                  value={proj}
+                  onChange={e => setProj(e.target.value)}
+                  placeholder="e.g. Tank Internal Lining"
+                />
+              </div>
             </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs">
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">
-                  Project Name <span className="text-slate-400 font-mono text-[10px] ml-1">optional</span>
-                </label>
-                <input
-                  type="text"
-                  value={projectName}
-                  onChange={e => setProjectName(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-                  placeholder="e.g. Tank Bottom Lining Package"
-                />
-              </div>
-
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">
-                  Client <span className="text-slate-400 font-mono text-[10px] ml-1">optional</span>
-                </label>
-                <input
-                  type="text"
-                  value={client}
-                  onChange={e => setClient(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-                  placeholder="e.g. Nayara Energy"
-                />
-              </div>
-
-              <div className="sm:col-span-2">
-                <label className="block font-bold text-slate-700 mb-1">
-                  Coating Generic Type <span className="text-slate-400 font-mono text-[10px] ml-1">optional</span>
-                </label>
-                <input
-                  type="text"
+            <div className="field">
+              <label>Coating Type</label>
+              <div className="iw">
+                <select
                   value={coatingType}
                   onChange={e => setCoatingType(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-                  placeholder="e.g. Solvent-free High Build Epoxy"
-                />
+                  style={{ width: '100%', border: 'none', background: 'transparent', font: 'inherit', color: 'inherit', outline: 'none' }}
+                >
+                  <option>Fusion Bonded Epoxy</option>
+                  <option>Epoxy</option>
+                  <option>Coal Tar Epoxy</option>
+                  <option>Glass Flake</option>
+                  <option>Rubber Lining</option>
+                  <option>Polyurethane</option>
+                  <option>Internal Tank Lining</option>
+                  <option>Pipeline Coating</option>
+                </select>
               </div>
             </div>
-          </div>
-
-          {/* Section B: Holiday Voltage Setup */}
-          <div className="border-t border-slate-100 pt-4">
-            <h2 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider font-mono mb-3">
-              B · Film Thickness &amp; Testing Standard
-            </h2>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Total Dry Film Thickness (DFT in µm)
-                </label>
+            <div className="field">
+              <label>DFT <span className="lh">µm</span></label>
+              <div className="iw">
                 <input
                   type="number"
                   value={dft}
                   onChange={e => setDft(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-                  placeholder="e.g. 500"
+                  placeholder="e.g. 1500"
+                  min="1"
+                  step="any"
                 />
-                <span className="text-[10px] text-slate-400 font-mono mt-1 block">
-                  Equivalent to {formatNum(mils, 1)} mils (thousandths of an inch).
-                </span>
+                <span className="uu">µm</span>
               </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Testing Standard / Method
-                </label>
+            </div>
+            <div className="field">
+              <label>Preferred Method</label>
+              <div className="iw">
                 <select
                   value={method}
                   onChange={e => setMethod(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
+                  style={{ width: '100%', border: 'none', background: 'transparent', font: 'inherit', color: 'inherit', outline: 'none' }}
                 >
-                  <option value="g62">ASTM G62 (V = 525 × √t(mils) Formula)</option>
-                  <option value="sp0188">NACE SP0188 (Table Interpolation Method)</option>
+                  <option>ASTM G62 — Formula (V = 525 × √t mils)</option>
+                  <option>NACE / AMPP SP0188 — Lookup Table</option>
                 </select>
               </div>
+            </div>
+          </div>
+        </div>
 
-              {/* Form Actions: Calculate & Reset */}
-              <div className="flex gap-2.5 pt-2">
-                <button
-                  type="button"
-                  onClick={handleCalculate}
-                  className="flex-[2] py-3 px-4 bg-gradient-to-r from-[#F7941D] to-[#A50021] hover:from-[#E8700A] hover:to-[#8B0018] text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-xs transition hover:brightness-105 active:scale-98 flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <Play className="w-3.5 h-3.5 fill-white" />
-                  <span>Calculate Voltage</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={handleReset}
-                  className="flex-1 py-3 px-4 bg-white hover:bg-red-50 text-[#A50021] border border-[#A50021]/30 font-bold text-xs uppercase tracking-wider rounded-xl shadow-2xs transition hover:border-[#A50021] active:scale-98 flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                  <span>Reset</span>
-                </button>
+        <div className="btn-row">
+          <button className="btn" onClick={handleCalculate}>▶ Calculate Test Voltage</button>
+          <button className="btn-reset" onClick={handleReset}>↺ Reset</button>
+        </div>
+
+        {hasCalculated && dftVal > 0 && (
+          <div className="res" style={{ display: 'block' }}>
+            <div className="output-section">
+              <div className="rh"><span className="pd"></span>Holiday Test Voltage Result</div>
+
+              {/* Verdict Banner */}
+              <div style={{
+                background: '#E8F5E9',
+                border: '1.5px solid rgba(46,125,50,.35)',
+                borderRadius: 'var(--r)',
+                padding: '13px 16px',
+                textAlign: 'center',
+                marginBottom: '10px'
+              }}>
+                <div style={{
+                  fontFamily: "'Rajdhani', sans-serif",
+                  fontSize: '19px',
+                  fontWeight: 700,
+                  color: '#1B5E20'
+                }}>
+                  ⚡ Recommended Test Voltage ≈ {formatNum(kvSel, 1)} kV ({formatNum(kvSel * 1000, 0)} V)
+                </div>
+                <div style={{
+                  fontSize: '12.5px',
+                  fontWeight: 600,
+                  color: '#2E7D32',
+                  marginTop: '3px'
+                }}>
+                  {coatingType} · {dftVal} µm ({formatNum(mils, 1)} mil) · Method: {useG62 ? 'ASTM G62 formula' : 'NACE/AMPP SP0188 table'}
+                </div>
               </div>
 
-              {isThinFilm && (
-                <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-2 text-xs text-[#D97706]">
-                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-                  <span>
-                    <strong>Thin Film Warning (≤ 500 µm):</strong> High-voltage spark testing can cause dielectric burn-through. Consider ASTM D5162 Type I low-voltage wet-sponge testing (9V–90V).
-                  </span>
+              {/* Primary KPI Tiles */}
+              <div className="tls">
+                <div className="tile tp">
+                  <div className="tl">Recommended Test Voltage</div>
+                  <div><span className="tv">{formatNum(kvSel, 1)}</span><span className="tu">kV</span></div>
+                  <div className="tn">{(useG62 ? 'ASTM G62 selected' : 'SP0188 table selected') + ' — round to instrument setting'}</div>
+                </div>
+                <div className="tile ts">
+                  <div className="tl">ASTM G62 Formula</div>
+                  <div><span className="tv" style={{ fontSize: '22px' }}>{formatNum(kvG62, 2)} kV</span></div>
+                  <div className="tn">V = 525 × √{formatNum(mils, 1)} = {formatNum(vG62, 0)} V</div>
+                </div>
+                <div className="tile ti">
+                  <div className="tl">SP0188 Table Value</div>
+                  <div><span className="tv" style={{ fontSize: '22px' }}>{formatNum(kvTab, 2)} kV</span></div>
+                  <div className="tn">Interpolated from lookup table</div>
+                </div>
+                <div className="tile tg">
+                  <div className="tl">Thickness</div>
+                  <div><span className="tv">{formatNum(mils, 1)}</span><span className="tu">mil</span></div>
+                  <div className="tn">{dftVal} µm ÷ 25.4</div>
+                </div>
+              </div>
+
+              {/* Voltage vs DFT Chart */}
+              <div style={{ marginTop: '12px' }}>
+                <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--txt3)', marginBottom: '6px' }}>
+                  Voltage vs DFT — both methods, your point marked
+                </div>
+                <div style={{ background: 'var(--bg2)', border: '1px solid var(--bdr)', borderRadius: 'var(--r)', padding: '10px' }}>
+                  <svg viewBox="0 0 100 100" preserveAspectRatio="none" style={{ width: '100%', height: '150px', display: 'block' }}>
+                    <polyline fill="none" stroke="#1565C0" strokeWidth="2" points={pathG62} />
+                    <polyline fill="none" stroke="#B26A00" strokeWidth="2" points={pathTab} />
+                    <circle cx={curX} cy={curY} r="2.6" fill="#A50021" stroke="#fff" strokeWidth="1" />
+                  </svg>
+                  <div style={{ display: 'flex', gap: '16px', fontSize: '10.5px', color: 'var(--txt2)', marginTop: '4px', flexWrap: 'wrap' }}>
+                    <span><span style={{ display: 'inline-block', width: '14px', height: '3px', background: '#1565C0', verticalAlign: 'middle', marginRight: '5px' }}></span>ASTM G62 formula</span>
+                    <span><span style={{ display: 'inline-block', width: '14px', height: '3px', background: '#B26A00', verticalAlign: 'middle', marginRight: '5px' }}></span>SP0188 lookup</span>
+                    <span>● Your selection ({dftVal} µm → {formatNum(kvSel, 1)} kV)</span>
+                    <span style={{ color: 'var(--txt3)' }}>X: 100–3500 µm · Y: 0–{formatNum(maxKv, 1)} kV</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Optional Thin Film Notice */}
+              {lowV && (
+                <div style={{ marginTop: '12px', padding: '10px 14px', background: '#FFF9EE', border: '1px solid #FFE082', borderRadius: 'var(--r)', fontSize: '12px', color: '#5D4037' }}>
+                  ⚠️ <strong>Thin film detected (≤ 500 µm):</strong> High voltage spark testing may burn through thin coatings. Per ASTM D5162 Type I and NACE SP0188, low-voltage wet sponge testing (67.5 V or 9–90 V) is typically recommended instead of high-voltage spark testing.
                 </div>
               )}
+
+              {/* Test Parameters Summary */}
+              <div className="input-summary" style={{ marginTop: '14px' }}>
+                <div className="input-summary-label">📝 Test Parameters Summary</div>
+                <div className="dr"><span className="dk">Project</span><span className="dv">{proj || '—'}</span></div>
+                <div className="dr"><span className="dk">Coating Type</span><span className="dv">{coatingType}</span></div>
+                <div className="dr"><span className="dk">Specified DFT</span><span className="dv">{dftVal} µm ({formatNum(mils, 1)} mil)</span></div>
+                <div className="dr"><span className="dk">Method Selected</span><span className="dv">{method}</span></div>
+                <div className="dr"><span className="dk">Recommended Voltage</span><span className="dv" style={{ fontWeight: 700, color: 'var(--brand-crimson)' }}>{formatNum(kvSel, 2)} kV ({formatNum(kvSel * 1000, 0)} V)</span></div>
+                <div className="dr"><span className="dk">ASTM G62 Calculation</span><span className="dv">{formatNum(kvG62, 2)} kV</span></div>
+                <div className="dr"><span className="dk">NACE SP0188 Lookup</span><span className="dv">{formatNum(kvTab, 2)} kV</span></div>
+              </div>
+
+              {/* References Callout */}
+              <div style={{ marginTop: '12px', padding: '10px 14px', background: '#E1F5FE', borderRadius: 'var(--r)', borderLeft: '3px solid var(--gi)', fontSize: '11.5px', color: 'var(--txt2)' }}>
+                <strong style={{ color: 'var(--gi)' }}>References:</strong> ASTM D5162 · ASTM G62 · NACE/AMPP SP0188. Always confirm the test voltage against the coating manufacturer's data sheet and project specification before testing. For DFT ≤ 500 µm consider low-voltage wet-sponge testing (ASTM D5162 Type I, typically 9–90 V).
+              </div>
+            </div>
+
+            {/* Action Bar */}
+            <div className="action-bar">
+              <button className="btn-print" onClick={() => window.print()}>🖨 Print PDF</button>
+              <button className="btn-share" onClick={() => {
+                const text = `Holiday Voltage: ${formatNum(kvSel, 1)} kV for ${dftVal}µm ${coatingType} (${method})`;
+                navigator.clipboard?.writeText(text);
+                addToast('Copied', 'Summary copied to clipboard.', 'success');
+              }}>📤 Share Text</button>
+              <button className="btn-print" onClick={handleExportCSV}>⬇ Export Excel (CSV)</button>
+              <button className="btn-print xls-btn" onClick={handleExportCSV}>📊 Excel Report</button>
             </div>
           </div>
-        </div>
-
-        {/* Right Output Section */}
-        <div className="lg:col-span-6 space-y-4">
-          <div className="bg-gradient-to-br from-white to-amber-50/20 border-2 border-amber-200/80 rounded-3xl p-6 shadow-sm space-y-5">
-            
-            <div className="flex items-center justify-between border-b border-amber-100 pb-3">
-              <span className="text-[10px] font-mono font-extrabold text-[#D97706] uppercase tracking-wider">
-                Recommended Test Voltage
-              </span>
-              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-mono flex items-center gap-1">
-                <Zap className="w-3.5 h-3.5" />
-                <span>Dielectric Test</span>
-              </span>
-            </div>
-
-            {/* Target Output Highlight Box */}
-            <div className="bg-white border border-amber-200 rounded-2xl p-5 text-center shadow-xs">
-              <span className="text-xs text-slate-400 font-mono">Calibrated Spark Voltage</span>
-              <div className="text-4xl md:text-5xl font-black text-slate-900 font-mono mt-1 text-[#D97706]">
-                {formatNum(recommendedKv, 2)} kV
-              </div>
-              <p className="text-xs text-slate-500 mt-2 font-mono">
-                {formatNum(recommendedKv * 1000, 0)} Volts DC ({method === 'g62' ? 'ASTM G62' : 'NACE SP0188'})
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-xl text-center">
-                <span className="text-[10px] text-slate-400 font-mono block">ASTM G62 Calc</span>
-                <span className="text-base font-bold text-slate-800 font-mono">{formatNum(kvG62, 2)} kV</span>
-              </div>
-
-              <div className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-xl text-center">
-                <span className="text-[10px] text-slate-400 font-mono block">NACE SP0188 Calc</span>
-                <span className="text-base font-bold text-slate-800 font-mono">{formatNum(kvSp0188, 2)} kV</span>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
+        )}
       </div>
-
     </div>
   );
 }

@@ -1,0 +1,230 @@
+
+/* ==================================================================
+   BG CoatingOS(tm) — ONE DESIGN SYSTEM
+   Makes the Coating Calculator a native module of the platform:
+   same palette, sidebar, cards, buttons, forms, radii, shadows,
+   typography and 220ms motion as the Home dashboard.
+   SCREEN ONLY — print/PDF exports keep the original branded output.
+   Calculation logic and markup are untouched.
+   ================================================================== */
+@media screen{
+
+  /* 1 - One corporate palette (identical tokens to the platform shell) */
+  :root{
+    --brand-orange:#F7941D; --brand-gold:#FFB347; --brand-gold-l:#FFD9A0;
+    --brand-crimson:#A41E22; --graphite:#2B2B2B; --graphite-2:#3A3D42;
+    --o2:#F7941D; --o3:#FFB347; --o4:#FFD9A0;
+    --bg:#F3F5F8; --bg2:#F7F8FA; --bg3:#FFFFFF; --bg4:#FFF4E3;
+    --bdr:#E6E8EC; --bdr2:#D5DAE2;
+    --txt:#222222; --txt2:#5F6672; --txt3:#8A9099; --txt4:#AEB4BD;
+    --gs:#1E9E50;
+    --in-bg:#FFFFFF; --in-bdr:#E6E8EC; --in-lbl:#B05E00;
+    --out-bg:#EDF8F0; --out-bdr:#BCE3C9; --out-lbl:#1E9E50;
+    --r:12px; --r2:16px;                 /* platform radii */
+    --side-w:250px;                      /* identical rail width to the platform */
+    --sh:0 2px 8px rgba(20,24,32,.06);   /* platform elevation */
+    --shl:0 10px 30px rgba(20,24,32,.10);
+    --tb-h:0px;                          /* .main padding already clears the OS header */
+  }
+
+  /* 2 - One typography system */
+  body,button,input,select,textarea,a{font-family:'IBM Plex Sans',system-ui,sans-serif !important}
+  h1,h2,h3,h4,h5,.side-name,.cn{font-family:'Sora','IBM Plex Sans',sans-serif !important}
+
+  /* 3 - One continuous background */
+  body{
+    background:var(--bg) !important;
+    background-image:
+      radial-gradient(circle at 100% 0,rgba(247,148,29,.05),transparent 38%),
+      radial-gradient(circle at 0 100%,rgba(164,30,34,.04),transparent 40%) !important;
+  }
+
+  /* 4 - SIDEBAR: identical Charcoal Blue rail as the platform sidebar */
+  .sidebar{background:
+      radial-gradient(120% 55% at 50% 0%,rgba(255,255,255,.06),transparent 62%),
+      radial-gradient(90% 40% at 50% 100%,rgba(247,148,29,.05),transparent 70%),
+      linear-gradient(180deg,#343A45 0%,#2B303A 42%,#252A33 78%,#22262E 100%) !important;
+    border-right:1px solid rgba(0,0,0,.22) !important;
+    box-shadow:inset -1px 0 0 rgba(255,255,255,.04) !important}
+  /* remove module-only decoration the platform rail doesn't have */
+  .sidebar::before{display:none !important}           /* 3px orange edge stripe */
+  .sidebar::after{background:none !important}          /* orange corner glow      */
+  .side-brand{border-bottom:1px solid rgba(255,255,255,.09) !important;background:transparent !important;
+    padding:0 .95rem !important;height:64px !important;gap:.7rem !important;z-index:1 !important}
+  .side-logo,.side-brand img{width:42px !important;height:42px !important;border-radius:11px !important;
+    background:#FFFFFF !important;border:1px solid rgba(255,255,255,.14) !important;padding:3px !important;
+    object-fit:contain !important;box-shadow:0 2px 8px rgba(0,0,0,.25) !important}
+  .side-name{font-size:1rem !important;letter-spacing:.01em !important;font-weight:700 !important}
+  .side-tag{font-family:'IBM Plex Mono',monospace !important;font-size:.6rem !important;letter-spacing:.3em !important;text-transform:uppercase !important}
+  .side-name{color:#FFFFFF !important}
+  .side-tag{color:rgba(255,255,255,.42) !important}
+  .sec-label{color:rgba(255,255,255,.38) !important;font-family:'IBM Plex Mono',monospace !important}
+  /* group buttons = platform .sb-item */
+  .ng{color:rgba(255,255,255,.74) !important;transition:background .22s,color .22s !important}
+  .ng:hover{background:rgba(255,255,255,.06) !important;color:#FFFFFF !important}
+  .ng.active{background:rgba(247,148,29,.16) !important;color:#FFFFFF !important;box-shadow:none !important;font-weight:600 !important}
+  .ng.active::before{background:#F7941D !important}
+  /* one icon family: emoji are swapped for the platform's stroke icons by the bridge */
+  .ng .ico{filter:none !important;opacity:1 !important;width:17px !important;height:17px !important;
+    display:inline-flex !important;align-items:center;justify-content:center;flex:none;
+    font-size:0 !important;color:rgba(255,255,255,.42) !important;transition:color .22s,transform .22s cubic-bezier(.22,1,.36,1) !important}
+  .ng .ico svg{width:17px;height:17px;stroke-width:1.9;display:block}
+  .ng:hover .ico{color:#FFB347 !important;transform:translateX(2px) !important}
+  .ng.active .ico{color:#FFB347 !important}
+  .ng .cnt{background:rgba(255,255,255,.09) !important;color:rgba(255,255,255,.6) !important;transition:all .22s !important}
+  .ng:hover .cnt{background:rgba(255,255,255,.14) !important;color:#FFFFFF !important}
+  .ng.active .cnt{background:linear-gradient(120deg,#F7941D,#FFB347) !important;color:#fff !important}
+  .ng.active .chev{color:#FFB347 !important}
+  /* sub-items */
+  .nav-sub{color:rgba(255,255,255,.55) !important;transition:background .22s,color .22s !important}
+  .nav-sub::before{background:rgba(255,255,255,.22) !important;transition:background .22s !important}
+  .nav-sub:hover{color:#FFFFFF !important;background:rgba(255,255,255,.06) !important}
+  .nav-sub:hover::before{background:#F7941D !important}
+  .nav-sub.active{color:#FFFFFF !important;background:rgba(247,148,29,.14) !important;font-weight:600 !important}
+  .nav-sub.active::before{background:#F7941D !important;box-shadow:0 0 8px rgba(247,148,29,.6) !important}
+  .side-foot{border-top:1px solid rgba(255,255,255,.09) !important;display:block !important;padding:10px 8px !important}
+  .side-foot > a{display:none !important}   /* contacts live on the platform Support page */
+    /* account block — same pattern as the platform sidebar */
+  #bgos-user{display:block}
+  #bgos-user .bgos-up{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:9px 9px;margin-bottom:6px;
+    border:1px solid rgba(247,148,29,.28);background:rgba(247,148,29,.10);border-radius:12px;cursor:pointer;
+    transition:background .22s,border-color .22s,transform .15s;font-family:'IBM Plex Sans',sans-serif}
+  #bgos-user .bgos-up:hover{background:rgba(247,148,29,.18);border-color:rgba(247,148,29,.5)}
+  #bgos-user .bgos-up:active{transform:scale(.985)}
+  #bgos-user .bgos-up .ic{width:30px;height:30px;flex:none;border-radius:9px;display:grid;place-items:center;
+    background:linear-gradient(120deg,#F7941D,#FFB347);color:#fff;box-shadow:0 3px 10px rgba(247,148,29,.35)}
+  #bgos-user .bgos-up .tx{line-height:1.25;overflow:hidden}
+  #bgos-user .bgos-up .tx b{display:block;font-family:'Sora',sans-serif;font-size:12.5px;font-weight:600;color:#fff;white-space:nowrap}
+  #bgos-user .bgos-up .tx span{font-size:11px;color:rgba(255,255,255,.42);white-space:nowrap}
+  #bgos-user .bgos-acct{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:8px 9px;
+    border:0;background:transparent;border-radius:12px;cursor:pointer;transition:background .22s;font-family:'IBM Plex Sans',sans-serif}
+  #bgos-user .bgos-acct:hover{background:rgba(255,255,255,.06)}
+  #bgos-user .bgos-acct .av{width:34px;height:34px;flex:none;border-radius:10px;display:grid;place-items:center;
+    background:linear-gradient(135deg,#A41E22,#7E1418);color:#fff;font-family:'Sora',sans-serif;font-weight:700;font-size:12.5px;
+    box-shadow:0 3px 8px rgba(164,30,34,.3)}
+  #bgos-user .bgos-acct .mt{line-height:1.2;overflow:hidden}
+  #bgos-user .bgos-acct .mt b{display:block;color:#fff;font-size:12.5px;white-space:nowrap}
+  #bgos-user .bgos-acct .mt span{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.14em;
+    color:#FFB347;text-transform:uppercase;white-space:nowrap}
+  #bgos-user .bgos-acct .dots{margin-left:auto;color:rgba(255,255,255,.42);flex:none}
+  /* account menu — identical to the platform's profile dropdown */
+  .side-foot{position:relative !important}
+  #bgos-menu{position:absolute;bottom:calc(100% + 8px);left:8px;right:8px;z-index:99;
+    background:#FFFFFF;border:1px solid #E6E8EC;border-radius:16px;box-shadow:0 10px 30px rgba(20,24,32,.14);
+    opacity:0;visibility:hidden;transform:translateY(8px) scale(.98);
+    transition:opacity .25s cubic-bezier(.22,1,.36,1),transform .25s cubic-bezier(.22,1,.36,1),visibility .25s}
+  #bgos-menu.open{opacity:1;visibility:visible;transform:none}
+  #bgos-menu .hd{padding:13px 15px;border-bottom:1px solid #E6E8EC;font-size:12.5px;color:#222;font-family:'IBM Plex Sans',sans-serif}
+  #bgos-menu .hd span{display:block;font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:#8A9099;letter-spacing:.1em;margin-top:2px}
+  #bgos-menu .bd{padding:6px}
+  #bgos-menu .mi{display:flex;gap:10px;align-items:center;width:100%;text-align:left;padding:9px 10px;border:0;background:none;
+    border-radius:12px;font-size:13px;color:#5F6672;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;transition:background .22s,color .22s}
+  #bgos-menu .mi:hover{background:#F7F8FA;color:#222}
+  #bgos-menu .mi svg{color:#8A9099;flex:none}
+  /* sidebar scrollbar on charcoal */
+  .side-nav{scrollbar-width:thin !important;scrollbar-color:rgba(255,255,255,.18) transparent !important}
+  .side-nav::-webkit-scrollbar{width:8px}
+  .side-nav::-webkit-scrollbar-track{background:transparent}
+  .side-nav::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14) !important;border-radius:99px;border:2px solid transparent;background-clip:padding-box}
+  .side-nav::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.26) !important;background-clip:padding-box}
+
+  /* 5 - Duplicate branding removed: the OS already brands the module */
+  .dash-hero{display:none !important}
+  .footer{display:none !important}
+  .tb-title,.tb-contact,.tb-pill{display:none !important}
+  @media (min-width:961px){.topbar{display:none !important}}
+  @media (max-width:960px){.topbar{height:auto !important;min-height:0 !important;padding:8px 14px !important;
+    background:rgba(255,255,255,.94) !important;border-bottom:1px solid var(--bdr) !important;box-shadow:0 1px 6px rgba(20,24,32,.05) !important}}
+  .sh{display:none !important}
+  .subnav{margin-top:6px !important}
+
+  /* 6 - BUTTONS: identical to the platform .btn-primary / .btn-ghost */
+  .btn{
+    background:linear-gradient(120deg,#F7941D 0%,#FFB347 60%,#F7941D 100%) !important;
+    background-size:200% 100% !important;color:#FFFFFF !important;border:none !important;
+    border-radius:999px !important;font-family:'Sora',sans-serif !important;
+    font-size:15px !important;font-weight:600 !important;letter-spacing:0 !important;text-transform:none !important;
+    box-shadow:0 4px 12px rgba(247,148,29,.28) !important;
+    transition:transform .22s cubic-bezier(.2,.7,.2,1),box-shadow .22s,background .22s !important;
+  }
+  .btn:hover{transform:translateY(-2px) !important;box-shadow:0 8px 20px rgba(247,148,29,.38) !important;background-position:100% 0 !important}
+  .btn:active{transform:translateY(0) scale(.99) !important}
+  .btn-reset{
+    background:#FFFFFF !important;color:var(--graphite) !important;border:1px solid var(--bdr2) !important;
+    border-radius:999px !important;font-family:'Sora',sans-serif !important;font-size:14px !important;
+    font-weight:600 !important;letter-spacing:0 !important;text-transform:none !important;box-shadow:none !important;
+    transition:transform .22s cubic-bezier(.22,1,.36,1),border-color .22s,color .22s,box-shadow .22s !important;
+  }
+  .btn-reset:hover{transform:translateY(-2px) !important;border-color:var(--brand-orange) !important;
+    color:#D97706 !important;background:#FFFFFF !important;box-shadow:0 6px 18px rgba(20,24,32,.08) !important}
+
+  /* 7 - TABS: white pill + orange active (matches platform pills) */
+  .snb{background:#FFFFFF !important;border:1px solid var(--bdr) !important;color:var(--txt2) !important;
+    border-radius:999px !important;transition:all .22s var(--ease,cubic-bezier(.22,1,.36,1)) !important}
+  .snb:hover{border-color:#F3D2A0 !important;color:var(--in-lbl) !important;transform:translateY(-1px) !important;
+    box-shadow:0 2px 8px rgba(20,24,32,.06) !important}
+  .snb.active{background:linear-gradient(120deg,#F7941D,#FFB347) !important;color:#fff !important;
+    border-color:transparent !important;box-shadow:0 4px 12px rgba(247,148,29,.28) !important}
+
+  /* 8 - CARDS + module headers: same radius, border, elevation as dashboard */
+  .card{border:1px solid var(--bdr) !important;border-radius:var(--r2) !important;box-shadow:var(--sh) !important;
+    transition:box-shadow .22s,border-color .22s,transform .22s !important}
+  .ch{background:#FFFFFF !important;border-bottom:1px solid var(--bdr) !important}
+  .sub-sec.active .ch{background:rgba(255,255,255,.96) !important;backdrop-filter:blur(12px) !important;
+    box-shadow:0 1px 6px rgba(20,24,32,.05) !important;border-bottom:1px solid var(--bdr) !important}
+  .tile{border:1px solid var(--bdr) !important;box-shadow:var(--sh) !important;background:#FFFFFF !important}
+
+  /* 9 - FORMS: one input system */
+  input[type=number],input[type=text],input[type=date],input[type=email],select,textarea{
+    background:#FFFFFF !important;border:1px solid var(--bdr) !important;border-radius:var(--r) !important;
+    color:var(--txt) !important;transition:border-color .22s,box-shadow .22s !important}
+  input:focus,select:focus,textarea:focus{outline:none !important;border-color:var(--brand-orange) !important;
+    box-shadow:0 0 0 3px rgba(247,148,29,.18) !important}
+  ::placeholder{color:#B4BAC3 !important}
+  select option{background:#FFFFFF !important;color:var(--txt) !important}
+
+  /* 10 - Tables + misc surfaces */
+  .rt tr:hover td{background:var(--bg4) !important}
+  .ctag{background:var(--bg2) !important;color:var(--txt2) !important;border-radius:999px !important}
+  .tb-burger{background:var(--bg2) !important}
+
+  /* 11 - Help dialog joins the family */
+  .gd-dlg,.gd-ct{background:#FFFFFF !important;border-color:var(--bdr) !important;border-radius:var(--r2) !important}
+  .gd-hd,.gd-f{background:var(--bg2) !important}
+  .gd-ft{background:var(--bg4) !important}
+  .gd-close{background:var(--bg2) !important;color:var(--txt) !important;border-radius:999px !important}
+  .gd-hd h3,.gd-f .fn{color:var(--txt) !important}
+
+
+  /* ── Two independent workspace containers (identical to the platform shell) ──
+     Navigation rail and working canvas are separate rounded boxes on the grey
+     canvas, with a consistent gutter. The OS header is overlaid by the shell as
+     this canvas box's header row, so --barh must match the platform. */
+  html,body{height:100% !important;overflow:hidden !important}
+  .app,#app{height:100% !important;overflow:hidden !important;display:block !important}
+  .sidebar{top:12px !important;left:12px !important;bottom:12px !important;height:auto !important;
+    border-radius:12px !important;overflow:hidden !important;
+    border:1px solid rgba(0,0,0,.14) !important;
+    box-shadow:0 8px 28px rgba(20,24,32,.14), inset 0 1px 0 rgba(255,255,255,.05) !important}
+  .main{margin:12px 12px 12px calc(var(--side-w) + 24px) !important;height:calc(100% - 24px) !important;
+    background:#FFFFFF !important;border:1px solid var(--bdr) !important;border-radius:12px !important;
+    box-shadow:0 6px 24px rgba(20,24,32,.07) !important;overflow-y:auto !important;overflow-x:hidden !important;
+    padding-top:48px !important}          /* clears the overlaid OS header */
+
+
+  /* ── Unified brand logo — identical box in platform + every module ──
+     The logo must feel anchored: same size, same place, no jump on transition. */
+  .side-brand{align-items:center !important;height:64px !important;
+    padding:0 16px !important;box-sizing:border-box !important}
+  .side-logo{width:46px !important;height:46px !important;flex:none !important;
+    border-radius:11px !important;background:#FFFFFF !important;border:1px solid rgba(0,0,0,.06) !important;
+    padding:3px !important;box-shadow:0 4px 16px rgba(20,24,32,.14) !important;
+    display:flex !important;align-items:center !important;justify-content:center !important;overflow:hidden !important}
+  .side-logo img{width:100% !important;height:100% !important;object-fit:contain !important;padding:0 !important}
+
+  /* 12 - Scrollbars identical to the platform */
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-track{background:var(--bg)}
+  ::-webkit-scrollbar-thumb{background:#C9CFD8;border-radius:99px;border:2px solid var(--bg)}
+  ::-webkit-scrollbar-thumb:hover{background:var(--brand-orange)}
+}

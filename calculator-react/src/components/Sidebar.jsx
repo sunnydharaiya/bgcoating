@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Home,
   Calculator,
@@ -43,7 +43,8 @@ import {
   Hammer,
   GraduationCap,
   Settings,
-  LogOut
+  LogOut,
+  LogIn
 } from 'lucide-react';
 
 export default function Sidebar({
@@ -53,7 +54,9 @@ export default function Sidebar({
   setActiveSubTool,
   onNavigate,
   mobileSidebarOpen,
-  setMobileSidebarOpen
+  setMobileSidebarOpen,
+  isLoggedIn,
+  onOpenAuthModal
 }) {
   const [estimationExpanded, setEstimationExpanded] = useState(false);
   const [docExpanded, setDocExpanded] = useState(false);
@@ -67,6 +70,23 @@ export default function Sidebar({
     } catch (e) {}
     return { name: 'User', role: 'FREE PLAN', email: '' };
   });
+
+  useEffect(() => {
+    const handleUserUpdate = () => {
+      try {
+        const stored = localStorage.getItem('bg_user');
+        if (stored) setCurrentUser(JSON.parse(stored));
+      } catch (e) {}
+    };
+    window.addEventListener('bg_user_updated', handleUserUpdate);
+    return () => window.removeEventListener('bg_user_updated', handleUserUpdate);
+  }, []);
+
+  const isUserPro = Boolean(
+    currentUser?.is_pro || 
+    currentUser?.profile?.is_pro || 
+    currentUser?.is_superuser
+  );
 
   const isHome = activePage === 'dashboard';
   const isCalc = activePage === 'coating-calculator' || activePage === 'calc';
@@ -177,8 +197,9 @@ export default function Sidebar({
     { id: 'annexure-inspection', label: 'Annexure - Inspection Plan' }
   ];
 
-  // Coating Calculator Categories
+  // Coating Calculator Categories (All 44 Tools: 16 Standard + 28 PRO)
   const calcTools = [
+    // Paint Suite (7 Tools)
     { id: 'wft_range', label: 'WFT Range Calculator' },
     { id: 'dft', label: 'DFT Calculator' },
     { id: 'coverage', label: 'Paint Coverage' },
@@ -186,14 +207,49 @@ export default function Sidebar({
     { id: 'blasting_loss', label: 'Blasting Dead Volume Loss' },
     { id: 'mixing_ratio', label: 'Mixing Ratio & Thinner' },
     { id: 'cost_per_area', label: 'Cost Per Area' },
+
+    // Surface Area Suite (6 Tools)
     { id: 'sa-pipe', label: 'Pipe Spool Area' },
     { id: 'sa-tank', label: 'Storage Tank Area' },
     { id: 'sa-wws', label: 'Structure Weight Area' },
     { id: 'sa-plate', label: 'Flat Plate Area' },
-    { id: 'ab-garnet', label: 'Abrasive Consumption' },
+    { id: 'sa-de', label: 'Dished End Area' },
+    { id: 'sa-vessel', label: 'Vessel & Equipment Area' },
+
+    // Abrasives & Salt (3 Tools)
+    { id: 'ab-garnet', label: 'Garnet Abrasive Consumption' },
+    { id: 'ab-cslag', label: 'Copper Slag Consumption' },
     { id: 'salt-main', label: 'Bresle Salt Test' },
+
+    // Executive PRO Suite (28 Tools across 12 Sections)
+    { id: 'vs-tds', label: 'VS · TDS Verification' },
+    { id: 'vs-den', label: 'VS · Density Verification' },
+    { id: 'vs-lab', label: 'VS · Lab ASTM D2697' },
     { id: 'pro-recon', label: 'Paint Reconciliation' },
-    { id: 'qa-pa2', label: 'SSPC-PA 2 Acceptance' }
+    { id: 'pro-lcc', label: 'Coating Life Cycle Cost (LCC)' },
+    { id: 'pro-abp', label: 'Abrasive Size & Blast Profile' },
+    { id: 'pro-arc', label: 'Abrasive Recycling' },
+    { id: 'pro-dcc', label: 'Dust Collector Capacity' },
+    { id: 'pro-saw', label: 'Surface Area & Steel Weight' },
+    { id: 'qa-pa2', label: 'DFT Compliance — SSPC-PA 2' },
+    { id: 'qa-iso', label: 'DFT Compliance — ISO 19840' },
+    { id: 'qa-hol', label: 'Holiday Test Voltage' },
+    { id: 'ce-rate', label: 'Corrosion Rate' },
+    { id: 'ce-life', label: 'Coating Life Prediction' },
+    { id: 'tsa-wire', label: 'TSA Wire Consumption' },
+    { id: 'tsa-cov', label: 'TSA Area Coverage' },
+    { id: 'tsa-eff', label: 'TSA Deposition Efficiency' },
+    { id: 'tsa-thk', label: 'TSA Thickness Verification' },
+    { id: 'tsa-prod', label: 'TSA Productivity' },
+    { id: 'tsa-cost', label: 'TSA Cost Estimation' },
+    { id: 'pfp-mat', label: 'PFP Material Consumption' },
+    { id: 'pfp-thk', label: 'PFP Thickness (Fire Rating)' },
+    { id: 'pfp-den', label: 'PFP Density Verification' },
+    { id: 'pfp-mesh', label: 'PFP Reinforcement Mesh' },
+    { id: 'pfp-cost', label: 'PFP Cost Breakdown' },
+    { id: 'pfp-rep', label: 'PFP Repair Quantity' },
+    { id: 'bid-proc', label: 'Paint Procurement Quantity' },
+    { id: 'bid-comp', label: 'Multi-Manufacturer Bid Comparison' }
   ];
 
   return (
@@ -1707,7 +1763,12 @@ export default function Sidebar({
                   onClick={() => handleNav('coating-calculator', 'vs-tds')}
                   className="w-full text-left px-3 py-1.5 rounded-lg text-xs font-bold text-white hover:bg-white/[0.04] transition cursor-pointer flex items-center justify-between"
                 >
-                  <span className="flex items-center gap-2"><span>👑</span> Executive PRO</span>
+                  <span className="flex items-center gap-2">
+                    <span>👑</span> Executive PRO
+                    {!isUserPro && (
+                      <span className="text-[10px] text-amber-400 font-mono">🔒</span>
+                    )}
+                  </span>
                   <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-amber-500/20 text-[#F7941D] font-bold">28</span>
                 </button>
                 
@@ -1810,13 +1871,16 @@ export default function Sidebar({
                         <button
                           key={item.id}
                           onClick={() => handleNav('coating-calculator', item.id)}
-                          className={`w-full text-left pl-8 pr-3 py-1 rounded-lg text-xs transition cursor-pointer block ${
+                          className={`w-full text-left pl-8 pr-3 py-1 rounded-lg text-xs transition cursor-pointer flex items-center justify-between ${
                             activeSubTool === item.id
                               ? 'text-white font-bold bg-[#F7941D]/15 border-l-2 border-[#F7941D]'
                               : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
                           }`}
                         >
-                          {item.label}
+                          <span className="truncate">{item.label}</span>
+                          {!isUserPro && (
+                            <span className="text-[9px] text-amber-500/80 font-mono shrink-0 ml-1">🔒</span>
+                          )}
                         </button>
                       ))}
                     </div>
@@ -1857,8 +1921,8 @@ export default function Sidebar({
                     { id: 'testing_qc', label: 'Paint Testing Requirements' },
                     { id: 'manufacturers', label: 'Approved Primer & Paint' },
                     { id: 'revisions_notes', label: 'Revision History' },
-                    { id: 'notes', label: 'General Notes & Comments', target: 'revisions_notes' },
-                    { id: 'validate', label: 'Validate / Save Draft', target: 'coating_design' }
+                    { id: 'notes', label: 'General Notes & Comments', target: 'notes' },
+                    { id: 'validate', label: 'Validate / Save Draft', target: 'validate' }
                   ].map((sec) => {
                     const isActive = activeSubTool === sec.id || (sec.target && activeSubTool === sec.target);
                     return (
@@ -2419,44 +2483,75 @@ export default function Sidebar({
             </div>
           ) : null}
 
-          {/* User Profile Card */}
-          <div className="flex items-center justify-between pt-1 px-1">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#F7941D] to-[#8B0E16] text-white font-bold flex items-center justify-center text-xs shadow-2xs font-mono shrink-0">
-                {(currentUser.name || 'U').charAt(0).toUpperCase()}
+          {/* User Profile Card / Sign In Action Card */}
+          {!isLoggedIn ? (
+            <button
+              onClick={onOpenAuthModal}
+              className="w-full flex items-center justify-between p-2 rounded-xl bg-gradient-to-r from-[#F7941D]/15 to-[#8B0E16]/15 border border-[#F7941D]/30 hover:border-[#F7941D] text-white transition group cursor-pointer"
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#F7941D] to-[#8B0E16] text-white flex items-center justify-center text-xs shadow-xs shrink-0">
+                  <LogIn className="w-3.5 h-3.5" />
+                </div>
+                <div className="text-left truncate">
+                  <span className="font-bold text-white text-[12px] block group-hover:text-[#F7941D] transition truncate">
+                    Sign In / Register
+                  </span>
+                  <span className="text-[9px] text-slate-400 block truncate">
+                    Unlock All Calculations
+                  </span>
+                </div>
               </div>
-              <div className="leading-tight truncate">
-                <span className="font-bold text-white text-[12px] block truncate">
-                  {currentUser.name || 'User'}
-                </span>
-                <span className="text-[9px] font-mono font-bold text-[#F7941D] uppercase block truncate">
-                  {currentUser.role || 'FREE PLAN'}
-                </span>
+              <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#F7941D] transition shrink-0" />
+            </button>
+          ) : (
+            <div className="flex items-center justify-between pt-1 px-1">
+              <div className="flex items-center gap-2.5 min-w-0">
+                {currentUser?.avatar_url || currentUser?.avatar || currentUser?.profile?.avatar_url ? (
+                  <img
+                    src={currentUser?.avatar_url || currentUser?.avatar || currentUser?.profile?.avatar_url}
+                    alt={currentUser.name || 'User'}
+                    className="w-7 h-7 rounded-full object-cover border border-amber-400/50 shadow-2xs shrink-0"
+                  />
+                ) : (
+                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#F7941D] to-[#8B0E16] text-white font-bold flex items-center justify-center text-xs shadow-2xs font-mono shrink-0">
+                    {(currentUser.name || 'U').charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div className="leading-tight truncate">
+                  <span className="font-bold text-white text-[12px] flex items-center gap-1 truncate">
+                    <span className="truncate">{currentUser.name || 'User'}</span>
+                    {isUserPro && <span className="text-[10px] text-amber-400">👑</span>}
+                  </span>
+                  <span className="text-[9px] font-mono font-bold text-[#F7941D] uppercase block truncate">
+                    {isUserPro ? 'EXECUTIVE PRO' : (currentUser.role || 'FREE PLAN')}
+                  </span>
+                </div>
               </div>
-            </div>
 
-            <div className="flex items-center gap-1 shrink-0">
-              <button 
-                onClick={() => handleNav('settings')}
-                className="p-1 text-slate-400 hover:text-white rounded cursor-pointer transition"
-                title="Account & Workspace Settings"
-              >
-                <Settings className="w-3.5 h-3.5" />
-              </button>
-              <button 
-                onClick={() => {
-                  if (window.confirm('Sign out of your workspace?')) {
-                    localStorage.removeItem('bg_auth_logged_in');
-                    window.dispatchEvent(new CustomEvent('bg_logout'));
-                  }
-                }}
-                className="p-1 text-slate-400 hover:text-rose-400 rounded cursor-pointer transition"
-                title="Sign Out / Switch Account"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-              </button>
+              <div className="flex items-center gap-1 shrink-0">
+                <button 
+                  onClick={() => handleNav('settings')}
+                  className="p-1 text-slate-400 hover:text-white rounded cursor-pointer transition"
+                  title="Account & Workspace Settings"
+                >
+                  <Settings className="w-3.5 h-3.5" />
+                </button>
+                <button 
+                  onClick={() => {
+                    if (window.confirm('Sign out of your workspace?')) {
+                      localStorage.removeItem('bg_auth_logged_in');
+                      window.dispatchEvent(new CustomEvent('bg_logout'));
+                    }
+                  }}
+                  className="p-1 text-slate-400 hover:text-rose-400 rounded cursor-pointer transition"
+                  title="Sign Out / Switch Account"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
         </div>
 
@@ -2573,8 +2668,8 @@ export default function Sidebar({
                       { id: 'testing_qc', label: 'Paint Testing Requirements' },
                       { id: 'manufacturers', label: 'Approved Primer & Paint' },
                       { id: 'revisions_notes', label: 'Revision History' },
-                      { id: 'notes', label: 'General Notes & Comments', target: 'revisions_notes' },
-                      { id: 'validate', label: 'Validate / Save Draft', target: 'coating_design' }
+                      { id: 'notes', label: 'General Notes & Comments', target: 'notes' },
+                      { id: 'validate', label: 'Validate / Save Draft', target: 'validate' }
                     ].map(sec => (
                       <button
                         key={sec.id}
@@ -2756,6 +2851,54 @@ export default function Sidebar({
                     </span>
                   </button>
                 </nav>
+              )}
+            </div>
+
+            {/* Mobile Bottom User / Sign In Action Card */}
+            <div className="p-3 border-t border-white/[0.08] bg-[#141923] shrink-0">
+              {!isLoggedIn ? (
+                <button
+                  onClick={() => {
+                    setMobileSidebarOpen(false);
+                    if (onOpenAuthModal) onOpenAuthModal();
+                  }}
+                  className="w-full flex items-center justify-between p-2.5 rounded-xl bg-gradient-to-r from-[#F7941D]/15 to-[#8B0E16]/15 border border-[#F7941D]/30 text-white cursor-pointer"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#F7941D] to-[#8B0E16] text-white flex items-center justify-center text-xs">
+                      <LogIn className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="text-left">
+                      <span className="font-bold text-white text-xs block">Sign In / Register</span>
+                      <span className="text-[10px] text-slate-400 block">Unlock Workspace</span>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                </button>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#F7941D] to-[#8B0E16] text-white font-bold flex items-center justify-center text-xs shrink-0 font-mono">
+                      {(currentUser.name || 'U').charAt(0).toUpperCase()}
+                    </div>
+                    <div className="leading-tight truncate">
+                      <span className="font-bold text-white text-xs block truncate">{currentUser.name || 'User'}</span>
+                      <span className="text-[9px] text-[#F7941D] font-mono font-bold block">{isUserPro ? 'EXECUTIVE PRO' : (currentUser.role || 'FREE PLAN')}</span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (window.confirm('Sign out of your workspace?')) {
+                        localStorage.removeItem('bg_auth_logged_in');
+                        window.dispatchEvent(new CustomEvent('bg_logout'));
+                      }
+                    }}
+                    className="p-1.5 text-slate-400 hover:text-rose-400 transition cursor-pointer"
+                    title="Sign Out"
+                  >
+                    <LogOut className="w-4 h-4" />
+                  </button>
+                </div>
               )}
             </div>
           </aside>

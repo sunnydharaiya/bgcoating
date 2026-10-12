@@ -111,13 +111,21 @@ class Command(BaseCommand):
             ('Expedite Curing Of Inorganic Zinc Silicate Primer And Ensure Validation Through ASTM D 4752', 'expedite-curing-inorganic-zinc-silicate-primer', 'Protective Coatings', date(2023, 9, 19), 7, 'Inorganic zinc silicate primers must cure fully before topcoating...', 'inorganic zinc silicate primer cure astm d 4752', False),
             ('Exploring Coating Adhesion: The Cross-Cut V-Cut Test', 'exploring-coating-adhesion-cross-cut-v-cut-test', 'Inspection', date(2023, 9, 15), 5, 'A simple, field-friendly way to gauge coating adhesion...', 'cross cut v cut adhesion test bond strength', False),
         ]
+        try:
+            from populate_blogs import posts_data
+        except Exception:
+            posts_data = {}
+
         for title, slug, cat, pub_date, read_t, excerpt, kw, feat in blogs:
+            p_data = posts_data.get(slug, {})
             BlogPost.objects.update_or_create(
                 slug=slug,
                 defaults={
                     'title': title, 'category_name': cat, 'publish_date': pub_date,
                     'read_time_minutes': read_t, 'excerpt': excerpt, 'search_keywords': kw,
-                    'is_featured': feat, 'featured_image': 'assets/images/Front_Page_Microns.jpg'
+                    'is_featured': feat,
+                    'featured_image': p_data.get('featured_image', 'assets/images/Front_Page_Microns.jpg'),
+                    'content': p_data.get('content', '')
                 }
             )
         self.stdout.write(self.style.SUCCESS('[OK] BlogPosts seeded.'))

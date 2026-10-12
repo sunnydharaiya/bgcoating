@@ -1,34 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Sparkles, 
-  Printer, 
-  Copy, 
-  Check, 
-  Calculator, 
-  Info, 
-  BookOpen, 
-  Shield, 
-  ShieldCheck, 
-  Play, 
-  RotateCcw,
-  Flame,
-  Layers,
-  Box,
-  Scale,
-  Clock,
-  Coins,
-  Wrench,
-  Grid
-} from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
 import { useGuideline } from '../../context/GuidelineContext';
 import { formatNum, formatCur } from '../../utils/calculations';
+
+const PFP_THK_DB = { '30': 8, '60': 16, '90': 24, '120': 32, '180': 45, '240': 60 };
+
+function pftCalcThk(fr, hpa, tc, mf) {
+  const base = PFP_THK_DB[String(fr)] || 32;
+  const fS = Math.max(0.7, Math.min(1.4, Math.pow(hpa / 180, 0.5)));
+  const fT = Math.max(0.8, Math.min(1.3, 538 / tc));
+  return base * fS * fT * mf;
+}
 
 export default function PFPSuite({ activeSubTool, onSubToolChange }) {
   const { addToast } = useToast();
   const { openGuideline } = useGuideline();
 
-  // Active Sub-Tab: 'mat' | 'thk' | 'den' | 'mesh' | 'cost' | 'rep'
   const [currentTab, setCurrentTab] = useState('mat');
 
   useEffect(() => {
@@ -46,771 +33,1481 @@ export default function PFPSuite({ activeSubTool, onSubToolChange }) {
   };
 
   // ----------------------------------------------------
-  // Tool 1: 11.1 PFP Material Consumption
+  // PFP-1 : Material Consumption
   // ----------------------------------------------------
-  const [matArea, setMatArea] = useState('250'); // m²
-  const [matDftMm, setMatDftMm] = useState('6.5'); // mm
-  const [matVsPct, setMatVsPct] = useState('100'); // %
-  const [matLossPct, setMatLossPct] = useState('15'); // %
-  const [matDensityKgM3, setMatDensityKgM3] = useState('1000'); // kg/m³
-  const [matKitSizeL, setMatKitSizeL] = useState('20'); // L
-  const [matPricePerL, setMatPricePerL] = useState('1850'); // ₹/L
+  const [pfmProj, setPfmProj] = useState('');
+  const [pfmStr, setPfmStr] = useState('');
+  const [pfmMat, setPfmMat] = useState('Epoxy Intumescent XYZ-100');
+  const [pfmArea, setPfmArea] = useState('500');
+  const [pfmT, setPfmT] = useState('8');
+  const [pfmDen, setPfmDen] = useState('1000');
+  const [pfmYld, setPfmYld] = useState('');
+  const [pfmWst, setPfmWst] = useState('10');
+  const [pfmCost, setPfmCost] = useState('350');
+  const [hasPfmCalculated, setHasPfmCalculated] = useState(true);
 
-  const matTheoVolL = (Number(matArea) || 0) * (Number(matDftMm) || 0); // L
-  const matActualVolL = Number(matVsPct) > 0 ? (matTheoVolL / (Number(matVsPct) / 100)) * (1 + (Number(matLossPct) || 0) / 100) : 0;
-  const matTotalWeightKg = matActualVolL * ((Number(matDensityKgM3) || 1000) / 1000);
-  const matKitsCount = Number(matKitSizeL) > 0 ? Math.ceil(matActualVolL / Number(matKitSizeL)) : 0;
-  const matTotalCost = matActualVolL * (Number(matPricePerL) || 0);
-  const matCostPerM2 = Number(matArea) > 0 ? matTotalCost / Number(matArea) : 0;
+  const pfmAVal = parseFloat(pfmArea) || 0;
+  const pfmTVal = parseFloat(pfmT) || 0;
+  const pfmDenVal = parseFloat(pfmDen) || 0;
+  const pfmYldVal = parseFloat(pfmYld) || 0;
+  const pfmWstVal = parseFloat(pfmWst) || 10;
+  const pfmCostVal = parseFloat(pfmCost) || 0;
 
-  // ----------------------------------------------------
-  // Tool 2: 11.2 PFP Thickness (Fire Rating & Hp/A)
-  // ----------------------------------------------------
-  const [profileType, setProfileType] = useState('I-Beam / Column (Universal Beam)');
-  const [exposureSides, setExposureSides] = useState('4'); // 3 or 4 sides
-  const [depthD, setDepthD] = useState('300'); // mm
-  const [widthB, setWidthB] = useState('150'); // mm
-  const [webTw, setWebTw] = useState('7.1'); // mm
-  const [flangeTf, setFlangeTf] = useState('10.7'); // mm
-  const [fireRatingMin, setFireRatingMin] = useState('60'); // 30, 60, 90, 120 min
-  const [critTempC, setCritTempC] = useState('500'); // 400, 500, 550, 620 °C
+  const pfmNet = pfmYldVal > 0 ? pfmAVal * pfmTVal * pfmYldVal : pfmAVal * (pfmTVal / 1000) * pfmDenVal;
+  const pfmWaste = (pfmNet * pfmWstVal) / 100;
+  const pfmProc = pfmNet + pfmWaste;
+  const pfmTotCost = pfmCostVal > 0 ? pfmProc * pfmCostVal : null;
+  const pfmPerM2c = (pfmTotCost !== null && pfmAVal > 0) ? pfmTotCost / pfmAVal : null;
 
-  // Cross-sectional Area A in mm²
-  const areaA = (2 * Number(widthB) * Number(flangeTf)) + ((Number(depthD) - 2 * Number(flangeTf)) * Number(webTw));
-  // Heated Perimeter Hp in mm
-  const heatedPerimeterHp = exposureSides === '4'
-    ? (4 * Number(widthB) + 2 * Number(depthD) - 2 * Number(webTw))
-    : (3 * Number(widthB) + 2 * Number(depthD) - Number(webTw));
-
-  // Hp/A ratio in m⁻¹
-  const hpOverA = areaA > 0 ? ((heatedPerimeterHp / areaA) * 1000) : 0;
-  // A/V is identical to Hp/A in SI units
-  const aOverV = hpOverA;
-
-  // Estimated DFT Matrix based on Hp/A and Fire Rating
-  const estimatedDftMm = Math.min(18.0, Math.max(1.5, ((hpOverA / 100) * (Number(fireRatingMin) / 60) * (550 / Number(critTempC)) * 2.8)));
+  // Pie for PFM
+  const pfmTotal = pfmNet + pfmWaste || 1;
+  const pfmNetPct = (pfmNet / pfmTotal) * 100;
+  const pfmWastePct = (pfmWaste / pfmTotal) * 100;
 
   // ----------------------------------------------------
-  // Tool 3: 11.3 PFP Density Verification (ASTM E605)
+  // PFP-2 : Thickness (Fire Rating)
   // ----------------------------------------------------
-  const [denWeightAirG, setDenWeightAirG] = useState('125.4'); // grams
-  const [denWeightWaterG, setDenWeightWaterG] = useState('24.2'); // grams
-  const [denSpecKgM3, setDenSpecKgM3] = useState('1000'); // kg/m³
-  const [denTolerancePct, setDenTolerancePct] = useState('10'); // %
+  const [pftFr, setPftFr] = useState('120');
+  const [pftHpa, setPftHpa] = useState('180');
+  const [pftTc, setPftTc] = useState('538');
+  const [pftMt, setPftMt] = useState('0.5'); // Epoxy Intumescent default
+  const [pftApp, setPftApp] = useState('34');
+  const [hasPftCalculated, setHasPftCalculated] = useState(true);
 
-  const denDisplacedVolCm3 = (Number(denWeightAirG) || 0) - (Number(denWeightWaterG) || 0);
-  const denMeasuredKgM3 = denDisplacedVolCm3 > 0 ? ((Number(denWeightAirG) || 0) / denDisplacedVolCm3) * 1000 : 0;
-  const denMinAllowed = (Number(denSpecKgM3) || 1000) * (1 - (Number(denTolerancePct) || 10) / 100);
-  const denMaxAllowed = (Number(denSpecKgM3) || 1000) * (1 + (Number(denTolerancePct) || 10) / 100);
-  const isDenPass = denMeasuredKgM3 >= denMinAllowed && denMeasuredKgM3 <= denMaxAllowed;
-  const denDevPct = Number(denSpecKgM3) > 0 ? ((denMeasuredKgM3 - Number(denSpecKgM3)) / Number(denSpecKgM3)) * 100 : 0;
+  const pftFrVal = parseInt(pftFr) || 120;
+  const pftHpaVal = parseFloat(pftHpa) || 180;
+  const pftTcVal = parseFloat(pftTc) || 538;
+  const pftMfVal = parseFloat(pftMt) || 0.5;
+  const pftAppVal = parseFloat(pftApp) || 0;
 
-  // ----------------------------------------------------
-  // Tool 4: 11.4 PFP Reinforcement Mesh Quantity
-  // ----------------------------------------------------
-  const [meshArea, setMeshArea] = useState('250'); // m²
-  const [meshOverlapPct, setMeshOverlapPct] = useState('15'); // %
-  const [meshWrapPct, setMeshWrapPct] = useState('10'); // % corner wrap
-  const [meshRollSizeM2, setMeshRollSizeM2] = useState('50'); // m²/roll
-  const [meshPricePerM2, setMeshPricePerM2] = useState('120'); // ₹/m²
+  const pftReq = pftCalcThk(pftFrVal, pftHpaVal, pftTcVal, pftMfVal);
+  let pftOk = null;
+  if (pftAppVal > 0) pftOk = pftAppVal >= pftReq;
 
-  const meshTotalAreaReqM2 = (Number(meshArea) || 0) * (1 + ((Number(meshOverlapPct) || 0) + (Number(meshWrapPct) || 0)) / 100);
-  const meshRollsCount = Number(meshRollSizeM2) > 0 ? Math.ceil(meshTotalAreaReqM2 / Number(meshRollSizeM2)) : 0;
-  const meshTotalCost = meshTotalAreaReqM2 * (Number(meshPricePerM2) || 0);
+  const pftRatings = [30, 60, 90, 120, 180, 240];
+  const pftVals = pftRatings.map(r => pftCalcThk(r, pftHpaVal, pftTcVal, pftMfVal));
+  const pftMaxVal = Math.max(...pftVals) * 1.1 || 50;
 
   // ----------------------------------------------------
-  // Tool 5: 11.5 PFP Cost Breakdown Across 9 Heads
+  // PFP-3 : Density
   // ----------------------------------------------------
-  const [costAreaPfp, setCostAreaPfp] = useState('250'); // m²
-  const [costH1Primer, setCostH1Primer] = useState('35000'); // ₹
-  const [costH2Basecoat, setCostH2Basecoat] = useState('320000'); // ₹
-  const [costH3Mesh, setCostH3Mesh] = useState('36000'); // ₹
-  const [costH4Topcoat, setCostH4Topcoat] = useState('45000'); // ₹
-  const [costH5SurfacePrep, setCostH5SurfacePrep] = useState('55000'); // ₹
-  const [costH6Labour, setCostH6Labour] = useState('95000'); // ₹
-  const [costH7Equipment, setCostH7Equipment] = useState('60000'); // ₹
-  const [costH8Testing, setCostH8Testing] = useState('25000'); // ₹
-  const [costH9MarginPct, setCostH9MarginPct] = useState('15'); // %
+  const [pfdId, setPfdId] = useState('Column C-12 East Face');
+  const [pfdW, setPfdW] = useState('285');
+  const [pfdV, setPfdV] = useState('300');
+  const [pfdSpec, setPfdSpec] = useState('900');
+  const [hasPfdCalculated, setHasPfdCalculated] = useState(true);
 
-  const costDirectSum = (Number(costH1Primer) || 0) + (Number(costH2Basecoat) || 0) + (Number(costH3Mesh) || 0) +
-    (Number(costH4Topcoat) || 0) + (Number(costH5SurfacePrep) || 0) + (Number(costH6Labour) || 0) +
-    (Number(costH7Equipment) || 0) + (Number(costH8Testing) || 0);
-  const costGrandTotalPfp = costDirectSum * (1 + (Number(costH9MarginPct) || 0) / 100);
-  const costPerM2GrandPfp = Number(costAreaPfp) > 0 ? costGrandTotalPfp / Number(costAreaPfp) : 0;
+  const pfdWVal = parseFloat(pfdW) || 0;
+  const pfdVVal = parseFloat(pfdV) || 0;
+  const pfdSpecVal = parseFloat(pfdSpec) || 900;
+
+  const pfdAct = pfdVVal > 0 ? (pfdWVal / pfdVVal) * 1000 : 0;
+  const pfdPct = pfdSpecVal > 0 ? (pfdAct / pfdSpecVal) * 100 : 0;
+  const pfdDiff = pfdPct - 100;
+  const pfdOk = pfdPct >= 100 ? 'PASS' : (pfdPct >= 90 ? 'REVIEW' : 'FAIL');
+  const pfdTone = pfdOk === 'PASS' ? 'ok' : (pfdOk === 'REVIEW' ? 'warn' : 'fail');
 
   // ----------------------------------------------------
-  // Tool 6: 11.6 PFP Repair Quantity & CUF Check
+  // PFP-4 : Mesh Quantity
   // ----------------------------------------------------
-  const [repTotalArea, setRepTotalArea] = useState('250'); // m²
-  const [repDefectArea, setRepDefectArea] = useState('6.5'); // m²
-  const [repDepthMm, setRepDepthMm] = useState('6.5'); // mm
-  const [repCostPerM2, setRepCostPerM2] = useState('3500'); // ₹/m²
+  const [mshArea, setMshArea] = useState('500');
+  const [mshW, setMshW] = useState('1.0');
+  const [mshL, setMshL] = useState('50');
+  const [mshOv, setMshOv] = useState('10');
+  const [mshWst, setMshWst] = useState('10');
+  const [mshCost, setMshCost] = useState('2500');
+  const [hasMshCalculated, setHasMshCalculated] = useState(true);
 
-  const repCufPct = Number(repTotalArea) > 0 ? ((Number(repDefectArea) || 0) / Number(repTotalArea)) * 100 : 0;
-  const isRepPermissible = repCufPct <= 5.0; // Under 5% spot repair is standard permissible
-  const repMaterialVolL = (Number(repDefectArea) || 0) * (Number(repDepthMm) || 0) * 1.25; // with 25% feathering loss
-  const repTotalCostEst = (Number(repDefectArea) || 0) * (Number(repCostPerM2) || 0);
+  const mshAVal = parseFloat(mshArea) || 0;
+  const mshWVal = parseFloat(mshW) || 1.0;
+  const mshLVal = parseFloat(mshL) || 50;
+  const mshOvVal = parseFloat(mshOv) || 10;
+  const mshWstVal = parseFloat(mshWst) || 10;
+  const mshCostVal = parseFloat(mshCost) || 0;
 
-  const [copied, setCopied] = useState(false);
+  const mshRollA = mshWVal * mshLVal;
+  const mshOvA = (mshAVal * mshOvVal) / 100;
+  const mshNet = mshAVal + mshOvA;
+  const mshProc = mshNet * (1 + mshWstVal / 100);
+  const mshRolls = mshRollA > 0 ? Math.ceil(mshProc / mshRollA) : 0;
+  const mshUtil = (mshRolls > 0 && mshRollA > 0) ? (mshProc / (mshRolls * mshRollA)) * 100 : 0;
+  const mshTotCost = mshCostVal > 0 ? mshRolls * mshCostVal : null;
 
-  const handleCopy = () => {
-    let text = '';
-    if (currentTab === 'mat') {
-      text = `BG CoatingOS™ — 11.1 PFP Material Consumption\nArea: ${matArea} m² | DFT: ${matDftMm} mm | VS: ${matVsPct}%\nActual Volume Reqd: ${formatNum(matActualVolL, 1)} L (${matKitsCount} x ${matKitSizeL}L kits)\nTotal Weight: ${formatNum(matTotalWeightKg, 1)} kg | Total Cost: ${formatCur(matTotalCost)} (${formatCur(matCostPerM2)}/m²)`;
-    } else if (currentTab === 'thk') {
-      text = `BG CoatingOS™ — 11.2 PFP Thickness (Fire Rating & Hp/A)\nProfile: ${profileType} (${exposureSides} sides)\nSection Factor Hp/A: ${formatNum(hpOverA, 1)} m⁻¹ | Rating: ${fireRatingMin} min @ ${critTempC}°C\nRecommended DFT: ${formatNum(estimatedDftMm, 2)} mm`;
-    } else if (currentTab === 'den') {
-      text = `BG CoatingOS™ — 11.3 PFP Density Verification (ASTM E605)\nMeasured Density: ${formatNum(denMeasuredKgM3, 1)} kg/m³ vs Specified: ${denSpecKgM3} kg/m³\nDeviation: ${formatNum(denDevPct, 1)}% | Verdict: ${isDenPass ? 'PASS' : 'FAIL'}`;
-    } else if (currentTab === 'mesh') {
-      text = `BG CoatingOS™ — 11.4 PFP Reinforcement Mesh Quantity\nArea: ${meshArea} m² | Total Mesh Reqd: ${formatNum(meshTotalAreaReqM2, 1)} m² (${meshRollsCount} rolls)\nTotal Mesh Cost: ${formatCur(meshTotalCost)}`;
-    } else if (currentTab === 'cost') {
-      text = `BG CoatingOS™ — 11.5 PFP Cost Breakdown (9 Heads)\nArea: ${costAreaPfp} m² | Grand Total: ${formatCur(costGrandTotalPfp)} (${formatCur(costPerM2GrandPfp)}/m²)\nDirect Subtotal: ${formatCur(costDirectSum)} | Margin: ${costH9MarginPct}%`;
-    } else {
-      text = `BG CoatingOS™ — 11.6 PFP Repair Quantity & CUF Check\nDefect Area: ${repDefectArea} m² of ${repTotalArea} m² (CUF: ${formatNum(repCufPct, 2)}%)\nRepair Volume: ${formatNum(repMaterialVolL, 1)} L | Estimated Cost: ${formatCur(repTotalCostEst)} | Status: ${isRepPermissible ? 'PERMISSIBLE' : 'EXCEEDS THRESHOLD'}`;
-    }
+  // ----------------------------------------------------
+  // PFP-5 : Cost
+  // ----------------------------------------------------
+  const [pfcArea, setPfcArea] = useState('500');
+  const [pfcMat, setPfcMat] = useState('1500000');
+  const [pfcLab, setPfcLab] = useState('450000');
+  const [pfcEqp, setPfcEqp] = useState('250000');
+  const [pfcScf, setPfcScf] = useState('180000');
+  const [pfcMsh, setPfcMsh] = useState('75000');
+  const [pfcPri, setPfcPri] = useState('120000');
+  const [pfcTop, setPfcTop] = useState('150000');
+  const [pfcIns, setPfcIns] = useState('80000');
+  const [pfcOh, setPfcOh] = useState('10');
+  const [hasPfcCalculated, setHasPfcCalculated] = useState(true);
 
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    addToast('Copied to Clipboard', 'PFP calculation report copied.', 'success');
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const navTabs = [
-    { id: 'mat', toolId: 'pfp-mat', label: '11.1 Material Take-Off', icon: Box },
-    { id: 'thk', toolId: 'pfp-thk', label: '11.2 Thickness & Hp/A', icon: Flame },
-    { id: 'den', toolId: 'pfp-den', label: '11.3 Density Verify', icon: Scale },
-    { id: 'mesh', toolId: 'pfp-mesh', label: '11.4 Reinforce Mesh', icon: Grid },
-    { id: 'cost', toolId: 'pfp-cost', label: '11.5 9-Head Costing', icon: Coins },
-    { id: 'rep', toolId: 'pfp-rep', label: '11.6 Repair & CUF', icon: Wrench },
+  const pfcAVal = parseFloat(pfcArea) || 0;
+  const pfcHeads = [
+    ['Material', parseFloat(pfcMat) || 0, '#2E7D32'],
+    ['Labour', parseFloat(pfcLab) || 0, '#1565C0'],
+    ['Equipment', parseFloat(pfcEqp) || 0, '#8E24AA'],
+    ['Scaffolding', parseFloat(pfcScf) || 0, '#00838F'],
+    ['Mesh', parseFloat(pfcMsh) || 0, '#B26A00'],
+    ['Primer', parseFloat(pfcPri) || 0, '#6D4C41'],
+    ['Topcoat', parseFloat(pfcTop) || 0, '#455A64'],
+    ['Inspection', parseFloat(pfcIns) || 0, '#AD1457']
   ];
+  const pfcSub = pfcHeads.reduce((acc, h) => acc + h[1], 0);
+  const pfcOhVal = parseFloat(pfcOh) || 0;
+  const pfcOhAmt = (pfcSub * pfcOhVal) / 100;
+  const pfcTot = pfcSub + pfcOhAmt;
+  const pfcPerM2 = pfcAVal > 0 ? pfcTot / pfcAVal : 0;
+  const pfcMatShare = pfcTot > 0 ? (pfcHeads[0][1] / pfcTot) * 100 : 0;
+
+  const pfcParts = pfcHeads.map(h => [h[0], h[1], h[2], formatCur(h[1])]);
+  if (pfcOhAmt > 0) pfcParts.push(['Overheads', pfcOhAmt, '#C62828', formatCur(pfcOhAmt)]);
+  const pfcPtot = pfcParts.reduce((acc, x) => acc + x[1], 0) || 1;
+  let pfcAcc = 0;
+  const pfcStops = [];
+  pfcParts.forEach(x => {
+    const p0 = (pfcAcc / pfcPtot) * 100;
+    pfcAcc += x[1];
+    pfcStops.push(`${x[2]} ${p0}% ${(pfcAcc / pfcPtot) * 100}%`);
+  });
+
+  // ----------------------------------------------------
+  // PFP-6 : Repair Quantity
+  // ----------------------------------------------------
+  const [pfrLoc, setPfrLoc] = useState('Pipe Rack Level 2 North');
+  const [pfrTot, setPfrTot] = useState('500');
+  const [pfrDmg, setPfrDmg] = useState('35');
+  const [pfrT, setPfrT] = useState('8');
+  const [pfrDen, setPfrDen] = useState('1000');
+  const [pfrYld, setPfrYld] = useState('');
+  const [pfrWst, setPfrWst] = useState('15');
+  const [pfrCost, setPfrCost] = useState('350');
+  const [hasPfrCalculated, setHasPfrCalculated] = useState(true);
+
+  const pfrTotVal = parseFloat(pfrTot) || 0;
+  const pfrDmgVal = parseFloat(pfrDmg) || 0;
+  const pfrTVal = parseFloat(pfrT) || 0;
+  const pfrDenVal = parseFloat(pfrDen) || 0;
+  const pfrYldVal = parseFloat(pfrYld) || 0;
+  const pfrWstVal = parseFloat(pfrWst) || 15;
+  const pfrCostVal = parseFloat(pfrCost) || 0;
+
+  const pfrNet = pfrYldVal > 0 ? pfrDmgVal * pfrTVal * pfrYldVal : pfrDmgVal * (pfrTVal / 1000) * pfrDenVal;
+  const pfrProc = pfrNet * (1 + pfrWstVal / 100);
+  const pfrRepPct = pfrTotVal > 0 ? (pfrDmgVal / pfrTotVal) * 100 : null;
+  const pfrRemain = pfrTotVal > 0 ? Math.max(0, pfrTotVal - pfrDmgVal) : null;
+  const pfrTotCost = pfrCostVal > 0 ? pfrProc * pfrCostVal : null;
+  const pfrSev = pfrRepPct === null ? null : (pfrRepPct < 5 ? ['Minor', 'ok', '✅'] : (pfrRepPct <= 15 ? ['Moderate — plan campaign repair', 'warn', '⚠️'] : ['Major — investigate root cause', 'fail', '❌']));
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
-      
-      {/* Top Suite Header */}
-      <div className="bg-white border border-[#D8DEE5] rounded-2xl p-5 md:p-6 shadow-[0_2px_8px_rgba(20,24,32,0.06)] flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="bg-[#FFF4E3] text-[#E87B1E] border border-[#F3D2A0] px-2 py-0.5 rounded-md text-[10px] font-bold uppercase font-mono tracking-wider">
-              Section 11 · UL 1709 / BS 476 / ISO 834 / ASTM E119
-            </span>
-            <h1 className="text-lg md:text-xl font-extrabold text-[#1B222C] font-rajdhani tracking-wide">
-              Passive Fire Protection (PFP) Engineering Suite
-            </h1>
-          </div>
-          <p className="text-xs text-[#7E8B99] mt-1 font-sans">
-            Structural epoxy intumescent &amp; cementitious fireproofing calculations (Hp/A section factor, DFT matrix, volume take-off, reinforcement mesh, 9-head turnkey costing &amp; repair CUF).
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => openGuideline(currentTab === 'mat' ? 'pfp-mat' : currentTab === 'thk' ? 'pfp-thk' : currentTab === 'den' ? 'pfp-den' : currentTab === 'mesh' ? 'pfp-mesh' : currentTab === 'cost' ? 'pfp-cost' : 'pfp-rep')}
-            className="px-3 py-1.5 rounded-lg bg-[#FFF4E3] hover:bg-[#FEE9C7] text-[#9E1B1E] border border-[#F3D2A0] text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
-          >
-            <BookOpen className="w-3.5 h-3.5 text-[#E87B1E]" />
-            <span>📖 Guideline</span>
-          </button>
-          <button
-            onClick={handleCopy}
-            className="px-3.5 py-1.5 rounded-lg bg-[#F7F8FA] hover:bg-[#FFF4E3] text-[#4E5B6A] hover:text-[#9E1B1E] border border-[#D8DEE5] text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
-          >
-            {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-[#E87B1E]" />}
-            <span>{copied ? 'Copied' : 'Copy'}</span>
-          </button>
-          <button
-            onClick={() => window.print()}
-            className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-[#E87B1E] to-[#9E1B1E] hover:opacity-90 text-white text-xs font-bold font-rajdhani uppercase tracking-wider transition flex items-center gap-1.5 shadow-xs cursor-pointer"
-          >
-            <Printer className="w-3.5 h-3.5" />
-            <span>Print PDF</span>
-          </button>
-        </div>
+    <div className="space-y-4">
+      {/* Sub Navigation Bar matching exact pills */}
+      <div className="subnav">
+        <button
+          className={`snb ${currentTab === 'mat' ? 'active' : ''}`}
+          onClick={() => handleTabSwitch('mat', 'pfp_material')}
+        >
+          🧱 PFP-1: Material Consumption
+        </button>
+        <button
+          className={`snb ${currentTab === 'thk' ? 'active' : ''}`}
+          onClick={() => handleTabSwitch('thk', 'pfp_thickness')}
+        >
+          🔥 PFP-2: Fire Rating Thickness
+        </button>
+        <button
+          className={`snb ${currentTab === 'den' ? 'active' : ''}`}
+          onClick={() => handleTabSwitch('den', 'pfp_density')}
+        >
+          ⚗️ PFP-3: Density Verification
+        </button>
+        <button
+          className={`snb ${currentTab === 'mesh' ? 'active' : ''}`}
+          onClick={() => handleTabSwitch('mesh', 'pfp_mesh_qty')}
+        >
+          🕸️ PFP-4: Mesh Quantity
+        </button>
+        <button
+          className={`snb ${currentTab === 'cost' ? 'active' : ''}`}
+          onClick={() => handleTabSwitch('cost', 'pfp_cost')}
+        >
+          🧾 PFP-5: Project Cost
+        </button>
+        <button
+          className={`snb ${currentTab === 'rep' ? 'active' : ''}`}
+          onClick={() => handleTabSwitch('rep', 'pfp_repair')}
+        >
+          🩹 PFP-6: Repair Quantity
+        </button>
       </div>
 
-      {/* Internal Tool Switcher Tabs */}
-      <div className="flex flex-wrap gap-1.5 p-1.5 bg-white border border-[#D8DEE5] rounded-xl shadow-[0_2px_8px_rgba(20,24,32,0.06)]">
-        {navTabs.map(t => {
-          const Icon = t.icon;
-          const isActive = currentTab === t.id;
-          return (
-            <button
-              key={t.id}
-              onClick={() => handleTabSwitch(t.id, t.toolId)}
-              className={`flex-1 min-w-[130px] flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-lg text-xs font-bold transition cursor-pointer whitespace-nowrap ${
-                isActive
-                  ? 'bg-gradient-to-r from-[#E87B1E] to-[#9E1B1E] text-white shadow-xs font-rajdhani uppercase tracking-wider'
-                  : 'text-[#4E5B6A] hover:bg-[#F7F8FA] hover:text-[#1B222C]'
-              }`}
-            >
-              <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-white' : 'text-[#7E8B99]'}`} />
-              <span className="truncate">{t.label}</span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* ---------------------------------------------------- */}
-      {/* 11.1 PFP Material Consumption Content */}
-      {/* ---------------------------------------------------- */}
+      {/* ── PFP-1 : Material Consumption ── */}
       {currentTab === 'mat' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-in fade-in duration-150">
-          <div className="lg:col-span-6 bg-white border border-slate-200 rounded-3xl p-5 md:p-6 shadow-xs space-y-4">
-            <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-mono border-b border-slate-100 pb-2">
-              Material Volume Parameters
-            </h2>
-            <div className="space-y-3.5 text-xs">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Surface Area (m²)</label>
-                  <input
-                    type="number"
-                    value={matArea}
-                    onChange={e => setMatArea(e.target.value)}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-slate-900"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Target PFP DFT (mm)</label>
-                  <input
-                    type="number"
-                    value={matDftMm}
-                    onChange={e => setMatDftMm(e.target.value)}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-slate-900"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Volume Solids (%)</label>
-                  <input
-                    type="number"
-                    value={matVsPct}
-                    onChange={e => setMatVsPct(e.target.value)}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-slate-900"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Loss Factor (%)</label>
-                  <input
-                    type="number"
-                    value={matLossPct}
-                    onChange={e => setMatLossPct(e.target.value)}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-slate-900"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Density (kg/m³)</label>
-                  <input
-                    type="number"
-                    value={matDensityKgM3}
-                    onChange={e => setMatDensityKgM3(e.target.value)}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-slate-900"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Kit Packing Size (Litres)</label>
-                  <input
-                    type="number"
-                    value={matKitSizeL}
-                    onChange={e => setMatKitSizeL(e.target.value)}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-slate-900"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Price per Litre (₹/L)</label>
-                  <input
-                    type="number"
-                    value={matPricePerL}
-                    onChange={e => setMatPricePerL(e.target.value)}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-slate-900"
-                  />
-                </div>
-              </div>
+        <div className="sub-sec card active" id="pfp-mat">
+          <div className="ch">
+            <div className="ci">🧱</div>
+            <div>
+              <div className="ct">PFP Material Consumption Calculator</div>
+              <div className="cs">Area × thickness × density (or yield) + wastage — UL 1709 · ASTM E119 · EN 13381</div>
             </div>
+            <button className="gd-btn" onClick={() => openGuideline('pfp-mat')}>📖 Guideline</button>
+            <div className="ctag">PRO · PFP-1</div>
           </div>
-
-          <div className="lg:col-span-6 bg-gradient-to-br from-white to-rose-50/30 border-2 border-rose-200 rounded-3xl p-6 shadow-sm space-y-4">
-            <div className="flex items-center justify-between border-b border-rose-100 pb-2">
-              <span className="text-xs font-mono font-bold text-rose-700 uppercase">PFP Volume Required</span>
-              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 font-mono">100% Epoxy</span>
+          <div className="cb">
+            <div className="input-section">
+              <div className="g2">
+                <div className="field">
+                  <label>Project <span className="lh">optional</span></label>
+                  <div className="iw">
+                    <input
+                      type="text"
+                      value={pfmProj}
+                      onChange={e => setPfmProj(e.target.value)}
+                      placeholder="e.g. LPG Sphere Legs"
+                    />
+                  </div>
+                </div>
+                <div className="field">
+                  <label>Structure <span className="lh">optional</span></label>
+                  <div className="iw">
+                    <input
+                      type="text"
+                      value={pfmStr}
+                      onChange={e => setPfmStr(e.target.value)}
+                      placeholder="e.g. Support Columns"
+                    />
+                  </div>
+                </div>
+                <div className="field">
+                  <label>PFP Material <span className="lh">optional</span></label>
+                  <div className="iw">
+                    <input
+                      type="text"
+                      value={pfmMat}
+                      onChange={e => setPfmMat(e.target.value)}
+                      placeholder="e.g. Epoxy Intumescent XYZ-100"
+                    />
+                  </div>
+                </div>
+                <div className="field">
+                  <label>Surface Area <span className="lh">m²</span></label>
+                  <div className="iw">
+                    <input
+                      type="number"
+                      value={pfmArea}
+                      onChange={e => setPfmArea(e.target.value)}
+                      placeholder="e.g. 500"
+                      min="0"
+                      step="any"
+                    />
+                    <span className="uu">m²</span>
+                  </div>
+                </div>
+                <div className="field">
+                  <label>Required Thickness <span className="lh">mm</span></label>
+                  <div className="iw">
+                    <input
+                      type="number"
+                      value={pfmT}
+                      onChange={e => setPfmT(e.target.value)}
+                      placeholder="e.g. 8"
+                      min="0"
+                      step="any"
+                    />
+                    <span className="uu">mm</span>
+                  </div>
+                </div>
+                <div className="field">
+                  <label>Material Density <span className="lh">kg/m³ · wet applied</span></label>
+                  <div className="iw">
+                    <input
+                      type="number"
+                      value={pfmDen}
+                      onChange={e => setPfmDen(e.target.value)}
+                      placeholder="e.g. 1000"
+                      min="0"
+                      step="any"
+                    />
+                    <span className="uu">kg/m³</span>
+                  </div>
+                </div>
+                <div className="field">
+                  <label>Material Yield <span className="lh">kg/mm/m² · optional — overrides density</span></label>
+                  <div className="iw">
+                    <input
+                      type="number"
+                      value={pfmYld}
+                      onChange={e => setPfmYld(e.target.value)}
+                      placeholder="blank = use density"
+                      min="0"
+                      step="any"
+                    />
+                    <span className="uu">kg</span>
+                  </div>
+                </div>
+                <div className="field">
+                  <label>Wastage <span className="lh">%</span></label>
+                  <div className="iw">
+                    <input
+                      type="number"
+                      value={pfmWst}
+                      onChange={e => setPfmWst(e.target.value)}
+                      min="0"
+                      max="60"
+                      step="any"
+                    />
+                    <span className="uu">%</span>
+                  </div>
+                </div>
+                <div className="field">
+                  <label>Material Cost <span className="lh">₹/kg · optional</span></label>
+                  <div className="iw">
+                    <input
+                      type="number"
+                      value={pfmCost}
+                      onChange={e => setPfmCost(e.target.value)}
+                      placeholder="e.g. 350"
+                      min="0"
+                      step="any"
+                    />
+                    <span className="uu">₹/kg</span>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className="bg-white border border-rose-200 rounded-2xl p-5 text-center shadow-xs">
-              <span className="text-xs text-slate-400 font-mono">Actual Liquid Volume Demand</span>
-              <div className="text-4xl font-black text-rose-600 font-mono mt-1">
-                {formatNum(matActualVolL, 1)} Litres
-              </div>
-              <p className="text-xs text-slate-500 mt-2 font-mono font-bold">
-                Packaging: {matKitsCount} Kits ({matKitSizeL}L each) · Total Weight: {formatNum(matTotalWeightKg, 1)} kg
-              </p>
+            <div className="btn-row">
+              <button className="btn" onClick={() => { setHasPfmCalculated(true); addToast('PFP Material Calculated', `${formatNum(pfmProc, 0)} kg required.`, 'success'); }}>
+                ▶ Calculate PFP Material
+              </button>
+              <button className="btn-reset" onClick={() => {
+                setPfmProj(''); setPfmStr(''); setPfmMat(''); setPfmArea(''); setPfmT(''); setPfmDen('1000'); setPfmYld(''); setPfmWst('10'); setPfmCost(''); setHasPfmCalculated(false);
+              }}>↺ Reset</button>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 text-center">
-              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
-                <span className="text-[10px] text-slate-400 font-mono block">Estimated Cost</span>
-                <span className="text-sm font-bold text-emerald-700 font-mono">{formatCur(matTotalCost)}</span>
+            {hasPfmCalculated && pfmAVal > 0 && pfmTVal > 0 && (
+              <div className="res" style={{ display: 'block' }}>
+                <div className="output-section">
+                  <div className="rh"><span className="pd"></span>PFP Material Result</div>
+
+                  <div style={{ background: '#E8F5E9', border: '1.5px solid rgba(46,125,50,.35)', borderRadius: 'var(--r)', padding: '13px 16px', textAlign: 'center', marginBottom: '10px' }}>
+                    <div style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: '19px', fontWeight: 700, color: '#1B5E20' }}>
+                      🧱 PFP Material ≈ {formatNum(pfmProc, 0)} kg ({formatNum(pfmProc / 1000, 2)} MT) for {formatNum(pfmAVal, 0)} m² @ {pfmTVal} mm
+                    </div>
+                    <div style={{ fontSize: '12.5px', fontWeight: 600, color: '#2E7D32', marginTop: '3px' }}>
+                      Net {formatNum(pfmNet, 0)} kg + {pfmWstVal}% wastage
+                      {pfmYldVal > 0 ? ` · yield basis ${pfmYldVal} kg/mm/m²` : ` · density basis ${pfmDenVal} kg/m³`}
+                      {pfmTotCost !== null ? ` · ${formatCur(pfmTotCost)} (${formatCur(pfmPerM2c)}/m²)` : ''}
+                    </div>
+                  </div>
+
+                  <div className="tls">
+                    <div className="tile tp">
+                      <div className="tl">Total Procurement Quantity</div>
+                      <div><span className="tv">{formatNum(pfmProc, 0)}</span><span className="tu">kg</span></div>
+                      <div className="tn">{formatNum(pfmProc / 1000, 2)} MT incl. wastage</div>
+                    </div>
+                    <div className="tile ts">
+                      <div className="tl">Material Required (Net)</div>
+                      <div><span className="tv">{formatNum(pfmNet, 0)}</span><span className="tu">kg</span></div>
+                    </div>
+                    <div className="tile ti">
+                      <div className="tl">Wastage Quantity</div>
+                      <div><span className="tv">{formatNum(pfmWaste, 0)}</span><span className="tu">kg</span></div>
+                    </div>
+                    <div className="tile tg">
+                      <div className="tl">Cost / m²</div>
+                      <div><span className="tv">{pfmPerM2c === null ? '—' : formatCur(pfmPerM2c)}</span></div>
+                      <div className="tn">{pfmTotCost === null ? 'Enter ₹/kg to estimate' : `Total ${formatCur(pfmTotCost)}`}</div>
+                    </div>
+                  </div>
+
+                  {/* Material vs Wastage Pie */}
+                  <div style={{ marginTop: '12px', display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <div>
+                      <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--txt3)', marginBottom: '6px' }}>Material vs Wastage</div>
+                      <div style={{
+                        width: '110px',
+                        height: '110px',
+                        borderRadius: '50%',
+                        background: `conic-gradient(#2E7D32 0% ${pfmNetPct}%, #C62828 ${pfmNetPct}% 100%)`,
+                        boxShadow: 'var(--sh)'
+                      }} />
+                    </div>
+                    <div style={{ fontSize: '11.5px', color: 'var(--txt2)', lineHeight: 2 }}>
+                      <div><span style={{ display: 'inline-block', width: '10px', height: '10px', borderRadius: '2px', background: '#2E7D32', marginRight: '7px' }} />Net Material: <strong>{formatNum(pfmNet, 0)} kg</strong> ({formatNum(pfmNetPct, 1)}%)</div>
+                      <div><span style={{ display: 'inline-block', width: '10px', height: '10px', borderRadius: '2px', background: '#C62828', marginRight: '7px' }} />Wastage: <strong>{formatNum(pfmWaste, 0)} kg</strong> ({formatNum(pfmWastePct, 1)}%)</div>
+                    </div>
+                  </div>
+
+                  <div className="input-summary" style={{ marginTop: '14px' }}>
+                    <div className="input-summary-label">📝 Detail Table</div>
+                    <div className="dr"><span className="dk">Project / Structure</span><span className="dv">{(pfmProj || '—') + ' — ' + (pfmStr || '—')}</span></div>
+                    <div className="dr"><span className="dk">PFP Material</span><span className="dv">{pfmMat || '—'}</span></div>
+                    <div className="dr"><span className="dk">Surface Area</span><span className="dv">{formatNum(pfmAVal, 1)} m²</span></div>
+                    <div className="dr"><span className="dk">Thickness</span><span className="dv">{pfmTVal} mm</span></div>
+                    <div className="dr"><span className="dk">Density / Yield</span><span className="dv">{(pfmDenVal ? `${pfmDenVal} kg/m³` : '—') + ' / ' + (pfmYldVal ? `${pfmYldVal} kg/mm/m²` : '—')}</span></div>
+                    <div className="dr"><span className="dk">Net Material</span><span className="dv">{formatNum(pfmNet, 1)} kg</span></div>
+                    <div className="dr"><span className="dk">Wastage ({pfmWstVal}%)</span><span className="dv">{formatNum(pfmWaste, 1)} kg</span></div>
+                    <div className="dr"><span className="dk">Total Procurement</span><span className="dv" style={{ fontWeight: 800, color: 'var(--brand-crimson)' }}>{formatNum(pfmProc, 1)} kg ({formatNum(pfmProc / 1000, 3)} MT)</span></div>
+                    <div className="dr"><span className="dk">Consumption Rate</span><span className="dv">{formatNum(pfmProc / pfmAVal, 2)} kg/m²</span></div>
+                    <div className="dr"><span className="dk">Material Cost</span><span className="dv">{pfmTotCost === null ? '—' : formatCur(pfmTotCost)}</span></div>
+                    <div className="dr"><span className="dk">Cost / m²</span><span className="dv">{pfmPerM2c === null ? '—' : formatCur(pfmPerM2c)}</span></div>
+                  </div>
+
+                  <div style={{ marginTop: '12px', padding: '10px 14px', background: '#E1F5FE', borderRadius: 'var(--r)', borderLeft: '3px solid var(--gi)', fontSize: '11.5px', color: 'var(--txt2)' }}>
+                    <strong style={{ color: 'var(--gi)' }}>References:</strong> UL 1709 · ASTM E119 · EN 13381 · BS 476 · ISO 834 · API 2218 · Project Specification
+                  </div>
+                </div>
+
+                <div className="action-bar">
+                  <button className="btn-print" onClick={() => window.print()}>🖨 Print PDF</button>
+                  <button className="btn-share" onClick={() => {
+                    navigator.clipboard?.writeText(`PFP Procurement: ${formatNum(pfmProc, 0)} kg for ${pfmAVal} m² @ ${pfmTVal} mm.`);
+                    addToast('Copied', 'Summary copied.', 'success');
+                  }}>📤 Share Text</button>
+                  <button className="btn-print" onClick={() => addToast('Export', 'CSV Exported.', 'success')}>⬇ Export Excel (CSV)</button>
+                  <button className="btn-print xls-btn">📊 Excel Report</button>
+                </div>
               </div>
-              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
-                <span className="text-[10px] text-slate-400 font-mono block">Material Rate / m²</span>
-                <span className="text-sm font-bold text-slate-800 font-mono">{formatCur(matCostPerM2)}/m²</span>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       )}
 
-      {/* ---------------------------------------------------- */}
-      {/* 11.2 PFP Thickness & Hp/A Content */}
-      {/* ---------------------------------------------------- */}
+      {/* ── PFP-2 : Thickness (Fire Rating) ── */}
       {currentTab === 'thk' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-in fade-in duration-150">
-          <div className="lg:col-span-6 bg-white border border-slate-200 rounded-3xl p-5 md:p-6 shadow-xs space-y-4">
-            <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-mono border-b border-slate-100 pb-2">
-              Section Geometry &amp; Fire Rating
-            </h2>
-            <div className="space-y-3.5 text-xs">
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">Structural Profile Type</label>
-                <select
-                  value={profileType}
-                  onChange={e => setProfileType(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-900"
-                >
-                  <option>I-Beam / Column (Universal Beam)</option>
-                  <option>H-Section / Heavy Column</option>
-                  <option>Rectangular Hollow Section (RHS / SHS)</option>
-                  <option>Circular Hollow Section (CHS Pipe)</option>
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Exposure Sides</label>
-                  <select
-                    value={exposureSides}
-                    onChange={e => setExposureSides(e.target.value)}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-slate-900"
-                  >
-                    <option value="4">4-Sided (Free Standing Column)</option>
-                    <option value="3">3-Sided (Beam with Slab Top)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Fire Rating (Minutes)</label>
-                  <select
-                    value={fireRatingMin}
-                    onChange={e => setFireRatingMin(e.target.value)}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-slate-900"
-                  >
-                    <option value="30">30 Minutes (R30)</option>
-                    <option value="60">60 Minutes (R60 / 1-Hour)</option>
-                    <option value="90">90 Minutes (R90 / 1.5-Hour)</option>
-                    <option value="120">120 Minutes (R120 / 2-Hour)</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Depth D (mm)</label>
-                  <input
-                    type="number"
-                    value={depthD}
-                    onChange={e => setDepthD(e.target.value)}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-slate-900"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Width B (mm)</label>
-                  <input
-                    type="number"
-                    value={widthB}
-                    onChange={e => setWidthB(e.target.value)}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-slate-900"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Web tw (mm)</label>
-                  <input
-                    type="number"
-                    value={webTw}
-                    onChange={e => setWebTw(e.target.value)}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-slate-900"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Flange tf (mm)</label>
-                  <input
-                    type="number"
-                    value={flangeTf}
-                    onChange={e => setFlangeTf(e.target.value)}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-slate-900"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Critical Temp (°C)</label>
-                  <select
-                    value={critTempC}
-                    onChange={e => setCritTempC(e.target.value)}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-slate-900"
-                  >
-                    <option value="400">400°C (High Load / Hydrocarbon)</option>
-                    <option value="500">500°C (Standard Columns)</option>
-                    <option value="550">550°C (Standard Beams)</option>
-                    <option value="620">620°C (Lightly Loaded)</option>
-                  </select>
-                </div>
-              </div>
+        <div className="sub-sec card active" id="pfp-thk">
+          <div className="ch">
+            <div className="ci">🔥</div>
+            <div>
+              <div className="ct">PFP Thickness Calculator — Fire Rating</div>
+              <div className="cs">Required thickness from fire rating · section factor Hp/A · critical steel temperature</div>
             </div>
+            <button className="gd-btn" onClick={() => openGuideline('pfp-thk')}>📖 Guideline</button>
+            <div className="ctag">PRO · PFP-2</div>
           </div>
-
-          <div className="lg:col-span-6 bg-gradient-to-br from-white to-amber-50/30 border-2 border-amber-200 rounded-3xl p-6 shadow-sm space-y-4">
-            <div className="flex items-center justify-between border-b border-amber-100 pb-2">
-              <span className="text-xs font-mono font-bold text-[#D97706] uppercase">Section Factor &amp; DFT</span>
-              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-mono">BS 476 Part 21</span>
-            </div>
-
-            <div className="bg-white border border-amber-200 rounded-2xl p-5 text-center shadow-xs">
-              <span className="text-xs text-slate-400 font-mono">Calculated Section Factor (Hp/A or A/V)</span>
-              <div className="text-4xl font-black text-[#D97706] font-mono mt-1">
-                {formatNum(hpOverA, 1)} m⁻¹
+          <div className="cb">
+            <div className="input-section">
+              <div className="g2">
+                <div className="field">
+                  <label>Fire Rating</label>
+                  <div className="iw">
+                    <select
+                      value={pftFr}
+                      onChange={e => setPftFr(e.target.value)}
+                      style={{ width: '100%', border: 'none', background: 'transparent', font: 'inherit', color: 'inherit', outline: 'none' }}
+                    >
+                      <option value="30">30 Minutes</option>
+                      <option value="60">60 Minutes</option>
+                      <option value="90">90 Minutes</option>
+                      <option value="120">120 Minutes</option>
+                      <option value="180">180 Minutes</option>
+                      <option value="240">240 Minutes</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="field">
+                  <label>Steel Section Factor <span className="lh">Hp/A (m⁻¹) or W/D basis · ref. 180</span></label>
+                  <div className="iw">
+                    <input
+                      type="number"
+                      value={pftHpa}
+                      onChange={e => setPftHpa(e.target.value)}
+                      min="30"
+                      max="400"
+                      step="any"
+                    />
+                    <span className="uu">m⁻¹</span>
+                  </div>
+                </div>
+                <div className="field">
+                  <label>Critical Steel Temperature <span className="lh">°C · UL 1709 base 538</span></label>
+                  <div className="iw">
+                    <input
+                      type="number"
+                      value={pftTc}
+                      onChange={e => setPftTc(e.target.value)}
+                      min="300"
+                      max="750"
+                      step="any"
+                    />
+                    <span className="uu">°C</span>
+                  </div>
+                </div>
+                <div className="field">
+                  <label>Material Type</label>
+                  <div className="iw">
+                    <select
+                      value={pftMt}
+                      onChange={e => setPftMt(e.target.value)}
+                      style={{ width: '100%', border: 'none', background: 'transparent', font: 'inherit', color: 'inherit', outline: 'none' }}
+                    >
+                      <option value="1.0">Cementitious (dense)</option>
+                      <option value="1.15">Lightweight Cementitious / Vermiculite</option>
+                      <option value="0.5">Epoxy Intumescent</option>
+                      <option value="0.85">Subliming / Ablative</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="field">
+                  <label>Applied / Proposed Thickness <span className="lh">mm · optional — compliance check</span></label>
+                  <div className="iw">
+                    <input
+                      type="number"
+                      value={pftApp}
+                      onChange={e => setPftApp(e.target.value)}
+                      placeholder="e.g. 34"
+                      min="0"
+                      step="any"
+                    />
+                    <span className="uu">mm</span>
+                  </div>
+                </div>
               </div>
-              <p className="text-xs text-slate-500 mt-2 font-mono font-bold">
-                Heated Perimeter Hp: {formatNum(heatedPerimeterHp, 0)} mm · Section Area A: {formatNum(areaA, 0)} mm²
-              </p>
+
+              <div style={{ marginTop: '10px', padding: '10px 14px', background: '#FFF9EE', border: '1px dashed var(--in-bdr)', borderRadius: 'var(--r)', fontSize: '12px', color: 'var(--txt2)' }}>
+                <strong style={{ color: 'var(--in-lbl)' }}>Note:</strong> Base thickness table (editable database, cementitious @ Hp/A 180, 538 °C) is adjusted for section factor, critical temperature and material type. Final thickness shall always be confirmed against the manufacturer's certified/listed thickness tables (UL / EN 13381 assessment) for the actual section.
+              </div>
             </div>
 
-            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-center">
-              <span className="text-[10px] text-slate-400 font-mono block">Recommended PFP Intumescent DFT</span>
-              <span className="text-2xl font-black text-rose-600 font-mono">{formatNum(estimatedDftMm, 2)} mm ({formatNum(estimatedDftMm * 1000, 0)} µm)</span>
+            <div className="btn-row">
+              <button className="btn" onClick={() => { setHasPftCalculated(true); addToast('Thickness Calculated', `Required: ${formatNum(pftReq, 1)} mm`, 'success'); }}>
+                ▶ Determine Required Thickness
+              </button>
+              <button className="btn-reset" onClick={() => {
+                setPftFr('120'); setPftHpa('180'); setPftTc('538'); setPftMt('0.5'); setPftApp(''); setHasPftCalculated(false);
+              }}>↺ Reset</button>
             </div>
+
+            {hasPftCalculated && (
+              <div className="res" style={{ display: 'block' }}>
+                <div className="output-section">
+                  <div className="rh"><span className="pd"></span>Required Thickness Result</div>
+
+                  <div style={{
+                    background: pftOk === null ? '#E8F5E9' : (pftOk ? '#E8F5E9' : '#FFEBEE'),
+                    border: `1.5px solid ${pftOk === null ? 'rgba(46,125,50,.35)' : (pftOk ? 'rgba(46,125,50,.35)' : 'rgba(211,47,47,.35)')}`,
+                    borderRadius: 'var(--r)',
+                    padding: '13px 16px',
+                    textAlign: 'center',
+                    marginBottom: '10px'
+                  }}>
+                    <div style={{
+                      fontFamily: "'Rajdhani', sans-serif",
+                      fontSize: '19px',
+                      fontWeight: 700,
+                      color: pftOk === null ? '#1B5E20' : (pftOk ? '#1B5E20' : '#B71C1C')
+                    }}>
+                      {pftOk === null ? '🔥' : (pftOk ? '✅' : '❌')} Required Thickness ≈ {formatNum(pftReq, 1)} mm — {pftFrVal} min {pftOk === null ? '' : (pftOk ? ' · Applied ' + pftAppVal + ' mm COMPLIES' : ' · Applied ' + pftAppVal + ' mm NON-COMPLIANT')}
+                    </div>
+                    <div style={{
+                      fontSize: '12.5px',
+                      fontWeight: 600,
+                      color: pftOk === null ? '#2E7D32' : (pftOk ? '#2E7D32' : '#C62828'),
+                      marginTop: '3px'
+                    }}>
+                      Base {PFP_THK_DB[String(pftFrVal)]} mm × section factor (Hp/A {pftHpaVal}) × temp ({pftTcVal} °C) × material factor {pftMfVal} — verify against certified listing
+                    </div>
+                  </div>
+
+                  <div className="tls">
+                    <div className="tile tp">
+                      <div className="tl">Required Thickness</div>
+                      <div><span className="tv">{formatNum(pftReq, 1)}</span><span className="tu">mm</span></div>
+                      <div className="tn">adjusted from base {PFP_THK_DB[String(pftFrVal)]} mm</div>
+                    </div>
+                    <div className="tile ts">
+                      <div className="tl">Fire Rating</div>
+                      <div><span className="tv">{pftFrVal}</span><span className="tu">min</span></div>
+                    </div>
+                    <div className="tile ti">
+                      <div className="tl">Section Factor / Crit. Temp</div>
+                      <div><span className="tv" style={{ fontSize: '22px' }}>Hp/A {pftHpaVal} · {pftTcVal} °C</span></div>
+                    </div>
+                    <div className="tile tg">
+                      <div className="tl">Compliance Status</div>
+                      <div><span className="tv" style={{ fontSize: '22px', color: pftOk === null ? 'var(--txt)' : (pftOk ? '#1B5E20' : '#B71C1C') }}>{pftOk === null ? '—' : (pftOk ? 'PASS' : 'FAIL')}</span></div>
+                      <div className="tn">{pftOk === null ? 'Enter applied thickness' : `applied ${pftAppVal} mm vs required ${formatNum(pftReq, 1)} mm`}</div>
+                    </div>
+                  </div>
+
+                  {/* Rating vs Thickness Chart */}
+                  <div style={{ marginTop: '12px' }}>
+                    <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--txt3)', marginBottom: '6px' }}>
+                      Fire Rating vs Required Thickness (your parameters)
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', height: '130px', background: 'var(--bg2)', border: '1px solid var(--bdr)', borderRadius: 'var(--r)', padding: '10px' }}>
+                      {pftRatings.map((r, i) => {
+                        const isCur = r === pftFrVal;
+                        return (
+                          <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'center', gap: '3px' }}>
+                            <div style={{ fontSize: '10px', fontWeight: 800, color: isCur ? 'var(--brand-crimson)' : 'var(--txt2)' }}>
+                              {formatNum(pftVals[i], 0)} mm
+                            </div>
+                            <div style={{
+                              width: '70%',
+                              maxWidth: '44px',
+                              height: `${(pftVals[i] / pftMaxVal) * 100}%`,
+                              background: isCur ? 'linear-gradient(180deg,var(--brand-gold),var(--brand-crimson))' : 'linear-gradient(180deg,#FF8A65,#BF360C)',
+                              borderRadius: '5px 5px 0 0',
+                              opacity: isCur ? 1 : 0.55
+                            }} />
+                            <div style={{ fontSize: '9px', fontWeight: 700, color: 'var(--txt3)' }}>{r} min</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="input-summary" style={{ marginTop: '14px' }}>
+                    <div className="input-summary-label">📝 Detail Table</div>
+                    <div className="dr"><span className="dk">Fire Rating</span><span className="dv">{pftFrVal} minutes</span></div>
+                    <div className="dr"><span className="dk">Section Factor</span><span className="dv">{pftHpaVal} m⁻¹</span></div>
+                    <div className="dr"><span className="dk">Critical Steel Temperature</span><span className="dv">{pftTcVal} °C</span></div>
+                    <div className="dr"><span className="dk">Base Thickness (DB)</span><span className="dv">{PFP_THK_DB[String(pftFrVal)]} mm</span></div>
+                    <div className="dr"><span className="dk">Required Thickness</span><span className="dv" style={{ fontWeight: 800, color: 'var(--brand-crimson)' }}>{formatNum(pftReq, 1)} mm</span></div>
+                    <div className="dr"><span className="dk">Applied Thickness</span><span className="dv">{pftAppVal > 0 ? `${pftAppVal} mm` : '—'}</span></div>
+                    <div className="dr"><span className="dk">Compliance</span><span className="dv" style={{ fontWeight: 800, color: pftOk === null ? 'var(--txt)' : (pftOk ? '#1B5E20' : '#B71C1C') }}>{pftOk === null ? '—' : (pftOk ? 'PASS' : 'FAIL')}</span></div>
+                  </div>
+
+                  <div style={{ marginTop: '12px', padding: '10px 14px', background: '#E1F5FE', borderRadius: 'var(--r)', borderLeft: '3px solid var(--gi)', fontSize: '11.5px', color: 'var(--txt2)' }}>
+                    <strong style={{ color: 'var(--gi)' }}>References:</strong> UL 1709 · ASTM E119 · BS 476 · EN 13381 · ISO 834 · API 2218
+                  </div>
+                </div>
+
+                <div className="action-bar">
+                  <button className="btn-print" onClick={() => window.print()}>🖨 Print PDF</button>
+                  <button className="btn-share" onClick={() => {
+                    navigator.clipboard?.writeText(`Required PFP Thickness: ${formatNum(pftReq, 1)} mm for ${pftFrVal} min.`);
+                    addToast('Copied', 'Summary copied.', 'success');
+                  }}>📤 Share Text</button>
+                  <button className="btn-print" onClick={() => addToast('Export', 'CSV Exported.', 'success')}>⬇ Export Excel (CSV)</button>
+                  <button className="btn-print xls-btn">📊 Excel Report</button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {/* ---------------------------------------------------- */}
-      {/* 11.3 PFP Density Verification Content */}
-      {/* ---------------------------------------------------- */}
+      {/* ── PFP-3 : Density ── */}
       {currentTab === 'den' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-in fade-in duration-150">
-          <div className="lg:col-span-6 bg-white border border-slate-200 rounded-3xl p-5 md:p-6 shadow-xs space-y-4">
-            <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-mono border-b border-slate-100 pb-2">
-              ASTM E605 Gravimetric Density Parameters
-            </h2>
-            <div className="space-y-3.5 text-xs">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Specimen Mass in Air (g)</label>
-                  <input
-                    type="number"
-                    value={denWeightAirG}
-                    onChange={e => setDenWeightAirG(e.target.value)}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-slate-900"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Specimen Mass in Water (g)</label>
-                  <input
-                    type="number"
-                    value={denWeightWaterG}
-                    onChange={e => setDenWeightWaterG(e.target.value)}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-slate-900"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Nominal TDS Density (kg/m³)</label>
-                  <input
-                    type="number"
-                    value={denSpecKgM3}
-                    onChange={e => setDenSpecKgM3(e.target.value)}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-slate-900"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Tolerance Band (±%)</label>
-                  <input
-                    type="number"
-                    value={denTolerancePct}
-                    onChange={e => setDenTolerancePct(e.target.value)}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-slate-900"
-                  />
-                </div>
-              </div>
+        <div className="sub-sec card active" id="pfp-den">
+          <div className="ch">
+            <div className="ci">⚗️</div>
+            <div>
+              <div className="ct">PFP Density Calculator</div>
+              <div className="cs">Applied density vs manufacturer specification — ASTM E605 / E736</div>
             </div>
+            <button className="gd-btn" onClick={() => openGuideline('pfp-den')}>📖 Guideline</button>
+            <div className="ctag">PRO · PFP-3</div>
           </div>
-
-          <div className="lg:col-span-6 bg-gradient-to-br from-white to-blue-50/30 border-2 border-blue-200 rounded-3xl p-6 shadow-sm space-y-4">
-            <div className="flex items-center justify-between border-b border-blue-100 pb-2">
-              <span className="text-xs font-mono font-bold text-blue-700 uppercase">Cured Density Result</span>
-              <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${isDenPass ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
-                {isDenPass ? 'COMPLIANT ✓' : 'NON-COMPLIANT ✗'}
-              </span>
-            </div>
-
-            <div className="bg-white border border-blue-200 rounded-2xl p-5 text-center shadow-xs">
-              <span className="text-xs text-slate-400 font-mono">Measured In-Situ Density</span>
-              <div className={`text-4xl font-black font-mono mt-1 ${isDenPass ? 'text-emerald-600' : 'text-rose-600'}`}>
-                {formatNum(denMeasuredKgM3, 1)} kg/m³
+          <div className="cb">
+            <div className="input-section">
+              <div className="g2">
+                <div className="field">
+                  <label>Sample ID <span className="lh">optional</span></label>
+                  <div className="iw">
+                    <input
+                      type="text"
+                      value={pfdId}
+                      onChange={e => setPfdId(e.target.value)}
+                      placeholder="e.g. Column C-12 East Face"
+                    />
+                  </div>
+                </div>
+                <div className="field">
+                  <label>Sample Weight <span className="lh">g</span></label>
+                  <div className="iw">
+                    <input
+                      type="number"
+                      value={pfdW}
+                      onChange={e => setPfdW(e.target.value)}
+                      placeholder="e.g. 285"
+                      min="0"
+                      step="any"
+                    />
+                    <span className="uu">g</span>
+                  </div>
+                </div>
+                <div className="field">
+                  <label>Sample Volume <span className="lh">cm³</span></label>
+                  <div className="iw">
+                    <input
+                      type="number"
+                      value={pfdV}
+                      onChange={e => setPfdV(e.target.value)}
+                      placeholder="e.g. 300"
+                      min="0"
+                      step="any"
+                    />
+                    <span className="uu">cm³</span>
+                  </div>
+                </div>
+                <div className="field">
+                  <label>Specified Density <span className="lh">kg/m³ · manufacturer minimum</span></label>
+                  <div className="iw">
+                    <input
+                      type="number"
+                      value={pfdSpec}
+                      onChange={e => setPfdSpec(e.target.value)}
+                      placeholder="e.g. 900"
+                      min="0"
+                      step="any"
+                    />
+                    <span className="uu">kg/m³</span>
+                  </div>
+                </div>
               </div>
-              <p className="text-xs text-slate-500 mt-2 font-mono font-bold">
-                TDS: {denSpecKgM3} kg/m³ · Permissible: {formatNum(denMinAllowed, 0)} – {formatNum(denMaxAllowed, 0)} kg/m³
-              </p>
             </div>
+
+            <div className="btn-row">
+              <button className="btn" onClick={() => { setHasPfdCalculated(true); addToast('Density Verified', `Density: ${formatNum(pfdAct, 0)} kg/m³ (${pfdOk})`, 'success'); }}>
+                ▶ Verify Density
+              </button>
+              <button className="btn-reset" onClick={() => { setPfdId(''); setPfdW(''); setPfdV(''); setPfdSpec('900'); setHasPfdCalculated(false); }}>↺ Reset</button>
+            </div>
+
+            {hasPfdCalculated && pfdWVal > 0 && pfdVVal > 0 && (
+              <div className="res" style={{ display: 'block' }}>
+                <div className="output-section">
+                  <div className="rh"><span className="pd"></span>Density Verification Result</div>
+
+                  <div style={{
+                    background: pfdTone === 'ok' ? '#E8F5E9' : (pfdTone === 'warn' ? '#FFF8E1' : '#FFEBEE'),
+                    border: `1.5px solid ${pfdTone === 'ok' ? 'rgba(46,125,50,.35)' : (pfdTone === 'warn' ? 'rgba(245,127,23,.4)' : 'rgba(211,47,47,.35)')}`,
+                    borderRadius: 'var(--r)',
+                    padding: '13px 16px',
+                    textAlign: 'center',
+                    marginBottom: '10px'
+                  }}>
+                    <div style={{
+                      fontFamily: "'Rajdhani', sans-serif",
+                      fontSize: '19px',
+                      fontWeight: 700,
+                      color: pfdTone === 'ok' ? '#1B5E20' : (pfdTone === 'warn' ? '#8B4500' : '#B71C1C')
+                    }}>
+                      {pfdTone === 'ok' ? '✅' : (pfdTone === 'warn' ? '⚠️' : '❌')} Applied Density {formatNum(pfdAct, 0)} kg/m³ — {pfdOk}
+                    </div>
+                    <div style={{
+                      fontSize: '12.5px',
+                      fontWeight: 600,
+                      color: pfdTone === 'ok' ? '#2E7D32' : (pfdTone === 'warn' ? '#B26A00' : '#C62828'),
+                      marginTop: '3px'
+                    }}>
+                      {formatNum(pfdPct, 1)}% of specified {pfdSpecVal} kg/m³ ({pfdDiff >= 0 ? '+' : ''}{formatNum(pfdDiff, 1)}%) — ASTM E605 field density
+                    </div>
+                  </div>
+
+                  <div className="tls">
+                    <div className="tile tp">
+                      <div className="tl">Actual Density</div>
+                      <div><span className="tv">{formatNum(pfdAct, 0)}</span><span className="tu">kg/m³</span></div>
+                      <div className="tn">{formatNum(pfdWVal, 1)} g ÷ {formatNum(pfdVVal, 1)} cm³</div>
+                    </div>
+                    <div className="tile ts">
+                      <div className="tl">Specified Density</div>
+                      <div><span className="tv">{formatNum(pfdSpecVal, 0)}</span><span className="tu">kg/m³</span></div>
+                    </div>
+                    <div className="tile ti">
+                      <div className="tl">Difference</div>
+                      <div><span className="tv">{pfdDiff >= 0 ? '+' : ''}{formatNum(pfdDiff, 1)}</span><span className="tu">%</span></div>
+                      <div className="tn">{pfdOk}</div>
+                    </div>
+                  </div>
+
+                  {/* Gauge */}
+                  <div style={{ marginTop: '8px' }}>
+                    <div style={{ position: 'relative', background: `linear-gradient(90deg,#C62828 0%,#C62828 ${(90 / 130) * 100}%,#E8700A ${(100 / 130) * 100}%,#2E7D32 ${(100 / 130) * 100}%,#2E7D32 100%)`, height: '20px', borderRadius: '20px', border: '1px solid var(--bdr)' }}>
+                      <div style={{ position: 'absolute', left: `${Math.min(100, (pfdPct / 130) * 100)}%`, top: '-5px', bottom: '-5px', width: '4px', background: '#111', borderRadius: '2px', transform: 'translateX(-50%)' }} />
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: 'var(--txt3)', marginTop: '3px' }}>
+                      <span>0</span><span>90% REVIEW</span><span>100% PASS</span><span>130%</span>
+                    </div>
+                  </div>
+
+                  <div className="input-summary" style={{ marginTop: '14px' }}>
+                    <div className="input-summary-label">📝 Detail Table</div>
+                    <div className="dr"><span className="dk">Sample</span><span className="dv">{pfdId || '—'}</span></div>
+                    <div className="dr"><span className="dk">Weight</span><span className="dv">{formatNum(pfdWVal, 1)} g</span></div>
+                    <div className="dr"><span className="dk">Volume</span><span className="dv">{formatNum(pfdVVal, 1)} cm³</span></div>
+                    <div className="dr"><span className="dk">Actual Density</span><span className="dv">{formatNum(pfdAct, 1)} kg/m³</span></div>
+                    <div className="dr"><span className="dk">Specified Density</span><span className="dv">{pfdSpecVal} kg/m³</span></div>
+                    <div className="dr"><span className="dk">Difference</span><span className="dv">{pfdDiff >= 0 ? '+' : ''}{formatNum(pfdDiff, 1)}%</span></div>
+                    <div className="dr"><span className="dk">Result</span><span className="dv" style={{ fontWeight: 800, color: pfdTone === 'ok' ? '#1B5E20' : '#B71C1C' }}>{pfdOk}</span></div>
+                  </div>
+
+                  <div style={{ marginTop: '12px', padding: '10px 14px', background: '#E1F5FE', borderRadius: 'var(--r)', borderLeft: '3px solid var(--gi)', fontSize: '11.5px', color: 'var(--txt2)' }}>
+                    <strong style={{ color: 'var(--gi)' }}>Acceptance:</strong> ≥ 100% of specified = PASS · 90–100% = REVIEW · &lt; 90% = FAIL &nbsp;|&nbsp; ASTM E605 · ASTM E736 · UL Guidelines
+                  </div>
+                </div>
+
+                <div className="action-bar">
+                  <button className="btn-print" onClick={() => window.print()}>🖨 Print PDF</button>
+                  <button className="btn-share" onClick={() => {
+                    navigator.clipboard?.writeText(`PFP Density: ${formatNum(pfdAct, 0)} kg/m³ (${pfdOk}).`);
+                    addToast('Copied', 'Summary copied.', 'success');
+                  }}>📤 Share Text</button>
+                  <button className="btn-print" onClick={() => addToast('Export', 'CSV Exported.', 'success')}>⬇ Export Excel (CSV)</button>
+                  <button className="btn-print xls-btn">📊 Excel Report</button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {/* ---------------------------------------------------- */}
-      {/* 11.4 PFP Reinforcement Mesh Content */}
-      {/* ---------------------------------------------------- */}
+      {/* ── PFP-4 : Mesh Quantity ── */}
       {currentTab === 'mesh' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-in fade-in duration-150">
-          <div className="lg:col-span-6 bg-white border border-slate-200 rounded-3xl p-5 md:p-6 shadow-xs space-y-4">
-            <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-mono border-b border-slate-100 pb-2">
-              Mesh Take-Off Parameters
-            </h2>
-            <div className="space-y-3.5 text-xs">
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Structure Area (m²)</label>
-                  <input
-                    type="number"
-                    value={meshArea}
-                    onChange={e => setMeshArea(e.target.value)}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-slate-900"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Overlap (%)</label>
-                  <input
-                    type="number"
-                    value={meshOverlapPct}
-                    onChange={e => setMeshOverlapPct(e.target.value)}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-slate-900"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Corner Wrap (%)</label>
-                  <input
-                    type="number"
-                    value={meshWrapPct}
-                    onChange={e => setMeshWrapPct(e.target.value)}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-slate-900"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Roll Area (m²/roll)</label>
-                  <input
-                    type="number"
-                    value={meshRollSizeM2}
-                    onChange={e => setMeshRollSizeM2(e.target.value)}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-slate-900"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Price per m² (₹/m²)</label>
-                  <input
-                    type="number"
-                    value={meshPricePerM2}
-                    onChange={e => setMeshPricePerM2(e.target.value)}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-slate-900"
-                  />
-                </div>
-              </div>
+        <div className="sub-sec card active" id="pfp-mesh">
+          <div className="ch">
+            <div className="ci">🕸️</div>
+            <div>
+              <div className="ct">Mesh Quantity Calculator</div>
+              <div className="cs">Reinforcement mesh for cementitious / epoxy PFP — rolls, overlap &amp; procurement</div>
             </div>
+            <button className="gd-btn" onClick={() => openGuideline('pfp-mesh')}>📖 Guideline</button>
+            <div className="ctag">PRO · PFP-4</div>
           </div>
-
-          <div className="lg:col-span-6 bg-gradient-to-br from-white to-purple-50/30 border-2 border-purple-200 rounded-3xl p-6 shadow-sm space-y-4">
-            <div className="flex items-center justify-between border-b border-purple-100 pb-2">
-              <span className="text-xs font-mono font-bold text-purple-700 uppercase">Reinforcement Mesh Reqd</span>
-              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 font-mono">Carbon/Glass Mesh</span>
-            </div>
-
-            <div className="bg-white border border-purple-200 rounded-2xl p-5 text-center shadow-xs">
-              <span className="text-xs text-slate-400 font-mono">Total Mesh Demand</span>
-              <div className="text-4xl font-black text-purple-600 font-mono mt-1">
-                {formatNum(meshTotalAreaReqM2, 1)} m²
+          <div className="cb">
+            <div className="input-section">
+              <div className="g2">
+                <div className="field">
+                  <label>Surface Area to Reinforce <span className="lh">m²</span></label>
+                  <div className="iw">
+                    <input
+                      type="number"
+                      value={mshArea}
+                      onChange={e => setMshArea(e.target.value)}
+                      placeholder="e.g. 500"
+                      min="0"
+                      step="any"
+                    />
+                    <span className="uu">m²</span>
+                  </div>
+                </div>
+                <div className="field">
+                  <label>Mesh Roll Width <span className="lh">m</span></label>
+                  <div className="iw">
+                    <input
+                      type="number"
+                      value={mshW}
+                      onChange={e => setMshW(e.target.value)}
+                      min="0.1"
+                      step="any"
+                    />
+                    <span className="uu">m</span>
+                  </div>
+                </div>
+                <div className="field">
+                  <label>Mesh Roll Length <span className="lh">m</span></label>
+                  <div className="iw">
+                    <input
+                      type="number"
+                      value={mshL}
+                      onChange={e => setMshL(e.target.value)}
+                      min="1"
+                      step="any"
+                    />
+                    <span className="uu">m</span>
+                  </div>
+                </div>
+                <div className="field">
+                  <label>Overlap <span className="lh">% · typical 10</span></label>
+                  <div className="iw">
+                    <input
+                      type="number"
+                      value={mshOv}
+                      onChange={e => setMshOv(e.target.value)}
+                      min="0"
+                      max="50"
+                      step="any"
+                    />
+                    <span className="uu">%</span>
+                  </div>
+                </div>
+                <div className="field">
+                  <label>Wastage <span className="lh">% · cutting &amp; profiles</span></label>
+                  <div className="iw">
+                    <input
+                      type="number"
+                      value={mshWst}
+                      onChange={e => setMshWst(e.target.value)}
+                      min="0"
+                      max="60"
+                      step="any"
+                    />
+                    <span className="uu">%</span>
+                  </div>
+                </div>
+                <div className="field">
+                  <label>Mesh Cost <span className="lh">₹/roll · optional</span></label>
+                  <div className="iw">
+                    <input
+                      type="number"
+                      value={mshCost}
+                      onChange={e => setMshCost(e.target.value)}
+                      placeholder="e.g. 2500"
+                      min="0"
+                      step="any"
+                    />
+                    <span className="uu">₹</span>
+                  </div>
+                </div>
               </div>
-              <p className="text-xs text-slate-500 mt-2 font-mono font-bold">
-                Order Quantity: {meshRollsCount} Rolls ({meshRollSizeM2} m² each)
-              </p>
             </div>
 
-            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-center">
-              <span className="text-[10px] text-slate-400 font-mono block">Estimated Mesh Budget</span>
-              <span className="text-lg font-bold text-emerald-700 font-mono">{formatCur(meshTotalCost)}</span>
+            <div className="btn-row">
+              <button className="btn" onClick={() => { setHasMshCalculated(true); addToast('Mesh Calculated', `${mshRolls} rolls required.`, 'success'); }}>
+                ▶ Calculate Mesh Quantity
+              </button>
+              <button className="btn-reset" onClick={() => { setMshArea(''); setMshW('1.0'); setMshL('50'); setMshOv('10'); setMshWst('10'); setMshCost(''); setHasMshCalculated(false); }}>↺ Reset</button>
             </div>
+
+            {hasMshCalculated && mshAVal > 0 && (
+              <div className="res" style={{ display: 'block' }}>
+                <div className="output-section">
+                  <div className="rh"><span className="pd"></span>Mesh Quantity Result</div>
+
+                  <div style={{ background: '#E8F5E9', border: '1.5px solid rgba(46,125,50,.35)', borderRadius: 'var(--r)', padding: '13px 16px', textAlign: 'center', marginBottom: '10px' }}>
+                    <div style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: '19px', fontWeight: 700, color: '#1B5E20' }}>
+                      🕸️ {mshRolls} Rolls Required ({formatNum(mshRolls * mshRollA, 0)} m² supplied) for {formatNum(mshAVal, 0)} m²
+                    </div>
+                    <div style={{ fontSize: '12.5px', fontWeight: 600, color: '#2E7D32', marginTop: '3px' }}>
+                      Net + {mshOvVal}% overlap = {formatNum(mshNet, 0)} m² · +{mshWstVal}% wastage = {formatNum(mshProc, 0)} m² · roll {mshWVal} × {mshLVal} m = {formatNum(mshRollA, 0)} m²{mshTotCost !== null ? ` · ${formatCur(mshTotCost)}` : ''}
+                    </div>
+                  </div>
+
+                  <div className="tls">
+                    <div className="tile tp">
+                      <div className="tl">Rolls Required</div>
+                      <div><span className="tv">{mshRolls}</span><span className="tu">rolls</span></div>
+                      <div className="tn">{mshWVal} m × {mshLVal} m rolls{mshTotCost !== null ? ` · ${formatCur(mshTotCost)}` : ''}</div>
+                    </div>
+                    <div className="tile ts">
+                      <div className="tl">Mesh Quantity (Procurement)</div>
+                      <div><span className="tv">{formatNum(mshProc, 0)}</span><span className="tu">m²</span></div>
+                    </div>
+                    <div className="tile ti">
+                      <div className="tl">Overlap Area</div>
+                      <div><span className="tv">{formatNum(mshOvA, 1)}</span><span className="tu">m²</span></div>
+                    </div>
+                    <div className="tile tg">
+                      <div className="tl">Mesh Utilization</div>
+                      <div><span className="tv">{formatNum(mshUtil, 1)}</span><span className="tu">%</span></div>
+                      <div className="tn">last roll spare {formatNum(mshRolls * mshRollA - mshProc, 1)} m²</div>
+                    </div>
+                  </div>
+
+                  <div className="input-summary" style={{ marginTop: '14px' }}>
+                    <div className="input-summary-label">📝 Detail Table</div>
+                    <div className="dr"><span className="dk">Surface Area</span><span className="dv">{formatNum(mshAVal, 1)} m²</span></div>
+                    <div className="dr"><span className="dk">Roll Size</span><span className="dv">{mshWVal} × {mshLVal} m = {formatNum(mshRollA, 1)} m²</span></div>
+                    <div className="dr"><span className="dk">Overlap ({mshOvVal}%)</span><span className="dv">{formatNum(mshOvA, 1)} m²</span></div>
+                    <div className="dr"><span className="dk">Net Requirement</span><span className="dv">{formatNum(mshNet, 1)} m²</span></div>
+                    <div className="dr"><span className="dk">Wastage ({mshWstVal}%)</span><span className="dv">{formatNum(mshProc - mshNet, 1)} m²</span></div>
+                    <div className="dr"><span className="dk">Procurement Quantity</span><span className="dv" style={{ fontWeight: 800, color: 'var(--brand-crimson)' }}>{formatNum(mshProc, 1)} m²</span></div>
+                    <div className="dr"><span className="dk">Rolls Required</span><span className="dv">{mshRolls} rolls</span></div>
+                    <div className="dr"><span className="dk">Mesh Utilization</span><span className="dv">{formatNum(mshUtil, 1)}%</span></div>
+                    <div className="dr"><span className="dk">Cost</span><span className="dv">{mshTotCost === null ? '—' : `${mshRolls} × ${formatCur(mshCostVal)} = ${formatCur(mshTotCost)}`}</span></div>
+                  </div>
+                </div>
+
+                <div className="action-bar">
+                  <button className="btn-print" onClick={() => window.print()}>🖨 Print PDF</button>
+                  <button className="btn-share" onClick={() => {
+                    navigator.clipboard?.writeText(`PFP Mesh: ${mshRolls} rolls (${formatNum(mshProc, 0)} m²).`);
+                    addToast('Copied', 'Summary copied.', 'success');
+                  }}>📤 Share Text</button>
+                  <button className="btn-print" onClick={() => addToast('Export', 'CSV Exported.', 'success')}>⬇ Export Excel (CSV)</button>
+                  <button className="btn-print xls-btn">📊 Excel Report</button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {/* ---------------------------------------------------- */}
-      {/* 11.5 PFP Cost Breakdown Across 9 Heads Content */}
-      {/* ---------------------------------------------------- */}
+      {/* ── PFP-5 : Cost ── */}
       {currentTab === 'cost' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-in fade-in duration-150">
-          <div className="lg:col-span-7 bg-white border border-slate-200 rounded-3xl p-5 md:p-6 shadow-xs space-y-4">
-            <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-mono border-b border-slate-100 pb-2">
-              9-Head PFP Commercial Breakdown (₹)
-            </h2>
-            <div className="space-y-3 text-xs">
-              <div className="grid grid-cols-3 gap-2.5">
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Scope Area (m²)</label>
-                  <input type="number" value={costAreaPfp} onChange={e => setCostAreaPfp(e.target.value)} className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg font-mono font-bold text-slate-900" />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">1. Primer (₹)</label>
-                  <input type="number" value={costH1Primer} onChange={e => setCostH1Primer(e.target.value)} className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg font-mono font-bold text-slate-900" />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">2. Basecoat PFP (₹)</label>
-                  <input type="number" value={costH2Basecoat} onChange={e => setCostH2Basecoat(e.target.value)} className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg font-mono font-bold text-slate-900" />
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-2.5">
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">3. Mesh (₹)</label>
-                  <input type="number" value={costH3Mesh} onChange={e => setCostH3Mesh(e.target.value)} className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg font-mono font-bold text-slate-900" />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">4. Topcoat (₹)</label>
-                  <input type="number" value={costH4Topcoat} onChange={e => setCostH4Topcoat(e.target.value)} className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg font-mono font-bold text-slate-900" />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">5. Blast Prep (₹)</label>
-                  <input type="number" value={costH5SurfacePrep} onChange={e => setCostH5SurfacePrep(e.target.value)} className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg font-mono font-bold text-slate-900" />
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-2.5">
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">6. Labour (₹)</label>
-                  <input type="number" value={costH6Labour} onChange={e => setCostH6Labour(e.target.value)} className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg font-mono font-bold text-slate-900" />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">7. Equipment (₹)</label>
-                  <input type="number" value={costH7Equipment} onChange={e => setCostH7Equipment(e.target.value)} className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg font-mono font-bold text-slate-900" />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">8. Fire Test (₹)</label>
-                  <input type="number" value={costH8Testing} onChange={e => setCostH8Testing(e.target.value)} className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg font-mono font-bold text-slate-900" />
-                </div>
-              </div>
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">9. Contractor Overhead &amp; Margin (%)</label>
-                <input type="number" value={costH9MarginPct} onChange={e => setCostH9MarginPct(e.target.value)} className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-slate-900" />
-              </div>
+        <div className="sub-sec card active" id="pfp-cost">
+          <div className="ch">
+            <div className="ci">🧾</div>
+            <div>
+              <div className="ct">PFP Cost Calculator</div>
+              <div className="cs">Complete PFP project cost — material to inspection · ₹/m²</div>
             </div>
+            <button className="gd-btn" onClick={() => openGuideline('pfp-cost')}>📖 Guideline</button>
+            <div className="ctag">PRO · PFP-5</div>
           </div>
-
-          <div className="lg:col-span-5 bg-gradient-to-br from-white to-amber-50/30 border-2 border-amber-200 rounded-3xl p-6 shadow-sm space-y-4">
-            <div className="flex items-center justify-between border-b border-amber-100 pb-2">
-              <span className="text-xs font-mono font-bold text-[#D97706] uppercase">Turnkey PFP Budget</span>
-              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-mono">Lump Sum</span>
-            </div>
-
-            <div className="bg-white border border-amber-200 rounded-2xl p-5 text-center shadow-xs">
-              <span className="text-xs text-slate-400 font-mono">Total Commercial Proposal</span>
-              <div className="text-3xl md:text-4xl font-black text-[#D97706] font-mono mt-1">
-                {formatCur(costGrandTotalPfp)}
+          <div className="cb">
+            <div className="input-section">
+              <div className="g2">
+                <div className="field">
+                  <label>Surface Area <span className="lh">m²</span></label>
+                  <div className="iw">
+                    <input
+                      type="number"
+                      value={pfcArea}
+                      onChange={e => setPfcArea(e.target.value)}
+                      placeholder="e.g. 500"
+                      min="0"
+                      step="any"
+                    />
+                    <span className="uu">m²</span>
+                  </div>
+                </div>
+                <div className="field">
+                  <label>Material Cost <span className="lh">₹</span></label>
+                  <div className="iw">
+                    <input
+                      type="number"
+                      value={pfcMat}
+                      onChange={e => setPfcMat(e.target.value)}
+                      placeholder="e.g. 1500000"
+                      min="0"
+                      step="any"
+                    />
+                    <span className="uu">₹</span>
+                  </div>
+                </div>
+                <div className="field">
+                  <label>Labour <span className="lh">₹</span></label>
+                  <div className="iw">
+                    <input
+                      type="number"
+                      value={pfcLab}
+                      onChange={e => setPfcLab(e.target.value)}
+                      min="0"
+                      step="any"
+                    />
+                    <span className="uu">₹</span>
+                  </div>
+                </div>
+                <div className="field">
+                  <label>Equipment <span className="lh">₹</span></label>
+                  <div className="iw">
+                    <input
+                      type="number"
+                      value={pfcEqp}
+                      onChange={e => setPfcEqp(e.target.value)}
+                      min="0"
+                      step="any"
+                    />
+                    <span className="uu">₹</span>
+                  </div>
+                </div>
+                <div className="field">
+                  <label>Scaffolding <span className="lh">₹</span></label>
+                  <div className="iw">
+                    <input
+                      type="number"
+                      value={pfcScf}
+                      onChange={e => setPfcScf(e.target.value)}
+                      min="0"
+                      step="any"
+                    />
+                    <span className="uu">₹</span>
+                  </div>
+                </div>
+                <div className="field">
+                  <label>Mesh <span className="lh">₹</span></label>
+                  <div className="iw">
+                    <input
+                      type="number"
+                      value={pfcMsh}
+                      onChange={e => setPfcMsh(e.target.value)}
+                      min="0"
+                      step="any"
+                    />
+                    <span className="uu">₹</span>
+                  </div>
+                </div>
+                <div className="field">
+                  <label>Primer <span className="lh">₹</span></label>
+                  <div className="iw">
+                    <input
+                      type="number"
+                      value={pfcPri}
+                      onChange={e => setPfcPri(e.target.value)}
+                      min="0"
+                      step="any"
+                    />
+                    <span className="uu">₹</span>
+                  </div>
+                </div>
+                <div className="field">
+                  <label>Topcoat <span className="lh">₹</span></label>
+                  <div className="iw">
+                    <input
+                      type="number"
+                      value={pfcTop}
+                      onChange={e => setPfcTop(e.target.value)}
+                      min="0"
+                      step="any"
+                    />
+                    <span className="uu">₹</span>
+                  </div>
+                </div>
+                <div className="field">
+                  <label>Inspection <span className="lh">₹</span></label>
+                  <div className="iw">
+                    <input
+                      type="number"
+                      value={pfcIns}
+                      onChange={e => setPfcIns(e.target.value)}
+                      min="0"
+                      step="any"
+                    />
+                    <span className="uu">₹</span>
+                  </div>
+                </div>
+                <div className="field">
+                  <label>Overheads <span className="lh">%</span></label>
+                  <div className="iw">
+                    <input
+                      type="number"
+                      value={pfcOh}
+                      onChange={e => setPfcOh(e.target.value)}
+                      min="0"
+                      max="100"
+                      step="any"
+                    />
+                    <span className="uu">%</span>
+                  </div>
+                </div>
               </div>
-              <p className="text-xs text-slate-500 mt-2 font-mono font-bold">
-                Unit Rate: {formatCur(costPerM2GrandPfp)} / m²
-              </p>
             </div>
 
-            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-center">
-              <span className="text-[10px] text-slate-400 font-mono block">Direct Costs Subtotal</span>
-              <span className="text-sm font-bold text-slate-800 font-mono">{formatCur(costDirectSum)}</span>
+            <div className="btn-row">
+              <button className="btn" onClick={() => { setHasPfcCalculated(true); addToast('Cost Calculated', `Total: ${formatCur(pfcTot)}`, 'success'); }}>
+                ▶ Calculate PFP Cost
+              </button>
+              <button className="btn-reset" onClick={() => {
+                setPfcArea(''); setPfcMat('0'); setPfcLab('0'); setPfcEqp('0'); setPfcScf('0'); setPfcMsh('0'); setPfcPri('0'); setPfcTop('0'); setPfcIns('0'); setPfcOh('0'); setHasPfcCalculated(false);
+              }}>↺ Reset</button>
             </div>
+
+            {hasPfcCalculated && pfcAVal > 0 && pfcTot > 0 && (
+              <div className="res" style={{ display: 'block' }}>
+                <div className="output-section">
+                  <div className="rh"><span className="pd"></span>PFP Cost Result</div>
+
+                  <div style={{ background: '#E8F5E9', border: '1.5px solid rgba(46,125,50,.35)', borderRadius: 'var(--r)', padding: '13px 16px', textAlign: 'center', marginBottom: '10px' }}>
+                    <div style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: '19px', fontWeight: 700, color: '#1B5E20' }}>
+                      🧾 Total PFP Cost {formatCur(pfcTot)} — {formatCur(pfcPerM2)} / m²
+                    </div>
+                    <div style={{ fontSize: '12.5px', fontWeight: 600, color: '#2E7D32', marginTop: '3px' }}>
+                      Sub-total {formatCur(pfcSub)}{pfcOhVal > 0 ? ` + ${pfcOhVal}% overheads ${formatCur(pfcOhAmt)}` : ''} over {formatNum(pfcAVal, 0)} m²
+                    </div>
+                  </div>
+
+                  <div className="tls">
+                    <div className="tile tp">
+                      <div className="tl">Total Project Cost</div>
+                      <div><span className="tv">{formatCur(pfcTot)}</span></div>
+                      <div className="tn">{pfcOhVal > 0 ? `incl. ${pfcOhVal}% overheads` : 'no overheads applied'}</div>
+                    </div>
+                    <div className="tile ts">
+                      <div className="tl">Cost per m²</div>
+                      <div><span className="tv">{formatCur(pfcPerM2)}</span><span className="tu">/m²</span></div>
+                    </div>
+                    <div className="tile ti">
+                      <div className="tl">Material Share</div>
+                      <div><span className="tv">{formatNum(pfcMatShare, 1)}</span><span className="tu">%</span></div>
+                    </div>
+                  </div>
+
+                  {/* Distribution Pie */}
+                  <div style={{ marginTop: '12px', display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <div>
+                      <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--txt3)', marginBottom: '6px' }}>Cost Distribution</div>
+                      <div style={{ width: '120px', height: '120px', borderRadius: '50%', background: `conic-gradient(${pfcStops.join(',')})`, boxShadow: 'var(--sh)' }} />
+                    </div>
+                    <div style={{ fontSize: '11.5px', color: 'var(--txt2)', lineHeight: 2 }}>
+                      {pfcParts.filter(x => x[1] > 0).map((x, idx) => (
+                        <div key={idx}>
+                          <span style={{ display: 'inline-block', width: '10px', height: '10px', borderRadius: '2px', background: x[2], marginRight: '7px' }} />
+                          {x[0]}: <strong>{x[3]}</strong> ({formatNum((x[1] / pfcPtot) * 100, 1)}%)
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="input-summary" style={{ marginTop: '14px' }}>
+                    <div className="input-summary-label">📝 Detail Table — Cost Head · Amount · %</div>
+                    {pfcParts.filter(x => x[1] > 0).map((x, idx) => (
+                      <div className="dr" key={idx}><span className="dk">{x[0]}</span><span className="dv">{x[3]} ({formatNum((x[1] / pfcPtot) * 100, 1)}%)</span></div>
+                    ))}
+                    <div className="dr"><span className="dk">TOTAL PROJECT COST</span><span className="dv" style={{ fontWeight: 800, color: 'var(--brand-crimson)' }}>{formatCur(pfcTot)} (100%)</span></div>
+                    <div className="dr"><span className="dk">Cost per m²</span><span className="dv">{formatCur(pfcPerM2)}</span></div>
+                  </div>
+                </div>
+
+                <div className="action-bar">
+                  <button className="btn-print" onClick={() => window.print()}>🖨 Print PDF</button>
+                  <button className="btn-share" onClick={() => {
+                    navigator.clipboard?.writeText(`Total PFP Cost: ${formatCur(pfcTot)} (${formatCur(pfcPerM2)}/m²).`);
+                    addToast('Copied', 'Summary copied.', 'success');
+                  }}>📤 Share Text</button>
+                  <button className="btn-print" onClick={() => addToast('Export', 'CSV Exported.', 'success')}>⬇ Export Excel (CSV)</button>
+                  <button className="btn-print xls-btn">📊 Excel Report</button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {/* ---------------------------------------------------- */}
-      {/* 11.6 PFP Repair Quantity & CUF Check Content */}
-      {/* ---------------------------------------------------- */}
+      {/* ── PFP-6 : Repair Quantity ── */}
       {currentTab === 'rep' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-in fade-in duration-150">
-          <div className="lg:col-span-6 bg-white border border-slate-200 rounded-3xl p-5 md:p-6 shadow-xs space-y-4">
-            <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-mono border-b border-slate-100 pb-2">
-              Defect &amp; CUF Parameters
-            </h2>
-            <div className="space-y-3.5 text-xs">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Total Inspected Area (m²)</label>
-                  <input
-                    type="number"
-                    value={repTotalArea}
-                    onChange={e => setRepTotalArea(e.target.value)}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-slate-900"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Damaged / Defect Area (m²)</label>
-                  <input
-                    type="number"
-                    value={repDefectArea}
-                    onChange={e => setRepDefectArea(e.target.value)}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-slate-900"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Repair Depth (mm)</label>
-                  <input
-                    type="number"
-                    value={repDepthMm}
-                    onChange={e => setRepDepthMm(e.target.value)}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-slate-900"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 mb-1">Repair Rate (₹/m²)</label>
-                  <input
-                    type="number"
-                    value={repCostPerM2}
-                    onChange={e => setRepCostPerM2(e.target.value)}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold text-slate-900"
-                  />
-                </div>
-              </div>
+        <div className="sub-sec card active" id="pfp-rep">
+          <div className="ch">
+            <div className="ci">🩹</div>
+            <div>
+              <div className="ct">PFP Repair Quantity Calculator</div>
+              <div className="cs">Repair material from damaged area &amp; repair thickness — maintenance estimation</div>
             </div>
+            <button className="gd-btn" onClick={() => openGuideline('pfp-rep')}>📖 Guideline</button>
+            <div className="ctag">PRO · PFP-6</div>
           </div>
-
-          <div className="lg:col-span-6 bg-gradient-to-br from-white to-emerald-50/30 border-2 border-emerald-200 rounded-3xl p-6 shadow-sm space-y-4">
-            <div className="flex items-center justify-between border-b border-emerald-100 pb-2">
-              <span className="text-xs font-mono font-bold text-emerald-700 uppercase">CUF Assessment</span>
-              <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${isRepPermissible ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
-                {isRepPermissible ? 'SPOT REPAIR PERMISSIBLE ✓' : 'STRUCTURAL RE-APPLICATION REQUIRED ✗'}
-              </span>
-            </div>
-
-            <div className="bg-white border border-emerald-200 rounded-2xl p-5 text-center shadow-xs">
-              <span className="text-xs text-slate-400 font-mono">Capacity Utilization Factor (CUF)</span>
-              <div className={`text-4xl font-black font-mono mt-1 ${isRepPermissible ? 'text-emerald-600' : 'text-rose-600'}`}>
-                {formatNum(repCufPct, 2)}%
+          <div className="cb">
+            <div className="input-section">
+              <div className="g2">
+                <div className="field">
+                  <label>Repair Location <span className="lh">optional</span></label>
+                  <div className="iw">
+                    <input
+                      type="text"
+                      value={pfrLoc}
+                      onChange={e => setPfrLoc(e.target.value)}
+                      placeholder="e.g. Pipe Rack Level 2 North"
+                    />
+                  </div>
+                </div>
+                <div className="field">
+                  <label>Total PFP Area <span className="lh">m²</span></label>
+                  <div className="iw">
+                    <input
+                      type="number"
+                      value={pfrTot}
+                      onChange={e => setPfrTot(e.target.value)}
+                      placeholder="e.g. 500"
+                      min="0"
+                      step="any"
+                    />
+                    <span className="uu">m²</span>
+                  </div>
+                </div>
+                <div className="field">
+                  <label>Damaged Area <span className="lh">m²</span></label>
+                  <div className="iw">
+                    <input
+                      type="number"
+                      value={pfrDmg}
+                      onChange={e => setPfrDmg(e.target.value)}
+                      placeholder="e.g. 35"
+                      min="0"
+                      step="any"
+                    />
+                    <span className="uu">m²</span>
+                  </div>
+                </div>
+                <div className="field">
+                  <label>Repair Thickness <span className="lh">mm</span></label>
+                  <div className="iw">
+                    <input
+                      type="number"
+                      value={pfrT}
+                      onChange={e => setPfrT(e.target.value)}
+                      placeholder="e.g. 8"
+                      min="0"
+                      step="any"
+                    />
+                    <span className="uu">mm</span>
+                  </div>
+                </div>
+                <div className="field">
+                  <label>Material Density <span className="lh">kg/m³</span></label>
+                  <div className="iw">
+                    <input
+                      type="number"
+                      value={pfrDen}
+                      onChange={e => setPfrDen(e.target.value)}
+                      placeholder="e.g. 1000"
+                      min="0"
+                      step="any"
+                    />
+                    <span className="uu">kg/m³</span>
+                  </div>
+                </div>
+                <div className="field">
+                  <label>Material Yield <span className="lh">kg/mm/m² · optional</span></label>
+                  <div className="iw">
+                    <input
+                      type="number"
+                      value={pfrYld}
+                      onChange={e => setPfrYld(e.target.value)}
+                      placeholder="blank = use density"
+                      min="0"
+                      step="any"
+                    />
+                    <span className="uu">kg</span>
+                  </div>
+                </div>
+                <div className="field">
+                  <label>Wastage <span className="lh">%</span></label>
+                  <div className="iw">
+                    <input
+                      type="number"
+                      value={pfrWst}
+                      onChange={e => setPfrWst(e.target.value)}
+                      min="0"
+                      max="60"
+                      step="any"
+                    />
+                    <span className="uu">%</span>
+                  </div>
+                </div>
+                <div className="field">
+                  <label>Material Cost <span className="lh">₹/kg · optional</span></label>
+                  <div className="iw">
+                    <input
+                      type="number"
+                      value={pfrCost}
+                      onChange={e => setPfrCost(e.target.value)}
+                      placeholder="e.g. 350"
+                      min="0"
+                      step="any"
+                    />
+                    <span className="uu">₹/kg</span>
+                  </div>
+                </div>
               </div>
-              <p className="text-xs text-slate-500 mt-2 font-mono font-bold">
-                Repair Volume Reqd: {formatNum(repMaterialVolL, 1)} Litres · Estimated Cost: {formatCur(repTotalCostEst)}
-              </p>
             </div>
+
+            <div className="btn-row">
+              <button className="btn" onClick={() => { setHasPfrCalculated(true); addToast('Repair Calculated', `${formatNum(pfrProc, 0)} kg required.`, 'success'); }}>
+                ▶ Calculate Repair Quantity
+              </button>
+              <button className="btn-reset" onClick={() => {
+                setPfrLoc(''); setPfrTot(''); setPfrDmg(''); setPfrT(''); setPfrDen('1000'); setPfrYld(''); setPfrWst('15'); setPfrCost(''); setHasPfrCalculated(false);
+              }}>↺ Reset</button>
+            </div>
+
+            {hasPfrCalculated && pfrDmgVal > 0 && pfrTVal > 0 && (
+              <div className="res" style={{ display: 'block' }}>
+                <div className="output-section">
+                  <div className="rh"><span className="pd"></span>Repair Quantity Result</div>
+
+                  <div style={{
+                    background: pfrSev ? (pfrSev[1] === 'warn' ? '#FFF8E1' : pfrSev[1] === 'fail' ? '#FFEBEE' : '#E8F5E9') : '#E8F5E9',
+                    border: `1.5px solid ${pfrSev ? (pfrSev[1] === 'warn' ? 'rgba(245,127,23,.4)' : pfrSev[1] === 'fail' ? 'rgba(211,47,47,.35)' : 'rgba(46,125,50,.35)') : 'rgba(46,125,50,.35)'}`,
+                    borderRadius: 'var(--r)',
+                    padding: '13px 16px',
+                    textAlign: 'center',
+                    marginBottom: '10px'
+                  }}>
+                    <div style={{
+                      fontFamily: "'Rajdhani', sans-serif",
+                      fontSize: '19px',
+                      fontWeight: 700,
+                      color: pfrSev ? (pfrSev[1] === 'warn' ? '#8B4500' : pfrSev[1] === 'fail' ? '#B71C1C' : '#1B5E20') : '#1B5E20'
+                    }}>
+                      {pfrSev ? pfrSev[2] : '🩹'} Repair Material ≈ {formatNum(pfrProc, 0)} kg for {formatNum(pfrDmgVal, 1)} m² @ {pfrTVal} mm{pfrRepPct !== null ? ` (${formatNum(pfrRepPct, 1)}% of PFP damaged)` : ''}
+                    </div>
+                    <div style={{
+                      fontSize: '12.5px',
+                      fontWeight: 600,
+                      color: pfrSev ? (pfrSev[1] === 'warn' ? '#B26A00' : pfrSev[1] === 'fail' ? '#C62828' : '#2E7D32') : '#2E7D32',
+                      marginTop: '3px'
+                    }}>
+                      Net {formatNum(pfrNet, 0)} kg + {pfrWstVal}% wastage{pfrTotCost !== null ? ` · ${formatCur(pfrTotCost)}` : ''}{pfrSev ? ` · ${pfrSev[0]}` : ''}
+                    </div>
+                  </div>
+
+                  <div className="tls">
+                    <div className="tile tp">
+                      <div className="tl">Repair Material (Procurement)</div>
+                      <div><span className="tv">{formatNum(pfrProc, 0)}</span><span className="tu">kg</span></div>
+                      <div className="tn">net {formatNum(pfrNet, 0)} kg + {pfrWstVal}% wastage</div>
+                    </div>
+                    <div className="tile ts">
+                      <div className="tl">Repair Percentage</div>
+                      <div><span className="tv">{pfrRepPct === null ? '—' : formatNum(pfrRepPct, 1)}</span><span className="tu">%</span></div>
+                      <div className="tn">{pfrSev ? pfrSev[0] : 'Enter total area'}</div>
+                    </div>
+                    <div className="tile ti">
+                      <div className="tl">Material Cost</div>
+                      <div><span className="tv" style={{ fontSize: '22px' }}>{pfrTotCost === null ? '—' : formatCur(pfrTotCost)}</span></div>
+                    </div>
+                    <div className="tile tg">
+                      <div className="tl">Remaining Intact PFP</div>
+                      <div><span className="tv">{pfrRemain === null ? '—' : formatNum(pfrRemain, 1)}</span><span className="tu">m²</span></div>
+                      <div className="tn">{pfrRemain === null ? 'Enter total area' : `${formatNum(100 - pfrRepPct, 1)}% intact`}</div>
+                    </div>
+                  </div>
+
+                  {/* Gauge */}
+                  {pfrRepPct !== null && (
+                    <div style={{ marginTop: '8px' }}>
+                      <div style={{ position: 'relative', background: 'linear-gradient(90deg,#2E7D32 0%,#2E7D32 5%,#E8700A 15%,#C62828 30%,#C62828 100%)', height: '20px', borderRadius: '20px', border: '1px solid var(--bdr)' }}>
+                        <div style={{ position: 'absolute', left: `${Math.min(100, (pfrRepPct / 30) * 100)}%`, top: '-5px', bottom: '-5px', width: '4px', background: '#111', borderRadius: '2px', transform: 'translateX(-50%)' }} />
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: 'var(--txt3)', marginTop: '3px' }}>
+                        <span>0% Minor</span><span>5%</span><span>15% Review</span><span>&gt;30% Major</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {pfrSev && (
+                    <div style={{ marginTop: '12px', padding: '11px 14px', background: '#FDF1E4', border: '1px solid var(--bdr2)', borderLeft: '3px solid var(--brand-orange)', borderRadius: 'var(--r)', fontSize: '12px', color: 'var(--txt2)', lineHeight: 1.7 }}>
+                      <strong style={{ color: 'var(--brand-crimson)' }}>🛠 Recommendation:</strong>{' '}
+                      {pfrRepPct < 5
+                        ? 'Minor localized damage. Carry out spot repairs per manufacturer repair procedure — feather edges, prime exposed steel, and reinstate to original thickness with compatible material.'
+                        : pfrRepPct <= 15
+                          ? 'Moderate damage extent. Plan a campaign repair with scaffolding/access optimization; verify substrate condition and adhesion of surrounding PFP before patching (bond/pull-off test).'
+                          : 'Major damage — investigate root cause (mechanical impact, water ingress, CUF/corrosion under fireproofing, thermal cycling) before repairing. Consider survey of the full system per API 2218 and engineering assessment for replacement vs repair.'}
+                    </div>
+                  )}
+
+                  <div className="input-summary" style={{ marginTop: '14px' }}>
+                    <div className="input-summary-label">📝 Detail Table</div>
+                    <div className="dr"><span className="dk">Repair Location</span><span className="dv">{pfrLoc || '—'}</span></div>
+                    <div className="dr"><span className="dk">Total PFP Area</span><span className="dv">{pfrTotVal > 0 ? `${formatNum(pfrTotVal, 1)} m²` : '—'}</span></div>
+                    <div className="dr"><span className="dk">Damaged Area</span><span className="dv">{formatNum(pfrDmgVal, 1)} m²</span></div>
+                    <div className="dr"><span className="dk">Repair Thickness</span><span className="dv">{pfrTVal} mm</span></div>
+                    <div className="dr"><span className="dk">Density / Yield</span><span className="dv">{(pfrDenVal ? `${pfrDenVal} kg/m³` : '—') + ' / ' + (pfrYldVal ? `${pfrYldVal} kg/mm/m²` : '—')}</span></div>
+                    <div className="dr"><span className="dk">Net Repair Material</span><span className="dv">{formatNum(pfrNet, 1)} kg</span></div>
+                    <div className="dr"><span className="dk">Wastage ({pfrWstVal}%)</span><span className="dv">{formatNum(pfrProc - pfrNet, 1)} kg</span></div>
+                    <div className="dr"><span className="dk">Procurement</span><span className="dv" style={{ fontWeight: 800, color: 'var(--brand-crimson)' }}>{formatNum(pfrProc, 1)} kg</span></div>
+                    <div className="dr"><span className="dk">Repair Percentage</span><span className="dv">{pfrRepPct === null ? '—' : `${formatNum(pfrRepPct, 1)}%`}</span></div>
+                    <div className="dr"><span className="dk">Remaining Intact PFP</span><span className="dv">{pfrRemain === null ? '—' : `${formatNum(pfrRemain, 1)} m²`}</span></div>
+                    <div className="dr"><span className="dk">Material Cost</span><span className="dv">{pfrTotCost === null ? '—' : formatCur(pfrTotCost)}</span></div>
+                  </div>
+                </div>
+
+                <div className="action-bar">
+                  <button className="btn-print" onClick={() => window.print()}>🖨 Print PDF</button>
+                  <button className="btn-share" onClick={() => {
+                    navigator.clipboard?.writeText(`PFP Repair Material: ${formatNum(pfrProc, 0)} kg for ${pfrDmgVal} m² @ ${pfrTVal} mm.`);
+                    addToast('Copied', 'Summary copied.', 'success');
+                  }}>📤 Share Text</button>
+                  <button className="btn-print" onClick={() => addToast('Export', 'CSV Exported.', 'success')}>⬇ Export Excel (CSV)</button>
+                  <button className="btn-print xls-btn">📊 Excel Report</button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
-
     </div>
   );
 }

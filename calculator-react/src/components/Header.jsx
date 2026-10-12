@@ -16,7 +16,8 @@ import {
   Plus,
   Search,
   Bell,
-  ClipboardCheck
+  ClipboardCheck,
+  LogIn
 } from 'lucide-react';
 
 export default function Header({ 
@@ -27,7 +28,9 @@ export default function Header({
   setMobileSidebarOpen,
   onOpenHelp,
   onOpenUpgrade,
-  onHeaderAction
+  onHeaderAction,
+  isLoggedIn,
+  onOpenAuthModal
 }) {
   const [zoomLevel, setZoomLevel] = useState(96);
   const [lang, setLang] = useState('English');
@@ -741,35 +744,58 @@ export default function Header({
             </button>
           </div>
 
-          {/* Free Plan Pill */}
-          <div className="bg-[#FFF5EA] border border-[#FDE3C7] text-[#D97706] font-mono font-bold text-[10px] px-2.5 py-1 rounded-full flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#D97706]"></span>
-            <span>FREE PLAN</span>
-          </div>
+          {/* Right Action Controls: Sign In when guest, Plan Pill & Avatar when authenticated */}
+          {!isLoggedIn ? (
+            <button
+              onClick={onOpenAuthModal}
+              className="bg-gradient-to-r from-[#F7941D] to-[#E8700A] hover:opacity-95 text-white font-bold text-xs px-3.5 py-1.5 rounded-full shadow-[0_2px_8px_rgba(247,148,29,0.3)] transition flex items-center gap-1.5 cursor-pointer"
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              <span>Sign In</span>
+            </button>
+          ) : (
+            <>
+              {/* Free Plan Pill */}
+              <div className="bg-[#FFF5EA] border border-[#FDE3C7] text-[#D97706] font-mono font-bold text-[10px] px-2.5 py-1 rounded-full flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#D97706]"></span>
+                <span>FREE PLAN</span>
+              </div>
 
-          {/* Upgrade Button */}
-          <button
-            onClick={onOpenUpgrade}
-            className="bg-gradient-to-r from-[#F7941D] to-[#E8700A] hover:opacity-95 text-white font-bold text-xs px-3.5 py-1.5 rounded-full shadow-[0_2px_8px_rgba(247,148,29,0.3)] transition flex items-center gap-1 cursor-pointer"
-          >
-            <span>Upgrade</span>
-            <ArrowRight className="w-3 h-3" />
-          </button>
+              {/* Upgrade Button */}
+              <button
+                onClick={onOpenUpgrade}
+                className="bg-gradient-to-r from-[#F7941D] to-[#E8700A] hover:opacity-95 text-white font-bold text-xs px-3.5 py-1.5 rounded-full shadow-[0_2px_8px_rgba(247,148,29,0.3)] transition flex items-center gap-1 cursor-pointer"
+              >
+                <span>Upgrade</span>
+                <ArrowRight className="w-3 h-3" />
+              </button>
 
-          {/* User Avatar */}
-          <div 
-            onClick={() => setActivePage('settings')}
-            className="w-7 h-7 rounded-full bg-gradient-to-br from-[#F7941D] to-[#8B0E16] text-white font-bold flex items-center justify-center text-xs shadow-2xs cursor-pointer hover:opacity-90 transition font-mono"
-            title="User Profile & Settings"
-          >
-            {userInitial}
-          </div>
+              {/* User Avatar */}
+              <div 
+                onClick={() => setActivePage('settings')}
+                className="w-7 h-7 rounded-full bg-gradient-to-br from-[#F7941D] to-[#8B0E16] text-white font-bold flex items-center justify-center text-xs shadow-2xs cursor-pointer hover:opacity-90 transition font-mono"
+                title="User Profile & Settings"
+              >
+                {userInitial}
+              </div>
+            </>
+          )}
 
         </div>
       ) : isDarkSuite ? (
         /* Mode 3: Dark Suite Right Actions (Manpower / Blaster / Painter) */
         <div className="flex items-center gap-2 md:gap-2.5 shrink-0 ml-3">
           
+          {!isLoggedIn && (
+            <button
+              onClick={onOpenAuthModal}
+              className="bg-gradient-to-r from-[#F7941D] to-[#E8700A] hover:opacity-95 text-white font-bold text-xs px-3 py-1.5 rounded-full shadow-xs transition flex items-center gap-1.5 cursor-pointer mr-1"
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              <span>Sign In</span>
+            </button>
+          )}
+
           {/* Live System Badge: Amber/Brown Glow */}
           <div className="hidden lg:flex items-center gap-1.5 bg-[#382013] border border-[#7C4019] text-[#F7941D] text-[10px] font-bold px-2.5 py-1 rounded-full">
             <span className="w-1.5 h-1.5 rounded-full bg-[#F7941D] animate-pulse"></span>
@@ -835,6 +861,15 @@ export default function Header({
       ) : isCalc ? (
         /* Mode: Coating Calculator Right Title (Matches Screenshot 1) */
         <div className="flex items-center gap-3 shrink-0 ml-3">
+          {!isLoggedIn && (
+            <button
+              onClick={onOpenAuthModal}
+              className="bg-gradient-to-r from-[#F7941D] to-[#E8700A] hover:opacity-95 text-white font-bold text-xs px-3 py-1.5 rounded-full shadow-xs transition flex items-center gap-1.5 cursor-pointer"
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              <span>Sign In</span>
+            </button>
+          )}
           <div className="flex items-center gap-2 pl-2">
             <div className="w-7 h-7 rounded-lg bg-[#FFF5EA] text-[#F7941D] flex items-center justify-center font-bold text-sm shadow-2xs">
               📐
@@ -847,6 +882,15 @@ export default function Header({
       ) : isSpec ? (
         /* Mode: Specification Reading Right Title (Matches Screenshot 2) */
         <div className="flex items-center gap-3 shrink-0 ml-3">
+          {!isLoggedIn && (
+            <button
+              onClick={onOpenAuthModal}
+              className="bg-gradient-to-r from-[#F7941D] to-[#E8700A] hover:opacity-95 text-white font-bold text-xs px-3 py-1.5 rounded-full shadow-xs transition flex items-center gap-1.5 cursor-pointer mr-1"
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              <span>Sign In</span>
+            </button>
+          )}
           <div className="flex lg:hidden items-center gap-1">
             <button
               onClick={() => handleActionClick('preview')}

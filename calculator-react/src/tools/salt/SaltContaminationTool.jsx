@@ -1,294 +1,382 @@
 import React, { useState } from 'react';
-import { Sparkles, Printer, Copy, Check, Calculator, Info, ShieldCheck, AlertTriangle, BookOpen, Play, RotateCcw } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
-import { useGuideline } from '../../context/GuidelineContext';
-import { calcBresleSalt, formatNum } from '../../utils/calculations';
+import { formatNum } from '../../utils/calculations';
+
+const SALT_TEMP = {
+  0: 5.6, 5: 18.7, 10: 29.1, 15: 37.4, 20: 44.3, 25: 50,
+  30: 54.8, 35: 58.8, 40: 62.4, 45: 65.4, 50: 68.0, 55: 70.3,
+  60: 72.4, 65: 74.2, 70: 75.8, 75: 77.3, 80: 78.6
+};
 
 export default function SaltContaminationTool() {
   const { addToast } = useToast();
-  const { openGuideline } = useGuideline();
-  const [instrument, setInstrument] = useState('');
-  const [projectName, setProjectName] = useState('');
-  const [blank, setBlank] = useState(''); // µS/cm
-  const [sample, setSample] = useState(''); // µS/cm
-  const [waterVol, setWaterVol] = useState('3.0'); // ml
-  const [temp, setTemp] = useState('25'); // °C
-  const [limit, setLimit] = useState('20'); // mg/m²
-  const [copied, setCopied] = useState(false);
+  const [instrument, setInstrument] = useState('Horiba');
+  const [projectName, setProjectName] = useState('Tank Farm Project');
+  const [blank, setBlank] = useState('1');
+  const [waterVol, setWaterVol] = useState('3');
+  const [surf, setSurf] = useState('25');
+  const [limit, setLimit] = useState('20');
+  const [temp, setTemp] = useState('25');
 
-  const res = (sample !== '' && blank !== '') ? calcBresleSalt(blank, sample, waterVol || 3.0, temp || 25, limit || 20) : null;
+  const [calculated, setCalculated] = useState(false);
+  const [res, setRes] = useState(null);
 
   const handleCalculate = () => {
-    if (sample === '' || blank === '') {
-      addToast('Missing Required Inputs', 'Please enter Sample Conductivity and DI Water Blank.', 'warning');
+    const blankVal = parseFloat(blank) || 0;
+    const surfVal = parseFloat(surf);
+    const wqVal = parseFloat(waterVol) || 3;
+    const limVal = parseFloat(limit) || 20;
+    const tempVal = parseInt(temp, 10) || 25;
+
+    if (isNaN(surfVal)) {
+      addToast('Missing Required Inputs', 'Please fill Surface Conductivity.', 'warning');
       return;
     }
-    addToast('Calculated Salt Contamination', 'Bresle ISO 8502-9 test evaluation complete.', 'success');
+
+    const net = Math.max(0, surfVal - blankVal);
+    const factor = 1.12 * (wqVal / 3);
+    const saltMeas = net * factor;
+    const tf = 50 / (SALT_TEMP[tempVal] || 50);
+    const salt25 = saltMeas * tf;
+    const isPass = salt25 <= limVal;
+
+    const above = tempVal > 25;
+    const at = tempVal === 25;
+    const dir = at 
+      ? 'unchanged (test already at the 25°C reference)'
+      : above 
+        ? 'reduced (test above 25°C reads high, so referencing to 25°C lowers it)'
+        : 'increased (test below 25°C reads low, so referencing to 25°C raises it)';
+
+    setRes({
+      instrument: instrument || '—',
+      projectName: projectName || '—',
+      blankVal,
+      surfVal,
+      wqVal,
+      limVal,
+      tempVal,
+      net,
+      factor,
+      saltMeas,
+      tf,
+      salt25,
+      isPass,
+      dir
+    });
+    setCalculated(true);
+    addToast('Calculation Complete', 'Salt contamination test evaluated.', 'success');
   };
 
   const handleReset = () => {
     setInstrument('');
     setProjectName('');
     setBlank('');
-    setSample('');
-    setWaterVol('3.0');
-    setTemp('25');
+    setWaterVol('3');
+    setSurf('');
     setLimit('20');
-    addToast('Form Reset', 'All input parameters have been cleared.', 'info');
+    setTemp('25');
+    setCalculated(false);
+    setRes(null);
+    addToast('Form Reset', 'Parameters have been cleared.', 'info');
   };
 
-  const handleCopy = () => {
-    if (!res) {
-      addToast('No Calculation', 'Please enter conductivity readings first.', 'warning');
-      return;
-    }
-    const text = `BG CoatingOS™ — Salt Contamination Test (ISO 8502-9 Bresle Method)
-${projectName ? `Project: ${projectName}\n` : ''}${instrument ? `Instrument: ${instrument}\n` : ''}Sample Reading: ${sample} µS/cm | Deionized Water Blank: ${blank} µm/cm
-Steel Temperature: ${temp}°C (fT factor: ${formatNum(res.ft, 3)}) | Water: ${waterVol} ml
---------------------------------------
-Measured Surface Salt Density: ${formatNum(res.saltMgM2, 1)} mg/m² (${formatNum(res.saltUgCm2, 2)} µg/cm²)
-Specified Maximum Limit: ${limit} mg/m²
-Acceptance Status: ${res.isPass ? 'PASS (Conforming)' : 'FAIL (Exceeds Limit — Re-washing Required)'}`;
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleShare = () => {
+    if (!res) return;
+    const text = `BG CoatingOS™ — Salt Contamination Test (ISO 8502-9)
+Instrument: ${res.instrument}
+Project: ${res.projectName}
+Blank: ${res.blankVal} µS/cm | Surface: ${res.surfVal} µS/cm | DM Water: ${res.wqVal} ml
+Temperature: ${res.tempVal}°C | Limit: ${res.limVal} mg/m²
+------------------------------------
+Verdict: ${res.isPass ? 'PASS — Acceptable' : 'FAIL — Exceeds Limit'}
+Measured Salt (at ${res.tempVal}°C): ${formatNum(res.saltMeas, 2)} mg/m² (${formatNum(res.saltMeas / 10, 3)} µg/cm²)
+Corrected Salt @ 25°C Ref: ${formatNum(res.salt25, 2)} mg/m² (${formatNum(res.salt25 / 10, 3)} µg/cm²)
+Net Conductivity: ${formatNum(res.net, 2)} µS/cm
+Temp Correction Factor: ${formatNum(res.tf, 4)}`;
+
     navigator.clipboard.writeText(text);
-    setCopied(true);
-    addToast('Copied to Clipboard', 'Salt contamination report copied.', 'success');
-    setTimeout(() => setCopied(false), 2000);
+    addToast('Copied to Clipboard', 'Summary copied for sharing.', 'success');
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
-      
-      {/* Tool Header Card */}
-      <div className="bg-white border border-slate-200 rounded-3xl p-5 md:p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="sub-sec card active" id="salt-main">
+      <div className="ch">
+        <div className="ci">🧂</div>
         <div>
-          <div className="flex items-center gap-2">
-            <span className="bg-amber-50 text-[#D97706] border border-amber-200 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase font-mono tracking-wider">
-              Tool SC-1 · ISO 8502-9
-            </span>
-            <h1 className="text-lg md:text-xl font-extrabold text-slate-900">
-              Salt Contamination Test (Bresle Patch Method)
-            </h1>
-          </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Conduct ISO 8502-6/9 soluble salt testing with automatic temperature correction (0°C–80°C) and pass/fail evaluation against project criteria.
-          </p>
+          <div className="ct">Online Salt Contamination Test</div>
+          <div className="cs">ISO 8502-9 · Temperature Correction · Pass/Fail Verdict</div>
         </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => openGuideline('salt_test_tool')}
-            className="px-3.5 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-[#D97706] border border-amber-200 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
-          >
-            <BookOpen className="w-3.5 h-3.5" />
-            <span>📖 Guideline</span>
-          </button>
-          <button
-            onClick={handleCopy}
-            className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
-          >
-            {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-            <span>{copied ? 'Copied' : 'Copy'}</span>
-          </button>
-          <button
-            onClick={() => window.print()}
-            className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
-          >
-            <Printer className="w-3.5 h-3.5" />
-            <span>Print Report</span>
-          </button>
-        </div>
+        <div className="ctag">ISO 8502-9</div>
       </div>
 
-      {/* Main Grid: Inputs + Output */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        {/* Left Inputs Section */}
-        <div className="lg:col-span-6 bg-white border border-slate-200 rounded-3xl p-5 md:p-6 shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider font-mono">
-              Bresle Conductivity Readings
-            </h2>
-            <Calculator className="w-4 h-4 text-[#F7941D]" />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                Instrument <span className="text-slate-400 font-mono text-[10px] ml-1">optional</span>
-              </label>
-              <input
-                type="text"
-                value={instrument}
-                onChange={e => setInstrument(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-                placeholder="e.g. Horiba B-771"
-              />
+      <div className="cb">
+        <div className="input-section">
+          <div className="g2">
+            <div className="field">
+              <label>Instrument <span className="lh">optional</span></label>
+              <div className="iw">
+                <input 
+                  type="text" 
+                  id="sc-inst" 
+                  placeholder="e.g. Horiba" 
+                  value={instrument} 
+                  onChange={(e) => setInstrument(e.target.value)} 
+                />
+              </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                Project Name <span className="text-slate-400 font-mono text-[10px] ml-1">optional</span>
-              </label>
-              <input
-                type="text"
-                value={projectName}
-                onChange={e => setProjectName(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-                placeholder="e.g. Tank Farm Project"
-              />
+            <div className="field">
+              <label>Project Name <span className="lh">optional</span></label>
+              <div className="iw">
+                <input 
+                  type="text" 
+                  id="sc-proj" 
+                  placeholder="e.g. Tank Farm Project" 
+                  value={projectName} 
+                  onChange={(e) => setProjectName(e.target.value)} 
+                />
+              </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                Surface Sample Conductivity (µS/cm)
-              </label>
-              <input
-                type="number"
-                step="0.1"
-                value={sample}
-                onChange={e => setSample(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-                placeholder="e.g. 24.5"
-              />
+            <div className="field">
+              <label>Blank Conductivity <span className="lh">µS/cm</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="sc-blank" 
+                  placeholder="e.g. 1" 
+                  step="0.1" 
+                  value={blank} 
+                  onChange={(e) => setBlank(e.target.value)} 
+                />
+                <span className="uu">µS/cm</span>
+              </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                Deionized Water Blank (µS/cm)
-              </label>
-              <input
-                type="number"
-                step="0.1"
-                value={blank}
-                onChange={e => setBlank(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-                placeholder="e.g. 2.0"
-              />
+            <div className="field">
+              <label>DM Water Volume <span className="lh">ml</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="sc-wq" 
+                  placeholder="3" 
+                  step="0.5" 
+                  value={waterVol} 
+                  onChange={(e) => setWaterVol(e.target.value)} 
+                />
+                <span className="uu">ml</span>
+              </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                Steel Substrate Temperature (°C)
-              </label>
-              <input
-                type="number"
-                value={temp}
-                onChange={e => setTemp(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-                placeholder="25"
-              />
+            <div className="field">
+              <label>Surface Conductivity <span className="lh">µS/cm</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="sc-surf" 
+                  placeholder="e.g. 25" 
+                  step="0.1" 
+                  value={surf} 
+                  onChange={(e) => setSurf(e.target.value)} 
+                />
+                <span className="uu">µS/cm</span>
+              </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                Injected Water Volume (ml)
-              </label>
-              <input
-                type="number"
-                step="0.1"
-                value={waterVol}
-                onChange={e => setWaterVol(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-                placeholder="3.0"
-              />
+            <div className="field">
+              <label>Acceptable Limit <span className="lh">mg/m²</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="sc-lim" 
+                  placeholder="20" 
+                  value={limit} 
+                  onChange={(e) => setLimit(e.target.value)} 
+                />
+                <span className="uu">mg/m²</span>
+              </div>
             </div>
 
-            <div className="sm:col-span-2">
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                Specified Maximum Salt Limit (mg/m²)
-              </label>
-              <input
-                type="number"
-                value={limit}
-                onChange={e => setLimit(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-                placeholder="20"
-              />
+            <div className="field">
+              <label>Steel Temperature</label>
+              <div className="iw">
+                <select 
+                  id="sc-temp" 
+                  value={temp} 
+                  onChange={(e) => setTemp(e.target.value)}
+                >
+                  <option value="0">0°C</option>
+                  <option value="5">5°C</option>
+                  <option value="10">10°C</option>
+                  <option value="15">15°C</option>
+                  <option value="20">20°C</option>
+                  <option value="25">25°C (Reference)</option>
+                  <option value="30">30°C</option>
+                  <option value="35">35°C</option>
+                  <option value="40">40°C</option>
+                  <option value="45">45°C</option>
+                  <option value="50">50°C</option>
+                  <option value="55">55°C</option>
+                  <option value="60">60°C</option>
+                  <option value="65">65°C</option>
+                  <option value="70">70°C</option>
+                  <option value="75">75°C</option>
+                  <option value="80">80°C</option>
+                </select>
+              </div>
             </div>
-          </div>
-
-          {/* Form Actions: Calculate & Reset */}
-          <div className="flex gap-2.5 pt-2">
-            <button
-              type="button"
-              onClick={handleCalculate}
-              className="flex-[2] py-3 px-4 bg-gradient-to-r from-[#F7941D] to-[#A50021] hover:from-[#E8700A] hover:to-[#8B0018] text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-xs transition hover:brightness-105 active:scale-98 flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <Play className="w-3.5 h-3.5 fill-white" />
-              <span>Evaluate Salt Content</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleReset}
-              className="flex-1 py-3 px-4 bg-white hover:bg-red-50 text-[#A50021] border border-[#A50021]/30 font-bold text-xs uppercase tracking-wider rounded-xl shadow-2xs transition hover:border-[#A50021] active:scale-98 flex items-center justify-center gap-1.5 cursor-pointer"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>Reset</span>
-            </button>
-          </div>
-
-          <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/70 text-xs text-slate-500 flex items-start gap-2">
-            <Info className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
-            <span className="leading-relaxed">
-              Standard ISO 8502-9 test patch area is 12.5 cm². Temperature normalization factor $f_T$ adjusts to 25°C standard baseline.
-            </span>
           </div>
         </div>
 
-        {/* Right Output Section */}
-        <div className="lg:col-span-6 space-y-4">
-          <div className={`border-2 rounded-3xl p-6 shadow-sm space-y-5 transition-all duration-300 ${
-            res && res.isPass 
-              ? 'bg-gradient-to-br from-white to-emerald-50/30 border-emerald-300' 
-              : 'bg-gradient-to-br from-white to-rose-50/30 border-rose-300'
-          }`}>
-            
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <span className="text-[10px] font-mono font-extrabold uppercase tracking-wider text-slate-500">
-                Test Verdict (ISO 8502-9)
-              </span>
-              <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full font-mono flex items-center gap-1 ${
-                res && res.isPass ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
-              }`}>
-                {res && res.isPass ? <ShieldCheck className="w-3.5 h-3.5" /> : <AlertTriangle className="w-3.5 h-3.5" />}
-                <span>{res && res.isPass ? 'PASS · Conforming' : 'FAIL · Non-Conforming'}</span>
-              </span>
-            </div>
-
-            {/* Target Output Highlight Box */}
-            <div className="bg-white border rounded-2xl p-5 text-center shadow-xs">
-              <span className="text-xs text-slate-400 font-mono">Surface Salt Density (Corrected @ 25°C)</span>
-              <div className={`text-4xl md:text-5xl font-black font-mono mt-1 ${
-                res && res.isPass ? 'text-emerald-700' : 'text-rose-700'
-              }`}>
-                {res ? `${formatNum(res.saltMgM2, 1)} mg/m²` : '—'}
-              </div>
-              <p className="text-xs text-slate-500 mt-2 font-mono">
-                Equivalent to {res ? `${formatNum(res.saltUgCm2, 2)} µg/cm²` : '—'} (Limit: {limit} mg/m²)
-              </p>
-            </div>
-
-            {/* Breakdown Cards */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-xl text-center">
-                <span className="text-[10px] text-slate-400 font-mono block">Net Conductivity (Δσ)</span>
-                <span className="text-base font-bold text-slate-800 font-mono">
-                  {res ? `${formatNum(res.rawDiff, 1)} µS/cm` : '—'}
-                </span>
-              </div>
-              <div className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-xl text-center">
-                <span className="text-[10px] text-slate-400 font-mono block">Temp Factor (fT @ {temp}°C)</span>
-                <span className="text-base font-bold text-slate-800 font-mono">
-                  {res ? formatNum(res.ft, 3) : '—'}
-                </span>
-              </div>
-            </div>
-
-          </div>
+        <div className="btn-row">
+          <button className="btn" onClick={handleCalculate}>▶ Calculate Salt Contamination</button>
+          <button className="btn-reset" onClick={handleReset}>↺ Reset</button>
         </div>
 
+        {calculated && res && (
+          <div className="res show" id="r-salt">
+            <div className="output-section">
+              <div className="rh"><span className="pd"></span>Salt Result</div>
+
+              <div id="salt-verdict">
+                <div className={res.isPass ? 'salt-pass' : 'salt-fail'}>
+                  <div className="salt-vl" style={{ color: res.isPass ? '#1B5E20' : '#B71C1C' }}>
+                    {res.isPass ? '✅ PASS — Acceptable' : '❌ FAIL — Exceeds Limit'}
+                  </div>
+                  <div className="salt-vv" style={{ color: res.isPass ? '#2E7D32' : '#C62828' }}>
+                    {formatNum(res.salt25, 1)} mg/m² (at 25°C ref) vs Limit {res.limVal} mg/m²
+                  </div>
+                </div>
+              </div>
+
+              <div className="tls">
+                <div className="tile tp">
+                  <div className="tl">Measured (at test temp.)</div>
+                  <div>
+                    <span className="tv" id="sc-r25">{formatNum(res.saltMeas, 2)}</span>
+                    <span className="tu">mg/m²</span>
+                  </div>
+                </div>
+                <div className="tile tg">
+                  <div className="tl">Corrected @ 25°C Ref ✓</div>
+                  <div>
+                    <span className="tv" id="sc-rtc">{formatNum(res.salt25, 2)}</span>
+                    <span className="tu">mg/m²</span>
+                  </div>
+                </div>
+                <div className="tile ti">
+                  <div className="tl">Measured (µg/cm²)</div>
+                  <div>
+                    <span className="tv" id="sc-r25u">{formatNum(res.saltMeas / 10, 3)}</span>
+                    <span className="tu">µg/cm²</span>
+                  </div>
+                </div>
+                <div className="tile ts">
+                  <div className="tl">Corrected (µg/cm²) ✓</div>
+                  <div>
+                    <span className="tv" id="sc-rtcu">{formatNum(res.salt25 / 10, 3)}</span>
+                    <span className="tu">µg/cm²</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Engineering Calculation Breakdown */}
+              <div id="sc-working">
+                <div className="sc-calc">
+                  <div className="sc-calc-h">
+                    <span>🧮</span> Engineering Calculation — ISO 8502-9 (step by step)
+                  </div>
+                  <div className="sc-calc-b">
+                    <div className="scw-row">
+                      <span className="scw-k">1 · Net conductivity</span>
+                      <span className="scw-v">
+                        {res.surfVal} − {res.blankVal} = <b>{formatNum(res.net, 2)} µS/cm</b>
+                      </span>
+                    </div>
+                    <div className="scw-note">
+                      Surface conductivity minus blank (background) conductivity.
+                    </div>
+
+                    <div className="scw-row">
+                      <span className="scw-k">2 · Extraction / area factor</span>
+                      <span className="scw-v">
+                        1.12 × ({res.wqVal} ÷ 3) = <b>{formatNum(res.factor, 3)}</b>
+                      </span>
+                    </div>
+                    <div className="scw-note">
+                      1.12 mg/m² per µS/cm baseline, scaled by DM-water volume ({res.wqVal} ml vs 3 ml Bresle standard).
+                    </div>
+
+                    <div className="scw-row">
+                      <span className="scw-k">3 · Measured salt @ {res.tempVal}°C</span>
+                      <span className="scw-v">
+                        {formatNum(res.net, 2)} × {formatNum(res.factor, 3)} = <b>{formatNum(res.saltMeas, 2)} mg/m²</b>
+                      </span>
+                    </div>
+                    <div className="scw-note">
+                      This is the value at the actual test temperature (before referencing to 25°C).
+                    </div>
+
+                    <div className="scw-row">
+                      <span className="scw-k">4 · Temperature correction factor</span>
+                      <span className="scw-v">
+                        50 ÷ {SALT_TEMP[res.tempVal] || 50} = <b>{formatNum(res.tf, 4)}</b>
+                      </span>
+                    </div>
+                    <div className="scw-note">
+                      Reference solution conductivity rises with temperature (25°C → 50; {res.tempVal}°C → {SALT_TEMP[res.tempVal] || 50}). Dividing by this ratio converts the reading to the 25°C reference.
+                    </div>
+
+                    <div className="scw-row hl">
+                      <span className="scw-k">5 · Corrected salt @ 25°C reference</span>
+                      <span className="scw-v">
+                        {formatNum(res.saltMeas, 2)} × {formatNum(res.tf, 4)} = <b>{formatNum(res.salt25, 2)} mg/m²</b>
+                      </span>
+                    </div>
+                    <div className="scw-note">
+                      Value is {res.dir}.
+                    </div>
+
+                    <div className={`scw-row res ${res.isPass ? 'ok' : 'no'}`}>
+                      <span className="scw-k">6 · Acceptance check</span>
+                      <span className="scw-v">
+                        <b>{formatNum(res.salt25, 2)} mg/m²</b> vs limit {res.limVal} mg/m² → <b>{res.isPass ? 'PASS' : 'FAIL'}</b>
+                      </span>
+                    </div>
+
+                    <div className="scw-why">
+                      <b>Why correct for temperature?</b> The Bresle extract’s conductivity is influenced by the temperature at which the test is performed. To comply with ISO 8502-9, the measured value is converted to the equivalent value at the standard reference temperature of 25°C.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="input-summary">
+                <div className="input-summary-label">📝 Input Data (Provided by User)</div>
+                <div className="dr"><span className="dk">Instrument</span><span className="dv" id="sc-rinst">{res.instrument}</span></div>
+                <div className="dr"><span className="dk">Project</span><span className="dv" id="sc-rproj">{res.projectName}</span></div>
+                <div className="dr"><span className="dk">Blank Conductivity</span><span className="dv" id="sc-rblank">{res.blankVal} µS/cm</span></div>
+                <div className="dr"><span className="dk">Surface Conductivity</span><span className="dv" id="sc-rsurf">{res.surfVal} µS/cm</span></div>
+                <div className="dr"><span className="dk">DM Water Volume</span><span className="dv" id="sc-rwq">{res.wqVal} ml</span></div>
+                <div className="dr"><span className="dk">Steel Temperature</span><span className="dv" id="sc-rtemp">{res.tempVal}°C</span></div>
+                <div className="dr"><span className="dk">Net Conductivity</span><span className="dv" id="sc-rnet">{formatNum(res.net, 3)} µS/cm</span></div>
+                <div className="dr"><span className="dk">Temp Factor</span><span className="dv" id="sc-rtf">{formatNum(res.tf, 4)}</span></div>
+                <div className="dr"><span className="dk">Limit</span><span className="dv" id="sc-rlim">{res.limVal} mg/m²</span></div>
+              </div>
+            </div>
+
+            <div className="action-bar">
+              <button className="btn-print" onClick={handlePrint}>🖨 Print PDF</button>
+              <button className="btn-share" onClick={handleShare}>📤 Share Text</button>
+            </div>
+          </div>
+        )}
       </div>
-
     </div>
   );
 }

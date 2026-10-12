@@ -20,10 +20,10 @@
             infrastructure assets — backed by NACE / AMPP-aligned coating inspection practice and our own digital coating platform.
           </p>
           <div class="hero-ctas">
-            <a class="btn btn-primary" href="{% url 'calculator' %}" data-route="">Explore BG Coating OS™ <span class="arr">→</span></a>
+            <a class="btn btn-primary" href="{{ os_url }}" target="_blank" rel="noopener noreferrer">Explore BG Coating OS™ <span class="arr">→</span></a>
             <a class="btn btn-ghost" href="https://wa.me/919925810408?text=Hello%20BG%20Group%2C%20I%20would%20like%20to%20talk%20to%20a%20consultant%20about%20your%20coating%20%26%20paint%20services." target="_blank" rel="noopener">Talk to a Consultant</a>
           </div>
-          <div class="hero-trust">
+          <div class="hero-trust" style="max-width:520px; margin-top:2.4rem; margin-bottom:1.5rem;">
             <span><i></i>REFINERY SPECIALISTS</span>
             <span><i></i>OIL &amp; GAS</span>
             <span><i></i>DIGITAL COATING SOLUTIONS</span>
@@ -91,7 +91,7 @@
             <li><span class="tick">✓</span><span><b>Digital coating innovation</b> — our own digital platform, calculators and IoT-enabled blasting &amp; painting booths.</span></li>
             <li><span class="tick">✓</span><span><b>A trusted technical partner</b> — driving client success through core values and a diverse portfolio of services.</span></li>
           </ul>
-          <a class="btn btn-primary" href="{% url 'about' %}" data-route="" data-anchor="journey">Read Our Story <span class="arr">→</span></a>
+          <a class="btn btn-primary" href="{% url 'board' %}#bg-group" data-route="" data-anchor="bg-group">Read Our Story <span class="arr">→</span></a>
         </div>
       </div>
     </section>
@@ -106,14 +106,14 @@
                 <circle cx="12" cy="12" r="10"></circle>
                 <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
               </svg></div>
-            <div class="td-n"><span data-count="128052" data-suffix="+" id="visitorCount" data-done="1">128,052+</span></div>
+            <div class="td-n"><span data-count="{{ site_settings.total_visitors|default:160222 }}" data-suffix="+" id="visitorCount" data-done="1">{{ site_settings.total_visitors_count|default:"160,222" }}+</span></div>
             <div class="td-l">Total Visitors</div>
           </div>
           <div class="td rv rv-d1 in" title="Verified customer feedback and testimonials">
             <div class="td-ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M12 2l3 6.5 7 .6-5.3 4.6 1.6 6.9L12 17l-6.2 3.6 1.6-6.9L2 9.1l7-.6z"></path>
               </svg></div>
-            <div class="td-n"><span data-count="31" data-suffix="+" data-done="1">31+</span></div>
+            <div class="td-n"><span data-count="{{ site_settings.customer_feedback_count|default:69 }}" data-suffix="+" data-done="1">{{ site_settings.feedback_count|default:"69" }}+</span></div>
             <div class="td-l">Customer Feedback</div>
           </div>
           <div class="td rv rv-d2 in" title="Total enquiries received through the platform">
@@ -121,7 +121,7 @@
                 <rect x="2" y="4" width="20" height="16" rx="2"></rect>
                 <path d="m2 6 10 7L22 6"></path>
               </svg></div>
-            <div class="td-n"><span data-count="5363" data-suffix="+" data-done="1">5,363+</span></div>
+            <div class="td-n"><span data-count="{{ site_settings.total_enquiries|default:6115 }}" data-suffix="+" data-done="1">{{ site_settings.enquiries_count|default:"6,115" }}+</span></div>
             <div class="td-l">Total Enquiries</div>
           </div>
           <div class="td rv rv-d3 in" title="Unique visitors reached across the platform">
@@ -129,7 +129,7 @@
                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                 <circle cx="12" cy="12" r="3"></circle>
               </svg></div>
-            <div class="td-n"><span data-count="37724" data-suffix="+" data-done="1">37,724+</span></div>
+            <div class="td-n"><span data-count="{{ site_settings.unique_visitors|default:40000 }}" data-suffix="+" data-done="1">{{ site_settings.unique_visitors_count|default:"40,000" }}+</span></div>
             <div class="td-l">Unique Visitors</div>
           </div>
         </div>
@@ -142,7 +142,7 @@
         <div class="section-head rv in">
           <p class="eyebrow">Our Services</p>
           <h2 class="h-section">Industrial Coating &amp; Surface Treatment Services</h2>
-          <p class="lead">Twelve specialized verticals covering the full lifecycle of industrial coatings — from corrosion intelligence and surface preparation to digital platforms and IoT-enabled application assets.</p>
+          <p class="lead">Specialized verticals covering the full lifecycle of industrial coatings — from corrosion intelligence and surface preparation to digital platforms and IoT-enabled application assets.</p>
         </div>
         <div class="services-grid">
           {% if featured_services %}
@@ -150,7 +150,7 @@
             <article class="svc card-lift rv in">
               <div class="svc-media">
                 {% if service.cover_image %}
-                <img loading="lazy" src="{% if 'assets/images' in service.cover_image.name or 'static/' in service.cover_image.name %}{% static service.cover_image.name %}{% else %}{{ service.cover_image.url }}{% endif %}" alt="{{ service.title }}" style="width:100%; height:100%; object-fit:cover;">
+                <img loading="lazy" src="{% if 'http' in service.cover_image.name %}{{ service.cover_image.name }}{% elif 'assets/images' in service.cover_image.name or 'static/' in service.cover_image.name %}{% static service.cover_image.name %}{% else %}{{ service.cover_image.url }}{% endif %}" alt="{{ service.title }}" style="width:100%; height:100%; object-fit:cover;">
                 {% else %}
                 <img loading="lazy" src="{% static 'assets/images/01__Coating_Survey_and_Corrosion_Assessment-transformed.png' %}" alt="{{ service.title }}" style="width:100%; height:100%; object-fit:cover;">
                 {% endif %}
@@ -159,7 +159,7 @@
                 <p class="svc-kicker">{{ service.category.name|default:"Industrial Coating" }} | {{ service.standard_code|default:"ISO / NACE" }}</p>
                 <h3>{{ service.title }}</h3>
                 <p>{{ service.excerpt }}</p>
-                <a class="svc-link" href="{% url 'service_detail' service.slug %}" data-route="">Explore Service <span class="arr">→</span></a>
+                <a class="svc-link" href="{% url 'services' %}#service-{{ service.slug }}">Explore Service <span class="arr">→</span></a>
               </div>
             </article>
             {% endfor %}
@@ -172,10 +172,16 @@
                 <p class="svc-kicker">Refinery | Oil &amp; Gas</p>
                 <h3>Coating Survey &amp; Corrosion Assessment</h3>
                 <p>Turning surface observations into corrosion intelligence — structured surveys, condition mapping and prioritized maintenance planning for critical assets.</p>
-                <a class="svc-link" href="{% url 'service_detail' 'coating-survey-corrosion-assessment' %}" data-route="">Explore Service <span class="arr">→</span></a>
+                <a class="svc-link" href="{% url 'services' %}#service-coating-survey-corrosion-assessment">Explore Service <span class="arr">→</span></a>
               </div>
             </article>
           {% endif %}
+        </div>
+        <div style="margin-top:2.5rem; text-align:center;">
+          <a href="{% url 'services' %}" class="btn btn-ghost" style="display:inline-flex; align-items:center; gap:0.5rem; text-decoration:none;">
+            <span>Explore All Services &amp; Capabilities</span>
+            <span class="arr">→</span>
+          </a>
         </div>
       </div>
     </section>
@@ -282,12 +288,12 @@
             project managers, anywhere in the world.
           </p>
           <div class="calc-list">
-            <a class="glass" href="{% url 'calculator' %}"><span class="cnum">CAL·01</span><b>Abrasive Consumption</b><span class="tag-new">NEW</span><span class="go">→</span></a>
-            <a class="glass" href="{% url 'calculator' %}"><span class="cnum">CAL·02</span><b>Coating Area Calculator</b><span class="tag-new">NEW</span><span class="go">→</span></a>
-            <a class="glass" href="{% url 'calculator' %}"><span class="cnum">CAL·03</span><b>Paint Calculator</b><span class="go">→</span></a>
-            <a class="glass" href="{% url 'calculator' %}"><span class="cnum">CAL·04</span><b>Paint Defect</b><span class="tag-new">NEW</span><span class="go">→</span></a>
-            <a class="glass" href="{% url 'calculator' %}"><span class="cnum">CAL·05</span><b>Salt Contamination Test</b><span class="tag-new">NEW</span><span class="go">→</span></a>
-            <a class="glass" href="{% url 'calculator' %}"><span class="cnum">CAL·06</span><b>Surface Area Calculator</b><span class="go">→</span></a>
+            <a class="glass" href="{{ os_url }}/coating-calculator/abrasive/garnet" target="_blank" rel="noopener noreferrer"><span class="cnum">CAL·01</span><b>Abrasive Consumption</b><span class="tag-new">NEW</span><span class="go">→</span></a>
+            <a class="glass" href="{{ os_url }}/coating-calculator/area/structural-steel" target="_blank" rel="noopener noreferrer"><span class="cnum">CAL·02</span><b>Coating Area Calculator</b><span class="tag-new">NEW</span><span class="go">→</span></a>
+            <a class="glass" href="{{ os_url }}/coating-calculator/paint/coverage" target="_blank" rel="noopener noreferrer"><span class="cnum">CAL·03</span><b>Paint Calculator</b><span class="go">→</span></a>
+            <a class="glass" href="{{ os_url }}/coating-calculator/pro/dft-iso-19840" target="_blank" rel="noopener noreferrer"><span class="cnum">CAL·04</span><b>Paint Defect (PRO DFT)</b><span class="tag-new">NEW</span><span class="go">→</span></a>
+            <a class="glass" href="{{ os_url }}/coating-calculator/salt/iso-8502-9" target="_blank" rel="noopener noreferrer"><span class="cnum">CAL·05</span><b>Salt Contamination Test</b><span class="tag-new">NEW</span><span class="go">→</span></a>
+            <a class="glass" href="{{ os_url }}/coating-calculator/area/pipe-spool" target="_blank" rel="noopener noreferrer"><span class="cnum">CAL·06</span><b>Surface Area Calculator</b><span class="go">→</span></a>
           </div>
         </div>
 
@@ -343,24 +349,33 @@
           <p class="lead">A window into our world — surface preparation standards, coating comparisons and live project documentation.</p>
         </div>
         <div class="gal-grid">
-          <figure class="gal rv in"><img loading="lazy" src="{% static 'assets/images/R1__PNG___Inorganic_Zinc_Vs_Epoxy_Zinc.png' %}" alt="Inorganic zinc vs epoxy zinc coating comparison">
-            <figcaption>Inorganic Zinc vs Epoxy Zinc</figcaption>
-          </figure>
-          <figure class="gal rv rv-d1 in"><img loading="lazy" src="{% static 'assets/images/02_R1__JPG___SSPC_VIS_1-transformed.jpeg' %}" alt="SSPC VIS 1 visual standard reference">
-            <figcaption>SSPC VIS 1 · Visual Standard</figcaption>
-          </figure>
-          <figure class="gal rv rv-d2 in"><img loading="lazy" src="{% static 'assets/images/03__JPG___SSPC_VIS_2-transformed.jpeg' %}" alt="SSPC VIS 2 visual standard reference">
-            <figcaption>SSPC VIS 2 · Visual Standard</figcaption>
-          </figure>
-          <figure class="gal rv in"><img loading="lazy" src="{% static 'assets/images/SSPC_VIS_5.jpg' %}" alt="SSPC VIS 5 visual standard reference">
-            <figcaption>SSPC VIS 5 · Visual Standard</figcaption>
-          </figure>
-          <figure class="gal rv rv-d1 in"><img loading="lazy" src="{% static 'assets/images/SSPC_vis_4.jpg' %}" alt="SSPC VIS 4 visual standard reference">
-            <figcaption>SSPC VIS 4 · Visual Standard</figcaption>
-          </figure>
-          <figure class="gal rv rv-d2 in"><img loading="lazy" src="{% static 'assets/images/SSPC_VIS_3.jpg' %}" alt="SSPC VIS 3 visual standard reference">
-            <figcaption>SSPC VIS 3 · Visual Standard</figcaption>
-          </figure>
+          {% if home_gallery %}
+            {% for item in home_gallery %}
+            <figure class="gal rv in">
+              <img loading="lazy" src="{% if item.image %}{{ item.image.url }}{% else %}{% static 'assets/images/R1__PNG___Inorganic_Zinc_Vs_Epoxy_Zinc.png' %}{% endif %}" alt="{{ item.title }}">
+              <figcaption>{{ item.title }}</figcaption>
+            </figure>
+            {% endfor %}
+          {% else %}
+            <figure class="gal rv in"><img loading="lazy" src="{% static 'assets/images/R1__PNG___Inorganic_Zinc_Vs_Epoxy_Zinc.png' %}" alt="Inorganic zinc vs epoxy zinc coating comparison">
+              <figcaption>Inorganic Zinc vs Epoxy Zinc</figcaption>
+            </figure>
+            <figure class="gal rv rv-d1 in"><img loading="lazy" src="{% static 'assets/images/02_R1__JPG___SSPC_VIS_1-transformed.jpeg' %}" alt="SSPC VIS 1 visual standard reference">
+              <figcaption>SSPC VIS 1 · Visual Standard</figcaption>
+            </figure>
+            <figure class="gal rv rv-d2 in"><img loading="lazy" src="{% static 'assets/images/03__JPG___SSPC_VIS_2-transformed.jpeg' %}" alt="SSPC VIS 2 visual standard reference">
+              <figcaption>SSPC VIS 2 · Visual Standard</figcaption>
+            </figure>
+            <figure class="gal rv in"><img loading="lazy" src="{% static 'assets/images/SSPC_VIS_5.jpg' %}" alt="SSPC VIS 5 visual standard reference">
+              <figcaption>SSPC VIS 5 · Visual Standard</figcaption>
+            </figure>
+            <figure class="gal rv rv-d1 in"><img loading="lazy" src="{% static 'assets/images/SSPC_vis_4.jpg' %}" alt="SSPC VIS 4 visual standard reference">
+              <figcaption>SSPC VIS 4 · Visual Standard</figcaption>
+            </figure>
+            <figure class="gal rv rv-d2 in"><img loading="lazy" src="{% static 'assets/images/SSPC_VIS_3.jpg' %}" alt="SSPC VIS 3 visual standard reference">
+              <figcaption>SSPC VIS 3 · Visual Standard</figcaption>
+            </figure>
+          {% endif %}
         </div>
         <div class="center-cta rv in"><a class="btn btn-primary" href="{% url 'gallery' %}" data-route="">View More Gallery <span class="arr">→</span></a></div>
       </div>
@@ -375,7 +390,6 @@
           <p class="lead">Verified feedback from inspectors, project managers and industry leaders who work with us.</p>
         </div>
         <div class="testi-viewport rv in">
-        <div class="testi-viewport rv in">
           <div class="testi-track" id="testiTrack">
             {% if testimonials %}
               {% for t in testimonials %}
@@ -385,6 +399,8 @@
                 <div class="who">
                   {% if t.client_photo %}
                   <img loading="lazy" src="{{ t.client_photo.url }}" alt="{{ t.client_name }}">
+                  {% elif t.client_avatar %}
+                  <img loading="lazy" src="{% static 'assets/images/' %}{{ t.client_avatar }}" alt="{{ t.client_name }}">
                   {% else %}
                   <img loading="lazy" src="{% static 'assets/images/Nirav_Lad___Image.png' %}" alt="{{ t.client_name }}">
                   {% endif %}
@@ -421,33 +437,36 @@
             {% for b in latest_blogs %}
             <article class="post card-lift rv in">
               <div class="pm">
-                {% if b.featured_image %}
-                <img loading="lazy" src="{% if 'assets/images' in b.featured_image.name %}{% static b.featured_image.name %}{% else %}{{ b.featured_image.url }}{% endif %}" alt="{{ b.title }}">
-                {% else %}
-                <img loading="lazy" src="{% static 'assets/images/Main_Thumbnail_3.jpg' %}" alt="{{ b.title }}">
-                {% endif %}
+                <a href="{% if b.external_url %}{{ b.external_url }}{% else %}{% url 'blog_detail' b.slug %}{% endif %}" {% if b.external_url %}target="_blank" rel="noopener"{% endif %} style="display:block;width:100%;height:100%;">
+                  {% if b.featured_image %}
+                  <img loading="lazy" src="{% if 'assets/images' in b.featured_image.name or 'static/' in b.featured_image.name %}{% static b.featured_image.name %}{% else %}{{ b.featured_image.url }}{% endif %}" alt="{{ b.title }}">
+                  {% else %}
+                  <img loading="lazy" src="{% static 'assets/images/Main_Thumbnail_3.jpg' %}" alt="{{ b.title }}">
+                  {% endif %}
+                </a>
               </div>
               <div class="pb">
                 <p class="meta"><span>{{ b.publish_date|date:"d M Y"|upper }}</span><span>BG GROUP</span></p>
-                <h3>{{ b.title }}</h3>
-                <a class="svc-link" href="{% if b.external_url %}{{ b.external_url }}{% else %}{% url 'blog' %}{% endif %}" target="_blank" rel="noopener">Read Article <span class="arr">→</span></a>
+                <h3><a href="{% if b.external_url %}{{ b.external_url }}{% else %}{% url 'blog_detail' b.slug %}{% endif %}" {% if b.external_url %}target="_blank" rel="noopener"{% endif %} style="color:inherit;text-decoration:none;">{{ b.title }}</a></h3>
+                <a class="svc-link" href="{% if b.external_url %}{{ b.external_url }}{% else %}{% url 'blog_detail' b.slug %}{% endif %}" {% if b.external_url %}target="_blank" rel="noopener"{% endif %}>Read Article <span class="arr">→</span></a>
               </div>
             </article>
             {% endfor %}
           {% else %}
             <article class="post card-lift rv in">
-              <div class="pm"><img loading="lazy" src="{% static 'assets/images/Main_Thumbnail_3.jpg' %}" alt="Coating field challenges and strategic prioritization"></div>
+              <div class="pm">
+                <a href="{% url 'blog_detail' 'hurdles-in-coating-field-strategic-prioritization' %}" style="display:block;width:100%;height:100%;">
+                  <img loading="lazy" src="{% static 'assets/images/Main_Thumbnail_3.jpg' %}" alt="Coating field challenges and strategic prioritization">
+                </a>
+              </div>
               <div class="pb">
                 <p class="meta"><span>27 SEP 2023</span><span>BG GROUP</span></p>
-                <h3>Uncover the hurdles within the coating field</h3>
-                <a class="svc-link" href="{% url 'blog' %}">Read Article <span class="arr">→</span></a>
+                <h3><a href="{% url 'blog_detail' 'hurdles-in-coating-field-strategic-prioritization' %}" style="color:inherit;text-decoration:none;">Uncover the hurdles within the coating field</a></h3>
+                <a class="svc-link" href="{% url 'blog_detail' 'hurdles-in-coating-field-strategic-prioritization' %}">Read Article <span class="arr">→</span></a>
               </div>
             </article>
           {% endif %}
         </div>
-        <div class="center-cta rv in"><a class="btn btn-ghost" href="{% url 'blog' %}" data-route="">Browse All Articles <span class="arr">→</span></a></div>
-      </div>
-    </section>
         <div class="center-cta rv in"><a class="btn btn-ghost" href="{% url 'blog' %}" data-route="">Browse All Articles <span class="arr">→</span></a></div>
       </div>
     </section>

@@ -1,0 +1,29 @@
+
+@page{size:A4;margin:18mm 15mm;}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Helvetica Neue',Arial,sans-serif;}
+body{color:#1A1A1A;background:#fff;line-height:1.5;}
+.doc{max-width:780px;margin:0 auto;}
+.hdr{background:linear-gradient(135deg,#180900,#3D1C0C,#1A0B03);color:#fff;padding:22px 26px;border-radius:8px 8px 0 0;border-bottom:4px solid #E8700A;display:flex;align-items:center;gap:16px;}
+.lg{width:58px;height:58px;background:#fff;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#E8700A;font-weight:800;font-size:22px;flex-shrink:0;}
+.lg-txt{flex:1;}
+.lg-name{font-size:24px;font-weight:800;letter-spacing:.5px;}
+.lg-name span{color:#F5911F;}
+.lg-tag{font-size:10px;color:rgba(255,255,255,.6);letter-spacing:2px;text-transform:uppercase;margin-top:3px;}
+.meta{text-align:right;font-size:10px;color:rgba(255,255,255,.8);line-height:1.7;}
+.meta b{color:#F5911F;}
+.title-bar{background:#FFF3E0;border-left:4px solid #E8700A;padding:14px 22px;margin-top:0;border-radius:0;}
+.title-bar .kicker{font-size:10px;color:#B83400;font-weight:700;letter-spacing:2px;text-transform:uppercase;}
+.title-bar .h1{font-size:22px;color:#2A1500;font-weight:700;margin-top:4px;}
+.body-wrap{padding:24px 26px;border:1px solid #DFC9A8;border-top:none;border-radius:0 0 8px 8px;}
+.section{margin-bottom:22px;}
+.sec-h{font-size:11px;letter-spacing:1.6px;text-transform:uppercase;font-weight:700;padding:6px 12px;border-radius:4px;display:inline-block;margin-bottom:10px;}
+.sec-h.in{background:#FFE0B2;color:#8B4500;}
+.sec-h.out{background:#C8E6C9;color:#1B5E20;}
+.tbl{width:100%;border-collapse:collapse;border:1px solid #DFC9A8;border-radius:6px;overflow:hidden;}
+.tbl.in-tbl{background:#FFF8E8;}
+.tbl.out-tbl{background:#E8F5E9;}
+.footer-bar{margin-top:24px;padding:14px 22px;background:#1A0A02;color:#fff;border-radius:6px;font-size:10px;line-height:1.8;text-align:center;}
+.footer-bar b{color:#F5911F;}
+.footer-bar a{color:#F5911F;text-decoration:none;}
+.sig{margin-top:18px;padding:12px 18px;background:#FFF8F0;border:1px dashed #C9A870;border-radius:6px;font-size:10px;color:#6B3A10;text-align:center;}
+@media print{body{background:#fff;}}

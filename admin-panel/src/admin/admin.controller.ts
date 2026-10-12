@@ -39,12 +39,13 @@ export class AdminController {
     const ctx = this.getAdminContext(req, 'Dashboard Overview', 'dashboard');
 
     try {
-      const [blogs, services, gallery, testimonials, enquiries] = await Promise.all([
+      const [blogs, services, gallery, testimonials, enquiries, users] = await Promise.all([
         this.apiClient.get<any>('/blog-posts/', {}, token).catch(() => ({ count: 0 })),
         this.apiClient.get<any>('/services/', {}, token).catch(() => ({ count: 0 })),
         this.apiClient.get<any>('/gallery/', {}, token).catch(() => ({ count: 0 })),
         this.apiClient.get<any>('/testimonials/', {}, token).catch(() => ({ count: 0 })),
         this.apiClient.get<any>('/contact-submissions/', {}, token).catch(() => ({ count: 0 })),
+        this.apiClient.get<any>('/users/', {}, token).catch(() => ({ count: 0 })),
       ]);
 
       return {
@@ -55,12 +56,13 @@ export class AdminController {
           galleryCount: gallery.count ?? (Array.isArray(gallery) ? gallery.length : 0),
           testimonialCount: testimonials.count ?? (Array.isArray(testimonials) ? testimonials.length : 0),
           enquiryCount: enquiries.count ?? (Array.isArray(enquiries) ? enquiries.length : 0),
+          userCount: users.count ?? (Array.isArray(users) ? users.length : 0),
         },
       };
     } catch (err) {
       return {
         ...ctx,
-        stats: { blogCount: 0, serviceCount: 0, galleryCount: 0, testimonialCount: 0, enquiryCount: 0 },
+        stats: { blogCount: 0, serviceCount: 0, galleryCount: 0, testimonialCount: 0, enquiryCount: 0, userCount: 0 },
       };
     }
   }
@@ -402,7 +404,9 @@ export class AdminController {
         is_featured: body.is_featured === 'on' || body.is_featured === 'true' || body.is_featured === true,
         order: parseInt(body.order, 10) || 0,
       };
-      if (coverImageVal) payload.cover_image = coverImageVal;
+      if (coverImageVal && !coverImageVal.startsWith('http://') && !coverImageVal.startsWith('https://') && !coverImageVal.startsWith('/media/')) {
+        payload.cover_image = coverImageVal;
+      }
 
       try {
         await this.apiClient.patch(`/services/${id}/`, payload, token);
@@ -423,6 +427,21 @@ export class AdminController {
     } catch (err: any) {
       const formatted = this.apiClient.formatApiError(err);
       return res.redirect(`/admin/services/items?error=${encodeURIComponent(formatted.message)}`);
+    }
+  }
+
+  @Post('services/items/:id/toggle-featured')
+  async toggleServiceFeatured(@Param('id') id: string, @Req() req: Request, @Res() res: Response) {
+    const token = req.cookies?.admin_token;
+    const referer = req.header('Referer') || '/admin/services/items';
+    try {
+      const svc = await this.apiClient.get<any>(`/services/${id}/`, {}, token);
+      const newStatus = !svc.is_featured;
+      await this.apiClient.patch(`/services/${id}/`, { is_featured: newStatus }, token);
+      return res.redirect(`${referer}${referer.includes('?') ? '&' : '?'}success=Service+featured+status+updated+successfully`);
+    } catch (err: any) {
+      const formatted = this.apiClient.formatApiError(err);
+      return res.redirect(`${referer}${referer.includes('?') ? '&' : '?'}error=${encodeURIComponent(formatted.message)}`);
     }
   }
 
@@ -547,7 +566,9 @@ export class AdminController {
         external_url: body.external_url || null,
         is_featured: body.is_featured === 'on' || body.is_featured === 'true' || body.is_featured === true,
       };
-      if (imageVal) payload.featured_image = imageVal;
+      if (imageVal && !imageVal.startsWith('http://') && !imageVal.startsWith('https://') && !imageVal.startsWith('/media/')) {
+        payload.featured_image = imageVal;
+      }
 
       try {
         await this.apiClient.patch(`/blog-posts/${id}/`, payload, token);
@@ -910,7 +931,9 @@ export class AdminController {
         img_key: body.img_key || '',
         order: parseInt(body.order, 10) || 0,
       };
-      if (imgVal) payload.certificate_image = imgVal;
+      if (imgVal && !imgVal.startsWith('http://') && !imgVal.startsWith('https://') && !imgVal.startsWith('/media/')) {
+        payload.certificate_image = imgVal;
+      }
 
       try {
         await this.apiClient.patch(`/education/${id}/`, payload, token);
@@ -1036,7 +1059,9 @@ export class AdminController {
         img_key: body.img_key || '',
         order: parseInt(body.order, 10) || 0,
       };
-      if (imgVal) payload.certificate_image = imgVal;
+      if (imgVal && !imgVal.startsWith('http://') && !imgVal.startsWith('https://') && !imgVal.startsWith('/media/')) {
+        payload.certificate_image = imgVal;
+      }
 
       try {
         await this.apiClient.patch(`/certifications/${id}/`, payload, token);
@@ -1320,6 +1345,84 @@ export class AdminController {
     } catch (err: any) {
       const formatted = this.apiClient.formatApiError(err);
       return res.redirect(`/admin/marketing/enquiries?error=${encodeURIComponent(formatted.message)}`);
+    }
+  }
+
+  // ================= CALCULATOR USERS & PROFILES =================
+  @Get('users')
+  @Render('users/index')
+  async getUsers(@Req() req: Request) {
+    const token = req.cookies?.admin_token;
+    const ctx = this.getAdminContext(req, 'Registered Users & Profiles', 'calculator-users');
+    const page = parseInt(req.query?.page as string, 10) || 1;
+    const query = (req.query?.q as string) || '';
+    const provider = (req.query?.provider as string) || '';
+
+    try {
+      const raw = await this.apiClient.get<any>(
+        '/users/',
+        { page, search: query, provider: provider || undefined },
+        token
+      );
+      const pagination = this.apiClient.adaptPaginated<any>(raw, page);
+
+      return {
+        ...ctx,
+        users: pagination.items,
+        pagination,
+        searchQuery: query,
+        selectedProvider: provider,
+        totalUsers: pagination.count,
+      };
+    } catch (err: any) {
+      return {
+        ...ctx,
+        users: [],
+        pagination: this.apiClient.adaptPaginated([], 1),
+        searchQuery: query,
+        selectedProvider: provider,
+        totalUsers: 0,
+      };
+    }
+  }
+
+  @Get('users/:id')
+  async getUserDetail(@Param('id') id: string, @Req() req: Request, @Res() res: Response) {
+    const token = req.cookies?.admin_token;
+    const ctx = this.getAdminContext(req, 'User Profile Details', 'calculator-users');
+
+    try {
+      const userItem = await this.apiClient.get<any>(`/users/${id}/`, {}, token);
+      return res.render('users/detail', {
+        ...ctx,
+        userItem,
+      });
+    } catch (err: any) {
+      return res.redirect('/admin/users?error=User+profile+not+found');
+    }
+  }
+
+  @Post('users/:id/toggle-pro')
+  async toggleUserPro(@Param('id') id: string, @Req() req: Request, @Res() res: Response) {
+    const token = req.cookies?.admin_token;
+    const referer = req.header('Referer') || `/admin/users/${id}`;
+    try {
+      await this.apiClient.post<any>(`/users/${id}/toggle-pro/`, {}, token);
+      return res.redirect(referer);
+    } catch (err: any) {
+      return res.redirect(`${referer}${referer.includes('?') ? '&' : '?'}error=Failed+to+update+Pro+status`);
+    }
+  }
+
+  @Post('users/:id/delete')
+  async deleteUser(@Param('id') id: string, @Req() req: Request, @Res() res: Response) {
+    const token = req.cookies?.admin_token;
+    try {
+      await this.apiClient.delete(`/users/${id}/`, token);
+      return res.redirect('/admin/users?success=User+account+deleted+successfully');
+    } catch (err: any) {
+      const formatted = this.apiClient.formatApiError(err);
+      return res.redirect(`/admin/users?error=${encodeURIComponent(formatted.message || 'Failed to delete user account')}`);
     }
   }
 }

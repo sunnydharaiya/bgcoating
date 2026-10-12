@@ -1,0 +1,116 @@
+<div class="sec collapsed" id="secC">
+  <div class="sec-hd" onclick="tog(&#39;secC&#39;)">
+    <div class="sec-hd-icon">🌍</div>
+    <div class="sec-hd-text">
+      <div class="sec-hd-t">General Requirements</div>
+      <div class="sec-hd-s">Environment, transportation, validation, MOC and cyclic service</div>
+    </div>
+    <div class="sec-pill">Section C</div>
+    <div class="sec-tog">▼</div>
+  </div>
+  <div class="sec-body">
+    <div class="grid g2">
+      <div class="fld">
+        <label class="lbl">A1 — Environment Condition <span class="req">*</span></label>
+        <select class="sel" id="envCond">
+          <option value="">— Select environment —</option>
+          <option>C1 — Very Low (Heated buildings)</option>
+          <option>C2 — Low (Unheated buildings, low pollution rural)</option>
+          <option>C3 — Medium (Urban / industrial, moderate SO2; coastal low salinity)</option>
+          <option>C4 — High (Industrial, coastal moderate salinity)</option>
+          <option>C5-I — Very High Industrial</option>
+          <option>C5-M — Very High Marine</option>
+          <option>CX — Extreme (Offshore, extreme humidity)</option>
+          <option>Im1 — Fresh water</option>
+          <option>Im2 — Sea / brackish water</option>
+          <option>Im3 — Soil (buried)</option>
+          <option>Im4 — Sea water with cathodic protection</option>
+        </select>
+        <div class="subhint">ISO 12944-2 Classification</div>
+      </div>
+      <div class="fld">
+        <label class="lbl">Clause / Document Reference</label>
+        <input class="inp" type="text" id="envRef" placeholder="e.g. ISO:12944, Location — HASSI MESSAOUD, ALGERIA">
+      </div>
+    </div>
+    <div class="grid g3" style="margin-top:11px;">
+      <div class="fld">
+        <label class="lbl">A2 — Transportation <span class="req">*</span></label>
+        <select class="sel" id="transport">
+          <option value="">— Select method —</option>
+          <option>Road Transport — Open Trailer</option>
+          <option>Road Transport — Covered Trailer</option>
+          <option>Sea — Below Deck (Container)</option>
+          <option>Sea — On Deck (Open)</option>
+          <option>Sea — On Deck (Covered)</option>
+          <option>Rail Transport</option>
+          <option>Air Freight</option>
+          <option>Multi-Modal (Combined)</option>
+        </select>
+      </div>
+      <div class="fld">
+        <label class="lbl">A3 — Voyage Duration</label>
+        <select class="sel" id="voyage">
+          <option value="">— Select —</option>
+          <option>Less than 7 days</option>
+          <option>7 – 14 days</option>
+          <option>15 – 30 days</option>
+          <option>1 – 2 months</option>
+          <option>2 – 3 months</option>
+          <option>More than 3 months</option>
+        </select>
+      </div>
+      <div class="fld">
+        <label class="lbl">A4 — Paint Scheme Validation</label>
+        <select class="sel" id="paintValid">
+          <option value="">— Select —</option>
+          <option>Validated by NACE Certified Inspector</option>
+          <option>Validated by AMPP Certified Inspector</option>
+          <option>Validated by Third-Party Inspection (TPI)</option>
+          <option>Validated by Customer / End User</option>
+          <option>Validated by Paint Manufacturer Technical</option>
+          <option>Validated by BG Group (Internal)</option>
+          <option>Validation Pending</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid g2" style="margin-top:11px;">
+      <div class="fld">
+        <label class="lbl">Sr. 1 — Painting Requirement in DATASHEET / MR / PR or Specific Customer Document?</label>
+        <div class="yno-wrap" data-target="paintReq"><button type="button" class="yno-btn" data-v="YES" onclick="ynoSet(this)">YES</button><button type="button" class="yno-btn" data-v="NO" onclick="ynoSet(this)">NO</button><button type="button" class="yno-btn on-na" data-v="NA" onclick="ynoSet(this)">NA</button></div>
+        <input type="hidden" id="paintReq" value="NA">
+        <div class="subhint">Current: <span id="paintReq-disp">NA</span></div>
+      </div>
+      <div class="fld">
+        <label class="lbl">DATASHEET / MR / PR or Specific Customer Document</label>
+        <input class="inp" type="text" id="paintReqDoc" placeholder="e.g. Clause 2.2 of 80080-ED-HEX-0000-REQ-411">
+      </div>
+    </div>
+    <div class="grid g3" style="margin-top:11px;">
+      <div class="fld">
+        <label class="lbl">Sr. 2 — MOC <span class="req">*</span> <span class="hint">(editable — type custom grade)</span></label>
+        <input class="inp" type="text" id="moc" placeholder="Select or type MOC" list="moc-list">
+        <datalist id="moc-list">
+          <option value="Carbon Steel (CS)"></option><option value="Low Alloy Steel (1.25Cr-0.5Mo)"></option><option value="Low Alloy Steel (2.25Cr-1Mo)"></option><option value="Low Alloy Steel (5Cr-0.5Mo)">
+          </option><option value="Stainless Steel (SS304)"></option><option value="Stainless Steel (SS304L)"></option><option value="Stainless Steel (SS316)"></option><option value="Stainless Steel (SS316L)">
+          </option><option value="Stainless Steel (SS321)"></option><option value="Stainless Steel (SS347)"></option><option value="Duplex Stainless Steel (2205)"></option><option value="Super Duplex (2507)">
+          </option><option value="Monel 400"></option><option value="Monel K-500"></option><option value="Inconel 600"></option><option value="Inconel 625"></option><option value="Inconel 718">
+          </option><option value="Hastelloy C-276"></option><option value="Titanium Gr 2"></option><option value="Aluminum"></option><option value="Galvanized Steel"></option><option value="Concrete"></option><option value="Cast Iron">
+          </option><option value="Others (Specify)">
+        </option></datalist>
+      </div>
+      <div class="fld">
+        <label class="lbl">Sr. 3 — Cyclic Service</label>
+        <div class="yno-wrap" data-target="cyclic"><button type="button" class="yno-btn" data-v="YES" onclick="ynoSet(this)">YES</button><button type="button" class="yno-btn" data-v="NO" onclick="ynoSet(this)">NO</button><button type="button" class="yno-btn on-na" data-v="NA" onclick="ynoSet(this)">NA</button></div>
+        <input type="hidden" id="cyclic" value="NA">
+        <div class="subhint">Current: <span id="cyclic-disp">NA</span></div>
+      </div>
+      <div class="fld">
+        <label class="lbl">Cyclic Service — Specify</label>
+        <input class="inp" type="text" id="cyclicDesc" placeholder="e.g. H2 Service &amp; H2S service">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION D -->

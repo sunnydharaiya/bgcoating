@@ -1,14 +1,17 @@
-// src/pages/LoginPage.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Mail, 
   Lock, 
   User, 
   Eye, 
   EyeOff, 
-  ArrowRight
+  ArrowRight,
+  Sparkles,
+  HelpCircle,
+  ExternalLink
 } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
+import { loginWithEmail, registerWithEmail, loginWithGoogle } from '../utils/api';
 
 export default function LoginPage({ onLoginSuccess }) {
   const { addToast } = useToast();
@@ -27,119 +30,131 @@ export default function LoginPage({ onLoginSuccess }) {
   const [regEmail, setRegEmail] = useState('');
   const [regPassword, setRegPassword] = useState('');
 
-  // Helper to format clean display name from email or input
-  const prettyName = (str) => {
-    if (!str) return 'BG User';
-    return str
-      .replace(/[._-]+/g, ' ')
-      .replace(/\b\w/g, (c) => c.toUpperCase());
-  };
+  // Google OAuth State
+  const googleBtnRef = useRef(null);
+  const [googleClientReady, setGoogleClientReady] = useState(false);
+  const [showSetupHelp, setShowSetupHelp] = useState(false);
 
-  // 1. Submit Sign In
-  const handleLogin = (e) => {
+  const rawClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+  const hasValidClientId = Boolean(
+    rawClientId && 
+    rawClientId.trim() !== '' && 
+    !rawClientId.includes('your-google-client-id')
+  );
+
+  // Initialize official Google Identity Services SDK for Real Google Account Sign-In
+  useEffect(() => {
+    if (!hasValidClientId) return;
+
+    let checkInterval = null;
+
+    const setupGoogleGis = () => {
+      if (!window.google?.accounts?.id) return false;
+
+      try {
+        window.google.accounts.id.initialize({
+          client_id: rawClientId.trim(),
+          callback: async (response) => {
+            if (response?.credential) {
+              setLoading(true);
+              try {
+                const res = await loginWithGoogle({ credential: response.credential });
+                addToast('Google Sign-In Successful', `Welcome back, ${res.formattedUser.name}!`, 'success');
+                if (onLoginSuccess) {
+                  onLoginSuccess(res.formattedUser);
+                }
+              } catch (err) {
+                addToast('Google Sign-In Failed', err.message || 'Authentication error.', 'error');
+              } finally {
+                setLoading(false);
+              }
+            }
+          },
+          auto_select: false,
+          cancel_on_tap_outside: true,
+        });
+
+        if (googleBtnRef.current) {
+          googleBtnRef.current.innerHTML = '';
+          window.google.accounts.id.renderButton(googleBtnRef.current, {
+            theme: 'outline',
+            size: 'large',
+            type: 'standard',
+            text: 'continue_with',
+            shape: 'rectangular',
+            logo_alignment: 'left',
+            width: 376,
+          });
+          setGoogleClientReady(true);
+        }
+        return true;
+      } catch (err) {
+        console.warn('Google Identity Services initialization error:', err);
+        return false;
+      }
+    };
+
+    if (!setupGoogleGis()) {
+      checkInterval = setInterval(() => {
+        if (setupGoogleGis()) {
+          clearInterval(checkInterval);
+        }
+      }, 300);
+    }
+
+    return () => {
+      if (checkInterval) clearInterval(checkInterval);
+    };
+  }, [hasValidClientId, rawClientId, addToast, onLoginSuccess]);
+
+  // 1. Submit Sign In via Backend REST API
+  const handleLogin = async (e) => {
     if (e) e.preventDefault();
+    if (!loginEmail.trim() || !loginPassword) {
+      addToast('Missing Fields', 'Please enter both email and password.', 'error');
+      return;
+    }
+
     setLoading(true);
-
-    const email = loginEmail.trim() || 'user@bgcoating.com';
-    const rawName = email.split('@')[0];
-    const name = prettyName(rawName);
-
-    const userData = {
-      name: name,
-      email: email,
-      role: 'Coating Inspector',
-      company: 'BG Coating & Inspection Services',
-      provider: 'email',
-      lastLogin: new Date().toISOString()
-    };
-
-    localStorage.setItem('bg_auth_logged_in', 'true');
-    localStorage.setItem('bg_user', JSON.stringify(userData));
-
-    setTimeout(() => {
-      setLoading(false);
-      addToast('Signed In', `Welcome back, ${name.split(' ')[0]}.`, 'success');
+    try {
+      const res = await loginWithEmail(loginEmail.trim(), loginPassword);
+      addToast('Signed In', `Welcome back, ${res.formattedUser.name}!`, 'success');
       if (onLoginSuccess) {
-        onLoginSuccess(userData);
+        onLoginSuccess(res.formattedUser);
       }
-    }, 250);
+    } catch (err) {
+      addToast('Sign In Failed', err.message, 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // 2. Submit Register
-  const handleRegister = (e) => {
+  // 2. Submit Register via Backend REST API
+  const handleRegister = async (e) => {
     if (e) e.preventDefault();
+    if (!regEmail.trim() || !regPassword) {
+      addToast('Missing Fields', 'Please enter email and password.', 'error');
+      return;
+    }
+
     setLoading(true);
-
-    const name = regName.trim() || 'BG Specialist';
-    const email = regEmail.trim() || 'engineer@company.com';
-
-    const userData = {
-      name: name,
-      email: email,
-      role: 'Coating Specialist',
-      company: 'BG CoatingOS Workspace',
-      provider: 'email',
-      lastLogin: new Date().toISOString()
-    };
-
-    localStorage.setItem('bg_auth_logged_in', 'true');
-    localStorage.setItem('bg_user', JSON.stringify(userData));
-
-    setTimeout(() => {
-      setLoading(false);
-      addToast('Account Created', `Welcome to BG CoatingOS, ${name.split(' ')[0]}!`, 'success');
+    try {
+      const res = await registerWithEmail({
+        name: regName.trim(),
+        email: regEmail.trim(),
+        password: regPassword,
+        role: 'Coating Specialist',
+        company: 'BG Coating & Inspection Services',
+      });
+      addToast('Account Created', `Welcome to BG CoatingOS, ${res.formattedUser.name}!`, 'success');
       if (onLoginSuccess) {
-        onLoginSuccess(userData);
+        onLoginSuccess(res.formattedUser);
       }
-    }, 250);
-  };
-
-  // 3. Google Login Setup (Dummy SSO)
-  const handleGoogleLogin = () => {
-    setLoading(true);
-    const userData = {
-      name: 'Google Engineer',
-      email: 'engineer@google.demo',
-      role: 'Corrosion Engineer & Inspector',
-      company: 'Industrial Asset Integrity',
-      provider: 'google',
-      lastLogin: new Date().toISOString()
-    };
-
-    localStorage.setItem('bg_auth_logged_in', 'true');
-    localStorage.setItem('bg_user', JSON.stringify(userData));
-
-    setTimeout(() => {
+    } catch (err) {
+      addToast('Registration Failed', err.message, 'error');
+    } finally {
       setLoading(false);
-      addToast('Google Sign-In', 'Authenticated via Google (demo).', 'success');
-      if (onLoginSuccess) {
-        onLoginSuccess(userData);
-      }
-    }, 250);
-  };
-
-  // 4. Microsoft Login Setup (Dummy SSO)
-  const handleMicrosoftLogin = () => {
-    setLoading(true);
-    const userData = {
-      name: 'Microsoft User',
-      email: 'm.specialist@enterprise.demo',
-      role: 'QA/QC Project Manager',
-      company: 'Marine & Offshore Infrastructure',
-      provider: 'microsoft',
-      lastLogin: new Date().toISOString()
-    };
-
-    localStorage.setItem('bg_auth_logged_in', 'true');
-    localStorage.setItem('bg_user', JSON.stringify(userData));
-
-    setTimeout(() => {
-      setLoading(false);
-      addToast('Microsoft Sign-In', 'Authenticated via Microsoft (demo).', 'success');
-      if (onLoginSuccess) {
-        onLoginSuccess(userData);
-      }
-    }, 250);
+    }
   };
 
   const handleForgotPassword = () => {
@@ -413,52 +428,97 @@ export default function LoginPage({ onLoginSuccess }) {
           <div className="flex-1 h-px bg-slate-200" />
         </div>
 
-        {/* Google & Microsoft SSO Buttons */}
-        <div className="grid grid-cols-2 gap-3">
+        {/* ========================================================
+            GOOGLE AUTH (REAL GOOGLE ACCOUNT AUTHENTICATION ONLY)
+            ======================================================== */}
+        <div className="w-full flex flex-col items-center">
           
-          {/* Google SSO Button */}
-          <button
-            type="button"
-            onClick={handleGoogleLogin}
-            disabled={loading}
-            className="flex items-center justify-center gap-2 px-3 py-2.5 bg-white hover:bg-slate-50 border border-slate-300 hover:border-[#F7941D] rounded-xl text-xs font-semibold text-slate-700 shadow-2xs hover:shadow-xs transition-all cursor-pointer group"
-          >
-            <svg className="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" viewBox="0 0 24 24">
-              <path
-                fill="#4285F4"
-                d="M23.5 12.3c0-.9-.1-1.5-.3-2.2H12v4.1h6.5c-.1 1.1-.8 2.7-2.4 3.8l3.7 2.9c2.3-2.1 3.7-5.1 3.7-8.6z"
+          {hasValidClientId ? (
+            <div className="w-full flex flex-col items-center">
+              {/* Google Official GIS Button Container */}
+              <div 
+                ref={googleBtnRef} 
+                className="w-full flex justify-center min-h-[44px] overflow-hidden rounded-xl"
               />
-              <path
-                fill="#34A853"
-                d="M12 24c3.2 0 6-1.1 7.9-2.9l-3.7-2.9c-1 .7-2.4 1.2-4.2 1.2-3.2 0-6-2.1-6.9-5.1L1.2 17C3.1 21.1 7.2 24 12 24z"
-              />
-              <path
-                fill="#FBBC05"
-                d="M5.1 14.3c-.3-.7-.4-1.5-.4-2.3s.1-1.6.4-2.3L1.2 6.7C.4 8.3 0 10.1 0 12s.4 3.7 1.2 5.3l3.9-3z"
-              />
-              <path
-                fill="#EA4335"
-                d="M12 4.7c1.8 0 3 .8 3.7 1.4l3.3-3.2C17.9 1.1 15.2 0 12 0 7.2 0 3.1 2.9 1.2 6.7l3.9 3C6 6.8 8.8 4.7 12 4.7z"
-              />
-            </svg>
-            <span>Google</span>
-          </button>
+              {!googleClientReady && (
+                <div className="w-full py-2.5 px-4 bg-slate-50 border border-slate-200 rounded-xl text-center text-xs text-slate-500 flex items-center justify-center gap-2">
+                  <div className="w-3.5 h-3.5 border-2 border-slate-300 border-t-[#F7941D] rounded-full animate-spin" />
+                  <span>Connecting Google Sign-In...</span>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="w-full space-y-2.5">
+              {/* Google Button with Setup Guidance */}
+              <button
+                type="button"
+                onClick={() => {
+                  setShowSetupHelp(!showSetupHelp);
+                  addToast(
+                    'Google Sign-In Configuration',
+                    'Set VITE_GOOGLE_CLIENT_ID in calculator-react/.env to sign in with your real Google account.',
+                    'info'
+                  );
+                }}
+                className="w-full flex items-center justify-center gap-2.5 px-4 py-2.5 bg-white hover:bg-slate-50 border border-slate-300 hover:border-[#F7941D] rounded-xl text-xs font-semibold text-slate-700 shadow-2xs hover:shadow-xs transition-all cursor-pointer group"
+              >
+                <svg className="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M23.5 12.3c0-.9-.1-1.5-.3-2.2H12v4.1h6.5c-.1 1.1-.8 2.7-2.4 3.8l3.7 2.9c2.3-2.1 3.7-5.1 3.7-8.6z" />
+                  <path fill="#34A853" d="M12 24c3.2 0 6-1.1 7.9-2.9l-3.7-2.9c-1 .7-2.4 1.2-4.2 1.2-3.2 0-6-2.1-6.9-5.1L1.2 17C3.1 21.1 7.2 24 12 24z" />
+                  <path fill="#FBBC05" d="M5.1 14.3c-.3-.7-.4-1.5-.4-2.3s.1-1.6.4-2.3L1.2 6.7C.4 8.3 0 10.1 0 12s.4 3.7 1.2 5.3l3.9-3z" />
+                  <path fill="#EA4335" d="M12 4.7c1.8 0 3 .8 3.7 1.4l3.3-3.2C17.9 1.1 15.2 0 12 0 7.2 0 3.1 2.9 1.2 6.7l3.9 3C6 6.8 8.8 4.7 12 4.7z" />
+                </svg>
+                <span>Sign in with Google</span>
+              </button>
 
-          {/* Microsoft SSO Button */}
-          <button
-            type="button"
-            onClick={handleMicrosoftLogin}
-            disabled={loading}
-            className="flex items-center justify-center gap-2 px-3 py-2.5 bg-white hover:bg-slate-50 border border-slate-300 hover:border-[#F7941D] rounded-xl text-xs font-semibold text-slate-700 shadow-2xs hover:shadow-xs transition-all cursor-pointer group"
-          >
-            <svg className="w-3.5 h-3.5 shrink-0 transition-transform group-hover:scale-110" viewBox="0 0 24 24">
-              <rect width="11" height="11" fill="#F25022" />
-              <rect x="13" width="11" height="11" fill="#7FBA00" />
-              <rect y="13" width="11" height="11" fill="#00A4EF" />
-              <rect x="13" y="13" width="11" height="11" fill="#FFB900" />
-            </svg>
-            <span>Microsoft</span>
-          </button>
+              {/* Informative Setup Banner */}
+              <div className="p-3 bg-amber-50/80 border border-amber-200/90 rounded-2xl text-left">
+                <div className="flex items-start gap-2">
+                  <Sparkles className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] font-bold text-amber-950">
+                      Real Google Account Sign-In Setup
+                    </p>
+                    <p className="text-[10px] text-amber-800/90 mt-0.5 leading-relaxed">
+                      To authenticate with your live Google account, add your OAuth Client ID to <code className="px-1 py-0.5 bg-amber-100 rounded font-mono text-amber-950 font-semibold">calculator-react/.env</code>:
+                    </p>
+                    <div className="mt-1.5 bg-amber-100/90 border border-amber-200 rounded-lg px-2 py-1 font-mono text-[9.5px] text-amber-950 select-all overflow-x-auto">
+                      VITE_GOOGLE_CLIENT_ID=your-id.apps.googleusercontent.com
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowSetupHelp(!showSetupHelp)}
+                      className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-900 hover:text-amber-700 mt-2 cursor-pointer"
+                    >
+                      <HelpCircle className="w-3 h-3" />
+                      <span>{showSetupHelp ? 'Hide Google Cloud Guide' : 'How to get your Google Client ID'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Step-by-Step Instructions Toggle */}
+                {showSetupHelp && (
+                  <div className="mt-2.5 pt-2.5 border-t border-amber-200 text-[10px] text-slate-700 space-y-1.5">
+                    <div className="font-semibold text-slate-900 uppercase tracking-wider text-[9px] font-mono">
+                      4 Quick Steps to Enable Google Sign-In:
+                    </div>
+                    <p className="text-slate-600">
+                      <strong>1.</strong> Visit <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noreferrer" className="text-blue-600 font-semibold underline inline-flex items-center gap-0.5">Google Cloud Credentials <ExternalLink className="w-2.5 h-2.5" /></a>
+                    </p>
+                    <p className="text-slate-600">
+                      <strong>2.</strong> Click <strong>+ Create Credentials</strong> &rarr; <strong>OAuth client ID</strong>.
+                    </p>
+                    <p className="text-slate-600">
+                      <strong>3.</strong> Choose <strong>Web application</strong> and add Authorized JavaScript origins: <code className="bg-white px-1 py-0.5 rounded border border-slate-200 font-mono text-slate-800">http://localhost:3000</code>.
+                    </p>
+                    <p className="text-slate-600">
+                      <strong>4.</strong> Paste your Client ID into <code className="bg-white px-1 py-0.5 rounded border border-slate-200 font-mono text-slate-800">calculator-react/.env</code> as <code className="font-mono text-amber-900 font-bold">VITE_GOOGLE_CLIENT_ID</code> and in <code className="bg-white px-1 py-0.5 rounded border border-slate-200 font-mono text-slate-800">backend/.env</code> as <code className="font-mono text-amber-900 font-bold">GOOGLE_CLIENT_ID</code>.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
         </div>
 

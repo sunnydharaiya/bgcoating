@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Sparkles, Printer, Copy, Check, Calculator, Info, BookOpen, ShieldCheck, AlertTriangle, Play, RotateCcw } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
 import { useGuideline } from '../../context/GuidelineContext';
 import { formatNum } from '../../utils/calculations';
@@ -8,331 +7,489 @@ export default function SSPCPA2Tool() {
   const { addToast } = useToast();
   const { openGuideline } = useGuideline();
 
-  // Section A: Project & Inspection Scope
-  const [projectName, setProjectName] = useState('');
-  const [client, setClient] = useState('');
-  const [inspector, setInspector] = useState('');
-  const [gaugeSn, setGaugeSn] = useState('');
-  const [calDate, setCalDate] = useState('');
+  // Inputs
+  const [proj, setProj] = useState('');
+  const [cli, setCli] = useState('');
+  const [str, setStr] = useState('');
+  const [area, setArea] = useState('Area A');
+  const [spec, setSpec] = useState('250');
+  const [maxp, setMaxp] = useState('120');
+  const [spotsText, setSpotsText] = useState('245, 260, 255, 270, 248');
 
-  const [specDft, setSpecDft] = useState('');
-  const [maxPct, setMaxPct] = useState(120); // 120% default SSPC-PA 2 level 3
-  const [spotReadingsText, setSpotReadingsText] = useState('');
-  const [copied, setCopied] = useState(false);
+  // Multi-area project state
+  const [projectAreas, setProjectAreas] = useState([]);
+  const [lastEvaluated, setLastEvaluated] = useState(null);
+  const [hasEvaluated, setHasEvaluated] = useState(true);
 
-  // Parse spot measurements
-  const spots = spotReadingsText
+  // Parse spots
+  const spots = spotsText
     .split(/[\s,;]+/)
     .map(x => parseFloat(x))
     .filter(x => !isNaN(x) && x > 0);
 
-  const minAllowed = specDft ? Number(specDft) * 0.8 : 0;
-  const maxAllowed = specDft ? Number(specDft) * (Number(maxPct) / 100) : 0;
+  const specVal = parseFloat(spec) || 0;
+  const maxpVal = parseFloat(maxp) || 120;
+  const minA = specVal * 0.8;
+  const maxA = specVal * maxpVal / 100;
 
-  const averageDft = spots.length > 0 ? spots.reduce((a, b) => a + b, 0) / spots.length : 0;
-  const minSpot = spots.length > 0 ? Math.min(...spots) : 0;
-  const maxSpot = spots.length > 0 ? Math.max(...spots) : 0;
+  const avg = spots.length > 0 ? spots.reduce((a, b) => a + b, 0) / spots.length : 0;
+  const lo = spots.length > 0 ? Math.min(...spots) : 0;
+  const hi = spots.length > 0 ? Math.max(...spots) : 0;
 
-  const failLowCount = spots.filter(x => x < minAllowed).length;
-  const failHighCount = spots.filter(x => x > maxAllowed).length;
-  const isAvgOk = specDft ? averageDft >= Number(specDft) : false;
-  const isPass = specDft && isAvgOk && failLowCount === 0 && failHighCount === 0 && spots.length >= 2;
+  const failLow = spots.filter(x => x < minA).length;
+  const failHigh = spots.filter(x => x > maxA).length;
+  const avgOk = specVal > 0 && avg >= specVal;
+  const isPass = specVal > 0 && spots.length >= 2 && avgOk && failLow === 0 && failHigh === 0;
 
-  const handleOpenGuideline = () => {
-    openGuideline('qa-pa2');
-  };
+  const why = [];
+  if (!avgOk && specVal > 0) why.push(`Average ${formatNum(avg, 1)} µm < specified ${specVal} µm`);
+  if (failLow > 0) why.push(`${failLow} spot(s) below 80% minimum (${formatNum(minA, 0)} µm)`);
+  if (failHigh > 0) why.push(`${failHigh} spot(s) above ${maxpVal}% maximum (${formatNum(maxA, 0)} µm)`);
 
-  const handleCalculate = () => {
-    if (!specDft || spots.length === 0) {
-      addToast('Missing Required Inputs', 'Please enter Specified Target DFT and spot readings.', 'warning');
+  const handleEvaluate = () => {
+    if (!specVal) {
+      addToast('Missing Input', 'Enter Specified DFT.', 'warning');
       return;
     }
-    addToast('Evaluated SSPC-PA 2 Compliance', isPass ? 'Spot readings satisfy SSPC-PA 2.' : 'Readings fail SSPC-PA 2 criteria.', isPass ? 'success' : 'warning');
+    if (spots.length < 2) {
+      addToast('Insufficient Readings', 'Enter at least 2 spot measurements (5 recommended per SSPC-PA 2).', 'warning');
+      return;
+    }
+    setHasEvaluated(true);
+    setLastEvaluated({
+      area: area.trim() || `Area ${String.fromCharCode(65 + projectAreas.length)}`,
+      spec: specVal,
+      n: spots.length,
+      avg,
+      lo,
+      hi,
+      ok: isPass
+    });
+    addToast(
+      'SSPC-PA 2 Evaluated',
+      isPass ? `Area conforms to SSPC-PA 2 (${formatNum(avg, 1)} µm avg).` : `Area non-conforming: ${why.join(' · ')}`,
+      isPass ? 'success' : 'warning'
+    );
   };
 
   const handleReset = () => {
-    setProjectName('');
-    setClient('');
-    setInspector('');
-    setGaugeSn('');
-    setCalDate('');
-    setSpecDft('');
-    setMaxPct(120);
-    setSpotReadingsText('');
-    addToast('Form Reset', 'All input parameters have been cleared.', 'info');
+    setProj('');
+    setCli('');
+    setStr('');
+    setArea('');
+    setSpec('');
+    setMaxp('120');
+    setSpotsText('');
+    setLastEvaluated(null);
+    setHasEvaluated(false);
+    addToast('Reset', 'Form cleared.', 'info');
   };
 
-  const handleCopy = () => {
-    if (!specDft || spots.length === 0) {
-      addToast('No Calculation', 'Please enter parameters first.', 'warning');
+  const handleAddArea = () => {
+    const areaToPush = lastEvaluated || {
+      area: area.trim() || `Area ${String.fromCharCode(65 + projectAreas.length)}`,
+      spec: specVal,
+      n: spots.length,
+      avg,
+      lo,
+      hi,
+      ok: isPass
+    };
+    if (!areaToPush.spec || areaToPush.n < 2) {
+      addToast('Cannot Add', 'Evaluate an area with valid readings first.', 'warning');
       return;
     }
-    const text = `BG CoatingOS™ — SSPC-PA 2 DFT Compliance Report
-${projectName ? `Project: ${projectName}\n` : ''}${client ? `Client: ${client}\n` : ''}${inspector ? `Inspector: ${inspector}\n` : ''}${gaugeSn ? `Gauge S/N: ${gaugeSn}\n` : ''}Specified DFT: ${specDft} µm | Max Limit: ${maxPct}% (${formatNum(maxAllowed, 0)} µm) | Min 80%: ${formatNum(minAllowed, 0)} µm
-Spot Readings (${spots.length}): ${spots.join(', ')} µm
---------------------------------------
-Area Average DFT: ${formatNum(averageDft, 1)} µm (Specified ≥ ${specDft} µm)
-Min / Max Spot: ${formatNum(minSpot, 0)} / ${formatNum(maxSpot, 0)} µm
-SSPC-PA 2 Acceptance Verdict: ${isPass ? 'PASS (Fully Conforming)' : 'FAIL (Non-Conforming)'}`;
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    addToast('Copied to Clipboard', 'SSPC-PA 2 compliance report copied.', 'success');
-    setTimeout(() => setCopied(false), 2000);
+    setProjectAreas(prev => [...prev, areaToPush]);
+    addToast('Area Added', `Project now has ${projectAreas.length + 1} inspection area(s).`, 'success');
   };
 
+  const handleClearProject = () => {
+    setProjectAreas([]);
+    addToast('Cleared', 'Project areas cleared.', 'info');
+  };
+
+  const handleDownloadExcel = () => {
+    if (projectAreas.length === 0 && !hasEvaluated) {
+      addToast('No Data', 'No inspection areas to export.', 'warning');
+      return;
+    }
+    const rows = [
+      ['Project Name', proj || '—'],
+      ['Client', cli || '—'],
+      ['Structure', str || '—'],
+      [''],
+      ['Area', 'Spec DFT (µm)', 'Spots Count', 'Avg DFT (µm)', 'Low (µm)', 'High (µm)', 'SSPC-PA 2 Status']
+    ];
+    const dataToExport = projectAreas.length > 0 ? projectAreas : [{
+      area: area || 'Area A',
+      spec: specVal,
+      n: spots.length,
+      avg,
+      lo,
+      hi,
+      ok: isPass
+    }];
+    dataToExport.forEach(r => {
+      rows.push([r.area, r.spec, r.n, formatNum(r.avg, 1), formatNum(r.lo, 0), formatNum(r.hi, 0), r.ok ? 'PASS' : 'FAIL']);
+    });
+    const csvContent = 'data:text/csv;charset=utf-8,' + rows.map(e => e.join(',')).join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `SSPC_PA2_Inspection_${proj || 'Report'}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    addToast('Export Successful', 'Project inspection areas exported to CSV.', 'success');
+  };
+
+  const allProjectOk = projectAreas.length > 0 && projectAreas.every(x => x.ok);
+
+  // Chart setup
+  const chartMax = Math.max(...(spots.length ? spots : [0]), maxA || 0, specVal || 0) * 1.15 || 100;
+
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
-      
-      {/* Tool Header Card */}
-      <div className="bg-white border border-slate-200 rounded-3xl p-5 md:p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="sub-sec card active" id="qa-pa2">
+      <div className="ch">
+        <div className="ci">📏</div>
         <div>
-          <div className="flex items-center gap-2">
-            <span className="bg-amber-50 text-[#D97706] border border-amber-200 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase font-mono tracking-wider">
-              Tool PRO-QA-1 · SSPC-PA 2
-            </span>
-            <h1 className="text-lg md:text-xl font-extrabold text-slate-900">
-              DFT Compliance &amp; Acceptance (SSPC-PA 2)
-            </h1>
-          </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Evaluate spot DFT measurements against SSPC-PA 2 80/120 rules, spot minimums, maximum threshold limits, and area averages.
-          </p>
+          <div className="ct">DFT Acceptance Calculator — SSPC-PA 2</div>
+          <div className="cs">Spot measurements · 80% / 120% rule · area average · multi-area project acceptance</div>
         </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleOpenGuideline}
-            className="px-3 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-[#D97706] border border-amber-200 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
-          >
-            <BookOpen className="w-3.5 h-3.5" />
-            <span>📖 Guideline</span>
-          </button>
-          <button
-            onClick={handleCopy}
-            className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
-          >
-            {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-            <span>{copied ? 'Copied' : 'Copy'}</span>
-          </button>
-          <button
-            onClick={() => window.print()}
-            className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
-          >
-            <Printer className="w-3.5 h-3.5" />
-            <span>Print Report</span>
-          </button>
-        </div>
+        <button className="gd-btn" onClick={() => openGuideline('qa-pa2')}>📖 Guideline</button>
+        <div className="ctag">PRO · QA-1</div>
       </div>
 
-      {/* Main Grid: Inputs + Output */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        {/* Left Inputs Section */}
-        <div className="lg:col-span-6 bg-white border border-slate-200 rounded-3xl p-5 md:p-6 shadow-xs space-y-5">
-          
-          {/* Section A: Project & Inspection Scope */}
-          <div>
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2 mb-3">
-              <h2 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider font-mono">
-                A · Project &amp; Inspection Scope
-              </h2>
-              <Calculator className="w-4 h-4 text-[#F7941D]" />
+      <div className="cb">
+        <div className="input-section">
+          <div className="g2">
+            <div className="field">
+              <label>Project Name <span className="lh">optional</span></label>
+              <div className="iw">
+                <input
+                  type="text"
+                  value={proj}
+                  onChange={e => setProj(e.target.value)}
+                  placeholder="e.g. Tank T-101"
+                />
+              </div>
             </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs">
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">
-                  Project Name <span className="text-slate-400 font-mono text-[10px] ml-1">optional</span>
-                </label>
+            <div className="field">
+              <label>Client <span className="lh">optional</span></label>
+              <div className="iw">
                 <input
                   type="text"
-                  value={projectName}
-                  onChange={e => setProjectName(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-                  placeholder="e.g. Flare Header Painting"
+                  value={cli}
+                  onChange={e => setCli(e.target.value)}
+                  placeholder="e.g. HPCL"
                 />
               </div>
-
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">
-                  Client <span className="text-slate-400 font-mono text-[10px] ml-1">optional</span>
-                </label>
+            </div>
+            <div className="field">
+              <label>Structure Name <span className="lh">optional</span></label>
+              <div className="iw">
                 <input
                   type="text"
-                  value={client}
-                  onChange={e => setClient(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-                  placeholder="e.g. HPCL-Mittal Pipelines"
+                  value={str}
+                  onChange={e => setStr(e.target.value)}
+                  placeholder="e.g. Shell Course 3"
                 />
               </div>
-
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">
-                  Inspector Name <span className="text-slate-400 font-mono text-[10px] ml-1">optional</span>
-                </label>
+            </div>
+            <div className="field">
+              <label>Inspection Area <span className="lh">e.g. Area A</span></label>
+              <div className="iw">
                 <input
                   type="text"
-                  value={inspector}
-                  onChange={e => setInspector(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-                  placeholder="e.g. NACE CIP Level 2 #12345"
+                  value={area}
+                  onChange={e => setArea(e.target.value)}
+                  placeholder="Area A"
                 />
               </div>
-
-              <div>
-                <label className="block font-bold text-slate-700 mb-1">
-                  Gauge Serial No <span className="text-slate-400 font-mono text-[10px] ml-1">optional</span>
-                </label>
+            </div>
+            <div className="field">
+              <label>Specified DFT <span className="lh">µm</span></label>
+              <div className="iw">
                 <input
-                  type="text"
-                  value={gaugeSn}
-                  onChange={e => setGaugeSn(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-                  placeholder="e.g. Elcometer 456 #SN-9821"
+                  type="number"
+                  value={spec}
+                  onChange={e => setSpec(e.target.value)}
+                  placeholder="e.g. 250"
+                  min="1"
+                  step="any"
                 />
+                <span className="uu">µm</span>
+              </div>
+            </div>
+            <div className="field">
+              <label>Max Spot Limit <span className="lh">% of spec · default 120</span></label>
+              <div className="iw">
+                <input
+                  type="number"
+                  value={maxp}
+                  onChange={e => setMaxp(e.target.value)}
+                  min="100"
+                  step="any"
+                />
+                <span className="uu">%</span>
               </div>
             </div>
           </div>
 
-          {/* Section B: SSPC-PA 2 Criteria */}
-          <div className="border-t border-slate-100 pt-4">
-            <h2 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider font-mono mb-3">
-              B · SSPC-PA 2 Specification &amp; Spot Measurements
-            </h2>
+          <div className="field" style={{ marginTop: '10px' }}>
+            <label>Spot Measurements <span className="lh">µm · each spot = avg of 3 gauge readings · comma / space separated</span></label>
+            <div className="iw">
+              <input
+                type="text"
+                value={spotsText}
+                onChange={e => setSpotsText(e.target.value)}
+                placeholder="e.g. 245, 260, 255, 270, 248"
+              />
+            </div>
+          </div>
 
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    Specified Target DFT (µm)
-                  </label>
-                  <input
-                    type="number"
-                    value={specDft}
-                    onChange={e => setSpecDft(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-                    placeholder="e.g. 250"
-                  />
+          <div style={{ marginTop: '10px', padding: '10px 14px', background: '#FFF9EE', border: '1px dashed var(--in-bdr)', borderRadius: 'var(--r)', fontSize: '12px', color: 'var(--txt2)' }}>
+            <strong style={{ color: 'var(--in-lbl)' }}>SSPC-PA 2 Criteria:</strong> No spot &lt; 80% of specified DFT · No spot &gt; 120% (unless specification permits) · Average of spots ≥ Specified DFT (minimum 5 spots per ~10 m² area recommended)
+          </div>
+        </div>
+
+        <div className="btn-row">
+          <button className="btn" onClick={handleEvaluate}>▶ Evaluate Area (SSPC-PA 2)</button>
+          <button className="btn-reset" onClick={handleReset}>↺ Reset</button>
+        </div>
+
+        {hasEvaluated && specVal > 0 && spots.length > 0 && (
+          <div className="res" style={{ display: 'block' }}>
+            <div className="output-section">
+              <div className="rh"><span className="pd"></span>SSPC-PA 2 Acceptance Result</div>
+
+              {/* Verdict Banner */}
+              <div style={{
+                background: isPass ? '#E8F5E9' : '#FFEBEE',
+                border: `1.5px solid ${isPass ? 'rgba(46,125,50,.35)' : 'rgba(211,47,47,.35)'}`,
+                borderRadius: 'var(--r)',
+                padding: '13px 16px',
+                textAlign: 'center',
+                marginBottom: '10px'
+              }}>
+                <div style={{
+                  fontFamily: "'Rajdhani', sans-serif",
+                  fontSize: '19px',
+                  fontWeight: 700,
+                  color: isPass ? '#1B5E20' : '#B71C1C'
+                }}>
+                  {isPass ? '✅ PASS' : '❌ FAIL'} — {area || 'Area'} per SSPC-PA 2
                 </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                    SSPC-PA 2 Max Spot Limit (%)
-                  </label>
-                  <select
-                    value={maxPct}
-                    onChange={e => setMaxPct(Number(e.target.value))}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-                  >
-                    <option value={120}>Level 3: 120% Max (Standard)</option>
-                    <option value={110}>Level 2: 110% Max (Tight)</option>
-                    <option value={150}>Level 4: 150% Max (High Build)</option>
-                    <option value={100}>Level 1: 100% Max (Spec Limit)</option>
-                  </select>
+                <div style={{
+                  fontSize: '12.5px',
+                  fontWeight: 600,
+                  color: isPass ? '#2E7D32' : '#C62828',
+                  marginTop: '3px'
+                }}>
+                  {isPass
+                    ? `Average ${formatNum(avg, 1)} µm ≥ ${specVal} µm · all ${spots.length} spots within ${formatNum(minA, 0)}–${formatNum(maxA, 0)} µm`
+                    : why.join(' · ')}
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Spot Measurements (µm, comma or space separated)
-                </label>
-                <textarea
-                  rows={3}
-                  value={spotReadingsText}
-                  onChange={e => setSpotReadingsText(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-                  placeholder="e.g. 240, 260, 255, 230, 270"
-                />
-                <span className="text-[10px] text-slate-400 font-mono">
-                  {spots.length} spot measurements entered (Minimum 5 spots recommended per 10 m² area).
-                </span>
+              {/* Primary KPI Tiles */}
+              <div className="tls">
+                <div className="tile tp">
+                  <div className="tl">Area Average DFT</div>
+                  <div><span className="tv">{formatNum(avg, 1)}</span><span className="tu">µm</span></div>
+                  <div className="tn">{avgOk ? `≥ specified ${specVal} µm ✓` : `BELOW specified ${specVal} µm ✗`}</div>
+                </div>
+                <div className="tile ts">
+                  <div className="tl">Min / Max Allowed</div>
+                  <div><span className="tv" style={{ fontSize: '22px' }}>{formatNum(minA, 0)} / {formatNum(maxA, 0)}</span><span className="tu">µm</span></div>
+                  <div className="tn">80% / max % of specified</div>
+                </div>
+                <div className="tile ti">
+                  <div className="tl">Lowest Spot</div>
+                  <div><span className="tv">{formatNum(lo, 0)}</span><span className="tu">µm</span></div>
+                  <div className="tn">{lo >= minA ? 'Above 80% minimum ✓' : 'Below minimum ✗'}</div>
+                </div>
+                <div className="tile tg">
+                  <div className="tl">Highest Spot</div>
+                  <div><span className="tv">{formatNum(hi, 0)}</span><span className="tu">µm</span></div>
+                  <div className="tn">{hi <= maxA ? `Within ${maxpVal}% maximum ✓` : 'Above maximum ✗'}</div>
+                </div>
+              </div>
+
+              {/* Spot Readings vs Limits Chart */}
+              <div style={{ marginTop: '12px' }}>
+                <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--txt3)', marginBottom: '6px' }}>
+                  Spot Readings vs Limits
+                </div>
+                <div style={{
+                  position: 'relative',
+                  height: '150px',
+                  display: 'flex',
+                  alignItems: 'stretch',
+                  gap: '3px',
+                  background: 'var(--bg2)',
+                  border: '1px solid var(--bdr)',
+                  borderRadius: 'var(--r)',
+                  padding: '10px 8px 4px'
+                }}>
+                  {spots.map((v, i) => {
+                    const bad = (v < minA) || (maxA > 0 && v > maxA);
+                    return (
+                      <div key={i} title={`Reading ${i + 1}: ${v} µm`} style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'center', gap: '2px', zIndex: 1 }}>
+                        <div style={{ fontSize: '9px', fontWeight: 700, color: bad ? '#C62828' : 'var(--txt2)' }}>
+                          {formatNum(v, 0)}
+                        </div>
+                        <div style={{
+                          width: '70%',
+                          maxWidth: '34px',
+                          height: `${(v / chartMax) * 100}%`,
+                          background: bad ? 'linear-gradient(180deg,#EF5350,#C62828)' : 'linear-gradient(180deg,#66BB6A,#2E7D32)',
+                          borderRadius: '4px 4px 0 0'
+                        }} />
+                        <div style={{ fontSize: '8.5px', color: 'var(--txt3)' }}>{i + 1}</div>
+                      </div>
+                    );
+                  })}
+
+                  {/* Limit Lines */}
+                  {minA > 0 && (
+                    <div style={{ position: 'absolute', left: 0, right: 0, top: `${100 - (minA / chartMax) * 100}%`, borderTop: '2px dashed #C62828', zIndex: 2 }}>
+                      <span style={{ position: 'absolute', right: '2px', top: '-14px', fontSize: '9px', fontWeight: 700, color: '#C62828', background: 'var(--bg2)', padding: '0 3px' }}>
+                        MIN {formatNum(minA, 0)}
+                      </span>
+                    </div>
+                  )}
+                  {maxA > 0 && (
+                    <div style={{ position: 'absolute', left: 0, right: 0, top: `${100 - (maxA / chartMax) * 100}%`, borderTop: '2px dashed #B26A00', zIndex: 2 }}>
+                      <span style={{ position: 'absolute', right: '2px', top: '-14px', fontSize: '9px', fontWeight: 700, color: '#B26A00', background: 'var(--bg2)', padding: '0 3px' }}>
+                        MAX {formatNum(maxA, 0)}
+                      </span>
+                    </div>
+                  )}
+                  {specVal > 0 && (
+                    <div style={{ position: 'absolute', left: 0, right: 0, top: `${100 - (specVal / chartMax) * 100}%`, borderTop: '2px dashed #1565C0', zIndex: 2 }}>
+                      <span style={{ position: 'absolute', right: '55px', top: '-14px', fontSize: '9px', fontWeight: 700, color: '#1565C0', background: 'var(--bg2)', padding: '0 3px' }}>
+                        SPEC {formatNum(specVal, 0)}
+                      </span>
+                    </div>
+                  )}
+                  {avg > 0 && (
+                    <div style={{ position: 'absolute', left: 0, right: 0, top: `${100 - (avg / chartMax) * 100}%`, borderTop: '2px dashed #2E7D32', zIndex: 2 }}>
+                      <span style={{ position: 'absolute', right: '115px', top: '-14px', fontSize: '9px', fontWeight: 700, color: '#2E7D32', background: 'var(--bg2)', padding: '0 3px' }}>
+                        AVG {formatNum(avg, 0)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Project Acceptance Multi-Area Section */}
+              <div style={{ marginTop: '14px', padding: '12px 14px', background: '#FDF1E4', border: '1px solid var(--bdr2)', borderRadius: 'var(--r)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--brand-crimson)', flex: 1 }}>
+                    🗂 Project Acceptance — multiple areas (A, B, C…)
+                  </div>
+                  <button className="btn" style={{ padding: '8px 14px', fontSize: '12px' }} onClick={handleAddArea}>
+                    ➕ Add This Area to Project
+                  </button>
+                  <button className="btn-reset" style={{ padding: '8px 14px', fontSize: '12px' }} onClick={handleClearProject}>
+                    🗑 Clear
+                  </button>
+                  <button className="btn-print" style={{ padding: '8px 14px', fontSize: '12px' }} onClick={handleDownloadExcel}>
+                    ⬇ Download Excel
+                  </button>
+                </div>
+
+                <div style={{ marginTop: '10px' }}>
+                  {projectAreas.length === 0 ? (
+                    <div style={{ fontSize: '11.5px', color: 'var(--txt3)' }}>
+                      No areas added yet. Evaluate each inspection area (A, B, C…) and add it here for the overall project acceptance.
+                    </div>
+                  ) : (
+                    <div>
+                      <div style={{ overflowX: 'auto' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11.5px', background: 'var(--bg3)', border: '1px solid var(--bdr)', borderRadius: 'var(--r)', overflow: 'hidden' }}>
+                          <thead>
+                            <tr>
+                              <th style={{ padding: '7px 10px', textAlign: 'left', background: 'var(--bg4)', fontSize: '10px', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--in-lbl)' }}>Area</th>
+                              <th style={{ padding: '7px 10px', textAlign: 'right', background: 'var(--bg4)', fontSize: '10px', color: 'var(--in-lbl)' }}>Spec µm</th>
+                              <th style={{ padding: '7px 10px', textAlign: 'right', background: 'var(--bg4)', fontSize: '10px', color: 'var(--in-lbl)' }}>Spots</th>
+                              <th style={{ padding: '7px 10px', textAlign: 'right', background: 'var(--bg4)', fontSize: '10px', color: 'var(--in-lbl)' }}>Avg µm</th>
+                              <th style={{ padding: '7px 10px', textAlign: 'right', background: 'var(--bg4)', fontSize: '10px', color: 'var(--in-lbl)' }}>Low / High</th>
+                              <th style={{ padding: '7px 10px', textAlign: 'center', background: 'var(--bg4)', fontSize: '10px', color: 'var(--in-lbl)' }}>Status</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {projectAreas.map((x, idx) => (
+                              <tr key={idx}>
+                                <td style={{ padding: '6px 10px', borderBottom: '1px solid var(--bdr)', fontWeight: 600 }}>{x.area}</td>
+                                <td style={{ padding: '6px 10px', textAlign: 'right', borderBottom: '1px solid var(--bdr)' }}>{x.spec}</td>
+                                <td style={{ padding: '6px 10px', textAlign: 'right', borderBottom: '1px solid var(--bdr)' }}>{x.n}</td>
+                                <td style={{ padding: '6px 10px', textAlign: 'right', borderBottom: '1px solid var(--bdr)' }}>{formatNum(x.avg, 1)}</td>
+                                <td style={{ padding: '6px 10px', textAlign: 'right', borderBottom: '1px solid var(--bdr)' }}>{formatNum(x.lo, 0)} / {formatNum(x.hi, 0)}</td>
+                                <td style={{ padding: '6px 10px', textAlign: 'center', borderBottom: '1px solid var(--bdr)', fontWeight: 800, color: x.ok ? '#1B5E20' : '#B71C1C' }}>
+                                  {x.ok ? 'PASS' : 'FAIL'}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      <div style={{
+                        marginTop: '8px',
+                        padding: '9px 12px',
+                        borderRadius: 'var(--r)',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        background: allProjectOk ? '#E8F5E9' : '#FFEBEE',
+                        color: allProjectOk ? '#1B5E20' : '#B71C1C',
+                        border: `1px solid ${allProjectOk ? 'rgba(46,125,50,.3)' : 'rgba(211,47,47,.3)'}`
+                      }}>
+                        {allProjectOk
+                          ? `✅ OVERALL PROJECT ACCEPTANCE: PASS — all ${projectAreas.length} area(s) conform to SSPC-PA 2`
+                          : `❌ OVERALL PROJECT ACCEPTANCE: FAIL — ${projectAreas.filter(x => !x.ok).length} of ${projectAreas.length} area(s) non-conforming`}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Inspection Summary */}
+              <div className="input-summary" style={{ marginTop: '14px' }}>
+                <div className="input-summary-label">📝 Inspection Summary</div>
+                <div className="dr"><span className="dk">Project</span><span className="dv">{proj || '—'}</span></div>
+                <div className="dr"><span className="dk">Client</span><span className="dv">{cli || '—'}</span></div>
+                <div className="dr"><span className="dk">Structure</span><span className="dv">{str || '—'}</span></div>
+                <div className="dr"><span className="dk">Inspection Area</span><span className="dv">{area || 'Area A'}</span></div>
+                <div className="dr"><span className="dk">Specified DFT</span><span className="dv">{specVal} µm</span></div>
+                <div className="dr"><span className="dk">Spots ({spots.length})</span><span className="dv">{spots.join(', ')} µm</span></div>
+                <div className="dr"><span className="dk">Minimum Allowed (80%)</span><span className="dv">{formatNum(minA, 0)} µm</span></div>
+                <div className="dr"><span className="dk">Maximum Allowed ({maxpVal}%)</span><span className="dv">{formatNum(maxA, 0)} µm</span></div>
+                <div className="dr"><span className="dk">Area Average</span><span className="dv">{formatNum(avg, 1)} µm</span></div>
+                <div className="dr"><span className="dk">Lowest / Highest Spot</span><span className="dv">{formatNum(lo, 0)} / {formatNum(hi, 0)} µm</span></div>
+                <div className="dr"><span className="dk">Status</span><span className="dv" style={{ fontWeight: 700, color: isPass ? '#1B5E20' : '#B71C1C' }}>{isPass ? 'PASS' : `FAIL — ${why.join('; ')}`}</span></div>
+              </div>
+
+              {/* References Callout */}
+              <div style={{ marginTop: '12px', padding: '10px 14px', background: '#E1F5FE', borderRadius: 'var(--r)', borderLeft: '3px solid var(--gi)', fontSize: '11.5px', color: 'var(--txt2)' }}>
+                <strong style={{ color: 'var(--gi)' }}>References:</strong> SSPC-PA 2 / AMPP SSPC-PA 2 · ISO 12944. Gauge calibration and base-metal-reading adjustment per SSPC-PA 2 Appendix; number of spots per area as specified.
               </div>
             </div>
 
-            {/* Form Actions: Calculate & Reset */}
-            <div className="flex gap-2.5 pt-4">
-              <button
-                type="button"
-                onClick={handleCalculate}
-                className="flex-[2] py-3 px-4 bg-gradient-to-r from-[#F7941D] to-[#A50021] hover:from-[#E8700A] hover:to-[#8B0018] text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-xs transition hover:brightness-105 active:scale-98 flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <Play className="w-3.5 h-3.5 fill-white" />
-                <span>Evaluate PA-2 Compliance</span>
-              </button>
-              <button
-                type="button"
-                onClick={handleReset}
-                className="flex-1 py-3 px-4 bg-white hover:bg-red-50 text-[#A50021] border border-[#A50021]/30 font-bold text-xs uppercase tracking-wider rounded-xl shadow-2xs transition hover:border-[#A50021] active:scale-98 flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span>Reset</span>
-              </button>
-            </div>
-
-            <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/70 text-xs text-slate-500 flex items-start gap-2 mt-4">
-              <Info className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
-              <span className="leading-relaxed">
-                Rules: Spot readings must be between <strong>{formatNum(minAllowed, 0)} µm (80%)</strong> and <strong>{formatNum(maxAllowed, 0)} µm ({maxPct}%)</strong>, and Area Average must be ≥ <strong>{specDft || '0'} µm</strong>.
-              </span>
+            {/* Action Bar */}
+            <div className="action-bar">
+              <button className="btn-print" onClick={() => window.print()}>🖨 Print PDF</button>
+              <button className="btn-share" onClick={() => {
+                const text = `SSPC-PA 2 Compliance: ${isPass ? 'PASS' : 'FAIL'} | Spec: ${specVal}µm | Avg: ${formatNum(avg, 1)}µm | Range: ${formatNum(lo, 0)}-${formatNum(hi, 0)}µm`;
+                navigator.clipboard?.writeText(text);
+                addToast('Copied', 'Summary copied to clipboard.', 'success');
+              }}>📤 Share Text</button>
+              <button className="btn-print" onClick={handleDownloadExcel}>⬇ Export Excel (CSV)</button>
+              <button className="btn-print xls-btn" onClick={handleDownloadExcel}>📊 Excel Report</button>
             </div>
           </div>
-        </div>
-
-        {/* Right Output Section */}
-        <div className="lg:col-span-6 space-y-4">
-          <div className={`border-2 rounded-3xl p-6 shadow-sm space-y-5 transition-all duration-300 ${
-            isPass 
-              ? 'bg-gradient-to-br from-white to-emerald-50/30 border-emerald-300' 
-              : 'bg-gradient-to-br from-white to-rose-50/30 border-rose-300'
-          }`}>
-            
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <span className="text-[10px] font-mono font-extrabold uppercase tracking-wider text-slate-500">
-                SSPC-PA 2 Acceptance Verdict
-              </span>
-              <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full font-mono flex items-center gap-1 ${
-                isPass ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
-              }`}>
-                {isPass ? <ShieldCheck className="w-3.5 h-3.5" /> : <AlertTriangle className="w-3.5 h-3.5" />}
-                <span>{isPass ? 'PASS · Fully Conforming' : 'FAIL · Non-Conforming'}</span>
-              </span>
-            </div>
-
-            {/* Target Output Highlight Box */}
-            <div className="bg-white border rounded-2xl p-5 text-center shadow-xs">
-              <span className="text-xs text-slate-400 font-mono">Area Average Dry Film Thickness</span>
-              <div className={`text-4xl md:text-5xl font-black font-mono mt-1 ${
-                isPass ? 'text-emerald-700' : 'text-rose-700'
-              }`}>
-                {formatNum(averageDft, 1)} µm
-              </div>
-              <p className="text-xs text-slate-500 mt-2 font-mono">
-                Specified: {specDft} µm (Allowable Range: {formatNum(minAllowed, 0)}–{formatNum(maxAllowed, 0)} µm)
-              </p>
-            </div>
-
-            {/* Detailed Readings Cards */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-xl text-center">
-                <span className="text-[10px] text-slate-400 font-mono block">Lowest Spot</span>
-                <span className={`text-base font-bold font-mono ${minSpot < minAllowed ? 'text-rose-600' : 'text-slate-800'}`}>
-                  {formatNum(minSpot, 0)} µm {minSpot < minAllowed ? '✗ (<80%)' : '✓'}
-                </span>
-              </div>
-
-              <div className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-xl text-center">
-                <span className="text-[10px] text-slate-400 font-mono block">Highest Spot</span>
-                <span className={`text-base font-bold font-mono ${maxSpot > maxAllowed ? 'text-rose-600' : 'text-slate-800'}`}>
-                  {formatNum(maxSpot, 0)} µm {maxSpot > maxAllowed ? '✗ (>Max)' : '✓'}
-                </span>
-              </div>
-            </div>
-
-          </div>
-        </div>
-
+        )}
       </div>
-
     </div>
   );
 }

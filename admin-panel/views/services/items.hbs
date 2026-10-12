@@ -74,13 +74,17 @@
               {{/if}}
             </td>
             <td class="px-4 py-3">
-              {{#if this.is_featured}}
-              <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-semibold flex items-center gap-1 w-fit font-mono">
-                <span>★</span> <span>Featured</span>
-              </span>
-              {{else}}
-              <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200 text-[10px] font-mono font-medium">Standard</span>
-              {{/if}}
+              <form method="POST" action="/admin/services/items/{{#if this.slug}}{{this.slug}}{{else}}{{this.id}}{{/if}}/toggle-featured" class="inline">
+                {{#if this.is_featured}}
+                <button type="submit" title="Click to remove from homepage featured services" class="px-2 py-0.5 rounded bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-[10px] font-semibold flex items-center gap-1 w-fit font-mono transition cursor-pointer shadow-2xs">
+                  <span>★</span> <span>Featured</span>
+                </button>
+                {{else}}
+                <button type="submit" title="Click to highlight as featured service on homepage" class="px-2 py-0.5 rounded bg-slate-100 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 text-slate-600 border border-slate-200 text-[10px] font-mono font-medium transition cursor-pointer flex items-center gap-1 shadow-2xs">
+                  <span>☆</span> <span>Standard</span>
+                </button>
+                {{/if}}
+              </form>
             </td>
             <td class="px-4 py-3 text-right space-x-1 whitespace-nowrap">
               <a 

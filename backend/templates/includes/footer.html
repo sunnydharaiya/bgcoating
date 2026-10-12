@@ -41,11 +41,11 @@
         <ul class="foot-list" style="gap:1rem">
           {% if latest_blogs %}
             {% for b in latest_blogs %}
-            <li><a href="{% url 'blog' %}" data-route="">{{ b.title }} <small style="display:block;font-family:var(--font-mono);font-size:.62rem;color:var(--txt-lo);margin-top:.3rem">{{ b.publish_date|date:"d-M-Y"|upper }}</small></a></li>
+            <li><a href="{% url 'blog_detail' b.slug %}">{{ b.title }} <small style="display:block;font-family:var(--font-mono);font-size:.62rem;color:var(--txt-lo);margin-top:.3rem">{{ b.publish_date|date:"d-M-Y"|upper }}</small></a></li>
             {% endfor %}
           {% else %}
-            <li><a href="{% url 'blog' %}" data-route="">Hurdles within the coating field &amp; strategic prioritization <small style="display:block;font-family:var(--font-mono);font-size:.62rem;color:var(--txt-lo);margin-top:.3rem">27-SEP-2023</small></a></li>
-            <li><a href="{% url 'blog' %}" data-route="">Abrasive blasting profiles: Ra, Rm and Rz <small style="display:block;font-family:var(--font-mono);font-size:.62rem;color:var(--txt-lo);margin-top:.3rem">21-SEP-2023</small></a></li>
+            <li><a href="{% url 'blog_detail' 'hurdles-in-coating-field-strategic-prioritization' %}">Hurdles within the coating field &amp; strategic prioritization <small style="display:block;font-family:var(--font-mono);font-size:.62rem;color:var(--txt-lo);margin-top:.3rem">27-SEP-2023</small></a></li>
+            <li><a href="{% url 'blog_detail' 'abrasive-blasting-profiles-ra-rm-rz' %}">Abrasive blasting profiles: Ra, Rm and Rz <small style="display:block;font-family:var(--font-mono);font-size:.62rem;color:var(--txt-lo);margin-top:.3rem">21-SEP-2023</small></a></li>
           {% endif %}
         </ul>
       </div>
@@ -404,8 +404,11 @@ function applyFilters(){
   const q = (searchInput.value || '').trim().toLowerCase();
   let shown = 0;
   bcards.forEach(c => {
-    const matchCat = curFilter === 'all' || c.dataset.cat === curFilter;
-    const matchQ = !q || (c.dataset.search || '').includes(q);
+    const cardCat = (c.dataset.cat || '').toLowerCase();
+    const filterVal = (curFilter || 'all').toLowerCase();
+    const matchCat = filterVal === 'all' || cardCat === filterVal || cardCat.includes(filterVal) || filterVal.includes(cardCat);
+    const searchData = (c.dataset.search || '').toLowerCase();
+    const matchQ = !q || searchData.includes(q);
     const show = matchCat && matchQ;
     c.classList.toggle('hide', !show);
     c.classList.remove('shown');
@@ -836,11 +839,20 @@ function initBASlider(ba, handle){
 
 
 
-<!-- ================= FLOATING ACTIONS (only two, every page) ================= -->
+<!-- ================= FLOATING ACTIONS (Quick actions stack) ================= -->
 <div class="fab-stack" aria-label="Quick actions">
-  <button class="fab fab-top" id="toTop" type="button" aria-label="Scroll back to top">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg>
-  </button>
+  <div class="fab-row">
+    <a class="fab fab-os" id="fabOs" href="{{ os_url|default:'http://localhost:3000' }}" target="_blank" rel="noopener noreferrer" aria-label="Open CoatingOS Platform" title="CoatingOS Engineering Platform">
+      <div class="fab-os-inner">
+        <img src="{% static 'assets/images/logo-2.png' %}" alt="BG Coating Logo" class="fab-os-logo">
+        <span class="fab-os-badge">OS</span>
+      </div>
+      <span class="fab-os-tooltip">CoatingOS</span>
+    </a>
+    <button class="fab fab-top" id="toTop" type="button" aria-label="Scroll back to top">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg>
+    </button>
+  </div>
   <a class="fab fab-wa" href="https://wa.me/919925810408" target="_blank" rel="noopener noreferrer" aria-label="Chat with a BG Group consultant on WhatsApp">
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.15-1.7-.85-2-.95-.26-.1-.45-.15-.64.15-.2.3-.74.94-.9 1.13-.17.2-.34.22-.63.08-.3-.15-1.25-.46-2.38-1.47-.88-.78-1.47-1.75-1.64-2.05-.17-.3-.02-.46.13-.6.13-.14.3-.34.44-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.64-1.55-.88-2.12-.23-.55-.47-.48-.64-.48h-.55c-.2 0-.5.07-.77.37-.26.3-1 .98-1 2.4s1.03 2.78 1.17 2.97c.15.2 2.03 3.1 4.9 4.35.68.3 1.22.47 1.64.6.69.22 1.31.19 1.8.11.55-.08 1.7-.7 1.94-1.36.24-.67.24-1.24.17-1.36-.07-.12-.26-.2-.55-.34zM12 2a10 10 0 0 0-8.6 15.06L2 22l5.06-1.33A10 10 0 1 0 12 2z"></path></svg>
     <span class="fab-label">Chat With Us</span>

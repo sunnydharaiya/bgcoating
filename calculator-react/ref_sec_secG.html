@@ -1,0 +1,35 @@
+<div class="sec collapsed" id="secG">
+  <div class="sec-hd" onclick="tog(&#39;secG&#39;)">
+    <div class="sec-hd-icon">🧪</div>
+    <div class="sec-hd-text">
+      <div class="sec-hd-t">Paint Testing Requirements</div>
+      <div class="sec-hd-s">Laboratory, certification standards, additional testing</div>
+    </div>
+    <div class="sec-pill">Section G</div>
+    <div class="sec-tog">▼</div>
+  </div>
+  <div class="sec-body">
+    <div class="grid g2">
+      <div class="fld"><label class="lbl">11.1 — Laboratory Requirement</label><input class="inp" type="text" id="labReq" placeholder="e.g. Reputed Government Laboratory — NABL Accredited in India"></div>
+      <div class="fld"><label class="lbl">Testing Certificate Type</label><input class="inp" type="text" id="testCert" placeholder="e.g. Standard Batch TC (Laboratory Analysis Results Sheet)"></div>
+      <div class="fld"><label class="lbl">Applicable Standard</label><input class="inp" type="text" id="appStd" placeholder="e.g. MFG Standard / Laboratory results"></div>
+      <div class="fld"><label class="lbl">Applicable for Paint System</label><input class="inp" type="text" id="appSystem" placeholder="e.g. Each batch of supplied materials"></div>
+    </div>
+    <div class="fld" style="margin-top:11px;">
+      <label class="lbl">Test Remarks</label>
+      <textarea class="txa" id="testRem" placeholder="e.g. If not applicable, technical back-up to be provided by paint manufacturer."></textarea>
+    </div>
+    <div class="fld" style="margin-top:14px;">
+      <label class="lbl">Additional Testing Requirement <span class="hint">(attach files / photos as special annexure)</span></label>
+      <div class="file-attach-bar">
+        <span style="font-size:18px;color:var(--o2);">📎</span>
+        <div class="info">Attach <b>files, photos, PDFs or test certificates</b> here. Files are saved with the draft and printed as annexure.</div>
+        <input type="file" id="addtlFiles" class="file-attach-input" multiple="" onchange="handleAttach(event)">
+        <button class="file-attach-btn" onclick="document.getElementById(&#39;addtlFiles&#39;).click()">📎 Attach Files</button>
+      </div>
+      <div class="file-list" id="fileList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION H -->

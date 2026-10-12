@@ -19,7 +19,26 @@ from .models import (
 
 @admin.register(SiteSettings)
 class SiteSettingsAdmin(admin.ModelAdmin):
-    list_display = ('site_name', 'phone_number', 'primary_email', 'working_hours')
+    list_display = ('site_name', 'phone_number', 'total_visitors_baseline', 'live_visitor_count', 'unique_visitors_baseline', 'total_enquiries_baseline', 'customer_feedback_count')
+    fieldsets = (
+        ("Branding & Identification", {
+            'fields': ('site_name', 'tagline', 'logo', 'footer_logo', 'footer_description', 'copyright_text')
+        }),
+        ("Contact & Hours", {
+            'fields': ('phone_number', 'whatsapp_number', 'primary_email', 'support_email', 'office_address', 'working_hours')
+        }),
+        ("Social Links & Forms", {
+            'fields': ('facebook_url', 'instagram_url', 'youtube_url', 'linkedin_url', 'pinterest_url', 'career_form_url')
+        }),
+        ("Trust Dashboard Metrics (Homepage)", {
+            'description': "Configure baseline metrics and view/adjust live visitor counters displayed on the homepage dashboard.",
+            'fields': (
+                ('total_visitors_baseline', 'live_visitor_count'),
+                ('unique_visitors_baseline', 'live_unique_visitor_count'),
+                ('total_enquiries_baseline', 'customer_feedback_count'),
+            )
+        }),
+    )
 
     def has_add_permission(self, request):
         # Enforce singleton pattern in admin
@@ -105,9 +124,9 @@ class CertificationItemAdmin(admin.ModelAdmin):
 
 @admin.register(ClientTestimonial)
 class ClientTestimonialAdmin(admin.ModelAdmin):
-    list_display = ('client_name', 'company_name', 'client_role', 'rating', 'order')
+    list_display = ('client_name', 'company_name', 'client_role', 'client_avatar', 'rating', 'order')
     list_editable = ('order', 'rating')
-    search_fields = ('client_name', 'company_name', 'testimonial_text')
+    search_fields = ('client_name', 'company_name', 'client_role', 'testimonial_text')
 
 
 @admin.register(TechnicalStandard)
@@ -135,4 +154,15 @@ class ContactSubmissionAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
         return False
+
+
+from .models import UserProfile
+
+
+@admin.register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    list_display = ('user', 'full_name', 'auth_provider', 'role', 'company', 'mobile', 'last_login_at', 'created_at')
+    list_filter = ('auth_provider', 'role', 'created_at')
+    search_fields = ('user__username', 'user__email', 'full_name', 'company', 'mobile')
+    readonly_fields = ('created_at', 'updated_at')
 

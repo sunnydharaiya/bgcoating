@@ -1,28 +1,25 @@
 import React, { useState } from 'react';
-import { Sparkles, Printer, Copy, Check, Calculator, Info, BookOpen, Play, RotateCcw } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
-import { useGuideline } from '../../context/GuidelineContext';
 import { calcPaintConsumption, formatNum } from '../../utils/calculations';
 
 export default function PaintConsumptionTool() {
   const { addToast } = useToast();
-  const { openGuideline } = useGuideline();
   const [paintName, setPaintName] = useState('');
   const [area, setArea] = useState('');
   const [dft, setDft] = useState('');
   const [vs, setVs] = useState('');
-  const [loss, setLoss] = useState('30');
-  const [coats, setCoats] = useState('1');
-  const [copied, setCopied] = useState(false);
+  const [loss, setLoss] = useState('20');
+  const [hasCalculated, setHasCalculated] = useState(false);
 
-  const res = (area && dft && vs) ? calcPaintConsumption(area, dft, vs, loss, coats || 1) : null;
+  const res = (area && dft && vs) ? calcPaintConsumption(area, dft, vs, loss, 1) : null;
 
   const handleCalculate = () => {
     if (!area || !dft || !vs) {
       addToast('Missing Required Inputs', 'Please enter Surface Area, Specified DFT, and Volume Solids.', 'warning');
       return;
     }
-    addToast('Calculated Paint Demand', 'Paint consumption and packaging requirement computed.', 'success');
+    setHasCalculated(true);
+    addToast('Calculated Consumption', 'Paint volume required computed successfully.', 'success');
   };
 
   const handleReset = () => {
@@ -30,246 +27,198 @@ export default function PaintConsumptionTool() {
     setArea('');
     setDft('');
     setVs('');
-    setLoss('30');
-    setCoats('1');
-    addToast('Form Reset', 'All input parameters have been cleared.', 'info');
+    setLoss('20');
+    setHasCalculated(false);
+    addToast('Form Reset', 'All input parameters cleared.', 'info');
   };
 
-  const handleCopy = () => {
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleShare = () => {
     if (!res) {
-      addToast('No Calculation', 'Please enter parameters first.', 'warning');
+      addToast('No Calculation', 'Please calculate first.', 'warning');
       return;
     }
-    const text = `BG CoatingOS™ — Paint Consumption Calculation
-${paintName ? `Paint Product: ${paintName}\n` : ''}Area: ${area} m² | DFT: ${dft} µm | VS: ${vs}% | Loss: ${loss}% | Coats: ${coats}
---------------------------------------
-Theoretical Litres: ${formatNum(res.totalTheoLiters, 1)} L
-Practical Total Paint Required: ${formatNum(res.totalPractLiters, 1)} L (${Math.ceil(res.totalPractLiters / 20)} × 20L Drums)
-Loss Volume: ${formatNum(res.lossLiters, 1)} L`;
+    const text = `BG CoatingOS™ — Paint Consumption (P-4)
+Paint Name: ${paintName || 'N/A'}
+Surface Area: ${area} m² | DFT: ${dft} µm | Volume Solids: ${vs}% | Loss: ${loss}%
+--------------------------------------------------
+Practical Paint Required: ${formatNum(res.totalPractLiters, 1)} Litres
+Theoretical Paint Required: ${formatNum(res.totalTheoLiters, 1)} Litres`;
+
     navigator.clipboard.writeText(text);
-    setCopied(true);
-    addToast('Copied to Clipboard', 'Paint consumption calculation copied.', 'success');
-    setTimeout(() => setCopied(false), 2000);
+    addToast('Copied to Clipboard', 'Calculation summary copied.', 'success');
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
-      
-      {/* Tool Header Card */}
-      <div className="bg-white border border-slate-200 rounded-3xl p-5 md:p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="sub-sec card active" id="sp-cons">
+      {/* Card Header (Screenshot 4) */}
+      <div className="ch">
+        <div className="ci">🧪</div>
         <div>
-          <div className="flex items-center gap-2">
-            <span className="bg-amber-50 text-[#D97706] border border-amber-200 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase font-mono tracking-wider">
-              Tool P-4
-            </span>
-            <h1 className="text-lg md:text-xl font-extrabold text-slate-900">
-              Paint Consumption Calculator
-            </h1>
-          </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Estimate total liquid paint volume (Litres &amp; Drum counts) required for coating a structure based on area, thickness, and application loss factor.
-          </p>
+          <div className="ct">Paint Consumption</div>
+          <div className="cs">Total litres for surface area at given DFT</div>
         </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => openGuideline('paint_consumption')}
-            className="px-3.5 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-[#D97706] border border-amber-200 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
-          >
-            <BookOpen className="w-3.5 h-3.5" />
-            <span>📖 Guideline</span>
-          </button>
-          <button
-            onClick={handleCopy}
-            className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
-          >
-            {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-            <span>{copied ? 'Copied' : 'Copy'}</span>
-          </button>
-          <button
-            onClick={() => window.print()}
-            className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
-          >
-            <Printer className="w-3.5 h-3.5" />
-            <span>Print Report</span>
-          </button>
-        </div>
+        <div className="ctag">P-4</div>
       </div>
 
-      {/* Main Grid: Inputs + Output */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        {/* Left Inputs Section */}
-        <div className="lg:col-span-6 bg-white border border-slate-200 rounded-3xl p-5 md:p-6 shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider font-mono">
-              Job Scope &amp; Film Thickness
-            </h2>
-            <Calculator className="w-4 h-4 text-[#F7941D]" />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="sm:col-span-2">
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                Paint Name <span className="text-slate-400 font-mono text-[10px] ml-1">optional</span>
-              </label>
-              <input
-                type="text"
-                value={paintName}
-                onChange={e => setPaintName(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-                placeholder="e.g. High Build Epoxy"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                Total Surface Area (m²)
-              </label>
-              <input
-                type="number"
-                value={area}
-                onChange={e => setArea(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-                placeholder="e.g. 1200"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                Specified DFT (µm)
-              </label>
-              <input
-                type="number"
-                value={dft}
-                onChange={e => setDft(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-                placeholder="e.g. 100"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                Volume Solids (% VS)
-              </label>
-              <input
-                type="number"
-                value={vs}
-                onChange={e => setVs(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-                placeholder="e.g. 65"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                Number of Coats
-              </label>
-              <input
-                type="number"
-                value={coats}
-                onChange={e => setCoats(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-                placeholder="1"
-              />
-            </div>
-
-            {/* Application Loss Slider */}
-            <div className="sm:col-span-2 space-y-2">
-              <div className="flex justify-between items-center text-xs">
-                <label className="font-bold text-slate-700">Application Loss Factor</label>
-                <span className="font-mono font-bold text-[#D97706] bg-amber-50 px-2 py-0.5 rounded border border-amber-200">{loss}%</span>
+      <div className="cb">
+        {/* User Inputs Section (Orange Border & Top Badge) */}
+        <div className="input-section">
+          <div className="g2">
+            <div className="field">
+              <label>Surface Area <span className="lh">m²</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="cons-a" 
+                  value={area} 
+                  onChange={e => setArea(e.target.value)} 
+                  placeholder="e.g. 1000" 
+                />
+                <span className="uu">m²</span>
               </div>
-              <input
-                type="range"
-                min="0"
-                max="60"
-                step="5"
-                value={loss}
-                onChange={e => setLoss(Number(e.target.value))}
-                className="w-full accent-[#F7941D] cursor-pointer"
-              />
-              <div className="flex justify-between text-[10px] text-slate-400 font-mono">
-                <span>0% (Shop/Roller)</span>
-                <span>25–35% (Airless Spray)</span>
-                <span>50%+ (Windy Site/Lattice)</span>
+            </div>
+            <div className="field">
+              <label>DFT <span className="lh">µm</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="cons-d" 
+                  value={dft} 
+                  onChange={e => setDft(e.target.value)} 
+                  placeholder="e.g. 125" 
+                />
+                <span className="uu">µm</span>
+              </div>
+            </div>
+            <div className="field">
+              <label>Volume Solids <span className="lh">%</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="cons-v" 
+                  value={vs} 
+                  onChange={e => setVs(e.target.value)} 
+                  placeholder="e.g. 65" 
+                  min="1" 
+                  max="100" 
+                />
+                <span className="uu">%</span>
               </div>
             </div>
           </div>
 
-          {/* Form Actions: Calculate & Reset */}
-          <div className="flex gap-2.5 pt-2">
-            <button
-              type="button"
-              onClick={handleCalculate}
-              className="flex-[2] py-3 px-4 bg-gradient-to-r from-[#F7941D] to-[#A50021] hover:from-[#E8700A] hover:to-[#8B0018] text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-xs transition hover:brightness-105 active:scale-98 flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <Play className="w-3.5 h-3.5 fill-white" />
-              <span>Calculate Paint Demand</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleReset}
-              className="flex-1 py-3 px-4 bg-white hover:bg-red-50 text-[#A50021] border border-[#A50021]/30 font-bold text-xs uppercase tracking-wider rounded-xl shadow-2xs transition hover:border-[#A50021] active:scale-98 flex items-center justify-center gap-1.5 cursor-pointer"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>Reset</span>
-            </button>
+          <div className="field">
+            <label>Application Loss <span className="lh">%</span></label>
+            <div className="sr">
+              <input 
+                type="range" 
+                id="cons-sld" 
+                min="0" 
+                max="60" 
+                step="1" 
+                value={loss} 
+                onChange={e => setLoss(e.target.value)} 
+                style={{ '--pct': `${(loss / 60) * 100}%` }}
+              />
+              <span className="sv" id="cons-sv">{loss}%</span>
+            </div>
           </div>
 
-          <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/70 text-xs text-slate-500 flex items-start gap-2">
-            <Info className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
-            <span className="leading-relaxed">
-              Formula: <code>Litres = (Area m² × DFT µm) ÷ (VS% × 10 × (1 - Loss% ÷ 100))</code>.
-            </span>
+          <div className="field">
+            <label>Paint Name <span className="lh">optional</span></label>
+            <div className="iw">
+              <input 
+                type="text" 
+                id="cons-nm" 
+                value={paintName} 
+                onChange={e => setPaintName(e.target.value)} 
+                placeholder="e.g. High Build Epoxy" 
+              />
+            </div>
           </div>
         </div>
 
-        {/* Right Output Section */}
-        <div className="lg:col-span-6 space-y-4">
-          <div className="bg-gradient-to-br from-white to-amber-50/20 border-2 border-amber-200/80 rounded-3xl p-6 shadow-sm space-y-5">
-            
-            <div className="flex items-center justify-between border-b border-amber-100 pb-3">
-              <span className="text-[10px] font-mono font-extrabold text-[#D97706] uppercase tracking-wider">
-                Total Paint Volume Requirement
-              </span>
-              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-mono">
-                Procurement
-              </span>
-            </div>
-
-            {/* Target Output Highlight Box */}
-            <div className="bg-white border border-amber-200 rounded-2xl p-5 text-center shadow-xs">
-              <span className="text-xs text-slate-400 font-mono">Practical Paint Requirement ({loss}% Loss)</span>
-              <div className="text-4xl md:text-5xl font-black text-slate-900 font-mono mt-1 text-[#D97706]">
-                {res ? `${formatNum(res.totalPractLiters, 1)} L` : '—'}
-              </div>
-              <p className="text-xs text-slate-500 mt-2 font-mono font-bold">
-                Order Recommendation: {res ? `${Math.ceil(res.totalPractLiters / 20)} × 20L Drums` : '—'}
-              </p>
-            </div>
-
-            {/* Breakdown Cards */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-xl">
-                <span className="text-[10px] text-slate-400 font-mono block">Theoretical Paint</span>
-                <span className="text-base font-bold text-slate-800 font-mono">
-                  {res ? `${formatNum(res.totalTheoLiters, 1)} L` : '—'}
-                </span>
-              </div>
-              <div className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-xl">
-                <span className="text-[10px] text-slate-400 font-mono block">Estimated Loss</span>
-                <span className="text-base font-bold text-rose-600 font-mono">
-                  {res ? `+${formatNum(res.lossLiters, 1)} L` : '—'}
-                </span>
-              </div>
-            </div>
-
-          </div>
+        {/* Buttons Row */}
+        <div className="btn-row">
+          <button type="button" className="btn" onClick={handleCalculate}>
+            ▶ Calculate Consumption
+          </button>
+          <button type="button" className="btn-reset" onClick={handleReset}>
+            ↺ Reset
+          </button>
         </div>
 
+        {/* Calculated Results Section */}
+        {(hasCalculated || res) && (
+          <div className="res" id="r-cons" style={{ display: 'block' }}>
+            <div className="output-section">
+              <div className="rh">
+                <span className="pd"></span>
+                <span>Consumption Result</span>
+              </div>
+
+              <div className="tls t1">
+                <div className="tile tp">
+                  <div className="tl">Paint Required (Practical)</div>
+                  <div>
+                    <span className="tv" id="cons-r">{res ? formatNum(res.totalPractLiters, 1) : '—'}</span>
+                    <span className="tu">Litres</span>
+                  </div>
+                  <div className="tn">With {loss}% Loss Applied</div>
+                </div>
+
+                <div className="tile ts">
+                  <div className="tl">Theoretical Paint Required</div>
+                  <div>
+                    <span className="tv" id="cons-rt">{res ? formatNum(res.totalTheoLiters, 1) : '—'}</span>
+                    <span className="tu">Litres</span>
+                  </div>
+                  <div className="tn">At 100% Transfer Efficiency</div>
+                </div>
+              </div>
+
+              {/* User Input Data Summary */}
+              <div className="input-summary">
+                <div className="input-summary-label">📝 Input Data (Provided by User)</div>
+                <div className="dr">
+                  <span className="dk">Paint Name</span>
+                  <span className="dv">{paintName || '—'}</span>
+                </div>
+                <div className="dr">
+                  <span className="dk">Surface Area</span>
+                  <span className="dv">{area ? `${area} m²` : '—'}</span>
+                </div>
+                <div className="dr">
+                  <span className="dk">DFT</span>
+                  <span className="dv">{dft ? `${dft} µm` : '—'}</span>
+                </div>
+                <div className="dr">
+                  <span className="dk">Volume Solids</span>
+                  <span className="dv">{vs ? `${vs}%` : '—'}</span>
+                </div>
+                <div className="dr">
+                  <span className="dk">Application Loss</span>
+                  <span className="dv">{loss}%</span>
+                </div>
+              </div>
+
+              {/* Action Bar */}
+              <div className="action-bar">
+                <button type="button" className="btn-print" onClick={handlePrint}>
+                  🖨 Print PDF
+                </button>
+                <button type="button" className="btn-share" onClick={handleShare}>
+                  📤 Share Text
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
-
     </div>
   );
 }

@@ -1,164 +1,152 @@
 import React, { useState } from 'react';
-import { 
-  Sparkles, 
-  Printer, 
-  Copy, 
-  Check, 
-  Calculator, 
-  Info, 
-  BookOpen, 
-  ArrowRight, 
-  TrendingUp, 
-  AlertTriangle, 
-  ShieldCheck,
-  FileSpreadsheet,
-  Share2,
-  Download,
-  Play,
-  RotateCcw
-} from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
 import { useGuideline } from '../../context/GuidelineContext';
 import { formatNum, formatCur } from '../../utils/calculations';
 
+function recClass(ap) {
+  if (ap <= 5) return { cls: 'Excellent Control', st: 'PASS', ic: '✅', bg: '#E8F5E9', bd: 'rgba(46,125,50,.35)', c1: '#1B5E20', c2: '#2E7D32', bar: '#2E7D32' };
+  if (ap <= 10) return { cls: 'Acceptable', st: 'PASS', ic: '🔵', bg: '#E3F2FD', bd: 'rgba(21,101,192,.35)', c1: '#0D47A1', c2: '#1565C0', bar: '#1565C0' };
+  if (ap <= 15) return { cls: 'Needs Review', st: 'REVIEW', ic: '⚠️', bg: '#FFF8E1', bd: 'rgba(245,127,23,.4)', c1: '#8B4500', c2: '#B26A00', bar: '#E8700A' };
+  return { cls: 'Investigate', st: 'FAIL', ic: '❌', bg: '#FFEBEE', bd: 'rgba(211,47,47,.35)', c1: '#B71C1C', c2: '#C62828', bar: '#C62828' };
+}
+
+function recComment(vp) {
+  const ap = Math.abs(vp);
+  if (vp < -5) return 'Paint saving achieved — actual consumption is below the estimated requirement. Verify that specified DFT was achieved (ISO 19840 / SSPC-PA 2) before accepting the saving.';
+  if (ap <= 5) return 'Excellent material control. Paint consumption is within acceptable engineering limits.';
+  if (ap <= 10) return 'Paint consumption is slightly higher than estimated. Review application efficiency, overspray, and blasting profile.';
+  if (ap <= 15) return 'Consumption variance requires review. Check DFT records, transfer efficiency, mixing practices, and environmental conditions.';
+  return 'Significant variance detected (>15%). Initiate a formal audit of DFT logs, batch mixing records, container empty weights, and site spillage reports immediately.';
+}
+
 export default function PaintReconciliationTool() {
   const { addToast } = useToast();
   const { openGuideline } = useGuideline();
-  const [copied, setCopied] = useState(false);
 
-  // Section A: Project Information
-  const [proj, setProj] = useState('');
-  const [client, setClient] = useState('');
-  const [contractor, setContractor] = useState('');
-  const [mfr, setMfr] = useState('');
-  const [prod, setProd] = useState('');
-  const [coatNo, setCoatNo] = useState('');
+  // A · Project Info
+  const [proj, setProj] = useState('Tank Farm T-101 External');
+  const [client, setClient] = useState('IOCL');
+  const [contractor, setContractor] = useState('ABC Coatings Pvt Ltd');
+  const [mfr, setMfr] = useState('Jotun / AkzoNobel');
+  const [prod, setProd] = useState('Epoxy MIO Intermediate');
+  const [coatNo, setCoatNo] = useState('2nd Coat');
   const [reportDate, setReportDate] = useState(new Date().toISOString().split('T')[0]);
 
-  // Section B: Surface & Specification
-  const [area, setArea] = useState('');
-  const [dft, setDft] = useState('');
-  const [vs, setVs] = useState('');
+  // B · Surface & Specification
+  const [area, setArea] = useState('2500');
+  const [dft, setDft] = useState('125');
+  const [vs, setVs] = useState('70');
   const [loss, setLoss] = useState('15');
   const [coats, setCoats] = useState('1');
 
-  // Section C: Material Issue Details
-  const [opening, setOpening] = useState('');
-  const [received, setReceived] = useState('');
-  const [issued, setIssued] = useState('');
+  // C · Material Issue Details
+  const [openStock, setOpenStock] = useState('100');
+  const [received, setReceived] = useState('400');
+  const [issued, setIssued] = useState('450');
   const [returned, setReturned] = useState('0');
   const [unused, setUnused] = useState('0');
   const [rejected, setRejected] = useState('0');
   const [spillage, setSpillage] = useState('0');
   const [thinner, setThinner] = useState('0');
 
-  // Section D: Density & Cost
-  const [density, setDensity] = useState('');
-  const [cost, setCost] = useState('');
+  // D · Density & Cost
+  const [density, setDensity] = useState('1.45');
+  const [cost, setCost] = useState('650');
 
-  // Calculations
-  const a = parseFloat(area) || 0;
-  const d = parseFloat(dft) || 0;
-  const v = parseFloat(vs) || 0;
-  const l = parseFloat(loss) || 0;
-  const c = parseFloat(coats) || 1;
+  const [res, setRes] = useState(null);
 
-  const op = parseFloat(opening) || 0;
-  const rc = parseFloat(received) || 0;
-  const is = parseFloat(issued) || 0;
-  const rt = parseFloat(returned) || 0;
-  const un = parseFloat(unused) || 0;
-  const rj = parseFloat(rejected) || 0;
-  const sp = parseFloat(spillage) || 0;
-  const th = parseFloat(thinner) || 0;
-  const den = parseFloat(density) || 0;
-  const prc = parseFloat(cost) || 0;
-
-  const hasInputs = area && dft && vs && issued;
-
-  // Theoretical & Practical Requirement
-  const tc = d > 0 ? (v * 10) / d : 0; // m²/L
-  const pc = tc * (1 - l / 100);       // m²/L
-  const theoReq = tc > 0 && hasInputs ? (a * c) / tc : 0;
-  const pracReq = pc > 0 && hasInputs ? (a * c) / pc : 0;
-
-  // Material Flow
-  const totalAvail = op + rc;
-  const consumed = is - rt - un;
-  const wasted = sp + rj;
-  const totalActual = hasInputs ? Math.max(0, consumed + wasted) : 0;
-  const closingStore = totalAvail - is + rt;
-
-  // Variances
-  const variance = hasInputs ? totalActual - pracReq : 0; // + excess, - saving
-  const varPercent = pracReq > 0 && hasInputs ? (variance / pracReq) * 100 : 0;
-  const saving = variance < 0;
-  const finImpact = prc > 0 && hasInputs ? Math.abs(variance) * prc : null;
-  const eff = totalActual > 0 ? (pracReq / totalActual) * 100 : 0;
-  const util = is > 0 ? (consumed / is) * 100 : 0;
-  const totalKg = den > 0 && hasInputs ? totalActual * den : null;
-
-  // Classification logic
-  const absVar = Math.abs(varPercent);
-  let status = 'READY';
-  let cls = 'Awaiting Inputs';
-  let verdictBg = 'bg-slate-50 border-slate-200 text-slate-700';
-  let barCol = '#2E7D32';
-  let icon = '📊';
-
-  if (hasInputs) {
-    if (absVar <= 5) {
-      status = 'PASS';
-      cls = 'Excellent Control';
-      verdictBg = 'bg-[#E8F5E9] border-[#2E7D32]/40 text-[#1B5E20]';
-      barCol = '#2E7D32';
-      icon = '✅';
-    } else if (absVar <= 10) {
-      status = 'PASS';
-      cls = 'Acceptable';
-      verdictBg = 'bg-[#E3F2FD] border-[#1565C0]/40 text-[#0D47A1]';
-      barCol = '#1565C0';
-      icon = '🔵';
-    } else if (absVar <= 15) {
-      status = 'REVIEW';
-      cls = 'Needs Review';
-      verdictBg = 'bg-[#FFF8E1] border-[#F5911F]/50 text-[#8B4500]';
-      barCol = '#F5911F';
-      icon = '⚠️';
-    } else {
-      status = 'FAIL';
-      cls = 'Investigate';
-      verdictBg = 'bg-[#FFEBEE] border-[#C62828]/40 text-[#B71C1C]';
-      barCol = '#C62828';
-      icon = '❌';
-    }
-  }
-
-  const getComment = () => {
-    if (!hasInputs) {
-      return 'Enter painted surface area, specified DFT, volume solids, and material issued to run reconciliation.';
-    }
-    if (varPercent < -5) {
-      return 'Paint saving achieved — actual consumption is below the estimated requirement. Verify that specified DFT was achieved (ISO 19840 / SSPC-PA 2) before accepting the saving.';
-    }
-    if (absVar <= 5) {
-      return 'Excellent material control. Paint consumption is within acceptable engineering limits.';
-    }
-    if (absVar <= 10) {
-      return 'Paint consumption is slightly higher than estimated. Review application efficiency, overspray, and blasting profile.';
-    }
-    if (absVar <= 15) {
-      return 'Consumption variance requires review. Check DFT records, transfer efficiency, mixing practice and wastage handling before closing the reconciliation.';
-    }
-    return 'Excessive paint consumption detected. Investigate overspray, surface profile, application method, workmanship, equipment calibration, and material handling.';
-  };
+  // Dynamic available paint
+  const totalAvailable = (parseFloat(openStock) || 0) + (parseFloat(received) || 0);
 
   const handleCalculate = () => {
-    if (!area || !dft || !vs || !issued) {
-      addToast('Missing Required Inputs', 'Please enter Surface Area, Specified DFT, Volume Solids, and Paint Issued.', 'warning');
+    const areaVal = parseFloat(area);
+    const dftVal = parseFloat(dft);
+    const vsVal = parseFloat(vs);
+    const lossVal = parseFloat(loss) || 0;
+    const coatsVal = parseInt(coats, 10) || 1;
+
+    const issVal = parseFloat(issued);
+    const retVal = parseFloat(returned) || 0;
+    const unuVal = parseFloat(unused) || 0;
+    const rejVal = parseFloat(rejected) || 0;
+    const splVal = parseFloat(spillage) || 0;
+    const thnVal = parseFloat(thinner) || 0;
+    const denVal = parseFloat(density) || 0;
+    const costVal = parseFloat(cost) || 0;
+
+    if (!areaVal || !dftVal || !vsVal) {
+      addToast('Missing Required Inputs', 'Please fill Surface Area, Specified DFT and Volume Solids.', 'warning');
       return;
     }
-    addToast('Calculated Paint Reconciliation', 'Material variance and consumption efficiency evaluated.', 'success');
+    if (isNaN(issVal)) {
+      addToast('Missing Required Inputs', 'Please fill Paint Issued to Site.', 'warning');
+      return;
+    }
+
+    const tc = (vsVal * 10) / dftVal;
+    const pc = (tc * (100 - lossVal)) / 100;
+    const theoReq = (areaVal * coatsVal) / tc;
+    const pracReq = (areaVal * coatsVal) / pc;
+
+    const consumed = issVal - retVal - unuVal;
+    if (consumed < 0) {
+      addToast('Logic Error', 'Returned + Unused paint cannot exceed Paint Issued.', 'error');
+      return;
+    }
+
+    const wasted = splVal + rejVal;
+    const totalActual = consumed + wasted;
+
+    const variance = totalActual - pracReq;
+    const varp = (variance / pracReq) * 100;
+    const fin = costVal > 0 ? variance * costVal : null;
+    const eff = totalActual > 0 ? (pracReq / totalActual) * 100 : 0;
+    const util = issVal > 0 ? (consumed / issVal) * 100 : 0;
+    const closing = totalAvailable - issVal + retVal;
+    const kg = denVal > 0 ? totalActual * denVal : null;
+
+    const g = recClass(Math.abs(varp));
+    const saving = variance < 0;
+
+    setRes({
+      tc,
+      pc,
+      theoReq,
+      pracReq,
+      consumed,
+      wasted,
+      totalActual,
+      variance,
+      varp,
+      fin,
+      eff,
+      util,
+      closing,
+      kg,
+      g,
+      saving,
+      areaVal,
+      dftVal,
+      vsVal,
+      lossVal,
+      coatsVal,
+      issVal,
+      retVal,
+      unuVal,
+      rejVal,
+      splVal,
+      thnVal,
+      denVal,
+      costVal,
+      proj,
+      client,
+      contractor,
+      mfr,
+      prod,
+      coatNo,
+      reportDate
+    });
+    addToast('Reconciliation Complete', 'Material variance and KPIs computed.', 'success');
   };
 
   const handleReset = () => {
@@ -173,7 +161,7 @@ export default function PaintReconciliationTool() {
     setVs('');
     setLoss('15');
     setCoats('1');
-    setOpening('');
+    setOpenStock('');
     setReceived('');
     setIssued('');
     setReturned('0');
@@ -183,475 +171,583 @@ export default function PaintReconciliationTool() {
     setThinner('0');
     setDensity('');
     setCost('');
-    addToast('Form Reset', 'All input parameters have been cleared.', 'info');
+    setRes(null);
+    addToast('Form Reset', 'Parameters have been cleared.', 'info');
   };
 
-  const handleCopy = () => {
-    if (!hasInputs) {
-      addToast('No Calculation', 'Please enter parameters first.', 'warning');
-      return;
-    }
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleShare = () => {
+    if (!res) return;
     const text = `BG CoatingOS™ — Paint Reconciliation Report
-Project: ${proj || '—'} | Client: ${client || '—'} | Paint: ${mfr} ${prod}
---------------------------------------
-Theoretical: ${formatNum(theoReq, 1)} L | Practical Req: ${formatNum(pracReq, 1)} L
-Total Actual Consumed: ${formatNum(totalActual, 1)} L
-Variance: ${variance >= 0 ? '+' : ''}${formatNum(variance, 1)} L (${formatNum(varPercent, 1)}%)
-Verdict: ${status} — ${cls}
-${finImpact ? `Financial Impact: ${saving ? 'Saving ' : 'Loss '}${formatCur(finImpact)}` : ''}`;
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    addToast('Copied to Clipboard', 'Reconciliation report copied.', 'success');
-    setTimeout(() => setCopied(false), 2000);
-  };
+Project: ${res.proj || '—'} | Product: ${res.prod || '—'}
+Area: ${res.areaVal} m² | Specified DFT: ${res.dftVal} µm | VS: ${res.vsVal}%
+--------------------------------------------------
+Theoretical Requirement: ${formatNum(res.theoReq, 1)} L
+Practical Requirement (incl. loss): ${formatNum(res.pracReq, 1)} L
+Actual Paint Consumed: ${formatNum(res.consumed, 1)} L
+Total Actual (incl. waste): ${formatNum(res.totalActual, 1)} L
+Variance: ${res.variance >= 0 ? '+' : ''}${formatNum(res.variance, 1)} L (${res.varp >= 0 ? '+' : ''}${formatNum(res.varp, 1)}%)
+Classification: ${res.g.cls} (${res.g.st})
+Consumption Efficiency: ${formatNum(res.eff, 1)}%
+Material Utilization: ${formatNum(res.util, 1)}%
+${res.fin !== null ? `Financial Impact: ${formatCur(res.fin)}` : ''}`;
 
-  const ROOT_CAUSES = [
-    'Excessive blast profile (high anchor pattern dead volume)',
-    'Higher-than-specified DFT applied on steel',
-    'Poor transfer efficiency / excessive overspray in field',
-    'Poor application technique or untrained blasters/painters',
-    'Incorrect mixing ratio or exceeded pot life',
-    'Material left inside airless spray pumps and fluid lines',
-    'Paint residue remaining inside discarded cans / drums',
-    'Poor jobsite storage, leakage or spillage',
-    'Rework / touch-up coating defects'
-  ];
+    navigator.clipboard.writeText(text);
+    addToast('Copied to Clipboard', 'Reconciliation summary copied.', 'success');
+  };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
-      
-      {/* Tool Header Card */}
-      <div className="bg-white border border-slate-200 rounded-3xl p-5 md:p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="sub-sec card active" id="pro-recon">
+      <div className="ch">
+        <div className="ci">📊</div>
         <div>
-          <div className="flex items-center gap-2">
-            <span className="bg-amber-50 text-[#D97706] border border-amber-200 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase font-mono tracking-wider">
-              Tool PRO-PR-1
-            </span>
-            <h1 className="text-lg md:text-xl font-extrabold text-slate-900">
-              Paint Reconciliation Calculator
-            </h1>
-          </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Theoretical requirement vs actual issued / consumed / returned — savings, excess &amp; financial impact
-          </p>
+          <div className="ct">Paint Reconciliation Calculator</div>
+          <div className="cs">Theoretical requirement vs actual issued / consumed / returned — savings, excess &amp; financial impact</div>
         </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => openGuideline('pro-recon')}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-[#1565C0] to-[#0D47A1] text-white text-xs font-extrabold tracking-wider uppercase shadow-xs hover:shadow-sm transition cursor-pointer shrink-0"
-          >
-            <BookOpen className="w-3.5 h-3.5" />
-            <span>📖 Guideline</span>
-          </button>
-          <button
-            onClick={handleCopy}
-            className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
-          >
-            {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-            <span>{copied ? 'Copied' : 'Share'}</span>
-          </button>
-          <button
-            onClick={() => window.print()}
-            className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
-          >
-            <Printer className="w-3.5 h-3.5" />
-            <span>Print PDF</span>
-          </button>
-        </div>
+        <button className="gd-btn" onClick={() => openGuideline('paint_reconciliation')}>📖 Guideline</button>
+        <div className="ctag">PRO · PR-1</div>
       </div>
 
-      {/* Main Input Form Container */}
-      <div className="bg-white border border-slate-200 rounded-3xl p-5 md:p-6 shadow-xs space-y-6">
-        
-        {/* Section A: Project Information */}
-        <div className="space-y-3">
-          <div className="text-[11px] font-bold tracking-wider uppercase text-[#A34E00] border-b border-amber-100 pb-1">
+      <div className="cb">
+        <div className="input-section">
+          {/* Section A */}
+          <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--in-lbl)', marginBottom: '8px' }}>
             A · Project Information
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Project Name <span className="text-slate-400 font-mono text-[10px]">optional</span></label>
-              <input type="text" value={proj} onChange={e => setProj(e.target.value)} placeholder="e.g. Tank Farm T-101 External" className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs" />
+          <div className="g2">
+            <div className="field">
+              <label>Project Name <span className="lh">optional</span></label>
+              <div className="iw">
+                <input 
+                  type="text" 
+                  id="rec-proj" 
+                  placeholder="e.g. Tank Farm T-101 External" 
+                  value={proj} 
+                  onChange={(e) => setProj(e.target.value)} 
+                />
+              </div>
             </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Client <span className="text-slate-400 font-mono text-[10px]">optional</span></label>
-              <input type="text" value={client} onChange={e => setClient(e.target.value)} placeholder="e.g. IOCL" className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs" />
+
+            <div className="field">
+              <label>Client <span className="lh">optional</span></label>
+              <div className="iw">
+                <input 
+                  type="text" 
+                  id="rec-cli" 
+                  placeholder="e.g. IOCL" 
+                  value={client} 
+                  onChange={(e) => setClient(e.target.value)} 
+                />
+              </div>
             </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Contractor <span className="text-slate-400 font-mono text-[10px]">optional</span></label>
-              <input type="text" value={contractor} onChange={e => setContractor(e.target.value)} placeholder="e.g. ABC Coatings Pvt Ltd" className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs" />
+
+            <div className="field">
+              <label>Contractor <span className="lh">optional</span></label>
+              <div className="iw">
+                <input 
+                  type="text" 
+                  id="rec-con" 
+                  placeholder="e.g. ABC Coatings Pvt Ltd" 
+                  value={contractor} 
+                  onChange={(e) => setContractor(e.target.value)} 
+                />
+              </div>
             </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Paint Manufacturer <span className="text-slate-400 font-mono text-[10px]">optional</span></label>
-              <input type="text" value={mfr} onChange={e => setMfr(e.target.value)} placeholder="e.g. Jotun / AkzoNobel" className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs" />
+
+            <div className="field">
+              <label>Paint Manufacturer <span className="lh">optional</span></label>
+              <div className="iw">
+                <input 
+                  type="text" 
+                  id="rec-mfr" 
+                  placeholder="e.g. Jotun / AkzoNobel" 
+                  value={mfr} 
+                  onChange={(e) => setMfr(e.target.value)} 
+                />
+              </div>
             </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Paint Product <span className="text-slate-400 font-mono text-[10px]">optional</span></label>
-              <input type="text" value={prod} onChange={e => setProd(e.target.value)} placeholder="e.g. Epoxy MIO Intermediate" className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs" />
+
+            <div className="field">
+              <label>Paint Product <span className="lh">optional</span></label>
+              <div className="iw">
+                <input 
+                  type="text" 
+                  id="rec-prod" 
+                  placeholder="e.g. Epoxy MIO Intermediate" 
+                  value={prod} 
+                  onChange={(e) => setProd(e.target.value)} 
+                />
+              </div>
             </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Report Date <span className="text-slate-400 font-mono text-[10px]">optional</span></label>
-              <input type="date" value={reportDate} onChange={e => setReportDate(e.target.value)} className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono" />
+
+            <div className="field">
+              <label>Coat Number <span className="lh">optional</span></label>
+              <div className="iw">
+                <input 
+                  type="text" 
+                  id="rec-coatno" 
+                  placeholder="e.g. 2nd Coat" 
+                  value={coatNo} 
+                  onChange={(e) => setCoatNo(e.target.value)} 
+                />
+              </div>
+            </div>
+
+            <div className="field">
+              <label>Report Date <span className="lh">optional</span></label>
+              <div className="iw">
+                <input 
+                  type="date" 
+                  id="rec-date" 
+                  value={reportDate} 
+                  onChange={(e) => setReportDate(e.target.value)} 
+                />
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Section B: Surface & Specification */}
-        <div className="space-y-3">
-          <div className="text-[11px] font-bold tracking-wider uppercase text-[#A34E00] border-b border-amber-100 pb-1">
+          {/* Section B */}
+          <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--in-lbl)', margin: '14px 0 8px' }}>
             B · Surface &amp; Specification
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Surface Area Painted <span className="text-slate-400 font-mono text-[10px]">m²</span></label>
-              <input type="number" value={area} onChange={e => setArea(e.target.value)} placeholder="e.g. 2500" className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold" />
+          <div className="g2">
+            <div className="field">
+              <label>Surface Area Painted <span className="lh">m²</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="rec-area" 
+                  placeholder="e.g. 2500" 
+                  min="0" 
+                  step="any" 
+                  value={area} 
+                  onChange={(e) => setArea(e.target.value)} 
+                />
+                <span className="uu">m²</span>
+              </div>
             </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Specified DFT <span className="text-slate-400 font-mono text-[10px]">µm</span></label>
-              <input type="number" value={dft} onChange={e => setDft(e.target.value)} placeholder="e.g. 125" className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold" />
+
+            <div className="field">
+              <label>Specified DFT <span className="lh">µm</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="rec-dft" 
+                  placeholder="e.g. 125" 
+                  min="0" 
+                  step="any" 
+                  value={dft} 
+                  onChange={(e) => setDft(e.target.value)} 
+                />
+                <span className="uu">µm</span>
+              </div>
             </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Volume Solids <span className="text-slate-400 font-mono text-[10px]">%</span></label>
-              <input type="number" value={vs} onChange={e => setVs(e.target.value)} placeholder="e.g. 70" className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold" />
+
+            <div className="field">
+              <label>Volume Solids <span className="lh">%</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="rec-vs" 
+                  placeholder="e.g. 70" 
+                  min="1" 
+                  max="100" 
+                  step="any" 
+                  value={vs} 
+                  onChange={(e) => setVs(e.target.value)} 
+                />
+                <span className="uu">%</span>
+              </div>
             </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Loss Factor <span className="text-slate-400 font-mono text-[10px]">%</span></label>
-              <input type="number" value={loss} onChange={e => setLoss(e.target.value)} placeholder="15" className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold" />
+
+            <div className="field">
+              <label>Loss Factor <span className="lh">% · default 15</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="rec-loss" 
+                  placeholder="15" 
+                  value={loss} 
+                  min="0" 
+                  max="90" 
+                  step="any" 
+                  onChange={(e) => setLoss(e.target.value)} 
+                />
+                <span className="uu">%</span>
+              </div>
             </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Number of Coats <span className="text-slate-400 font-mono text-[10px]">nos</span></label>
-              <input type="number" value={coats} onChange={e => setCoats(e.target.value)} placeholder="1" className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold" />
+
+            <div className="field">
+              <label>Number of Coats <span className="lh">for this reconciliation</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="rec-coats" 
+                  placeholder="1" 
+                  value={coats} 
+                  min="1" 
+                  step="1" 
+                  onChange={(e) => setCoats(e.target.value)} 
+                />
+                <span className="uu">nos</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Section C: Material Issue Details */}
-        <div className="space-y-3">
-          <div className="text-[11px] font-bold tracking-wider uppercase text-[#A34E00] border-b border-amber-100 pb-1">
+          {/* Section C */}
+          <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--in-lbl)', margin: '14px 0 8px' }}>
             C · Material Issue Details
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Opening Stock <span className="text-slate-400 font-mono text-[10px]">L</span></label>
-              <input type="number" value={opening} onChange={e => setOpening(e.target.value)} placeholder="e.g. 100" className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold" />
+          <div className="g2">
+            <div className="field">
+              <label>Opening Stock <span className="lh">L</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="rec-open" 
+                  placeholder="e.g. 100" 
+                  min="0" 
+                  step="any" 
+                  value={openStock} 
+                  onChange={(e) => setOpenStock(e.target.value)} 
+                />
+                <span className="uu">L</span>
+              </div>
             </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Paint Received <span className="text-slate-400 font-mono text-[10px]">L</span></label>
-              <input type="number" value={received} onChange={e => setReceived(e.target.value)} placeholder="e.g. 400" className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold" />
+
+            <div className="field">
+              <label>Paint Received <span className="lh">L</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="rec-rcv" 
+                  placeholder="e.g. 400" 
+                  min="0" 
+                  step="any" 
+                  value={received} 
+                  onChange={(e) => setReceived(e.target.value)} 
+                />
+                <span className="uu">L</span>
+              </div>
             </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Total Paint Available <span className="text-slate-400 font-mono text-[10px]">auto</span></label>
-              <input type="text" readOnly value={`${totalAvail} L`} className="w-full px-3 py-2 bg-stone-100 border border-stone-200 rounded-xl text-xs font-mono font-bold text-stone-700 cursor-not-allowed" />
+
+            <div className="field">
+              <label>Total Paint Available <span className="lh">auto</span></label>
+              <div className="iw">
+                <input 
+                  type="text" 
+                  id="rec-avail" 
+                  value={totalAvailable ? `${totalAvailable} L` : '—'} 
+                  readOnly 
+                  style={{ background: 'var(--bg2)', color: 'var(--txt2)', fontWeight: 700 }} 
+                />
+                <span className="uu">L</span>
+              </div>
             </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Paint Issued to Site <span className="text-slate-400 font-mono text-[10px]">L</span></label>
-              <input type="number" value={issued} onChange={e => setIssued(e.target.value)} placeholder="e.g. 450" className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold" />
+
+            <div className="field">
+              <label>Paint Issued to Site <span className="lh">L</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="rec-iss" 
+                  placeholder="e.g. 450" 
+                  min="0" 
+                  step="any" 
+                  value={issued} 
+                  onChange={(e) => setIssued(e.target.value)} 
+                />
+                <span className="uu">L</span>
+              </div>
             </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Paint Returned to Store <span className="text-slate-400 font-mono text-[10px]">L</span></label>
-              <input type="number" value={returned} onChange={e => setReturned(e.target.value)} placeholder="0" className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold" />
+
+            <div className="field">
+              <label>Paint Returned to Store <span className="lh">L</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="rec-ret" 
+                  placeholder="0" 
+                  value={returned} 
+                  min="0" 
+                  step="any" 
+                  onChange={(e) => setReturned(e.target.value)} 
+                />
+                <span className="uu">L</span>
+              </div>
             </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Unused Paint in Container <span className="text-slate-400 font-mono text-[10px]">L</span></label>
-              <input type="number" value={unused} onChange={e => setUnused(e.target.value)} placeholder="0" className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold" />
+
+            <div className="field">
+              <label>Unused Paint in Container <span className="lh">L</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="rec-unu" 
+                  placeholder="0" 
+                  value={unused} 
+                  min="0" 
+                  step="any" 
+                  onChange={(e) => setUnused(e.target.value)} 
+                />
+                <span className="uu">L</span>
+              </div>
             </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Rejected Paint <span className="text-slate-400 font-mono text-[10px]">L</span></label>
-              <input type="number" value={rejected} onChange={e => setRejected(e.target.value)} placeholder="0" className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold" />
+
+            <div className="field">
+              <label>Rejected Paint <span className="lh">L</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="rec-rej" 
+                  placeholder="0" 
+                  value={rejected} 
+                  min="0" 
+                  step="any" 
+                  onChange={(e) => setRejected(e.target.value)} 
+                />
+                <span className="uu">L</span>
+              </div>
             </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Spillage / Wastage <span className="text-slate-400 font-mono text-[10px]">L</span></label>
-              <input type="number" value={spillage} onChange={e => setSpillage(e.target.value)} placeholder="0" className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold" />
+
+            <div className="field">
+              <label>Spillage / Wastage <span className="lh">L</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="rec-spl" 
+                  placeholder="0" 
+                  value={spillage} 
+                  min="0" 
+                  step="any" 
+                  onChange={(e) => setSpillage(e.target.value)} 
+                />
+                <span className="uu">L</span>
+              </div>
             </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Thinner Issued <span className="text-slate-400 font-mono text-[10px]">L</span></label>
-              <input type="number" value={thinner} onChange={e => setThinner(e.target.value)} placeholder="0" className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold" />
+
+            <div className="field">
+              <label>Thinner Issued <span className="lh">L · optional</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="rec-thn" 
+                  placeholder="0" 
+                  value={thinner} 
+                  min="0" 
+                  step="any" 
+                  onChange={(e) => setThinner(e.target.value)} 
+                />
+                <span className="uu">L</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Section D: Density & Cost */}
-        <div className="space-y-3">
-          <div className="text-[11px] font-bold tracking-wider uppercase text-[#A34E00] border-b border-amber-100 pb-1">
+          {/* Section D */}
+          <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--in-lbl)', margin: '14px 0 8px' }}>
             D · Optional — Density &amp; Cost
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Paint Density <span className="text-slate-400 font-mono text-[10px]">kg/L</span></label>
-              <input type="number" step="0.01" value={density} onChange={e => setDensity(e.target.value)} placeholder="e.g. 1.45" className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono" />
+          <div className="g2">
+            <div className="field">
+              <label>Paint Density <span className="lh">kg/L · optional</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="rec-den" 
+                  placeholder="e.g. 1.45" 
+                  min="0" 
+                  step="any" 
+                  value={density} 
+                  onChange={(e) => setDensity(e.target.value)} 
+                />
+                <span className="uu">kg/L</span>
+              </div>
             </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Paint Cost <span className="text-slate-400 font-mono text-[10px]">₹/L</span></label>
-              <input type="number" value={cost} onChange={e => setCost(e.target.value)} placeholder="e.g. 650" className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono" />
+
+            <div className="field">
+              <label>Paint Cost <span className="lh">₹/L · optional</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="rec-cost" 
+                  placeholder="e.g. 650" 
+                  min="0" 
+                  step="any" 
+                  value={cost} 
+                  onChange={(e) => setCost(e.target.value)} 
+                />
+                <span className="uu">₹/L</span>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Action Button Row */}
-        <div className="flex gap-2.5 pt-2">
-          <button
-            type="button"
-            onClick={handleCalculate}
-            className="flex-[2] py-3 px-4 bg-gradient-to-r from-[#F7941D] to-[#A50021] hover:from-[#E8700A] hover:to-[#8B0018] text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-xs transition hover:brightness-105 active:scale-98 flex items-center justify-center gap-2 cursor-pointer"
-          >
-            <Play className="w-3.5 h-3.5 fill-white" />
-            <span>Run Paint Reconciliation</span>
-          </button>
-          <button
-            type="button"
-            onClick={handleReset}
-            className="flex-1 py-3 px-4 bg-white hover:bg-red-50 text-[#A50021] border border-[#A50021]/30 font-bold text-xs uppercase tracking-wider rounded-xl shadow-2xs transition hover:border-[#A50021] active:scale-98 flex items-center justify-center gap-1.5 cursor-pointer"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            <span>Reset</span>
-          </button>
+        <div className="btn-row">
+          <button className="btn" onClick={handleCalculate}>▶ Run Paint Reconciliation</button>
+          <button className="btn-reset" onClick={handleReset}>↺ Reset</button>
         </div>
 
-        {/* Results Output Section */}
-        <div className="space-y-5 pt-5 border-t border-slate-100">
-          <div className="flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-wider font-mono">
-            <span className="w-2 h-2 rounded-full bg-[#A50021]"></span>
-            Reconciliation Result
-          </div>
+        {res && (
+          <div className="res show" id="r-rec">
+            <div className="output-section">
+              <div className="rh"><span className="pd"></span>Reconciliation Result</div>
 
-          {/* Verdict Banner */}
-          <div className={`p-4 rounded-2xl border ${verdictBg} text-center space-y-1`}>
-            <div className="text-base md:text-lg font-black tracking-tight flex items-center justify-center gap-2">
-              <span>{icon}</span>
-              <span>{status} — {cls}</span>
-            </div>
-            <div className="text-xs font-bold opacity-90 font-mono">
-              {saving ? `Paint Saving of ${formatNum(Math.abs(variance), 1)} L` : `Paint Excess of ${formatNum(variance, 1)} L`} · Variance {variance >= 0 ? '+' : ''}{formatNum(varPercent, 1)}% vs Practical Req {formatNum(pracReq, 1)} L
-            </div>
-          </div>
-
-          {/* 4 Primary Metric Tiles */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <div className="bg-[#FFFDF9] border border-amber-200/80 rounded-2xl p-3.5 text-center shadow-2xs">
-              <div className="text-[11px] font-bold text-stone-500">Paint Variance</div>
-              <div className="text-2xl font-black text-[#A34E00] font-mono mt-1">
-                {variance >= 0 ? '+' : '−'}{formatNum(Math.abs(variance), 1)}<span className="text-xs font-normal ml-0.5">L</span>
-              </div>
-              <div className="text-[10px] font-bold text-stone-500 mt-1 font-mono">
-                {saving ? 'Paint Saving (−)' : 'Paint Excess (+)'}
-              </div>
-            </div>
-
-            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 text-center shadow-2xs">
-              <div className="text-[11px] font-bold text-slate-500">Variance %</div>
-              <div className="text-2xl font-black text-slate-800 font-mono mt-1">
-                {variance >= 0 ? '+' : '−'}{formatNum(Math.abs(varPercent), 1)}<span className="text-xs font-normal ml-0.5">%</span>
-              </div>
-              <div className="text-[10px] text-slate-400 mt-1 font-mono">
-                {cls}
-              </div>
-            </div>
-
-            <div className="bg-blue-50/60 border border-blue-200 rounded-2xl p-3.5 text-center shadow-2xs">
-              <div className="text-[11px] font-bold text-blue-900">Consumption Efficiency</div>
-              <div className="text-2xl font-black text-blue-700 font-mono mt-1">
-                {formatNum(eff, 1)}<span className="text-xs font-normal ml-0.5">%</span>
-              </div>
-              <div className="text-[10px] text-blue-600 mt-1 font-mono">
-                Practical ÷ Actual
-              </div>
-            </div>
-
-            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 text-center shadow-2xs">
-              <div className="text-[11px] font-bold text-slate-500">Material Utilization</div>
-              <div className="text-2xl font-black text-slate-800 font-mono mt-1">
-                {formatNum(util, 1)}<span className="text-xs font-normal ml-0.5">%</span>
-              </div>
-              <div className="text-[10px] text-slate-400 mt-1 font-mono">
-                Productive Share
-              </div>
-            </div>
-          </div>
-
-          {/* 6 Secondary Detail Tiles */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-center">
-              <div className="text-[10px] text-slate-500">Theoretical Req</div>
-              <div className="text-base font-bold font-mono text-slate-900 mt-0.5">{formatNum(theoReq, 1)} L</div>
-            </div>
-            <div className="bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-center">
-              <div className="text-[10px] text-slate-500">Practical Req (Loss)</div>
-              <div className="text-base font-bold font-mono text-slate-900 mt-0.5">{formatNum(pracReq, 1)} L</div>
-            </div>
-            <div className="bg-blue-50/60 border border-blue-200 rounded-xl p-2.5 text-center">
-              <div className="text-[10px] text-blue-900">Actual Consumed</div>
-              <div className="text-base font-bold font-mono text-blue-900 mt-0.5">{formatNum(consumed, 1)} L</div>
-            </div>
-            <div className="bg-blue-50/60 border border-blue-200 rounded-xl p-2.5 text-center">
-              <div className="text-[10px] text-blue-900">Total Actual (Losses)</div>
-              <div className="text-base font-bold font-mono text-blue-900 mt-0.5">{formatNum(totalActual, 1)} L</div>
-            </div>
-            <div className="bg-red-50/60 border border-red-200 rounded-xl p-2.5 text-center">
-              <div className="text-[10px] text-red-900">Wastage (Spill/Rej)</div>
-              <div className="text-base font-bold font-mono text-red-900 mt-0.5">{formatNum(wasted, 1)} L</div>
-            </div>
-            <div className="bg-amber-50/60 border border-amber-200 rounded-xl p-2.5 text-center">
-              <div className="text-[10px] text-amber-900">Financial Impact</div>
-              <div className="text-base font-bold font-mono text-amber-900 mt-0.5">{finImpact ? formatCur(finImpact) : '—'}</div>
-            </div>
-          </div>
-
-          {/* Visual Material Flow Diagram */}
-          <div className="space-y-2">
-            <div className="text-[10px] font-bold tracking-wider uppercase text-slate-400 font-mono">
-              Material Flow Balance
-            </div>
-            <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 gap-1.5 text-center font-mono">
-              {[
-                { label: 'Opening', val: op },
-                { label: 'Received', val: rc },
-                { label: 'Available', val: totalAvail },
-                { label: 'Issued', val: is },
-                { label: 'Returned', val: rt },
-                { label: 'Unused', val: un },
-                { label: 'Consumed', val: consumed },
-                { label: 'Wastage', val: wasted },
-                { label: 'Closing Store', val: closingStore, highlight: true }
-              ].map((item, idx) => (
-                <div key={idx} className={`p-2 rounded-xl border text-xs ${item.highlight ? 'bg-[#FDF1E4] border-[#F5911F] text-[#A50021]' : 'bg-slate-50 border-slate-200 text-slate-800'}`}>
-                  <div className="text-[9px] uppercase tracking-wider text-slate-400 font-sans">{item.label}</div>
-                  <div className="text-sm font-bold mt-0.5">{formatNum(item.val, 1)} L</div>
+              {/* Verdict Banner */}
+              <div style={{ background: res.g.bg, border: `1.5px solid ${res.g.bd}`, borderRadius: 'var(--r)', padding: '13px 16px', textAlign: 'center', marginBottom: '10px' }}>
+                <div style={{ fontFamily: 'Rajdhani, sans-serif', fontSize: '19px', fontWeight: 700, color: res.g.c1 }}>
+                  {res.g.ic} {res.g.st} — {res.g.cls}
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Comparison Bars */}
-          <div className="space-y-2 bg-slate-50 p-4 rounded-2xl border border-slate-200">
-            <div className="text-[10px] font-bold tracking-wider uppercase text-slate-400 font-mono">
-              Theoretical vs Actual Requirement
-            </div>
-            <div className="space-y-2 font-mono text-xs">
-              <div>
-                <div className="flex justify-between text-[11px] text-slate-600 mb-1">
-                  <span>Theoretical Requirement</span>
-                  <span className="font-bold">{formatNum(theoReq, 1)} L</span>
-                </div>
-                <div className="h-4 bg-slate-200 rounded-full overflow-hidden">
-                  <div className="h-full bg-emerald-600 rounded-full" style={{ width: `${Math.min(100, (theoReq / Math.max(theoReq, pracReq, totalActual, 1)) * 100)}%` }} />
+                <div style={{ fontSize: '12.5px', fontWeight: 600, color: res.g.c2, marginTop: '3px' }}>
+                  {res.saving ? `Paint Saving of ${formatNum(Math.abs(res.variance), 1)} L` : `Paint Excess of ${formatNum(res.variance, 1)} L`}
+                  {' · '}Variance {res.varp >= 0 ? '+' : ''}{formatNum(res.varp, 1)}% vs Practical Requirement {formatNum(res.pracReq, 1)} L
                 </div>
               </div>
 
-              <div>
-                <div className="flex justify-between text-[11px] text-slate-600 mb-1">
-                  <span>Practical Requirement (incl. loss)</span>
-                  <span className="font-bold">{formatNum(pracReq, 1)} L</span>
-                </div>
-                <div className="h-4 bg-slate-200 rounded-full overflow-hidden">
-                  <div className="h-full bg-blue-600 rounded-full" style={{ width: `${Math.min(100, (pracReq / Math.max(theoReq, pracReq, totalActual, 1)) * 100)}%` }} />
-                </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between text-[11px] text-slate-600 mb-1">
-                  <span>Total Actual Consumption</span>
-                  <span className="font-bold">{formatNum(totalActual, 1)} L</span>
-                </div>
-                <div className="h-4 bg-slate-200 rounded-full overflow-hidden">
-                  <div className={`h-full rounded-full ${saving ? 'bg-emerald-600' : 'bg-[#D97706]'}`} style={{ width: `${Math.min(100, (totalActual / Math.max(theoReq, pracReq, totalActual, 1)) * 100)}%` }} />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Engineering Comment Box */}
-          <div className="p-3.5 bg-[#E8F5E9] border border-[#2E7D32]/30 border-l-4 border-l-[#2E7D32] rounded-2xl text-xs text-stone-800 leading-relaxed space-y-1">
-            <strong className="text-[#1B5E20] block font-bold">
-              🧠 Engineering Comment:
-            </strong>
-            <p>{getComment()}</p>
-          </div>
-
-          {/* Root Cause Analysis Box (if variance > 10%) */}
-          {absVar > 10 && !saving && (
-            <div className="p-4 bg-[#FDF1E4] border border-[#F2DEC3] border-l-4 border-l-[#A50021] rounded-2xl text-xs text-stone-800 leading-relaxed space-y-1.5">
-              <strong className="text-[#A50021] block font-bold">
-                🔎 Root Cause Analysis — Likely Causes to Investigate:
-              </strong>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-1 text-stone-700">
-                {ROOT_CAUSES.map((rcItem, idx) => (
-                  <div key={idx} className="flex items-start gap-1.5">
-                    <span className="text-[#A50021]">•</span>
-                    <span>{rcItem}</span>
+              {/* Primary 4 Tiles */}
+              <div className="tls">
+                <div className="tile tp">
+                  <div className="tl">Paint Variance</div>
+                  <div>
+                    <span className="tv" id="rec-rvar">{res.variance >= 0 ? '+' : '−'}{formatNum(Math.abs(res.variance), 1)}</span>
+                    <span className="tu">L</span>
                   </div>
-                ))}
+                  <div className="tn" id="rec-rvarn">{res.saving ? 'Paint Saving (−)' : 'Paint Excess (+)'}</div>
+                </div>
+
+                <div className="tile ts">
+                  <div className="tl">Variance</div>
+                  <div>
+                    <span className="tv" id="rec-rvarp">{res.varp >= 0 ? '+' : '−'}{formatNum(Math.abs(res.varp), 1)}</span>
+                    <span className="tu">%</span>
+                  </div>
+                  <div className="tn" id="rec-rcls">{res.g.cls}</div>
+                </div>
+
+                <div className="tile ti">
+                  <div className="tl">Consumption Efficiency</div>
+                  <div>
+                    <span className="tv" id="rec-reff">{formatNum(res.eff, 1)}</span>
+                    <span className="tu">%</span>
+                  </div>
+                </div>
+
+                <div className="tile tg">
+                  <div className="tl">Material Utilization</div>
+                  <div>
+                    <span className="tv" id="rec-rutil">{formatNum(res.util, 1)}</span>
+                    <span className="tu">%</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Secondary 6 Tiles */}
+              <div className="tls">
+                <div className="tile ts" style={{ marginBottom: 0 }}>
+                  <div className="tl" style={{ fontSize: '9px' }}>Theoretical Requirement</div>
+                  <div className="tv" style={{ fontSize: '22px' }}>{formatNum(res.theoReq, 1)}<span className="tu">L</span></div>
+                </div>
+
+                <div className="tile ts" style={{ marginBottom: 0 }}>
+                  <div className="tl" style={{ fontSize: '9px' }}>Practical Requirement (incl. loss)</div>
+                  <div className="tv" style={{ fontSize: '22px' }}>{formatNum(res.pracReq, 1)}<span className="tu">L</span></div>
+                </div>
+
+                <div className="tile ti" style={{ marginBottom: 0 }}>
+                  <div className="tl" style={{ fontSize: '9px' }}>Actual Paint Consumed</div>
+                  <div className="tv" style={{ fontSize: '22px' }}>{formatNum(res.consumed, 1)}<span className="tu">L</span></div>
+                </div>
+
+                <div className="tile ti" style={{ marginBottom: 0 }}>
+                  <div className="tl" style={{ fontSize: '9px' }}>Total Actual (incl. losses)</div>
+                  <div className="tv" style={{ fontSize: '22px' }}>{formatNum(res.totalActual, 1)}<span className="tu">L</span></div>
+                </div>
+
+                <div className="tile tg" style={{ marginBottom: 0 }}>
+                  <div className="tl" style={{ fontSize: '9px' }}>Paint Wasted (Spillage+Rejected)</div>
+                  <div className="tv" style={{ fontSize: '22px' }}>{formatNum(res.wasted, 1)}<span className="tu">L</span></div>
+                </div>
+
+                <div className="tile tg" style={{ marginBottom: 0 }}>
+                  <div className="tl" style={{ fontSize: '9px' }}>Financial Impact</div>
+                  <div className="tv" style={{ fontSize: '22px' }}>
+                    {res.fin !== null ? (res.fin >= 0 ? `+${formatCur(res.fin)}` : `−${formatCur(Math.abs(res.fin))}`) : '—'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Material Flow Diagram */}
+              <div style={{ marginTop: '14px' }}>
+                <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--txt3)', marginBottom: '6px' }}>
+                  Material Flow
+                </div>
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'stretch' }}>
+                  <div style={{ flex: 1, minWidth: '120px', background: '#F1F5F9', padding: '10px', borderRadius: '8px', borderLeft: '3px solid #64748B' }}>
+                    <div style={{ fontSize: '9px', color: '#64748B', fontWeight: 600 }}>1 · AVAILABLE</div>
+                    <div style={{ fontSize: '16px', fontWeight: 700, color: '#1E293B', marginTop: '2px' }}>{totalAvailable} L</div>
+                    <div style={{ fontSize: '9.5px', color: '#94A3B8', marginTop: '2px' }}>Opening + Received</div>
+                  </div>
+                  <div style={{ flex: 1, minWidth: '120px', background: '#EFF6FF', padding: '10px', borderRadius: '8px', borderLeft: '3px solid #3B82F6' }}>
+                    <div style={{ fontSize: '9px', color: '#3B82F6', fontWeight: 600 }}>2 · ISSUED</div>
+                    <div style={{ fontSize: '16px', fontWeight: 700, color: '#1E3A8A', marginTop: '2px' }}>{res.issVal} L</div>
+                    <div style={{ fontSize: '9.5px', color: '#60A5FA', marginTop: '2px' }}>Issued to Site</div>
+                  </div>
+                  <div style={{ flex: 1, minWidth: '120px', background: '#ECFDF5', padding: '10px', borderRadius: '8px', borderLeft: '3px solid #10B981' }}>
+                    <div style={{ fontSize: '9px', color: '#10B981', fontWeight: 600 }}>3 · CONSUMED</div>
+                    <div style={{ fontSize: '16px', fontWeight: 700, color: '#064E3B', marginTop: '2px' }}>{res.consumed} L</div>
+                    <div style={{ fontSize: '9.5px', color: '#34D399', marginTop: '2px' }}>Applied on Steel</div>
+                  </div>
+                  <div style={{ flex: 1, minWidth: '120px', background: '#FEF2F2', padding: '10px', borderRadius: '8px', borderLeft: '3px solid #EF4444' }}>
+                    <div style={{ fontSize: '9px', color: '#EF4444', fontWeight: 600 }}>4 · WASTED / REJ</div>
+                    <div style={{ fontSize: '16px', fontWeight: 700, color: '#7F1D1D', marginTop: '2px' }}>{res.wasted} L</div>
+                    <div style={{ fontSize: '9.5px', color: '#F87171', marginTop: '2px' }}>Spill + Reject</div>
+                  </div>
+                  <div style={{ flex: 1, minWidth: '120px', background: '#FFFBEB', padding: '10px', borderRadius: '8px', borderLeft: '3px solid #F59E0B' }}>
+                    <div style={{ fontSize: '9px', color: '#F59E0B', fontWeight: 600 }}>5 · STORE CLOSING</div>
+                    <div style={{ fontSize: '16px', fontWeight: 700, color: '#78350F', marginTop: '2px' }}>{res.closing} L</div>
+                    <div style={{ fontSize: '9.5px', color: '#FBBF24', marginTop: '2px' }}>Store Balance</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Engineering Recommendation Box */}
+              <div style={{ marginTop: '14px', padding: '12px 14px', background: '#FDF1E4', border: '1px solid var(--bdr2)', borderLeft: '3px solid var(--brand-orange)', borderRadius: 'var(--r)', fontSize: '12px', color: 'var(--txt2)', lineHeight: 1.65 }}>
+                <strong style={{ color: 'var(--brand-crimson)' }}>🛠 Engineering Recommendation — {res.g.cls}:</strong><br />
+                {recComment(res.varp)}
+              </div>
+
+              {/* Input Summary */}
+              <div className="input-summary" style={{ marginTop: '14px' }}>
+                <div className="input-summary-label">📝 Project Material Summary</div>
+                <div className="dr"><span className="dk">Project</span><span className="dv">{res.proj || '—'}</span></div>
+                <div className="dr"><span className="dk">Client / Contractor</span><span className="dv">{res.client || '—'} / {res.contractor || '—'}</span></div>
+                <div className="dr"><span className="dk">Product / Coat</span><span className="dv">{res.prod || '—'} ({res.coatNo || '—'})</span></div>
+                <div className="dr"><span className="dk">Surface Area Painted</span><span className="dv">{res.areaVal.toLocaleString()} m²</span></div>
+                <div className="dr"><span className="dk">Specified DFT / VS%</span><span className="dv">{res.dftVal} µm / {res.vsVal}%</span></div>
+                <div className="dr"><span className="dk">Practical Requirement</span><span className="dv">{formatNum(res.pracReq, 1)} L</span></div>
+                <div className="dr"><span className="dk">Actual Applied + Wasted</span><span className="dv">{formatNum(res.totalActual, 1)} L</span></div>
+                {res.kg !== null && (
+                  <div className="dr"><span className="dk">Total Paint Weight (at {res.denVal} kg/L)</span><span className="dv">{formatNum(res.kg, 1)} kg</span></div>
+                )}
+              </div>
+
+              <div style={{ marginTop: '12px', padding: '10px 14px', background: '#E1F5FE', borderRadius: 'var(--r)', borderLeft: '3px solid var(--gi)', fontSize: '11.5px', color: 'var(--txt2)' }}>
+                <strong style={{ color: 'var(--gi)' }}>Classification:</strong> ±0–5% Excellent Control · ±5–10% Acceptable · ±10–15% Needs Review · &gt;15% Investigate &nbsp;|&nbsp; <strong>References:</strong> ISO 12944 · ISO 19840 · SSPC PA Guide · ASTM D3276 · ASTM D4414 · AMPP GPP · NORSOK M-501 · PMBOK Material Control
               </div>
             </div>
-          )}
 
-          {/* Project Material Summary Table */}
-          <div className="bg-stone-50/80 border border-stone-200 rounded-2xl p-4 text-xs space-y-2">
-            <div className="font-bold text-stone-700 pb-1 border-b border-stone-200">
-              📝 Project Material Summary
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-stone-600">
-              <div className="flex justify-between py-1 border-b border-dashed border-stone-200">
-                <span>Project / Client</span>
-                <span className="font-bold text-stone-900">{proj} / {client}</span>
-              </div>
-              <div className="flex justify-between py-1 border-b border-dashed border-stone-200">
-                <span>Paint System</span>
-                <span className="font-bold text-stone-900">{mfr} — {prod} ({coatNo})</span>
-              </div>
-              <div className="flex justify-between py-1 border-b border-dashed border-stone-200">
-                <span>Area Coated</span>
-                <span className="font-mono font-bold text-stone-900">{a} m² ({c} coat)</span>
-              </div>
-              <div className="flex justify-between py-1 border-b border-dashed border-stone-200">
-                <span>Spreading Rate (Practical)</span>
-                <span className="font-mono font-bold text-stone-900">{formatNum(pc, 2)} m²/L</span>
-              </div>
-              <div className="flex justify-between py-1 border-b border-dashed border-stone-200">
-                <span>Total Consumed</span>
-                <span className="font-mono font-bold text-stone-900">{formatNum(consumed, 1)} L</span>
-              </div>
-              <div className="flex justify-between py-1 border-b border-dashed border-stone-200">
-                <span>Closing Store Balance</span>
-                <span className="font-mono font-bold text-stone-900">{formatNum(closingStore, 1)} L</span>
-              </div>
+            <div className="action-bar">
+              <button className="btn-print" onClick={handlePrint}>🖨 Print PDF</button>
+              <button className="btn-share" onClick={handleShare}>📤 Share Text</button>
+              <button className="btn-print" onClick={handlePrint}>⬇ Export Excel (CSV)</button>
+              <button className="btn-print xls-btn" onClick={() => addToast('Excel Export', 'Generating reconciliation report...', 'info')}>
+                📊 Excel Report
+              </button>
             </div>
           </div>
-
-          {/* Classification & Standards Note */}
-          <div className="p-3.5 bg-[#E1F5FE] border-l-4 border-l-[#0288D1] rounded-2xl text-xs text-slate-700 leading-relaxed font-mono">
-            <strong className="text-[#0288D1]">Classification:</strong> ±0–5% Excellent Control · ±5–10% Acceptable · ±10–15% Needs Review · &gt;15% Investigate &nbsp;|&nbsp; <strong>References:</strong> ISO 12944 · ISO 19840 · SSPC PA Guide · ASTM D3276 · ASTM D4414 · AMPP GPP · NORSOK M-501 · PMBOK Material Control
-          </div>
-
-          {/* Action Bar */}
-          <div className="flex flex-wrap items-center gap-2 pt-2">
-            <button
-              onClick={() => window.print()}
-              className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
-            >
-              <Printer className="w-3.5 h-3.5" />
-              <span>🖨 Print PDF</span>
-            </button>
-            <button
-              onClick={handleCopy}
-              className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
-            >
-              {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Share2 className="w-3.5 h-3.5" />}
-              <span>📤 Share Text</span>
-            </button>
-            <button
-              onClick={() => addToast('Excel Export', 'CSV report prepared for download.', 'info')}
-              className="px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
-            >
-              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
-              <span>📊 Excel Report</span>
-            </button>
-          </div>
-
-        </div>
-
+        )}
       </div>
-
     </div>
   );
 }

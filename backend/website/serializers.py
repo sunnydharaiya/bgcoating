@@ -1,3 +1,4 @@
+from django.contrib.auth.models import User
 from rest_framework import serializers
 from .models import (
     SiteSettings,
@@ -17,6 +18,7 @@ from .models import (
     UserProject,
     CalculationLog,
     PaintProduct,
+    UserProfile,
 )
 
 
@@ -48,9 +50,32 @@ class NavigationItemSerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'url', 'order', 'is_header', 'is_footer', 'is_external', 'parent', 'children']
 
 
+class FlexibleImageField(serializers.ImageField):
+    """
+    An ImageField that gracefully handles both binary uploads and existing URL/path strings.
+    If a string URL or path matching the existing image is sent, it preserves the existing file.
+    """
+    def to_internal_value(self, data):
+        if isinstance(data, str):
+            if not data.strip():
+                if self.allow_null or not self.required:
+                    return None
+            inst = getattr(self.parent, 'instance', None)
+            if inst:
+                current_file = getattr(inst, self.source or self.field_name, None)
+                if current_file:
+                    return current_file
+            if data.startswith('assets/') or '/media/' in data or data.startswith('/'):
+                return data
+            if self.allow_null or not self.required:
+                return None
+        return super().to_internal_value(data)
+
+
 class ServiceSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source='category.name', read_only=True)
     category_slug = serializers.CharField(source='category.slug', read_only=True)
+    cover_image = FlexibleImageField(required=False, allow_null=True)
 
     class Meta:
         model = Service
@@ -72,12 +97,13 @@ class ServiceCategorySerializer(serializers.ModelSerializer):
 class BlogPostListSerializer(serializers.ModelSerializer):
     """Lightweight serializer for blog listing & previews."""
     formatted_date = serializers.SerializerMethodField()
+    featured_image = FlexibleImageField(required=False, allow_null=True)
 
     class Meta:
         model = BlogPost
         fields = [
             'id', 'title', 'slug', 'category_name', 'publish_date', 'formatted_date',
-            'read_time_minutes', 'excerpt', 'featured_image', 'search_keywords',
+            'read_time_minutes', 'excerpt', 'content', 'featured_image', 'search_keywords',
             'external_url', 'is_featured'
         ]
 
@@ -88,6 +114,7 @@ class BlogPostListSerializer(serializers.ModelSerializer):
 class BlogPostDetailSerializer(serializers.ModelSerializer):
     """Full detail serializer for blog posts."""
     formatted_date = serializers.SerializerMethodField()
+    featured_image = FlexibleImageField(required=False, allow_null=True)
 
     class Meta:
         model = BlogPost
@@ -98,24 +125,32 @@ class BlogPostDetailSerializer(serializers.ModelSerializer):
 
 
 class ProjectGallerySerializer(serializers.ModelSerializer):
+    image = FlexibleImageField(required=False, allow_null=True)
+
     class Meta:
         model = ProjectGallery
         fields = '__all__'
 
 
 class BoardMemberSerializer(serializers.ModelSerializer):
+    image = FlexibleImageField(required=False, allow_null=True)
+
     class Meta:
         model = BoardMember
         fields = '__all__'
 
 
 class EducationItemSerializer(serializers.ModelSerializer):
+    certificate_image = FlexibleImageField(required=False, allow_null=True)
+
     class Meta:
         model = EducationItem
         fields = '__all__'
 
 
 class CertificationItemSerializer(serializers.ModelSerializer):
+    certificate_image = FlexibleImageField(required=False, allow_null=True)
+
     class Meta:
         model = CertificationItem
         fields = '__all__'
@@ -123,6 +158,8 @@ class CertificationItemSerializer(serializers.ModelSerializer):
 
 
 class ClientTestimonialSerializer(serializers.ModelSerializer):
+    client_photo = FlexibleImageField(required=False, allow_null=True)
+
     class Meta:
         model = ClientTestimonial
         fields = '__all__'
@@ -188,4 +225,146 @@ class PaintProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = PaintProduct
         fields = '__all__'
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserProfile
+        fields = '__all__'
+        read_only_fields = ['id', 'user', 'created_at', 'updated_at']
+
+
+class UserSerializer(serializers.ModelSerializer):
+    profile = UserProfileSerializer(read_only=True)
+    full_name = serializers.SerializerMethodField()
+    is_pro = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = [
+            'id', 'username', 'email', 'first_name', 'last_name',
+            'full_name', 'is_pro', 'is_superuser', 'is_staff', 'date_joined',
+            'last_login', 'profile'
+        ]
+
+    def get_full_name(self, obj):
+        if hasattr(obj, 'profile') and obj.profile.full_name:
+            return obj.profile.full_name
+        name = f"{obj.first_name} {obj.last_name}".strip()
+        return name or obj.username
+
+    def get_is_pro(self, obj):
+        if hasattr(obj, 'profile'):
+            return bool(obj.profile.is_pro)
+        return False
+
+
+class UserRegistrationSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True, min_length=6)
+    name = serializers.CharField(max_length=255, required=False, allow_blank=True)
+    role = serializers.CharField(max_length=100, required=False, allow_blank=True, default='Coating Inspector')
+    company = serializers.CharField(max_length=255, required=False, allow_blank=True, default='BG Coating & Inspection Services')
+
+    def validate_email(self, value):
+        normalized = value.strip().lower()
+        if User.objects.filter(email__iexact=normalized).exists():
+            raise serializers.ValidationError("An account with this email address already exists.")
+        return normalized
+
+    def create(self, validated_data):
+        import re
+        email = validated_data['email']
+        password = validated_data['password']
+        name = validated_data.get('name', '').strip()
+        role = validated_data.get('role', 'Coating Inspector')
+        company = validated_data.get('company', 'BG Coating & Inspection Services')
+
+        base_username = email.split('@')[0]
+        clean_base = re.sub(r'[^a-zA-Z0-9_]', '', base_username) or 'user'
+        username = clean_base
+        counter = 1
+        while User.objects.filter(username=username).exists():
+            username = f"{clean_base}{counter}"
+            counter += 1
+
+        first_name = name.split(' ')[0] if name else ''
+        last_name = ' '.join(name.split(' ')[1:]) if name and len(name.split(' ')) > 1 else ''
+
+        user = User.objects.create_user(
+            username=username,
+            email=email,
+            password=password,
+            first_name=first_name,
+            last_name=last_name
+        )
+
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+        profile.full_name = name or username
+        profile.auth_provider = 'email'
+        profile.role = role
+        profile.company = company
+        profile.save()
+
+        return user
+
+
+class UserProfileUpdateSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(source='full_name', required=False)
+    email = serializers.EmailField(required=False)
+
+    class Meta:
+        model = UserProfile
+        fields = [
+            'name',
+            'full_name',
+            'email',
+            'mobile',
+            'country_code',
+            'designation',
+            'department',
+            'emp_id',
+            'role',
+            'company',
+            'bu',
+            'office_location',
+            'branch',
+            'website',
+            'alt_mobile',
+            'alt_email',
+            'address',
+            'city',
+            'state',
+            'country',
+            'zip_code',
+            'experience_years',
+            'discipline',
+            'expertise',
+            'certifications',
+            'preferred_standards',
+            'default_dashboard',
+            'unit_system',
+            'language',
+            'theme',
+            'time_zone',
+            'date_format',
+            'avatar_url',
+        ]
+
+    def update(self, instance, validated_data):
+        email = validated_data.pop('email', None)
+        if email and email != instance.user.email:
+            if User.objects.filter(email__iexact=email).exclude(pk=instance.user.pk).exists():
+                raise serializers.ValidationError({"email": "This email is already in use by another account."})
+            instance.user.email = email
+            instance.user.save(update_fields=['email'])
+
+        name = validated_data.get('full_name')
+        if name:
+            parts = name.strip().split(' ', 1)
+            instance.user.first_name = parts[0]
+            instance.user.last_name = parts[1] if len(parts) > 1 else ''
+            instance.user.save(update_fields=['first_name', 'last_name'])
+
+        return super().update(instance, validated_data)
 

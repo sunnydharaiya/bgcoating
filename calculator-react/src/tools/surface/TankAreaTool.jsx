@@ -1,259 +1,267 @@
 import React, { useState } from 'react';
-import { Sparkles, Printer, Copy, Check, Calculator, Info, BookOpen, Play, RotateCcw } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
-import { useGuideline } from '../../context/GuidelineContext';
-import { calcTankArea, formatNum } from '../../utils/calculations';
+import { formatNum } from '../../utils/calculations';
 
 export default function TankAreaTool() {
   const { addToast } = useToast();
-  const { openGuideline } = useGuideline();
   const [itemName, setItemName] = useState('');
-  const [diameter, setDiameter] = useState('');
-  const [height, setHeight] = useState('');
-  const [roofType, setRoofType] = useState('conical');
-  const [roofSlope, setRoofSlope] = useState('15');
-  const [copied, setCopied] = useState(false);
+  const [heightM, setHeightM] = useState('');
+  const [insideDiaM, setInsideDiaM] = useState('');
+  const [thicknessMm, setThicknessMm] = useState('');
+  const [qty, setQty] = useState('1');
+  const [hasCalculated, setHasCalculated] = useState(false);
 
-  const res = (diameter && height) ? calcTankArea(diameter, height, roofType, roofSlope || 15) : null;
+  const H = parseFloat(heightM) || 0;
+  const ID = parseFloat(insideDiaM) || 0;
+  const T = (parseFloat(thicknessMm) || 0) / 1000;
+  const Q = parseFloat(qty) || 1;
+  const OD = ID + 2 * T;
+
+  // Shell Inside Area: π * ID * H * Q
+  const shellInside = Math.PI * ID * H * Q;
+  // Shell Outside Area: π * OD * H * Q
+  const shellOutside = Math.PI * OD * H * Q;
+  // Roof / Bottom circle area (flat disc approximation)
+  const roofInside = Math.PI * Math.pow(ID / 2, 2) * Q;
+  const roofOutside = Math.PI * Math.pow(OD / 2, 2) * Q;
+  const bottomInside = roofInside;
+  const bottomOutside = roofOutside;
+
+  const totalInside = shellInside + roofInside + bottomInside;
+  const totalOutside = shellOutside + roofOutside + bottomOutside;
+  const totalArea = totalInside + totalOutside;
 
   const handleCalculate = () => {
-    if (!diameter || !height) {
-      addToast('Missing Required Inputs', 'Please enter Tank Diameter and Shell Height.', 'warning');
+    if (!heightM || !insideDiaM || !thicknessMm) {
+      addToast('Missing Required Inputs', 'Please enter Tank Height, Inside Diameter, and Thickness.', 'warning');
       return;
     }
-    addToast('Calculated Tank Area', 'Shell, roof, and bottom areas computed.', 'success');
+    setHasCalculated(true);
+    addToast('Calculated Tank Area', 'Total shell, roof, and bottom areas computed successfully.', 'success');
   };
 
   const handleReset = () => {
     setItemName('');
-    setDiameter('');
-    setHeight('');
-    setRoofType('conical');
-    setRoofSlope('15');
-    addToast('Form Reset', 'All input parameters have been cleared.', 'info');
+    setHeightM('');
+    setInsideDiaM('');
+    setThicknessMm('');
+    setQty('1');
+    setHasCalculated(false);
+    addToast('Form Reset', 'All input parameters cleared.', 'info');
   };
 
-  const handleCopy = () => {
-    if (!res) {
-      addToast('No Calculation', 'Please enter parameters first.', 'warning');
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleShare = () => {
+    if (!hasCalculated) {
+      addToast('No Calculation', 'Please calculate first.', 'warning');
       return;
     }
-    const text = `BG CoatingOS™ — Storage Tank Area Calculation
-${itemName ? `Item Name: ${itemName}\n` : ''}Diameter: ${diameter} m | Height: ${height} m | Roof: ${roofType} (${roofSlope}°)
---------------------------------------
-Shell Surface Area: ${formatNum(res.shellOutside, 2)} m²
-Roof Surface Area: ${formatNum(res.roofArea, 2)} m²
-Bottom Internal Area: ${formatNum(res.bottomArea, 2)} m²
-Total External Coating Area: ${formatNum(res.totalExternal, 2)} m²
-Total Internal Lining Area: ${formatNum(res.totalInternal, 2)} m²
-Grand Total Surface Area: ${formatNum(res.grandTotal, 2)} m²`;
+    const text = `BG CoatingOS™ — Tank Surface Area (A-2)
+Item: ${itemName || 'Storage Tank'} | Qty: ${Q}
+Height: ${H} m | Inside Dia: ${ID} m | Thickness: ${thicknessMm} mm
+--------------------------------------------------
+Total Inside + Outside Area: ${formatNum(totalArea, 2)} m²
+Shell Inside: ${formatNum(shellInside, 2)} m² | Shell Outside: ${formatNum(shellOutside, 2)} m²
+Roof Inside: ${formatNum(roofInside, 2)} m² | Roof Outside: ${formatNum(roofOutside, 2)} m²`;
+
     navigator.clipboard.writeText(text);
-    setCopied(true);
-    addToast('Copied to Clipboard', 'Tank area calculation copied.', 'success');
-    setTimeout(() => setCopied(false), 2000);
+    addToast('Copied to Clipboard', 'Calculation summary copied.', 'success');
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
-      
-      {/* Tool Header Card */}
-      <div className="bg-white border border-slate-200 rounded-3xl p-5 md:p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="sub-sec card active" id="sa-tank">
+      {/* Card Header (Screenshot 9) */}
+      <div className="ch">
+        <div className="ci">🛢️</div>
         <div>
-          <div className="flex items-center gap-2">
-            <span className="bg-amber-50 text-[#D97706] border border-amber-200 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase font-mono tracking-wider">
-              Tool A-2
-            </span>
-            <h1 className="text-lg md:text-xl font-extrabold text-slate-900">
-              Storage Tank Surface Area Calculator
-            </h1>
-          </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Calculate external and internal surface areas for cylindrical vertical storage tanks (Shell, Conical/Dome Roof, Bottom plates).
-          </p>
+          <div className="ct">Tank Surface Area Calculator</div>
+          <div className="cs">Shell, roof, bottom inside &amp; outside areas</div>
         </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => openGuideline('tank_shell')}
-            className="px-3.5 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-[#D97706] border border-amber-200 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
-          >
-            <BookOpen className="w-3.5 h-3.5" />
-            <span>📖 Guideline</span>
-          </button>
-          <button
-            onClick={handleCopy}
-            className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
-          >
-            {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-            <span>{copied ? 'Copied' : 'Copy'}</span>
-          </button>
-          <button
-            onClick={() => window.print()}
-            className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
-          >
-            <Printer className="w-3.5 h-3.5" />
-            <span>Print Report</span>
-          </button>
-        </div>
+        <div className="ctag">A-2</div>
       </div>
 
-      {/* Main Grid: Inputs + Output */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        {/* Left Inputs Section */}
-        <div className="lg:col-span-6 bg-white border border-slate-200 rounded-3xl p-5 md:p-6 shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider font-mono">
-              Tank Dimensions &amp; Roof Geometry
-            </h2>
-            <Calculator className="w-4 h-4 text-[#F7941D]" />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="sm:col-span-2">
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                Item Name <span className="text-slate-400 font-mono text-[10px] ml-1">optional</span>
-              </label>
-              <input
-                type="text"
-                value={itemName}
-                onChange={e => setItemName(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-                placeholder="e.g. Storage Tank T-101"
-              />
+      <div className="cb">
+        {/* User Inputs Section (Orange Border & Top Badge) */}
+        <div className="input-section">
+          <div className="g2">
+            <div className="field">
+              <label>Tank Height <span className="lh">m</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="tk-h" 
+                  value={heightM} 
+                  onChange={e => setHeightM(e.target.value)} 
+                  placeholder="e.g. 18" 
+                  step="0.01" 
+                />
+                <span className="uu">m</span>
+              </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                Tank Internal Diameter (metres)
-              </label>
-              <input
-                type="number"
-                value={diameter}
-                onChange={e => setDiameter(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-                placeholder="e.g. 15"
-              />
+            <div className="field">
+              <label>Inside Diameter <span className="lh">m</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="tk-id" 
+                  value={insideDiaM} 
+                  onChange={e => setInsideDiaM(e.target.value)} 
+                  placeholder="e.g. 15" 
+                  step="0.01" 
+                />
+                <span className="uu">m</span>
+              </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                Tank Shell Height (metres)
-              </label>
-              <input
-                type="number"
-                value={height}
-                onChange={e => setHeight(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-                placeholder="e.g. 12"
-              />
+            <div className="field">
+              <label>Thickness <span className="lh">mm</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="tk-t" 
+                  value={thicknessMm} 
+                  onChange={e => setThicknessMm(e.target.value)} 
+                  placeholder="e.g. 45" 
+                />
+                <span className="uu">mm</span>
+              </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                Roof Configuration
-              </label>
-              <select
-                value={roofType}
-                onChange={e => setRoofType(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-              >
-                <option value="conical">Conical Roof (Standard)</option>
-                <option value="dome">Dome / Curved Roof</option>
-                <option value="flat">Flat Roof / Open Top</option>
-                <option value="floating">Floating Roof Tank</option>
-              </select>
+            <div className="field">
+              <label>Quantity <span className="lh">nos.</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="tk-q" 
+                  value={qty} 
+                  onChange={e => setQty(e.target.value)} 
+                  placeholder="1" 
+                  min="1" 
+                />
+                <span className="uu">nos</span>
+              </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                Roof Slope Angle (Degrees)
-              </label>
-              <input
-                type="number"
-                value={roofSlope}
-                onChange={e => setRoofSlope(e.target.value)}
-                disabled={roofType !== 'conical'}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D] disabled:opacity-50"
-                placeholder="15"
-              />
+            <div className="field">
+              <label>Item Name <span className="lh">optional</span></label>
+              <div className="iw">
+                <input 
+                  type="text" 
+                  id="tk-nm" 
+                  value={itemName} 
+                  onChange={e => setItemName(e.target.value)} 
+                  placeholder="e.g. Storage Tank" 
+                />
+              </div>
             </div>
-          </div>
-
-          {/* Form Actions: Calculate & Reset */}
-          <div className="flex gap-2.5 pt-2">
-            <button
-              type="button"
-              onClick={handleCalculate}
-              className="flex-[2] py-3 px-4 bg-gradient-to-r from-[#F7941D] to-[#A50021] hover:from-[#E8700A] hover:to-[#8B0018] text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-xs transition hover:brightness-105 active:scale-98 flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <Play className="w-3.5 h-3.5 fill-white" />
-              <span>Calculate Tank Area</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleReset}
-              className="flex-1 py-3 px-4 bg-white hover:bg-red-50 text-[#A50021] border border-[#A50021]/30 font-bold text-xs uppercase tracking-wider rounded-xl shadow-2xs transition hover:border-[#A50021] active:scale-98 flex items-center justify-center gap-1.5 cursor-pointer"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>Reset</span>
-            </button>
-          </div>
-
-          <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/70 text-xs text-slate-500 flex items-start gap-2">
-            <Info className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
-            <span className="leading-relaxed">
-              Shell Area: <code>π × D × H</code>. Roof slope correction applied for conical heads per API 650.
-            </span>
           </div>
         </div>
 
-        {/* Right Output Section */}
-        <div className="lg:col-span-6 space-y-4">
-          <div className="bg-gradient-to-br from-white to-amber-50/20 border-2 border-amber-200/80 rounded-3xl p-6 shadow-sm space-y-5">
-            
-            <div className="flex items-center justify-between border-b border-amber-100 pb-3">
-              <span className="text-[10px] font-mono font-extrabold text-[#D97706] uppercase tracking-wider">
-                Tank Coating Areas
-              </span>
-              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-mono">
-                API 650 Norms
-              </span>
-            </div>
-
-            {/* Target Output Highlight Box */}
-            <div className="bg-white border border-amber-200 rounded-2xl p-5 text-center shadow-xs">
-              <span className="text-xs text-slate-400 font-mono">Total External Coating Area (Shell + Roof)</span>
-              <div className="text-4xl md:text-5xl font-black text-slate-900 font-mono mt-1 text-[#D97706]">
-                {res ? `${formatNum(res.totalExternal, 1)} m²` : '—'}
-              </div>
-              <p className="text-xs text-slate-500 mt-2 font-mono">
-                Shell: {res ? `${formatNum(res.shellOutside, 1)} m²` : '—'} | Roof: {res ? `${formatNum(res.roofArea, 1)} m²` : '—'}
-              </p>
-            </div>
-
-            {/* Breakdown Cards */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-xl">
-                <span className="text-[10px] text-slate-400 font-mono block">Internal Lining Area</span>
-                <span className="text-base font-bold text-slate-800 font-mono">
-                  {res ? `${formatNum(res.totalInternal, 1)} m²` : '—'}
-                </span>
-              </div>
-
-              <div className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-xl">
-                <span className="text-[10px] text-slate-400 font-mono block">Grand Total Area (All Faces)</span>
-                <span className="text-base font-bold text-slate-800 font-mono">
-                  {res ? `${formatNum(res.grandTotal, 1)} m²` : '—'}
-                </span>
-              </div>
-            </div>
-
-          </div>
+        {/* Buttons Row */}
+        <div className="btn-row">
+          <button type="button" className="btn" onClick={handleCalculate}>
+            ▶ Calculate Area
+          </button>
+          <button type="button" className="btn-reset" onClick={handleReset}>
+            ↺ Reset
+          </button>
         </div>
 
+        {/* Calculated Results Section */}
+        {hasCalculated && (
+          <div className="res" id="r-tank" style={{ display: 'block' }}>
+            <div className="output-section">
+              <div className="rh">
+                <span className="pd"></span>
+                <span>Tank Area Result</span>
+              </div>
+
+              <div className="tls t1">
+                <div className="tile tp">
+                  <div className="tl">Total Inside + Outside Area</div>
+                  <div>
+                    <span className="tv" id="tk-rtot">{formatNum(totalArea, 2)}</span>
+                    <span className="tu">m²</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="tls">
+                <div className="tile ts">
+                  <div className="tl">Shell Inside</div>
+                  <div>
+                    <span className="tv" id="tk-rsi">{formatNum(shellInside, 2)}</span>
+                    <span className="tu">m²</span>
+                  </div>
+                </div>
+
+                <div className="tile ti">
+                  <div className="tl">Shell Outside</div>
+                  <div>
+                    <span className="tv" id="tk-rso">{formatNum(shellOutside, 2)}</span>
+                    <span className="tu">m²</span>
+                  </div>
+                </div>
+
+                <div className="tile tg">
+                  <div className="tl">Roof Outside</div>
+                  <div>
+                    <span className="tv">{formatNum(roofOutside, 2)}</span>
+                    <span className="tu">m²</span>
+                  </div>
+                </div>
+
+                <div className="tile tp">
+                  <div className="tl">Bottom Outside</div>
+                  <div>
+                    <span className="tv">{formatNum(bottomOutside, 2)}</span>
+                    <span className="tu">m²</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* User Input Data Summary */}
+              <div className="input-summary">
+                <div className="input-summary-label">📝 Input Data (Provided by User)</div>
+                <div className="dr">
+                  <span className="dk">Item Name</span>
+                  <span className="dv">{itemName || '—'}</span>
+                </div>
+                <div className="dr">
+                  <span className="dk">Tank Height</span>
+                  <span className="dv">{heightM} m</span>
+                </div>
+                <div className="dr">
+                  <span className="dk">Inside Diameter</span>
+                  <span className="dv">{insideDiaM} m</span>
+                </div>
+                <div className="dr">
+                  <span className="dk">Thickness</span>
+                  <span className="dv">{thicknessMm} mm</span>
+                </div>
+                <div className="dr">
+                  <span className="dk">Quantity</span>
+                  <span className="dv">{qty} nos</span>
+                </div>
+              </div>
+
+              {/* Action Bar */}
+              <div className="action-bar">
+                <button type="button" className="btn-print" onClick={handlePrint}>
+                  🖨 Print PDF
+                </button>
+                <button type="button" className="btn-share" onClick={handleShare}>
+                  📤 Share Text
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
-
     </div>
   );
 }

@@ -1,13 +1,18 @@
+from django.conf import settings as django_settings
 from .models import SiteSettings, NavigationItem, TechnicalStandard
 
 
 def site_settings(request):
-    """Inject global SiteSettings object into all templates."""
+    """Inject global SiteSettings object and OS URL into all templates."""
     try:
         settings = SiteSettings.load()
     except Exception:
         settings = None
-    return {'site_settings': settings}
+    os_url = getattr(django_settings, 'OS_URL', 'http://localhost:3000')
+    return {
+        'site_settings': settings,
+        'os_url': os_url,
+    }
 
 
 def navigation(request):

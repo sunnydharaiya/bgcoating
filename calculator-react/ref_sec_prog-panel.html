@@ -1,0 +1,31 @@
+<div class="prog-panel" id="prog-panel" style="display: none;">
+        <div class="prog-panel-in">
+          <div class="prog-text">
+            <div class="prog-title"><span class="icon">📋</span>Form Completion Progress</div>
+            <div class="prog-bar-wrap"><div class="prog-bar-fill" id="prog-fill" style="width: 0%;"></div></div>
+            <div class="prog-chips" id="prog-chips"><span class="prog-chip " onclick="document.getElementById(&#39;secAB&#39;).scrollIntoView({behavior:&#39;smooth&#39;,block:&#39;start&#39;})">A · Project &amp; Scope</span><span class="prog-chip " onclick="document.getElementById(&#39;secC&#39;).scrollIntoView({behavior:&#39;smooth&#39;,block:&#39;start&#39;})">C · General Req.</span><span class="prog-chip " onclick="document.getElementById(&#39;secD&#39;).scrollIntoView({behavior:&#39;smooth&#39;,block:&#39;start&#39;})">D · Operating Data</span><span class="prog-chip " onclick="document.getElementById(&#39;secE&#39;).scrollIntoView({behavior:&#39;smooth&#39;,block:&#39;start&#39;})">E · Insul. / FP / TSA / Galv / Pickl</span><span class="prog-chip " onclick="document.getElementById(&#39;secF&#39;).scrollIntoView({behavior:&#39;smooth&#39;,block:&#39;start&#39;})">F · Coating Systems</span><span class="prog-chip " onclick="document.getElementById(&#39;secG&#39;).scrollIntoView({behavior:&#39;smooth&#39;,block:&#39;start&#39;})">G · Paint Testing</span><span class="prog-chip " onclick="document.getElementById(&#39;secH&#39;).scrollIntoView({behavior:&#39;smooth&#39;,block:&#39;start&#39;})">H · Manufacturers</span><span class="prog-chip " onclick="document.getElementById(&#39;secI&#39;).scrollIntoView({behavior:&#39;smooth&#39;,block:&#39;start&#39;})">I · Revisions</span></div>
+          </div>
+          <button class="prev-btn" onclick="openPreview()" title="Read-only report preview"><span class="pv-ic">👁</span> Preview</button>
+          <div class="prog-donut">
+            <svg width="72" height="72" viewBox="0 0 74 74">
+              <defs>
+                <lineargradient id="donut-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#F5911F"></stop>
+                  <stop offset="50%" stop-color="#E8700A"></stop>
+                  <stop offset="100%" stop-color="#A50021"></stop>
+                </lineargradient>
+              </defs>
+              <circle class="prog-donut-bg" cx="37" cy="37" r="30"></circle>
+              <circle class="prog-donut-fg" cx="37" cy="37" r="30" id="donut-fg" stroke-dasharray="0.0 188.5" pathLength="188.5"></circle>
+            </svg>
+            <div class="prog-donut-text">
+              <div class="prog-donut-pct" id="donut-pct">0%</div>
+              <div class="prog-donut-lbl">Complete</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+<div class="wrap">
+

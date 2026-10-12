@@ -1,249 +1,295 @@
 import React, { useState } from 'react';
-import { Sparkles, Printer, Copy, Check, Calculator, Info, BookOpen, Play, RotateCcw } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
-import { useGuideline } from '../../context/GuidelineContext';
 import { formatNum } from '../../utils/calculations';
 
 export default function StructureWeightTool() {
   const { addToast } = useToast();
-  const { openGuideline } = useGuideline();
-  const [structureName, setStructureName] = useState('');
-  const [tonnage, setTonnage] = useState('');
-  const [structureType, setStructureType] = useState('medium');
-  const [customRate, setCustomRate] = useState('25');
-  const [copied, setCopied] = useState(false);
+  const [ulT, setUlT] = useState('');
+  const [ulR, setUlR] = useState('35');
+  const [lT, setLT] = useState('');
+  const [lR, setLR] = useState('30');
+  const [mT, setMT] = useState('');
+  const [mR, setMR] = useState('25');
+  const [hT, setHT] = useState('');
+  const [hR, setHR] = useState('20');
+  const [uhT, setUhT] = useState('');
+  const [uhR, setUhR] = useState('15');
+  const [hasCalculated, setHasCalculated] = useState(false);
 
-  const rates = {
-    ultralight: { name: 'Ultra Light Fabrication (<25 kg/m)', rate: 35, desc: 'Purlins, light trusses, walkways, handrails' },
-    light: { name: 'Light Structural Steel (25–45 kg/m)', rate: 30, desc: 'Secondary framing, bracing, pipe racks' },
-    medium: { name: 'Medium Structural Steel (45–80 kg/m)', rate: 25, desc: 'Primary beams, portal frames, process platforms' },
-    heavy: { name: 'Heavy Structural Steel (80–150 kg/m)', rate: 20, desc: 'Heavy mill columns, crane girders, offshore topsides' },
-    ultraheavy: { name: 'Ultra Heavy Sections (>150 kg/m)', rate: 15, desc: 'Major bridge girders, heavy built-up box columns' },
-    custom: { name: 'Custom Defined Tonnage Rate', rate: Number(customRate || 0), desc: 'User-specified m² per metric tonne' }
-  };
+  const aUL = (parseFloat(ulT) || 0) * (parseFloat(ulR) || 35);
+  const aL = (parseFloat(lT) || 0) * (parseFloat(lR) || 30);
+  const aM = (parseFloat(mT) || 0) * (parseFloat(mR) || 25);
+  const aH = (parseFloat(hT) || 0) * (parseFloat(hR) || 20);
+  const aUH = (parseFloat(uhT) || 0) * (parseFloat(uhR) || 15);
 
-  const selectedRate = structureType === 'custom' ? Number(customRate || 0) : rates[structureType].rate;
-  const estimatedArea = tonnage ? Number(tonnage) * selectedRate : null;
+  const totalTonnage = (parseFloat(ulT) || 0) + (parseFloat(lT) || 0) + (parseFloat(mT) || 0) + (parseFloat(hT) || 0) + (parseFloat(uhT) || 0);
+  const totalArea = aUL + aL + aM + aH + aUH;
+  const avgRate = totalTonnage > 0 ? totalArea / totalTonnage : 0;
 
   const handleCalculate = () => {
-    if (!tonnage) {
-      addToast('Missing Required Inputs', 'Please enter Total Structural Steel Weight.', 'warning');
+    if (totalTonnage <= 0) {
+      addToast('Missing Required Inputs', 'Please enter tonnage for at least one structural category.', 'warning');
       return;
     }
-    addToast('Calculated Structural Area', 'Weight-wise surface area computed.', 'success');
+    setHasCalculated(true);
+    addToast('Calculated Area from Weight', 'Structural area take-off computed successfully.', 'success');
   };
 
   const handleReset = () => {
-    setStructureName('');
-    setTonnage('');
-    setStructureType('medium');
-    setCustomRate('25');
-    addToast('Form Reset', 'All input parameters have been cleared.', 'info');
+    setUlT('');
+    setUlR('35');
+    setLT('');
+    setLR('30');
+    setMT('');
+    setMR('25');
+    setHT('');
+    setHR('20');
+    setUhT('');
+    setUhR('15');
+    setHasCalculated(false);
+    addToast('Form Reset', 'All input parameters cleared.', 'info');
   };
 
-  const handleCopy = () => {
-    if (!estimatedArea) {
-      addToast('No Calculation', 'Please enter steel tonnage first.', 'warning');
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleShare = () => {
+    if (!hasCalculated) {
+      addToast('No Calculation', 'Please calculate first.', 'warning');
       return;
     }
-    const text = `BG CoatingOS™ — Structure Weight-Wise Area Calculation
-${structureName ? `Structure / BOQ Ref: ${structureName}\n` : ''}Tonnage: ${tonnage} Metric Tonnes | Structure: ${rates[structureType].name}
-Rate: ${selectedRate} m²/MT
---------------------------------------
-Estimated Paintable Surface Area: ${formatNum(estimatedArea, 1)} m²`;
+    const text = `BG CoatingOS™ — Structure Weight-Wise Area (A-3)
+Total Tonnage: ${formatNum(totalTonnage, 1)} Tonnes | Avg Rate: ${formatNum(avgRate, 1)} m²/tonne
+--------------------------------------------------
+Total Structural Area: ${formatNum(totalArea, 1)} m²
+Ultra-Light: ${ulT || 0} t (${formatNum(aUL, 1)} m²)
+Light: ${lT || 0} t (${formatNum(aL, 1)} m²)
+Medium: ${mT || 0} t (${formatNum(aM, 1)} m²)
+Heavy: ${hT || 0} t (${formatNum(aH, 1)} m²)
+Ultra-Heavy: ${uhT || 0} t (${formatNum(aUH, 1)} m²)`;
+
     navigator.clipboard.writeText(text);
-    setCopied(true);
-    addToast('Copied to Clipboard', 'Structural area estimate copied.', 'success');
-    setTimeout(() => setCopied(false), 2000);
+    addToast('Copied to Clipboard', 'Calculation summary copied.', 'success');
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
-      
-      {/* Tool Header Card */}
-      <div className="bg-white border border-slate-200 rounded-3xl p-5 md:p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="sub-sec card active" id="sa-wws">
+      {/* Card Header (Screenshot 10) */}
+      <div className="ch">
+        <div className="ci">⚖️</div>
         <div>
-          <div className="flex items-center gap-2">
-            <span className="bg-amber-50 text-[#D97706] border border-amber-200 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase font-mono tracking-wider">
-              Tool A-3
-            </span>
-            <h1 className="text-lg md:text-xl font-extrabold text-slate-900">
-              Structural Steel Weight-Wise Area (m²/MT)
-            </h1>
-          </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Rapidly convert total steel tonnage (MT) into paintable surface area using industrial classification rules of thumb.
-          </p>
+          <div className="ct">Structure Weight-Wise Area</div>
+          <div className="cs">Surface area estimation from tonnage (editable rates)</div>
         </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => openGuideline('structural_steel')}
-            className="px-3.5 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-[#D97706] border border-amber-200 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
-          >
-            <BookOpen className="w-3.5 h-3.5" />
-            <span>📖 Guideline</span>
-          </button>
-          <button
-            onClick={handleCopy}
-            className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
-          >
-            {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-            <span>{copied ? 'Copied' : 'Copy'}</span>
-          </button>
-          <button
-            onClick={() => window.print()}
-            className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
-          >
-            <Printer className="w-3.5 h-3.5" />
-            <span>Print Report</span>
-          </button>
-        </div>
+        <div className="ctag">A-3</div>
       </div>
 
-      {/* Main Grid: Inputs + Output */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        {/* Left Inputs Section */}
-        <div className="lg:col-span-6 bg-white border border-slate-200 rounded-3xl p-5 md:p-6 shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider font-mono">
-              Tonnage &amp; Member Category
-            </h2>
-            <Calculator className="w-4 h-4 text-[#F7941D]" />
+      <div className="cb">
+        {/* User Inputs Section (Orange Border & Top Badge) */}
+        <div className="input-section">
+          <div style={{ fontSize: '11px', color: 'var(--txt2)', marginBottom: '10px', background: '#FFF3E0', padding: '8px 10px', borderRadius: '6px', borderLeft: '3px solid var(--o2)' }}>
+            Standard Norms (Editable): UltraLight=35 · Light=30 · Medium=25 · Heavy=20 · UltraHeavy=15 m²/tonne
           </div>
 
-          <div className="space-y-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                Structure Name / BOQ Reference <span className="text-slate-400 font-mono text-[10px] ml-1">optional</span>
-              </label>
-              <input
-                type="text"
-                value={structureName}
-                onChange={e => setStructureName(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-                placeholder="e.g. Pipe Rack Modules PR-01 to PR-04"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                Total Structural Steel Weight (Metric Tonnes / MT)
-              </label>
-              <input
-                type="number"
-                value={tonnage}
-                onChange={e => setTonnage(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-                placeholder="e.g. 150"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                Structure Member Classification
-              </label>
-              <select
-                value={structureType}
-                onChange={e => setStructureType(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-              >
-                <option value="ultralight">Ultra Light Structure (35 m² / MT)</option>
-                <option value="light">Light Structure (30 m² / MT)</option>
-                <option value="medium">Medium Structure (25 m² / MT — Typical)</option>
-                <option value="heavy">Heavy Structure (20 m² / MT)</option>
-                <option value="ultraheavy">Ultra Heavy Structure (15 m² / MT)</option>
-                <option value="custom">Custom Specified Rate</option>
-              </select>
-            </div>
-
-            {structureType === 'custom' && (
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                  Custom Area Rate (m² per MT)
-                </label>
-                <input
-                  type="number"
-                  value={customRate}
-                  onChange={e => setCustomRate(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#F7941D]"
-                  placeholder="e.g. 25"
+          <div className="g3">
+            <div className="field">
+              <label>UL Tonnage <span className="lh">t</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="ww-ul" 
+                  value={ulT} 
+                  onChange={e => setUlT(e.target.value)} 
+                  placeholder="e.g. 25" 
                 />
+                <span className="uu">t</span>
               </div>
-            )}
-          </div>
+            </div>
+            <div className="field">
+              <label>UL Rate <span className="lh">m²/t</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="ww-ulr" 
+                  value={ulR} 
+                  onChange={e => setUlR(e.target.value)} 
+                />
+                <span className="uu">m²/t</span>
+              </div>
+            </div>
+            <div className="field"></div>
 
-          {/* Form Actions: Calculate & Reset */}
-          <div className="flex gap-2.5 pt-2">
-            <button
-              type="button"
-              onClick={handleCalculate}
-              className="flex-[2] py-3 px-4 bg-gradient-to-r from-[#F7941D] to-[#A50021] hover:from-[#E8700A] hover:to-[#8B0018] text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-xs transition hover:brightness-105 active:scale-98 flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <Play className="w-3.5 h-3.5 fill-white" />
-              <span>Calculate Structure Area</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleReset}
-              className="flex-1 py-3 px-4 bg-white hover:bg-red-50 text-[#A50021] border border-[#A50021]/30 font-bold text-xs uppercase tracking-wider rounded-xl shadow-2xs transition hover:border-[#A50021] active:scale-98 flex items-center justify-center gap-1.5 cursor-pointer"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>Reset</span>
-            </button>
-          </div>
+            <div className="field">
+              <label>Light Tonnage <span className="lh">t</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="ww-l" 
+                  value={lT} 
+                  onChange={e => setLT(e.target.value)} 
+                  placeholder="e.g. 50" 
+                />
+                <span className="uu">t</span>
+              </div>
+            </div>
+            <div className="field">
+              <label>Light Rate <span className="lh">m²/t</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="ww-lr" 
+                  value={lR} 
+                  onChange={e => setLR(e.target.value)} 
+                />
+                <span className="uu">m²/t</span>
+              </div>
+            </div>
+            <div className="field"></div>
 
-          <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/70 text-xs text-slate-500 flex items-start gap-2">
-            <Info className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
-            <span className="leading-relaxed">
-              {rates[structureType].desc}. Tonnage-to-area factors are industry standard reference norms for structural budgeting.
-            </span>
+            <div className="field">
+              <label>Medium Tonnage <span className="lh">t</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="ww-m" 
+                  value={mT} 
+                  onChange={e => setMT(e.target.value)} 
+                  placeholder="e.g. 100" 
+                />
+                <span className="uu">t</span>
+              </div>
+            </div>
+            <div className="field">
+              <label>Medium Rate <span className="lh">m²/t</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="ww-mr" 
+                  value={mR} 
+                  onChange={e => setMR(e.target.value)} 
+                />
+                <span className="uu">m²/t</span>
+              </div>
+            </div>
+            <div className="field"></div>
+
+            <div className="field">
+              <label>Heavy Tonnage <span className="lh">t</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="ww-h" 
+                  value={hT} 
+                  onChange={e => setHT(e.target.value)} 
+                  placeholder="e.g. 150" 
+                />
+                <span className="uu">t</span>
+              </div>
+            </div>
+            <div className="field">
+              <label>Heavy Rate <span className="lh">m²/t</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="ww-hr" 
+                  value={hR} 
+                  onChange={e => setHR(e.target.value)} 
+                />
+                <span className="uu">m²/t</span>
+              </div>
+            </div>
+            <div className="field"></div>
+
+            <div className="field">
+              <label>UH Tonnage <span className="lh">t</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="ww-uh" 
+                  value={uhT} 
+                  onChange={e => setUhT(e.target.value)} 
+                  placeholder="e.g. 50" 
+                />
+                <span className="uu">t</span>
+              </div>
+            </div>
+            <div className="field">
+              <label>UH Rate <span className="lh">m²/t</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="ww-uhr" 
+                  value={uhR} 
+                  onChange={e => setUhR(e.target.value)} 
+                />
+                <span className="uu">m²/t</span>
+              </div>
+            </div>
+            <div className="field"></div>
           </div>
         </div>
 
-        {/* Right Output Section */}
-        <div className="lg:col-span-6 space-y-4">
-          <div className="bg-gradient-to-br from-white to-amber-50/20 border-2 border-amber-200/80 rounded-3xl p-6 shadow-sm space-y-5">
-            
-            <div className="flex items-center justify-between border-b border-amber-100 pb-3">
-              <span className="text-[10px] font-mono font-extrabold text-[#D97706] uppercase tracking-wider">
-                Estimated Coated Surface
-              </span>
-              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-mono">
-                {selectedRate} m²/MT
-              </span>
-            </div>
-
-            {/* Target Output Highlight Box */}
-            <div className="bg-white border border-amber-200 rounded-2xl p-5 text-center shadow-xs">
-              <span className="text-xs text-slate-400 font-mono">Total Paintable Surface Area</span>
-              <div className="text-4xl md:text-5xl font-black text-slate-900 font-mono mt-1 text-[#D97706]">
-                {formatNum(estimatedArea, 1)} m²
-              </div>
-              <p className="text-xs text-slate-500 mt-2 font-mono">
-                For {tonnage} MT of {rates[structureType].name.split(' (')[0]}
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-xl text-center">
-                <span className="text-[10px] text-slate-400 font-mono block">Steel Weight</span>
-                <span className="text-base font-bold text-slate-800 font-mono">{tonnage} MT</span>
-              </div>
-              <div className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-xl text-center">
-                <span className="text-[10px] text-slate-400 font-mono block">Area in Sq. Ft</span>
-                <span className="text-base font-bold text-slate-800 font-mono">
-                  {formatNum(estimatedArea * 10.7639, 0)} sq.ft
-                </span>
-              </div>
-            </div>
-
-          </div>
+        {/* Buttons Row */}
+        <div className="btn-row">
+          <button type="button" className="btn" onClick={handleCalculate}>
+            ▶ Calculate Area
+          </button>
+          <button type="button" className="btn-reset" onClick={handleReset}>
+            ↺ Reset
+          </button>
         </div>
 
+        {/* Calculated Results Section */}
+        {hasCalculated && (
+          <div className="res" id="r-wws" style={{ display: 'block' }}>
+            <div className="output-section">
+              <div className="rh">
+                <span className="pd"></span>
+                <span>Structural Area Result</span>
+              </div>
+
+              <div className="tls t1">
+                <div className="tile tp">
+                  <div className="tl">Total Structural Area</div>
+                  <div>
+                    <span className="tv" id="ww-rtot">{formatNum(totalArea, 1)}</span>
+                    <span className="tu">m²</span>
+                  </div>
+                  <div className="tn">From {formatNum(totalTonnage, 1)} Total Tonnes</div>
+                </div>
+              </div>
+
+              <div className="tls">
+                <div className="tile ts">
+                  <div className="tl">Average Norm Rate</div>
+                  <div>
+                    <span className="tv">{formatNum(avgRate, 1)}</span>
+                    <span className="tu">m²/t</span>
+                  </div>
+                </div>
+                <div className="tile ti">
+                  <div className="tl">Total Tonnage</div>
+                  <div>
+                    <span className="tv">{formatNum(totalTonnage, 1)}</span>
+                    <span className="tu">Tonnes</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Bar */}
+              <div className="action-bar">
+                <button type="button" className="btn-print" onClick={handlePrint}>
+                  🖨 Print PDF
+                </button>
+                <button type="button" className="btn-share" onClick={handleShare}>
+                  📤 Share Text
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
-
     </div>
   );
 }
