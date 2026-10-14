@@ -910,18 +910,26 @@ class PaintProductViewSet(viewsets.ModelViewSet):
 def api_update_visitor_duration(request):
     """
     Heartbeat & beacon endpoint updating visitor page stay duration (in seconds)
-    for a given visit_hash.
+    for a given visit_hash. Upserts visit record if not yet recorded so duration is never dropped.
     """
     try:
         data = request.data
         if not data and request.body:
             import json
-            data = json.loads(request.body.decode('utf-8'))
+            try:
+                data = json.loads(request.body.decode('utf-8'))
+            except Exception:
+                data = {}
 
-        visit_hash = (data.get('visit_hash') or '').strip()
-        duration = data.get('duration')
-        if not visit_hash or duration is None:
-            return Response({'error': 'visit_hash and duration are required.'}, status=status.HTTP_400_BAD_REQUEST)
+        if not isinstance(data, dict):
+            data = {}
+
+        visit_hash = (data.get('visit_hash') or request.POST.get('visit_hash') or '').strip()
+        duration = data.get('duration') if data.get('duration') is not None else request.POST.get('duration')
+        page_url = (data.get('page_url') or request.POST.get('page_url') or '').strip()[:255]
+
+        if duration is None:
+            return Response({'error': 'duration is required.'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             duration_sec = int(duration)
@@ -931,8 +939,26 @@ def api_update_visitor_duration(request):
         if duration_sec < 0:
             duration_sec = 0
 
-        # Update the hit with this visit_hash
-        hit = VisitorCount.objects.filter(visit_hash=visit_hash).order_by('-visited_at').first()
+        # 1. Try matching hit directly by visit_hash
+        hit = None
+        if visit_hash:
+            hit = VisitorCount.objects.filter(visit_hash=visit_hash).order_by('-visited_at').first()
+
+        # 2. Fallback matching by session_key or IP
+        session_key = getattr(request.session, 'session_key', '') or ''
+        ip = (
+            request.META.get('HTTP_X_FORWARDED_FOR', '').split(',')[0].strip()
+            or request.META.get('HTTP_X_REAL_IP', '').strip()
+            or request.META.get('REMOTE_ADDR', '')
+        )
+
+        if not hit and session_key:
+            hit = VisitorCount.objects.filter(session_key=session_key, page_url=page_url).order_by('-visited_at').first()
+
+        if not hit and ip and page_url:
+            hit = VisitorCount.objects.filter(ip_address=ip, page_url=page_url).order_by('-visited_at').first()
+
+        # 3. Update existing hit duration
         if hit:
             if duration_sec > hit.duration_seconds:
                 hit.duration_seconds = duration_sec
@@ -943,7 +969,34 @@ def api_update_visitor_duration(request):
                 'duration_seconds': hit.duration_seconds
             }, status=status.HTTP_200_OK)
 
-        return Response({'status': 'not_found', 'message': 'Visit entry not found.'}, status=status.HTTP_404_NOT_FOUND)
+        # 4. Upsert new hit record if visit wasn't pre-recorded
+        from .geo_utils import get_ip_location, parse_device_info, generate_visit_hash
+        user_agent = request.META.get('HTTP_USER_AGENT', '')
+        loc = get_ip_location(ip)
+        dev = parse_device_info(user_agent)
+        final_hash = visit_hash or generate_visit_hash(ip or 'anon', page_url or '/')
+
+        hit = VisitorCount.objects.create(
+            visit_hash=final_hash,
+            page_url=page_url or '/',
+            ip_address=ip or None,
+            session_key=session_key or None,
+            duration_seconds=duration_sec,
+            country=loc.get('country', '')[:100],
+            country_code=loc.get('country_code', '')[:10],
+            city=loc.get('city', '')[:100],
+            region=loc.get('region', '')[:100],
+            device_type=dev.get('device_type', 'Desktop')[:50],
+            browser=dev.get('browser', '')[:50],
+            os_name=dev.get('os_name', '')[:50],
+            user_agent=user_agent[:500],
+        )
+
+        return Response({
+            'status': 'created',
+            'visit_hash': hit.visit_hash,
+            'duration_seconds': hit.duration_seconds
+        }, status=status.HTTP_200_OK)
     except Exception as ex:
         return Response({'error': str(ex)}, status=status.HTTP_400_BAD_REQUEST)
 

@@ -233,7 +233,12 @@
         const match = document.cookie.match(/(?:^|;\s*)bg_visit_hash=([^;]+)/);
         if (match) visitHash = decodeURIComponent(match[1]);
       }
-      if (!visitHash) return;
+      if (!visitHash) {
+        visitHash = 'vh_' + Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
+        try {
+          document.cookie = 'bg_visit_hash=' + encodeURIComponent(visitHash) + '; path=/; max-age=86400; SameSite=Lax';
+        } catch (e) {}
+      }
 
       const startTime = Date.now();
       let lastReportedSec = 0;
