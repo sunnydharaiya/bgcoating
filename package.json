@@ -1,0 +1,11 @@
+{
+  "name": "bgcoating",
+  "version": "1.0.0",
+  "private": true,
+  "description": "BG Coating Monorepo",
+  "scripts": {
+    "build": "npm --prefix calculator-react install && npm --prefix calculator-react run build && node -e \"const fs=require('fs'); fs.cpSync('calculator-react/dist', 'dist', {recursive: true});\"",
+    "build:calculator": "npm --prefix calculator-react install && npm --prefix calculator-react run build",
+    "build:admin": "npm --prefix admin-panel install && npm --prefix admin-panel run build"
+  }
+}
