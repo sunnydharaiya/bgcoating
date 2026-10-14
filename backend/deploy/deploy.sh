@@ -35,7 +35,15 @@ source "${VENV_DIR}/bin/activate"
 pip install --upgrade pip setuptools wheel --quiet
 pip install -r "${BACKEND_DIR}/requirements.txt" --quiet
 
-# 4. Run database migrations
+# 4. Safe backup & run database migrations
+if [ -f "${BACKEND_DIR}/db.sqlite3" ]; then
+    echo "💾 Creating safety backup of SQLite database..."
+    mkdir -p "${BACKEND_DIR}/backups"
+    cp "${BACKEND_DIR}/db.sqlite3" "${BACKEND_DIR}/backups/db_backup_$(date +%Y%m%d_%H%M%S).sqlite3"
+    # Keep only 10 most recent backups
+    ls -t "${BACKEND_DIR}/backups/db_backup_"*.sqlite3 2>/dev/null | tail -n +11 | xargs -r rm -f --
+fi
+
 echo "🗄️ Running database migrations..."
 python "${BACKEND_DIR}/manage.py" migrate --noinput
 

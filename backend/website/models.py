@@ -31,38 +31,69 @@ class SiteSettings(models.Model):
     )
 
     # Dynamic Trust Dashboard Metrics
-    total_visitors_baseline = models.PositiveIntegerField(default=160222, help_text="Baseline count for Total Visitors")
-    unique_visitors_baseline = models.PositiveIntegerField(default=40000, help_text="Baseline count for Unique Visitors")
-    total_enquiries_baseline = models.PositiveIntegerField(default=6115, help_text="Baseline count for Total Enquiries")
-    customer_feedback_count = models.PositiveIntegerField(default=69, help_text="Customer feedback count displayed on trust dashboard")
-    live_visitor_count = models.PositiveIntegerField(default=0, help_text="Live incrementing visitor counter")
-    live_unique_visitor_count = models.PositiveIntegerField(default=0, help_text="Live unique visitor counter")
+    total_visitors_baseline = models.PositiveIntegerField(default=0, help_text="Optional baseline offset for Total Visitors (0 for pure visitor count)")
+    unique_visitors_baseline = models.PositiveIntegerField(default=0, help_text="Optional baseline offset for Unique Visitors (0 for pure visitor count)")
+    total_enquiries_baseline = models.PositiveIntegerField(default=0, help_text="Optional baseline offset for Total Enquiries (0 for pure contact count)")
+    customer_feedback_baseline = models.PositiveIntegerField(default=0, help_text="Optional baseline offset for Customer Feedback (0 for pure testimonial count)")
+
+    @property
+    def total_visitors(self):
+        try:
+            from .models import VisitorCount
+            v_count = VisitorCount.objects.count()
+        except Exception:
+            v_count = 0
+        return (self.total_visitors_baseline or 0) + v_count
 
     @property
     def total_visitors_count(self):
-        return f"{self.total_visitors_baseline + self.live_visitor_count:,}"
+        return f"{self.total_visitors:,}"
+
+    @property
+    def unique_visitors(self):
+        try:
+            from .models import VisitorCount
+            # Count distinct visitors by session_key or IP
+            u_count = VisitorCount.objects.exclude(session_key__isnull=True).exclude(session_key='').values('session_key').distinct().count()
+            if u_count == 0:
+                u_count = VisitorCount.objects.exclude(ip_address__isnull=True).values('ip_address').distinct().count()
+        except Exception:
+            u_count = 0
+        return (self.unique_visitors_baseline or 0) + u_count
 
     @property
     def unique_visitors_count(self):
-        return f"{self.unique_visitors_baseline + self.live_unique_visitor_count:,}"
+        return f"{self.unique_visitors:,}"
 
     @property
-    def enquiries_count(self):
+    def total_enquiries(self):
         try:
             from .models import ContactSubmission
             sub_count = ContactSubmission.objects.count()
         except Exception:
             sub_count = 0
-        return f"{self.total_enquiries_baseline + sub_count:,}"
+        return (self.total_enquiries_baseline or 0) + sub_count
 
     @property
-    def feedback_count(self):
+    def enquiries_count(self):
+        return f"{self.total_enquiries:,}"
+
+    @property
+    def customer_feedback(self):
         try:
             from .models import ClientTestimonial
             t_count = ClientTestimonial.objects.count()
         except Exception:
             t_count = 0
-        return f"{max(self.customer_feedback_count, t_count):,}"
+        return (self.customer_feedback_baseline or 0) + t_count
+
+    @property
+    def customer_feedback_count(self):
+        return self.customer_feedback
+
+    @property
+    def feedback_count(self):
+        return f"{self.customer_feedback:,}"
 
     class Meta:
         verbose_name = "Site Settings"
@@ -341,6 +372,74 @@ class ContactSubmission(models.Model):
 
     def __str__(self):
         return f"{self.full_name} ({self.service_of_interest}) - {self.submitted_at.strftime('%Y-%m-%d %H:%M')}"
+
+
+class VisitorCount(models.Model):
+    """Tracks visitor page hits across the platform with location, duration, and cryptographic hashes."""
+    visitor_hash = models.CharField(max_length=64, blank=True, db_index=True, help_text="Unique hash identifier per visitor/device")
+    visit_hash = models.CharField(max_length=64, blank=True, db_index=True, help_text="Unique hash identifier per page visit")
+    ip_address = models.GenericIPAddressField(null=True, blank=True, db_index=True)
+    session_key = models.CharField(max_length=100, blank=True, null=True, db_index=True)
+    page_url = models.CharField(max_length=255, blank=True)
+    page_title = models.CharField(max_length=255, blank=True)
+    referer = models.CharField(max_length=500, blank=True)
+
+    # Location from IP
+    country = models.CharField(max_length=100, blank=True, default='')
+    country_code = models.CharField(max_length=10, blank=True, default='')
+    city = models.CharField(max_length=100, blank=True, default='')
+    region = models.CharField(max_length=100, blank=True, default='')
+
+    # Device & client info
+    user_agent = models.TextField(blank=True)
+    device_type = models.CharField(max_length=50, blank=True, default='Desktop')
+    browser = models.CharField(max_length=50, blank=True, default='')
+    os_name = models.CharField(max_length=50, blank=True, default='')
+
+    # Time stayed / duration
+    duration_seconds = models.PositiveIntegerField(default=0, help_text="Time stayed on page in seconds")
+
+    visited_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-visited_at']
+        verbose_name = "Visitor Log"
+        verbose_name_plural = "Visitor Logs"
+
+    def __str__(self):
+        loc = f" ({self.city}, {self.country})" if self.city and self.country else ""
+        return f"{self.page_url} - {self.ip_address}{loc} [{self.short_visitor_hash}]"
+
+    @property
+    def duration_display(self):
+        secs = self.duration_seconds or 0
+        if secs < 60:
+            return f"{secs}s"
+        mins = secs // 60
+        rem_secs = secs % 60
+        if mins < 60:
+            return f"{mins}m {rem_secs}s" if rem_secs else f"{mins}m"
+        hours = mins // 60
+        rem_mins = mins % 60
+        return f"{hours}h {rem_mins}m"
+
+    @property
+    def location_display(self):
+        parts = [p for p in (self.city, self.country) if p and p != 'Unknown']
+        return ", ".join(parts) if parts else (self.country or "Unknown")
+
+    @property
+    def short_visitor_hash(self):
+        return self.visitor_hash[:10] if self.visitor_hash else '-'
+
+    @property
+    def short_visit_hash(self):
+        return self.visit_hash[:10] if self.visit_hash else '-'
+
+
+VisitorLog = VisitorCount
+Visitor = VisitorCount
 
 
 class UserProject(models.Model):

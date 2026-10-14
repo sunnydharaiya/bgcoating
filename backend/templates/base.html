@@ -10,6 +10,8 @@
 <meta name="author" content="{{ site_settings.site_name|default:'BG Group Of Paint &amp; Coatings Consultant' }}">
 <meta name="robots" content="{{ page_seo.robots|default:'index, follow' }}">
 <link rel="canonical" href="{{ page_canonical|default:request.path }}">
+<meta name="visit-hash" content="{{ current_visit_hash|default:'' }}">
+<meta name="visitor-hash" content="{{ current_visitor_hash|default:'' }}">
 {% if page_seo and page_seo.og_image %}
 <meta property="og:image" content="{{ page_seo.og_image.url }}">
 {% endif %}
@@ -21,7 +23,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com/">
 <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{% static 'css/styles.css' %}?v=2.4">
+<link rel="stylesheet" href="{% static 'css/styles.css' %}?v=2.5">
 
 {% block extra_css %}{% endblock %}
 </head>
@@ -35,7 +37,7 @@
 
 {% include 'includes/footer.html' %}
 
-<script src="{% static 'js/main.js' %}?v=2.2"></script>
+<script src="{% static 'js/main.js' %}?v=2.3"></script>
 {% block extra_js %}{% endblock %}
 </body>
 </html>

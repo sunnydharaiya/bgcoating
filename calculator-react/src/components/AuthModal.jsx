@@ -6,9 +6,6 @@ import {
   Eye, 
   EyeOff, 
   ArrowRight,
-  Sparkles,
-  HelpCircle,
-  ExternalLink,
   X,
   LogIn,
   UserPlus,
@@ -21,7 +18,8 @@ export default function AuthModal({
   isOpen, 
   onClose, 
   onLoginSuccess,
-  defaultTab = 'login'
+  defaultTab = 'login',
+  isCompulsory = false
 }) {
   const { addToast } = useToast();
 
@@ -42,7 +40,6 @@ export default function AuthModal({
   // Google OAuth State
   const googleBtnRef = useRef(null);
   const [googleClientReady, setGoogleClientReady] = useState(false);
-  const [showSetupHelp, setShowSetupHelp] = useState(false);
 
   const rawClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
   const hasValidClientId = Boolean(
@@ -68,9 +65,9 @@ export default function AuthModal({
     };
   }, [isOpen]);
 
-  // Handle escape key
+  // Handle escape key (disabled when login is compulsory)
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || isCompulsory) return;
     const handleKeyDown = (e) => {
       if (e.key === 'Escape' && onClose) {
         onClose();
@@ -78,7 +75,7 @@ export default function AuthModal({
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen, isCompulsory, onClose]);
 
   // Initialize official Google Identity Services SDK for Real Google Account Sign-In
   useEffect(() => {
@@ -206,7 +203,10 @@ export default function AuthModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-950/75 backdrop-blur-sm animate-in fade-in duration-200">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-950/75 backdrop-blur-sm animate-in fade-in duration-200"
+      onClick={!isCompulsory && onClose ? onClose : undefined}
+    >
       
       {/* Centered Clean Auth Modal */}
       <div 
@@ -214,10 +214,11 @@ export default function AuthModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="auth-modal-title"
+        onClick={(e) => e.stopPropagation()}
       >
         
-        {/* Close Button */}
-        {onClose && (
+        {/* Close Button - hidden when login is compulsory */}
+        {!isCompulsory && onClose && (
           <button
             type="button"
             onClick={onClose}
@@ -226,6 +227,19 @@ export default function AuthModal({
           >
             <X className="w-5 h-5" />
           </button>
+        )}
+
+        {/* Compulsory Login Notice when preview period ends */}
+        {isCompulsory && (
+          <div className="mb-4 px-3.5 py-2.5 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/90 rounded-2xl flex items-center gap-2.5 text-left text-amber-950 text-xs shadow-2xs">
+            <div className="w-7 h-7 rounded-xl bg-amber-500/20 text-amber-700 flex items-center justify-center shrink-0">
+              <ShieldCheck className="w-4 h-4" />
+            </div>
+            <div>
+              <p className="font-bold text-[11px] text-amber-900 leading-tight">Preview Period Ended</p>
+              <p className="text-[10px] text-amber-800/90 leading-normal mt-0.5">Please sign in or create an account to continue using BG CoatingOS™.</p>
+            </div>
+          </div>
         )}
 
         {/* Brand Header */}
@@ -510,15 +524,14 @@ export default function AuthModal({
               )}
             </div>
           ) : (
-            <div className="w-full space-y-2">
-              {/* Google Button with Setup Guidance */}
+            <div className="w-full">
+              {/* Google Button */}
               <button
                 type="button"
                 onClick={() => {
-                  setShowSetupHelp(!showSetupHelp);
                   addToast(
-                    'Google Sign-In Configuration',
-                    'Set VITE_GOOGLE_CLIENT_ID in calculator-react/.env to sign in with your real Google account.',
+                    'Google Sign-In',
+                    'Please sign in using your registered email and password below.',
                     'info'
                   );
                 }}
@@ -532,67 +545,10 @@ export default function AuthModal({
                 </svg>
                 <span>Sign in with Google</span>
               </button>
-
-              {/* Informative Setup Banner */}
-              <div className="p-2.5 bg-amber-50/80 border border-amber-200/90 rounded-2xl text-left">
-                <div className="flex items-start gap-2">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[10.5px] font-bold text-amber-950">
-                      Real Google Account Sign-In Setup
-                    </p>
-                    <p className="text-[9.5px] text-amber-800/90 mt-0.5 leading-relaxed">
-                      To authenticate with your live Google account, add your OAuth Client ID to <code className="px-1 py-0.5 bg-amber-100 rounded font-mono text-amber-950 font-semibold">calculator-react/.env</code>:
-                    </p>
-                    <div className="mt-1 bg-amber-100/90 border border-amber-200 rounded-lg px-2 py-0.5 font-mono text-[9px] text-amber-950 select-all overflow-x-auto">
-                      VITE_GOOGLE_CLIENT_ID=your-id.apps.googleusercontent.com
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setShowSetupHelp(!showSetupHelp)}
-                      className="inline-flex items-center gap-1 text-[9.5px] font-bold text-amber-900 hover:text-amber-700 mt-1.5 cursor-pointer"
-                    >
-                      <HelpCircle className="w-3 h-3" />
-                      <span>{showSetupHelp ? 'Hide Guide' : 'How to get Google Client ID'}</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Step-by-Step Instructions Toggle */}
-                {showSetupHelp && (
-                  <div className="mt-2 pt-2 border-t border-amber-200 text-[9.5px] text-slate-700 space-y-1">
-                    <p className="text-slate-600">
-                      <strong>1.</strong> Visit <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noreferrer" className="text-blue-600 font-semibold underline inline-flex items-center gap-0.5">Google Cloud Credentials <ExternalLink className="w-2.5 h-2.5" /></a>
-                    </p>
-                    <p className="text-slate-600">
-                      <strong>2.</strong> Click <strong>+ Create Credentials</strong> &rarr; <strong>OAuth client ID</strong>.
-                    </p>
-                    <p className="text-slate-600">
-                      <strong>3.</strong> Choose <strong>Web application</strong> and add Authorized JavaScript origins: <code className="bg-white px-1 py-0.5 rounded border border-slate-200 font-mono text-slate-800">http://localhost:3000</code>.
-                    </p>
-                    <p className="text-slate-600">
-                      <strong>4.</strong> Paste your Client ID into <code className="bg-white px-1 py-0.5 rounded border border-slate-200 font-mono text-slate-800">calculator-react/.env</code> as <code className="font-mono text-amber-900 font-bold">VITE_GOOGLE_CLIENT_ID</code>.
-                    </p>
-                  </div>
-                )}
-              </div>
             </div>
           )}
 
         </div>
-
-        {/* Guest Skip Option */}
-        {onClose && (
-          <div className="mt-4 pt-3 border-t border-slate-100 text-center">
-            <button
-              type="button"
-              onClick={onClose}
-              className="text-[11px] font-medium text-slate-500 hover:text-slate-800 transition cursor-pointer"
-            >
-              Continue browsing as Guest &rarr;
-            </button>
-          </div>
-        )}
 
       </div>
 

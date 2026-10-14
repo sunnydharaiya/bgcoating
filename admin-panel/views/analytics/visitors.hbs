@@ -1,0 +1,624 @@
+<div class="space-y-6">
+  <!-- Section Header Banner -->
+  <div class="bg-white border border-slate-200 rounded-md p-5 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 shadow-2xs">
+    <div>
+      <div class="flex items-center gap-2">
+        <span class="text-[11px] font-mono font-semibold text-blue-600 uppercase tracking-wider">Analytics &amp; Intelligence</span>
+        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Live Tracking
+        </span>
+      </div>
+      <h2 class="text-lg font-bold text-slate-900 mt-1">Visitor Traffic &amp; Page Engagement Logs</h2>
+      <p class="text-xs text-slate-500 mt-0.5">Real-time audit log of user visits, IP-derived geo location, page dwell time, device specs, and unique cryptographic hashes.</p>
+    </div>
+    <div class="flex items-center gap-2.5 shrink-0">
+      <button 
+        onclick="exportToCSV()"
+        class="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-md text-xs font-semibold flex items-center gap-1.5 transition shadow-2xs"
+        title="Export displayed records to CSV"
+      >
+        <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        <span>Export CSV</span>
+      </button>
+      <a 
+        href="/admin/analytics/visitors"
+        class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs font-semibold flex items-center gap-1.5 transition shadow-2xs"
+      >
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        <span>Refresh</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Key Metrics Summary Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- Card 1: Total Visits -->
+    <div class="bg-white border border-slate-200 rounded-md p-4 shadow-2xs">
+      <div class="flex items-center justify-between text-slate-400">
+        <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Total Page Hits</span>
+        <div class="w-8 h-8 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+        </div>
+      </div>
+      <div class="text-2xl font-bold font-mono text-slate-900 mt-2">{{stats.total_visits}}</div>
+      <div class="text-[11px] text-slate-500 mt-1 flex items-center gap-1">
+        <span class="text-emerald-600 font-semibold">Active period</span> &bull; All recorded page entries
+      </div>
+    </div>
+
+    <!-- Card 2: Unique Visitors -->
+    <div class="bg-white border border-slate-200 rounded-md p-4 shadow-2xs">
+      <div class="flex items-center justify-between text-slate-400">
+        <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Unique Visitors</span>
+        <div class="w-8 h-8 rounded-md bg-indigo-50 text-indigo-600 flex items-center justify-center">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+        </div>
+      </div>
+      <div class="text-2xl font-bold font-mono text-slate-900 mt-2">{{stats.unique_visitors}}</div>
+      <div class="text-[11px] text-slate-500 mt-1 flex items-center gap-1">
+        <span class="text-indigo-600 font-semibold font-mono">SHA-256</span> Fingerprinted unique devices
+      </div>
+    </div>
+
+    <!-- Card 3: Avg Dwell Time -->
+    <div class="bg-white border border-slate-200 rounded-md p-4 shadow-2xs">
+      <div class="flex items-center justify-between text-slate-400">
+        <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Avg Time on Page</span>
+        <div class="w-8 h-8 rounded-md bg-amber-50 text-amber-600 flex items-center justify-center">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+      </div>
+      <div class="text-2xl font-bold font-mono text-slate-900 mt-2">{{stats.avg_duration_display}}</div>
+      <div class="text-[11px] text-slate-500 mt-1 flex items-center gap-1">
+        <span class="text-amber-600 font-semibold">Active stay</span> &bull; Tracked via sendBeacon
+      </div>
+    </div>
+
+    <!-- Card 4: Most Visited Route -->
+    <div class="bg-white border border-slate-200 rounded-md p-4 shadow-2xs">
+      <div class="flex items-center justify-between text-slate-400">
+        <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Top Visited Page</span>
+        <div class="w-8 h-8 rounded-md bg-emerald-50 text-emerald-600 flex items-center justify-center">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+        </div>
+      </div>
+      <div class="text-sm font-bold font-mono text-slate-900 mt-2 truncate max-w-full" title="{{#if stats.top_pages.[0]}}{{stats.top_pages.[0].page_url}}{{else}}/{{/if}}">
+        {{#if stats.top_pages.[0]}}{{stats.top_pages.[0].page_url}}{{else}}/{{/if}}
+      </div>
+      <div class="text-[11px] text-slate-500 mt-1 flex items-center gap-1">
+        <span class="text-emerald-600 font-semibold font-mono">{{#if stats.top_pages.[0]}}{{stats.top_pages.[0].hits}}{{else}}0{{/if}} hits</span> &bull; Highest user traffic
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters & Search Toolbar -->
+  <div class="bg-white border border-slate-200 rounded-md p-4 shadow-2xs">
+    <form method="GET" action="/admin/analytics/visitors" class="space-y-3">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
+        <!-- Date From -->
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1">Date From</label>
+          <input 
+            type="date" 
+            name="date_from" 
+            value="{{filters.date_from}}" 
+            class="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-slate-700 bg-white"
+          />
+        </div>
+
+        <!-- Date To -->
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1">Date To</label>
+          <input 
+            type="date" 
+            name="date_to" 
+            value="{{filters.date_to}}" 
+            class="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-slate-700 bg-white"
+          />
+        </div>
+
+        <!-- Country Filter -->
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1">Location / Country</label>
+          <select 
+            name="country" 
+            class="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-slate-700 bg-white"
+          >
+            <option value="">All Countries</option>
+            {{#each stats.available_countries}}
+            <option value="{{this}}" {{#if (eq ../filters.country this)}}selected{{/if}}>{{this}}</option>
+            {{/each}}
+          </select>
+        </div>
+
+        <!-- Device Type -->
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1">Device Type</label>
+          <select 
+            name="device_type" 
+            class="w-full px-2.5 py-1.5 text-xs border border-slate-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-slate-700 bg-white"
+          >
+            <option value="">All Devices</option>
+            <option value="Desktop" {{#if (eq filters.device_type 'Desktop')}}selected{{/if}}>Desktop</option>
+            <option value="Mobile" {{#if (eq filters.device_type 'Mobile')}}selected{{/if}}>Mobile</option>
+            <option value="Tablet" {{#if (eq filters.device_type 'Tablet')}}selected{{/if}}>Tablet</option>
+          </select>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="lg:col-span-2">
+          <label class="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1">Search Keywords / IP / Hash</label>
+          <div class="relative">
+            <input 
+              type="text" 
+              name="search" 
+              value="{{filters.search}}" 
+              placeholder="Filter by page URL, IP, hash, city..." 
+              class="w-full pl-8 pr-2.5 py-1.5 text-xs border border-slate-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-slate-700 bg-white"
+            />
+            <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Preset & Action Buttons -->
+      <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100">
+        <div class="flex flex-wrap items-center gap-1.5 text-xs">
+          <span class="text-[11px] font-semibold text-slate-400 uppercase mr-1">Presets:</span>
+          <button type="button" onclick="setPreset('today')" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-[11px] font-medium transition">Today</button>
+          <button type="button" onclick="setPreset('7d')" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-[11px] font-medium transition">Last 7 Days</button>
+          <button type="button" onclick="setPreset('30d')" class="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-[11px] font-medium transition">Last 30 Days</button>
+        </div>
+        <div class="flex items-center gap-2">
+          <a href="/admin/analytics/visitors" class="px-3 py-1.5 text-xs text-slate-600 hover:text-slate-900 border border-slate-200 rounded-md hover:bg-slate-50 transition font-medium">Reset Filters</a>
+          <button type="submit" class="px-3.5 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded-md font-semibold transition shadow-2xs flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+            <span>Apply Filters</span>
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Active Visitor Journey Filter Pill (if visitor_hash is set) -->
+  {{#if filters.visitor_hash}}
+  <div class="p-3 bg-blue-50 border border-blue-200 rounded-md flex items-center justify-between gap-3 text-xs text-blue-900 shadow-2xs">
+    <div class="flex items-center gap-2">
+      <svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+      <div>
+        <span>Currently auditing single visitor journey:</span>
+        <code class="font-mono font-bold bg-white px-2 py-0.5 rounded border border-blue-200 text-blue-700 ml-1">{{filters.visitor_hash}}</code>
+      </div>
+    </div>
+    <a href="/admin/analytics/visitors" class="px-2.5 py-1 bg-white hover:bg-blue-100 text-blue-700 border border-blue-300 rounded font-semibold text-[11px] transition">
+      Clear Visitor Filter
+    </a>
+  </div>
+  {{/if}}
+
+  <!-- Visual Intelligence Row (Top Pages & Geographic / Device Breakdown) -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <!-- Top Pages Card -->
+    <div class="bg-white border border-slate-200 rounded-md p-4 shadow-2xs">
+      <div class="flex items-center justify-between mb-3 border-b border-slate-100 pb-2">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          Top Visited URLs &amp; Average Stay
+        </h3>
+        <span class="text-[10px] font-mono text-slate-400">Top 5 Routes</span>
+      </div>
+      <div class="space-y-2 text-xs">
+        {{#each stats.top_pages}}
+        <div class="flex items-center justify-between p-2 rounded-md hover:bg-slate-50 transition border border-transparent hover:border-slate-200">
+          <div class="min-w-0 pr-3">
+            <a href="{{this.page_url}}" target="_blank" class="font-mono font-medium text-blue-600 hover:underline truncate block max-w-sm">
+              {{this.page_url}}
+            </a>
+            <div class="text-[10px] text-slate-400 mt-0.5">
+              Avg Dwell: <span class="font-mono font-medium text-slate-600">{{this.avg_stay}}s</span>
+            </div>
+          </div>
+          <div class="shrink-0 flex items-center gap-1 font-mono text-[11px] bg-slate-100 text-slate-800 px-2.5 py-1 rounded-md font-semibold">
+            <span>{{this.hits}} hits</span>
+          </div>
+        </div>
+        {{else}}
+        <div class="py-6 text-center text-slate-400 text-xs italic">No traffic recorded for this filter range yet.</div>
+        {{/each}}
+      </div>
+    </div>
+
+    <!-- Top Locations & Device Breakdown Card -->
+    <div class="bg-white border border-slate-200 rounded-md p-4 shadow-2xs">
+      <div class="flex items-center justify-between mb-3 border-b border-slate-100 pb-2">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Audience Geography &amp; Device Breakdown
+        </h3>
+        <span class="text-[10px] font-mono text-slate-400">GeoIP &amp; Client</span>
+      </div>
+
+      <!-- Device distribution pills -->
+      <div class="flex items-center gap-2 mb-3 pb-3 border-b border-slate-100">
+        {{#each stats.devices}}
+        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-slate-100 text-slate-700 text-[11px] font-medium border border-slate-200">
+          <span class="font-semibold text-slate-900">{{this.device_type}}:</span>
+          <span class="font-mono text-blue-600 font-bold">{{this.count}}</span>
+        </span>
+        {{else}}
+        <span class="text-[11px] text-slate-400 italic">No device telemetry recorded yet.</span>
+        {{/each}}
+      </div>
+
+      <!-- Top Locations list -->
+      <div class="space-y-2 text-xs">
+        {{#each stats.top_locations}}
+        <div class="flex items-center justify-between p-1.5 rounded hover:bg-slate-50 transition">
+          <div class="flex items-center gap-2 truncate">
+            <span class="text-sm">📍</span>
+            <div class="truncate">
+              <span class="font-bold text-slate-800">{{#if this.city}}{{this.city}}, {{/if}}{{this.country}}</span>
+            </div>
+          </div>
+          <span class="font-mono font-semibold text-slate-600 text-[11px] bg-slate-100 px-2 py-0.5 rounded">
+            {{this.hits}} visits
+          </span>
+        </div>
+        {{else}}
+        <div class="py-4 text-center text-slate-400 text-xs italic">No geographic location logs available.</div>
+        {{/each}}
+      </div>
+    </div>
+  </div>
+
+  <!-- Detailed Visitor Entries Table -->
+  <div class="bg-white border border-slate-200 rounded-md overflow-hidden shadow-2xs">
+    <div class="p-4 border-b border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      <div>
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-800">Live Visitor Hit Stream</h3>
+        <p class="text-[11px] text-slate-500">Every recorded page transition with duration, location from IP, and unique hash audit.</p>
+      </div>
+      <div class="text-[11px] font-mono text-slate-500 bg-white px-2.5 py-1 border border-slate-200 rounded">
+        Showing <strong>{{logs.length}}</strong> of <strong>{{pagination.count}}</strong> total log hits
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs" id="visitorLogsTable">
+        <thead class="bg-slate-50 text-slate-500 uppercase tracking-wider font-semibold border-b border-slate-200 text-[11px]">
+          <tr>
+            <th class="px-3.5 py-3 whitespace-nowrap">Timestamp</th>
+            <th class="px-3.5 py-3 whitespace-nowrap">Visitor Hash (ID)</th>
+            <th class="px-3.5 py-3 whitespace-nowrap">Page URL &amp; Link</th>
+            <th class="px-3.5 py-3 whitespace-nowrap">Time Stayed</th>
+            <th class="px-3.5 py-3 whitespace-nowrap">IP &amp; Location</th>
+            <th class="px-3.5 py-3 whitespace-nowrap">Device / Browser</th>
+            <th class="px-3.5 py-3 whitespace-nowrap text-right">Inspect</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-200 text-slate-700">
+          {{#each logs}}
+          <tr class="hover:bg-slate-50 transition">
+            <!-- Timestamp -->
+            <td class="px-3.5 py-3 font-mono text-slate-500 whitespace-nowrap text-[11px]">
+              <div>{{formatDateTime this.visited_at}}</div>
+            </td>
+
+            <!-- Visitor Hash (clickable to view user journey) -->
+            <td class="px-3.5 py-3 font-mono whitespace-nowrap">
+              <div class="flex items-center gap-1.5">
+                <a 
+                  href="/admin/analytics/visitors?visitor_hash={{this.visitor_hash}}"
+                  class="inline-block px-2 py-0.5 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 text-[11px] font-semibold transition font-mono"
+                  title="Filter all visits from this visitor: {{this.visitor_hash}}"
+                >
+                  {{this.short_visitor_hash}}
+                </a>
+              </div>
+              <div class="text-[10px] text-slate-400 mt-0.5 font-mono">
+                hit: {{this.short_visit_hash}}
+              </div>
+            </td>
+
+            <!-- Page URL & Referer -->
+            <td class="px-3.5 py-3 max-w-xs">
+              <a 
+                href="{{this.page_url}}" 
+                target="_blank" 
+                class="font-mono text-blue-600 hover:underline font-semibold block truncate"
+                title="Open page in new tab: {{this.page_url}}"
+              >
+                {{this.page_url}}
+              </a>
+              {{#if this.referer}}
+              <div class="text-[10px] text-slate-400 truncate mt-0.5" title="Referer: {{this.referer}}">
+                via {{this.referer}}
+              </div>
+              {{/if}}
+            </td>
+
+            <!-- Stay Time / Duration -->
+            <td class="px-3.5 py-3 whitespace-nowrap font-mono">
+              {{#if (gt this.duration_seconds 0)}}
+              <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-bold">
+                <svg class="w-3 h-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                {{this.duration_display}}
+              </span>
+              {{else}}
+              <span class="inline-flex items-center px-1.5 py-0.5 rounded bg-slate-100 text-slate-400 text-[10px] font-medium">
+                &lt; 5s
+              </span>
+              {{/if}}
+            </td>
+
+            <!-- IP & Location -->
+            <td class="px-3.5 py-3">
+              <div class="flex items-center gap-1.5 font-sans font-semibold text-slate-900 text-[12px]">
+                <span>📍</span>
+                <span>{{this.location_display}}</span>
+              </div>
+              <div class="font-mono text-[11px] text-slate-400 mt-0.5">
+                {{this.ip_address}}
+              </div>
+            </td>
+
+            <!-- Device / Browser -->
+            <td class="px-3.5 py-3 whitespace-nowrap">
+              <div class="flex items-center gap-1 text-[11px] font-semibold text-slate-800">
+                <span class="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-mono">{{this.device_type}}</span>
+                <span>{{this.browser}}</span>
+              </div>
+              <div class="text-[10px] text-slate-400 mt-0.5 font-sans">
+                {{this.os_name}}
+              </div>
+            </td>
+
+            <!-- Inspect Modal Button -->
+            <td class="px-3.5 py-3 text-right whitespace-nowrap">
+              <button 
+                onclick="openVisitorModal({{json this}})"
+                class="px-2.5 py-1 bg-white hover:bg-slate-100 text-slate-700 rounded border border-slate-200 text-xs font-medium transition shadow-2xs"
+              >
+                Details
+              </button>
+            </td>
+          </tr>
+          {{else}}
+          <tr>
+            <td colspan="7" class="p-8 text-center text-slate-400">
+              <div class="max-w-xs mx-auto space-y-2">
+                <svg class="w-10 h-10 text-slate-300 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                <div class="text-sm font-bold text-slate-600">No Visitor Logs Found</div>
+                <div class="text-xs text-slate-400">No entries match your selected date or location filters. Try clearing filters to view all recorded hits.</div>
+              </div>
+            </td>
+          </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Enhanced Pagination preserving query filters -->
+    {{#if pagination}}
+    <div class="bg-white border-t border-slate-200 p-3.5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+      <div class="text-slate-500 font-medium">
+        Showing page <span class="font-bold text-slate-900 font-mono">{{pagination.currentPage}}</span> of <span class="font-bold text-slate-900 font-mono">{{pagination.totalPages}}</span>
+        (<span class="font-medium text-slate-700 font-mono">{{pagination.count}} total entries</span>)
+      </div>
+
+      <div class="flex items-center gap-2">
+        {{#if pagination.hasPrev}}
+        <a 
+          href="?page={{dec pagination.currentPage}}{{#if filters.date_from}}&date_from={{filters.date_from}}{{/if}}{{#if filters.date_to}}&date_to={{filters.date_to}}{{/if}}{{#if filters.country}}&country={{filters.country}}{{/if}}{{#if filters.device_type}}&device_type={{filters.device_type}}{{/if}}{{#if filters.search}}&search={{filters.search}}{{/if}}{{#if filters.visitor_hash}}&visitor_hash={{filters.visitor_hash}}{{/if}}"
+          class="px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 rounded-md border border-slate-200 transition flex items-center gap-1 font-medium shadow-2xs"
+        >
+          <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+          <span>Previous</span>
+        </a>
+        {{else}}
+        <button disabled class="px-3 py-1.5 bg-slate-50 text-slate-400 rounded-md border border-slate-200 cursor-not-allowed opacity-60 flex items-center gap-1 font-medium">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+          <span>Previous</span>
+        </button>
+        {{/if}}
+
+        {{#if pagination.hasNext}}
+        <a 
+          href="?page={{inc pagination.currentPage}}{{#if filters.date_from}}&date_from={{filters.date_from}}{{/if}}{{#if filters.date_to}}&date_to={{filters.date_to}}{{/if}}{{#if filters.country}}&country={{filters.country}}{{/if}}{{#if filters.device_type}}&device_type={{filters.device_type}}{{/if}}{{#if filters.search}}&search={{filters.search}}{{/if}}{{#if filters.visitor_hash}}&visitor_hash={{filters.visitor_hash}}{{/if}}"
+          class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition flex items-center gap-1 font-semibold shadow-2xs"
+        >
+          <span>Next</span>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </a>
+        {{else}}
+        <button disabled class="px-3 py-1.5 bg-slate-50 text-slate-400 rounded-md border border-slate-200 cursor-not-allowed opacity-60 flex items-center gap-1 font-medium">
+          <span>Next</span>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </button>
+        {{/if}}
+      </div>
+    </div>
+    {{/if}}
+  </div>
+</div>
+
+<!-- Visitor Entry Audit Detail Modal -->
+<div id="visitorModal" class="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs hidden items-center justify-center p-4">
+  <div class="bg-white rounded-lg shadow-xl border border-slate-200 max-w-xl w-full p-6 space-y-4">
+    <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+      <div>
+        <h3 class="text-sm font-bold text-slate-900">Visitor Hit Cryptographic Audit</h3>
+        <p class="text-[11px] text-slate-500">Comprehensive fingerprint and execution telemetry.</p>
+      </div>
+      <button onclick="closeVisitorModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-md">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="space-y-3 text-xs max-h-[65vh] overflow-y-auto pr-1">
+      <div>
+        <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Full Visitor Hash (SHA-256)</span>
+        <code id="modalVisitorHash" class="block font-mono bg-slate-50 p-2 rounded border border-slate-200 text-blue-700 break-all select-all mt-1"></code>
+      </div>
+
+      <div>
+        <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Full Visit Hit Hash (SHA-256)</span>
+        <code id="modalVisitHash" class="block font-mono bg-slate-50 p-2 rounded border border-slate-200 text-slate-700 break-all select-all mt-1"></code>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Client IP Address</span>
+          <span id="modalIp" class="font-mono font-semibold text-slate-900 mt-0.5 block"></span>
+        </div>
+        <div>
+          <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Stay Duration</span>
+          <span id="modalDuration" class="font-mono font-bold text-emerald-600 mt-0.5 block"></span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Location (From IP)</span>
+          <span id="modalLocation" class="font-semibold text-slate-900 mt-0.5 block"></span>
+        </div>
+        <div>
+          <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Device &amp; OS</span>
+          <span id="modalDevice" class="text-slate-900 mt-0.5 block"></span>
+        </div>
+      </div>
+
+      <div>
+        <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Page Visited</span>
+        <a id="modalPageUrl" href="#" target="_blank" class="font-mono text-blue-600 hover:underline block break-all font-semibold mt-0.5"></a>
+      </div>
+
+      <div id="modalRefererContainer">
+        <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Referer</span>
+        <span id="modalReferer" class="font-mono text-slate-600 block break-all mt-0.5"></span>
+      </div>
+
+      <div>
+        <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">Full User-Agent String</span>
+        <div id="modalUserAgent" class="font-mono text-[11px] bg-slate-50 p-2 rounded border border-slate-200 text-slate-600 break-all mt-1"></div>
+      </div>
+    </div>
+
+    <div class="border-t border-slate-200 pt-3 flex items-center justify-between">
+      <a id="modalUserJourneyLink" href="#" class="text-xs text-blue-600 hover:underline font-semibold flex items-center gap-1">
+        <span>View all hits for this user &rarr;</span>
+      </a>
+      <button onclick="closeVisitorModal()" class="px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md text-xs font-semibold transition">
+        Close
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function openVisitorModal(item) {
+    document.getElementById('modalVisitorHash').textContent = item.visitor_hash || '-';
+    document.getElementById('modalVisitHash').textContent = item.visit_hash || '-';
+    document.getElementById('modalIp').textContent = item.ip_address || 'Unknown';
+    document.getElementById('modalDuration').textContent = item.duration_display || (item.duration_seconds ? item.duration_seconds + 's' : '< 5s');
+    document.getElementById('modalLocation').textContent = item.location_display || item.country || 'Unknown';
+    document.getElementById('modalDevice').textContent = (item.device_type || 'Desktop') + ' • ' + (item.browser || '') + ' (' + (item.os_name || '') + ')';
+    
+    const pageLink = document.getElementById('modalPageUrl');
+    pageLink.textContent = item.page_url || '/';
+    pageLink.href = item.page_url || '/';
+
+    const refererCont = document.getElementById('modalRefererContainer');
+    if (item.referer) {
+      refererCont.classList.remove('hidden');
+      document.getElementById('modalReferer').textContent = item.referer;
+    } else {
+      refererCont.classList.add('hidden');
+    }
+
+    document.getElementById('modalUserAgent').textContent = item.user_agent || '-';
+    
+    const journeyLink = document.getElementById('modalUserJourneyLink');
+    if (item.visitor_hash) {
+      journeyLink.href = '/admin/analytics/visitors?visitor_hash=' + encodeURIComponent(item.visitor_hash);
+      journeyLink.classList.remove('hidden');
+    } else {
+      journeyLink.classList.add('hidden');
+    }
+
+    const modal = document.getElementById('visitorModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+  }
+
+  function closeVisitorModal() {
+    const modal = document.getElementById('visitorModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+  }
+
+  function setPreset(preset) {
+    const today = new Date();
+    const toDateStr = today.toISOString().split('T')[0];
+    let fromDate = new Date();
+
+    if (preset === 'today') {
+      fromDate = today;
+    } else if (preset === '7d') {
+      fromDate.setDate(today.getDate() - 7);
+    } else if (preset === '30d') {
+      fromDate.setDate(today.getDate() - 30);
+    }
+
+    const fromDateStr = fromDate.toISOString().split('T')[0];
+    document.querySelector('input[name="date_from"]').value = fromDateStr;
+    document.querySelector('input[name="date_to"]').value = toDateStr;
+  }
+
+  function exportToCSV() {
+    const rows = Array.from(document.querySelectorAll('#visitorLogsTable tbody tr'));
+    if (!rows.length) {
+      alert('No logs available to export.');
+      return;
+    }
+
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += ["Timestamp", "Visitor Hash", "Page URL", "Stay Time", "IP Address", "Location", "Device", "Browser"].join(",") + "\r\n";
+
+    rows.forEach(tr => {
+      const cols = tr.querySelectorAll('td');
+      if (cols.length >= 6) {
+        const time = (cols[0]?.innerText || '').replace(/\n/g, ' ').trim();
+        const hash = (cols[1]?.querySelector('a')?.innerText || '').trim();
+        const page = (cols[2]?.querySelector('a')?.innerText || '').trim();
+        const duration = (cols[3]?.innerText || '').replace(/\n/g, ' ').trim();
+        const locParts = (cols[4]?.innerText || '').split('\n').map(s => s.trim()).filter(Boolean);
+        const location = locParts[0] || '';
+        const ip = locParts[1] || '';
+        const devParts = (cols[5]?.innerText || '').split('\n').map(s => s.trim()).filter(Boolean);
+        const dev = devParts[0] || '';
+        const os = devParts[1] || '';
+
+        const line = [
+          `"${time.replace(/"/g, '""')}"`,
+          `"${hash.replace(/"/g, '""')}"`,
+          `"${page.replace(/"/g, '""')}"`,
+          `"${duration.replace(/"/g, '""')}"`,
+          `"${ip.replace(/"/g, '""')}"`,
+          `"${location.replace(/"/g, '""')}"`,
+          `"${dev.replace(/"/g, '""')}"`,
+          `"${os.replace(/"/g, '""')}"`
+        ];
+        csvContent += line.join(",") + "\r\n";
+      }
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `visitor_analytics_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+</script>

@@ -89,6 +89,40 @@
       rvElements.forEach(el => io.observe(el));
     }
 
+    /* Counter animation for elements with [data-count] */
+    const counterElements = document.querySelectorAll('[data-count]:not([data-done="1"])');
+    if (counterElements.length > 0) {
+      const cIo = new IntersectionObserver(entries => {
+        entries.forEach(en => {
+          if (en.isIntersecting) {
+            const el = en.target;
+            cIo.unobserve(el);
+            el.setAttribute('data-done', '1');
+            const raw = el.getAttribute('data-count');
+            const target = parseInt(raw, 10);
+            if (isNaN(target)) return;
+            const suffix = el.getAttribute('data-suffix') || '';
+            const duration = Math.min(1600, Math.max(600, target > 1000 ? 1200 : target * 12));
+            const start = performance.now();
+            function tick(now) {
+              const elapsed = now - start;
+              const progress = Math.min(elapsed / duration, 1);
+              const ease = 1 - Math.pow(1 - progress, 3);
+              const val = Math.floor(ease * target);
+              el.textContent = val.toLocaleString() + suffix;
+              if (progress < 1) {
+                requestAnimationFrame(tick);
+              } else {
+                el.textContent = target.toLocaleString() + suffix;
+              }
+            }
+            requestAnimationFrame(tick);
+          }
+        });
+      }, { threshold: 0.15 });
+      counterElements.forEach(el => cIo.observe(el));
+    }
+
     /* DFT gauge needle sweep */
     const gc = document.getElementById('gaugeCard');
     if (gc) {
@@ -101,9 +135,66 @@
     const yearEl = document.getElementById('year');
     if (yearEl) yearEl.textContent = new Date().getFullYear();
 
-    /* Before / After Slider interactions */
+    /* Before / After Slider interactions (pointer drag + touch + keyboard) */
     const baContainers = document.querySelectorAll('.ba');
     baContainers.forEach(ba => {
+      const handle = ba.querySelector('.ba-handle');
+      let isDragging = false;
+
+      function updatePosition(clientX) {
+        const rect = ba.getBoundingClientRect();
+        if (rect.width <= 0) return;
+        const offsetX = Math.max(0, Math.min(clientX - rect.left, rect.width));
+        const percent = Math.round((offsetX / rect.width) * 100);
+        ba.style.setProperty('--pos', percent + '%');
+        if (handle) {
+          handle.setAttribute('aria-valuenow', percent);
+        }
+      }
+
+      ba.addEventListener('pointerdown', (e) => {
+        isDragging = true;
+        ba.classList.add('dragging');
+        ba.setPointerCapture(e.pointerId);
+        updatePosition(e.clientX);
+      });
+
+      ba.addEventListener('pointermove', (e) => {
+        if (!isDragging) return;
+        updatePosition(e.clientX);
+      });
+
+      function stopDragging(e) {
+        if (!isDragging) return;
+        isDragging = false;
+        ba.classList.remove('dragging');
+        try {
+          ba.releasePointerCapture(e.pointerId);
+        } catch (_) {}
+      }
+
+      ba.addEventListener('pointerup', stopDragging);
+      ba.addEventListener('pointercancel', stopDragging);
+
+      // Keyboard arrow control for accessibility
+      if (handle) {
+        handle.addEventListener('keydown', (e) => {
+          let currentPos = parseFloat(getComputedStyle(ba).getPropertyValue('--pos')) || 50;
+          if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
+            e.preventDefault();
+            const newPos = Math.max(0, currentPos - 5);
+            ba.style.setProperty('--pos', newPos + '%');
+            handle.setAttribute('aria-valuenow', newPos);
+          } else if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            const newPos = Math.min(100, currentPos + 5);
+            ba.style.setProperty('--pos', newPos + '%');
+            handle.setAttribute('aria-valuenow', newPos);
+          }
+        });
+      }
+
+      // Fallback for range inputs if present
       const range = ba.querySelector('.ba-range');
       if (range) {
         range.addEventListener('input', (e) => {
@@ -134,6 +225,65 @@
         });
       });
     });
+
+    /* Visitor duration & stay time tracking via periodic heartbeat & beacon */
+    (function initDurationTracker() {
+      let visitHash = document.querySelector('meta[name="visit-hash"]')?.getAttribute('content');
+      if (!visitHash) {
+        const match = document.cookie.match(/(?:^|;\s*)bg_visit_hash=([^;]+)/);
+        if (match) visitHash = decodeURIComponent(match[1]);
+      }
+      if (!visitHash) return;
+
+      const startTime = Date.now();
+      let lastReportedSec = 0;
+
+      function sendDuration(isFinal) {
+        const elapsedSec = Math.round((Date.now() - startTime) / 1000);
+        if (elapsedSec <= lastReportedSec && !isFinal) return;
+        lastReportedSec = elapsedSec;
+
+        const payload = JSON.stringify({
+          visit_hash: visitHash,
+          duration: elapsedSec,
+          page_url: window.location.pathname
+        });
+
+        const endpoint = '/api/v1/visitors/duration/';
+
+        if (isFinal && navigator.sendBeacon) {
+          try {
+            const blob = new Blob([payload], { type: 'application/json' });
+            navigator.sendBeacon(endpoint, blob);
+            return;
+          } catch (e) {}
+        }
+
+        try {
+          fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: payload,
+            keepalive: Boolean(isFinal)
+          }).catch(() => {});
+        } catch (e) {}
+      }
+
+      // Heartbeat every 15 seconds
+      setInterval(() => {
+        sendDuration(false);
+      }, 15000);
+
+      // On visibility change to hidden or page unload
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') {
+          sendDuration(true);
+        }
+      });
+
+      window.addEventListener('pagehide', () => sendDuration(true));
+      window.addEventListener('beforeunload', () => sendDuration(true));
+    })();
   }
 
   if (document.readyState === 'loading') {

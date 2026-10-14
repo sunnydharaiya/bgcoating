@@ -22,8 +22,10 @@ router.register('calculator/projects', api_views.UserProjectViewSet, basename='u
 router.register('calculator/logs', api_views.CalculationLogViewSet, basename='calculationlog')
 router.register('calculator/products', api_views.PaintProductViewSet, basename='paintproduct')
 router.register('users', api_views.UserViewSet, basename='user')
+router.register('visitor-logs', api_views.VisitorCountViewSet, basename='visitorcount')
 
 urlpatterns = [
+    path('api/v1/visitors/duration/', api_views.api_update_visitor_duration, name='api_update_visitor_duration'),
     path('api/v1/auth/register/', api_views.api_register, name='api_register'),
     path('api/v1/auth/login/', api_views.api_login, name='api_login'),
     path('api/v1/auth/google/', api_views.api_google_auth, name='api_google_auth'),

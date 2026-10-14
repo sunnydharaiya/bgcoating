@@ -40,6 +40,12 @@ export default function App() {
     return localStorage.getItem('bg_auth_logged_in') === 'true';
   });
 
+  // Track whether authentication is compulsory (preview period ended)
+  const [compulsoryAuth, setCompulsoryAuth] = useState(() => {
+    if (localStorage.getItem('bg_auth_logged_in') === 'true') return false;
+    return sessionStorage.getItem('bg_preview_expired') === 'true';
+  });
+
   // Initialize state from current URL - open any dashboard or tool URL directly
   const initialRoute = parseCurrentUrl();
   const [activePage, setActivePageState] = useState(() => {
@@ -48,17 +54,32 @@ export default function App() {
   });
   const [activeSubTool, setActiveSubToolState] = useState(initialRoute.subTool);
 
-  // Auth modal state - starts open if initial URL is /login, or triggered after 10s / manually
+  // Auth modal state - starts open if initial URL is /login, preview expired, or triggered
   const [authModalOpen, setAuthModalOpen] = useState(() => {
-    return initialRoute.page === 'login';
+    if (initialRoute.page === 'login') return true;
+    if (localStorage.getItem('bg_auth_logged_in') === 'true') return false;
+    return sessionStorage.getItem('bg_preview_expired') === 'true';
   });
 
-  // Auto-trigger Auth Modal after 10 seconds of unauthenticated browsing
+  // Compulsory preview window timer: allows brief initial exploration (15s), then locks modal
   useEffect(() => {
-    if (isLoggedIn) return;
-    const timer = setTimeout(() => {
+    if (isLoggedIn) {
+      setCompulsoryAuth(false);
+      return;
+    }
+
+    if (sessionStorage.getItem('bg_preview_expired') === 'true') {
+      setCompulsoryAuth(true);
       setAuthModalOpen(true);
-    }, 10000);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      sessionStorage.setItem('bg_preview_expired', 'true');
+      setCompulsoryAuth(true);
+      setAuthModalOpen(true);
+    }, 15000);
+
     return () => clearTimeout(timer);
   }, [isLoggedIn]);
 
@@ -106,19 +127,19 @@ export default function App() {
   // Auth Handlers
   const handleLoginSuccess = useCallback((userData) => {
     setIsLoggedIn(true);
+    setCompulsoryAuth(false);
+    sessionStorage.removeItem('bg_preview_expired');
     setAuthModalOpen(false);
     if (activePage === 'login') {
       navigate('dashboard', 'hub');
     }
   }, [activePage, navigate]);
 
-  const handleSkipGuest = useCallback(() => {
-    setAuthModalOpen(false);
-  }, []);
-
   const handleLogout = useCallback(() => {
     localStorage.removeItem('bg_auth_logged_in');
+    sessionStorage.setItem('bg_preview_expired', 'true');
     setIsLoggedIn(false);
+    setCompulsoryAuth(true);
     setAuthModalOpen(true);
   }, []);
 
@@ -324,8 +345,9 @@ export default function App() {
           {/* Global Modals & Notifications */}
           <AuthModal 
             isOpen={authModalOpen} 
-            onClose={() => setAuthModalOpen(false)} 
+            onClose={compulsoryAuth ? null : () => setAuthModalOpen(false)} 
             onLoginSuccess={handleLoginSuccess} 
+            isCompulsory={compulsoryAuth}
           />
           <GuidelineDrawer />
           <HelpFaqDrawer 

@@ -32,6 +32,23 @@ async function bootstrap() {
     const date = new Date(dateStr);
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
   });
+  hbs.registerHelper('formatDateTime', (dateStr) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    return date.toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+  });
+  hbs.registerHelper('gt', (a, b) => a > b);
+  hbs.registerHelper('gte', (a, b) => a >= b);
+  hbs.registerHelper('lt', (a, b) => a < b);
+  hbs.registerHelper('lte', (a, b) => a <= b);
+  hbs.registerHelper('slice', (str, start, end) => (typeof str === 'string' ? str.slice(start, end) : ''));
 
   const port = process.env.PORT || 3001;
   await app.listen(port);

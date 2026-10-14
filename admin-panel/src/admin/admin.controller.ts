@@ -67,6 +67,81 @@ export class AdminController {
     }
   }
 
+  // ================= VISITOR ANALYTICS & TRAFFIC LOGS =================
+  @Get('analytics/visitors')
+  @Render('analytics/visitors')
+  async getVisitorAnalytics(@Req() req: Request, @Query() query: any) {
+    const token = req.cookies?.admin_token;
+    const ctx = this.getAdminContext(req, 'Visitor Analytics & Traffic Logs', 'analytics-visitors');
+
+    const page = parseInt(query?.page as string, 10) || 1;
+    const pageSize = 25;
+
+    const apiParams: Record<string, any> = {
+      page,
+      page_size: pageSize,
+    };
+
+    if (query?.date_from) apiParams.date_from = query.date_from;
+    if (query?.date_to) apiParams.date_to = query.date_to;
+    if (query?.country) apiParams.country = query.country;
+    if (query?.city) apiParams.city = query.city;
+    if (query?.visitor_hash) apiParams.visitor_hash = query.visitor_hash;
+    if (query?.device_type) apiParams.device_type = query.device_type;
+    if (query?.search) apiParams.search = query.search;
+
+    try {
+      const [rawLogs, stats] = await Promise.all([
+        this.apiClient.get<any>('/visitor-logs/', apiParams, token).catch(() => ({ results: [], count: 0 })),
+        this.apiClient.get<any>('/visitor-logs/stats/', apiParams, token).catch(() => ({
+          total_visits: 0,
+          unique_visitors: 0,
+          avg_duration_seconds: 0,
+          avg_duration_display: '0s',
+          top_pages: [],
+          top_locations: [],
+          devices: [],
+          available_countries: [],
+        })),
+      ]);
+
+      const pagination = this.apiClient.adaptPaginated(rawLogs, page, pageSize);
+
+      return {
+        ...ctx,
+        pagination,
+        logs: pagination.items,
+        stats,
+        filters: {
+          date_from: query?.date_from || '',
+          date_to: query?.date_to || '',
+          country: query?.country || '',
+          city: query?.city || '',
+          visitor_hash: query?.visitor_hash || '',
+          device_type: query?.device_type || '',
+          search: query?.search || '',
+        },
+      };
+    } catch (err) {
+      return {
+        ...ctx,
+        pagination: this.apiClient.adaptPaginated([], 1, pageSize),
+        logs: [],
+        stats: {
+          total_visits: 0,
+          unique_visitors: 0,
+          avg_duration_seconds: 0,
+          avg_duration_display: '0s',
+          top_pages: [],
+          top_locations: [],
+          devices: [],
+          available_countries: [],
+        },
+        filters: {},
+      };
+    }
+  }
+
   // ================= WEBSITE MANAGEMENT =================
   @Get('website/settings')
   @Render('website/settings')

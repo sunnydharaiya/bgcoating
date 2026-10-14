@@ -45,17 +45,6 @@ def home(request):
         'Protective coatings, surface preparation, corrosion assessment & NACE/AMPP-aligned coating inspection for refinery, oil & gas, petrochemical and industrial assets. BG Group, Surat, India.',
     )
 
-    # Dynamic visitor tracking
-    try:
-        from .models import SiteSettings
-        site_cfg = SiteSettings.load()
-        site_cfg.live_visitor_count += 1
-        if not request.session.get('bg_unique_visitor_counted'):
-            site_cfg.live_unique_visitor_count += 1
-            request.session['bg_unique_visitor_counted'] = True
-        site_cfg.save(update_fields=['live_visitor_count', 'live_unique_visitor_count'])
-    except Exception:
-        pass
 
     # All 12 services in exact order
     all_services = Service.objects.all().select_related('category').order_by('order', 'id')

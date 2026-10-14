@@ -19,6 +19,7 @@ from .models import (
     CalculationLog,
     PaintProduct,
     UserProfile,
+    VisitorCount,
 )
 
 
@@ -367,4 +368,40 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
             instance.user.save(update_fields=['first_name', 'last_name'])
 
         return super().update(instance, validated_data)
+
+
+class VisitorCountSerializer(serializers.ModelSerializer):
+    duration_display = serializers.CharField(read_only=True)
+    location_display = serializers.CharField(read_only=True)
+    short_visitor_hash = serializers.CharField(read_only=True)
+    short_visit_hash = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = VisitorCount
+        fields = [
+            'id',
+            'visitor_hash',
+            'visit_hash',
+            'short_visitor_hash',
+            'short_visit_hash',
+            'ip_address',
+            'session_key',
+            'page_url',
+            'page_title',
+            'referer',
+            'country',
+            'country_code',
+            'city',
+            'region',
+            'location_display',
+            'user_agent',
+            'device_type',
+            'browser',
+            'os_name',
+            'duration_seconds',
+            'duration_display',
+            'visited_at',
+            'updated_at',
+        ]
+        read_only_fields = fields
 

@@ -14,12 +14,13 @@ from .models import (
     TechnicalStandard,
     Industry,
     ContactSubmission,
+    VisitorCount,
 )
 
 
 @admin.register(SiteSettings)
 class SiteSettingsAdmin(admin.ModelAdmin):
-    list_display = ('site_name', 'phone_number', 'total_visitors_baseline', 'live_visitor_count', 'unique_visitors_baseline', 'total_enquiries_baseline', 'customer_feedback_count')
+    list_display = ('site_name', 'phone_number', 'total_visitors_baseline', 'unique_visitors_baseline', 'total_enquiries_baseline', 'customer_feedback_baseline')
     fieldsets = (
         ("Branding & Identification", {
             'fields': ('site_name', 'tagline', 'logo', 'footer_logo', 'footer_description', 'copyright_text')
@@ -31,11 +32,10 @@ class SiteSettingsAdmin(admin.ModelAdmin):
             'fields': ('facebook_url', 'instagram_url', 'youtube_url', 'linkedin_url', 'pinterest_url', 'career_form_url')
         }),
         ("Trust Dashboard Metrics (Homepage)", {
-            'description': "Configure baseline metrics and view/adjust live visitor counters displayed on the homepage dashboard.",
+            'description': "Optional baseline numbers added to dynamic table counts. Set 0 to display pure live counts from database tables.",
             'fields': (
-                ('total_visitors_baseline', 'live_visitor_count'),
-                ('unique_visitors_baseline', 'live_unique_visitor_count'),
-                ('total_enquiries_baseline', 'customer_feedback_count'),
+                ('total_visitors_baseline', 'unique_visitors_baseline'),
+                ('total_enquiries_baseline', 'customer_feedback_baseline'),
             )
         }),
     )
@@ -165,4 +165,84 @@ class UserProfileAdmin(admin.ModelAdmin):
     list_filter = ('auth_provider', 'role', 'created_at')
     search_fields = ('user__username', 'user__email', 'full_name', 'company', 'mobile')
     readonly_fields = ('created_at', 'updated_at')
+
+
+from django.utils.html import format_html
+
+
+@admin.register(VisitorCount)
+class VisitorCountAdmin(admin.ModelAdmin):
+    list_display = (
+        'visited_at',
+        'visitor_hash_badge',
+        'visit_hash_badge',
+        'page_url_link',
+        'location_badge',
+        'duration_display',
+        'device_type',
+        'browser',
+        'ip_address',
+    )
+    list_filter = ('visited_at', 'country', 'city', 'device_type', 'browser')
+    search_fields = ('visitor_hash', 'visit_hash', 'page_url', 'ip_address', 'city', 'country', 'referer')
+    readonly_fields = (
+        'visitor_hash',
+        'visit_hash',
+        'ip_address',
+        'session_key',
+        'page_url',
+        'page_title',
+        'referer',
+        'country',
+        'country_code',
+        'city',
+        'region',
+        'device_type',
+        'browser',
+        'os_name',
+        'duration_seconds',
+        'user_agent',
+        'visited_at',
+        'updated_at',
+    )
+    date_hierarchy = 'visited_at'
+
+    def has_add_permission(self, request):
+        return False
+
+    @admin.display(description="Page Visited")
+    def page_url_link(self, obj):
+        if not obj.page_url:
+            return "-"
+        return format_html(
+            '<a href="{0}" target="_blank" style="font-weight:600;color:#2563eb;">{0}</a>',
+            obj.page_url
+        )
+
+    @admin.display(description="Visitor Hash")
+    def visitor_hash_badge(self, obj):
+        if not obj.visitor_hash:
+            return "-"
+        return format_html(
+            '<code style="background:#eff6ff;color:#1e40af;padding:2px 6px;border-radius:4px;font-size:11px;">{}</code>',
+            obj.short_visitor_hash
+        )
+
+    @admin.display(description="Visit Hash")
+    def visit_hash_badge(self, obj):
+        if not obj.visit_hash:
+            return "-"
+        return format_html(
+            '<code style="background:#f1f5f9;color:#475569;padding:2px 6px;border-radius:4px;font-size:11px;">{}</code>',
+            obj.short_visit_hash
+        )
+
+    @admin.display(description="Location")
+    def location_badge(self, obj):
+        loc = obj.location_display
+        return format_html(
+            '<span style="background:#f8fafc;border:1px solid #e2e8f0;padding:2px 6px;border-radius:4px;font-size:12px;">📍 {}</span>',
+            loc
+        )
+
 

@@ -36,3 +36,11 @@ def global_standards(request):
     except Exception:
         standards = []
     return {'global_standards': standards}
+
+
+def visitor_analytics(request):
+    """Inject current visit and visitor hashes for frontend duration tracking."""
+    return {
+        'current_visit_hash': getattr(request, 'current_visit_hash', ''),
+        'current_visitor_hash': getattr(request, 'current_visitor_hash', ''),
+    }

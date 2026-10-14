@@ -11,6 +11,7 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from django.db import models
 from django.http import Http404
+from django.views.decorators.csrf import csrf_exempt
 
 from .models import (
     SiteSettings,
@@ -31,6 +32,7 @@ from .models import (
     CalculationLog,
     PaintProduct,
     UserProfile,
+    VisitorCount,
 )
 from .serializers import (
     SiteSettingsSerializer,
@@ -55,6 +57,7 @@ from .serializers import (
     UserProfileSerializer,
     UserRegistrationSerializer,
     UserProfileUpdateSerializer,
+    VisitorCountSerializer,
 )
 from . import calculator_engine
 
@@ -899,4 +902,169 @@ class PaintProductViewSet(viewsets.ModelViewSet):
     queryset = PaintProduct.objects.all()
     serializer_class = PaintProductSerializer
     permission_classes = [AllowAny]
+
+
+@csrf_exempt
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def api_update_visitor_duration(request):
+    """
+    Heartbeat & beacon endpoint updating visitor page stay duration (in seconds)
+    for a given visit_hash.
+    """
+    try:
+        data = request.data
+        if not data and request.body:
+            import json
+            data = json.loads(request.body.decode('utf-8'))
+
+        visit_hash = (data.get('visit_hash') or '').strip()
+        duration = data.get('duration')
+        if not visit_hash or duration is None:
+            return Response({'error': 'visit_hash and duration are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            duration_sec = int(duration)
+        except (ValueError, TypeError):
+            return Response({'error': 'Invalid duration format.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if duration_sec < 0:
+            duration_sec = 0
+
+        # Update the hit with this visit_hash
+        hit = VisitorCount.objects.filter(visit_hash=visit_hash).order_by('-visited_at').first()
+        if hit:
+            if duration_sec > hit.duration_seconds:
+                hit.duration_seconds = duration_sec
+                hit.save(update_fields=['duration_seconds', 'updated_at'])
+            return Response({
+                'status': 'success',
+                'visit_hash': hit.visit_hash,
+                'duration_seconds': hit.duration_seconds
+            }, status=status.HTTP_200_OK)
+
+        return Response({'status': 'not_found', 'message': 'Visit entry not found.'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as ex:
+        return Response({'error': str(ex)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class VisitorCountViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    API endpoint for retrieving visitor traffic logs and aggregated analytics.
+    Supports filtering by date range (date_from, date_to), country, city, visitor hash, and search.
+    """
+    serializer_class = VisitorCountSerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        qs = VisitorCount.objects.all().order_by('-visited_at')
+        params = self.request.query_params
+
+        # Filter by Date range
+        date_from = params.get('date_from')
+        if date_from:
+            qs = qs.filter(visited_at__date__gte=date_from)
+
+        date_to = params.get('date_to')
+        if date_to:
+            qs = qs.filter(visited_at__date__lte=date_to)
+
+        # Filter by Location
+        country = params.get('country')
+        if country:
+            qs = qs.filter(country__iexact=country)
+
+        city = params.get('city')
+        if city:
+            qs = qs.filter(city__iexact=city)
+
+        # Filter by specific Visitor Hash
+        visitor_hash = params.get('visitor_hash')
+        if visitor_hash:
+            qs = qs.filter(visitor_hash=visitor_hash)
+
+        # Filter by Device
+        device_type = params.get('device_type')
+        if device_type:
+            qs = qs.filter(device_type__iexact=device_type)
+
+        # General search query
+        search = params.get('search')
+        if search:
+            qs = qs.filter(
+                models.Q(page_url__icontains=search) |
+                models.Q(ip_address__icontains=search) |
+                models.Q(visitor_hash__icontains=search) |
+                models.Q(visit_hash__icontains=search) |
+                models.Q(city__icontains=search) |
+                models.Q(country__icontains=search) |
+                models.Q(referer__icontains=search)
+            )
+
+        return qs
+
+    @action(detail=False, methods=['get'])
+    def stats(self, request):
+        """
+        Return comprehensive visitor analytics summary for the selected period.
+        """
+        from django.db.models import Count, Avg
+
+        qs = self.get_queryset()
+
+        total_visits = qs.count()
+        unique_visitors = qs.exclude(visitor_hash='').values('visitor_hash').distinct().count()
+
+        # Average duration for non-zero visits
+        durations = qs.filter(duration_seconds__gt=0).values_list('duration_seconds', flat=True)
+        avg_duration = round(sum(durations) / len(durations)) if durations else 0
+
+        # Top pages
+        top_pages = list(
+            qs.exclude(page_url='')
+            .values('page_url')
+            .annotate(hits=Count('id'), avg_stay=Avg('duration_seconds'))
+            .order_by('-hits')[:10]
+        )
+        for tp in top_pages:
+            tp['avg_stay'] = round(tp['avg_stay'] or 0)
+
+        # Top countries & cities
+        top_locations = list(
+            qs.exclude(country__in=['', 'Unknown'])
+            .values('country', 'city')
+            .annotate(hits=Count('id'))
+            .order_by('-hits')[:10]
+        )
+
+        # Device breakdown
+        device_stats = list(
+            qs.exclude(device_type='')
+            .values('device_type')
+            .annotate(count=Count('id'))
+            .order_by('-count')
+        )
+
+        # Filter dropdown values
+        available_countries = list(
+            VisitorCount.objects.exclude(country__in=['', 'Unknown'])
+            .values_list('country', flat=True)
+            .distinct()
+            .order_by('country')
+        )
+
+        mins = avg_duration // 60
+        secs = avg_duration % 60
+        avg_duration_display = f"{mins}m {secs}s" if mins else f"{secs}s"
+
+        return Response({
+            'total_visits': total_visits,
+            'unique_visitors': unique_visitors,
+            'avg_duration_seconds': avg_duration,
+            'avg_duration_display': avg_duration_display,
+            'top_pages': top_pages,
+            'top_locations': top_locations,
+            'devices': device_stats,
+            'available_countries': available_countries,
+        })
 

@@ -5,10 +5,7 @@ import {
   User, 
   Eye, 
   EyeOff, 
-  ArrowRight,
-  Sparkles,
-  HelpCircle,
-  ExternalLink
+  ArrowRight
 } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { loginWithEmail, registerWithEmail, loginWithGoogle } from '../utils/api';
@@ -33,7 +30,6 @@ export default function LoginPage({ onLoginSuccess }) {
   // Google OAuth State
   const googleBtnRef = useRef(null);
   const [googleClientReady, setGoogleClientReady] = useState(false);
-  const [showSetupHelp, setShowSetupHelp] = useState(false);
 
   const rawClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
   const hasValidClientId = Boolean(
@@ -448,15 +444,14 @@ export default function LoginPage({ onLoginSuccess }) {
               )}
             </div>
           ) : (
-            <div className="w-full space-y-2.5">
-              {/* Google Button with Setup Guidance */}
+            <div className="w-full">
+              {/* Google Button */}
               <button
                 type="button"
                 onClick={() => {
-                  setShowSetupHelp(!showSetupHelp);
                   addToast(
-                    'Google Sign-In Configuration',
-                    'Set VITE_GOOGLE_CLIENT_ID in calculator-react/.env to sign in with your real Google account.',
+                    'Google Sign-In',
+                    'Please sign in using your registered email and password below.',
                     'info'
                   );
                 }}
@@ -470,53 +465,6 @@ export default function LoginPage({ onLoginSuccess }) {
                 </svg>
                 <span>Sign in with Google</span>
               </button>
-
-              {/* Informative Setup Banner */}
-              <div className="p-3 bg-amber-50/80 border border-amber-200/90 rounded-2xl text-left">
-                <div className="flex items-start gap-2">
-                  <Sparkles className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[11px] font-bold text-amber-950">
-                      Real Google Account Sign-In Setup
-                    </p>
-                    <p className="text-[10px] text-amber-800/90 mt-0.5 leading-relaxed">
-                      To authenticate with your live Google account, add your OAuth Client ID to <code className="px-1 py-0.5 bg-amber-100 rounded font-mono text-amber-950 font-semibold">calculator-react/.env</code>:
-                    </p>
-                    <div className="mt-1.5 bg-amber-100/90 border border-amber-200 rounded-lg px-2 py-1 font-mono text-[9.5px] text-amber-950 select-all overflow-x-auto">
-                      VITE_GOOGLE_CLIENT_ID=your-id.apps.googleusercontent.com
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setShowSetupHelp(!showSetupHelp)}
-                      className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-900 hover:text-amber-700 mt-2 cursor-pointer"
-                    >
-                      <HelpCircle className="w-3 h-3" />
-                      <span>{showSetupHelp ? 'Hide Google Cloud Guide' : 'How to get your Google Client ID'}</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Step-by-Step Instructions Toggle */}
-                {showSetupHelp && (
-                  <div className="mt-2.5 pt-2.5 border-t border-amber-200 text-[10px] text-slate-700 space-y-1.5">
-                    <div className="font-semibold text-slate-900 uppercase tracking-wider text-[9px] font-mono">
-                      4 Quick Steps to Enable Google Sign-In:
-                    </div>
-                    <p className="text-slate-600">
-                      <strong>1.</strong> Visit <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noreferrer" className="text-blue-600 font-semibold underline inline-flex items-center gap-0.5">Google Cloud Credentials <ExternalLink className="w-2.5 h-2.5" /></a>
-                    </p>
-                    <p className="text-slate-600">
-                      <strong>2.</strong> Click <strong>+ Create Credentials</strong> &rarr; <strong>OAuth client ID</strong>.
-                    </p>
-                    <p className="text-slate-600">
-                      <strong>3.</strong> Choose <strong>Web application</strong> and add Authorized JavaScript origins: <code className="bg-white px-1 py-0.5 rounded border border-slate-200 font-mono text-slate-800">http://localhost:3000</code>.
-                    </p>
-                    <p className="text-slate-600">
-                      <strong>4.</strong> Paste your Client ID into <code className="bg-white px-1 py-0.5 rounded border border-slate-200 font-mono text-slate-800">calculator-react/.env</code> as <code className="font-mono text-amber-900 font-bold">VITE_GOOGLE_CLIENT_ID</code> and in <code className="bg-white px-1 py-0.5 rounded border border-slate-200 font-mono text-slate-800">backend/.env</code> as <code className="font-mono text-amber-900 font-bold">GOOGLE_CLIENT_ID</code>.
-                    </p>
-                  </div>
-                )}
-              </div>
             </div>
           )}
 

@@ -13,6 +13,9 @@ WorkingDirectory=/var/www/bgcoating.com/backend
 # Optional environment variables (dash prefix '-' ensures no crash if file is absent)
 EnvironmentFile=-/var/www/bgcoating.com/backend/.env
 
+# Automatically apply database migrations before Gunicorn starts
+ExecStartPre=/var/www/bgcoating.com/backend/.venv/bin/python /var/www/bgcoating.com/backend/manage.py migrate --noinput
+
 # Gunicorn execution path inside the Python virtualenv (single line)
 ExecStart=/var/www/bgcoating.com/backend/.venv/bin/gunicorn --config /var/www/bgcoating.com/backend/gunicorn_conf.py bgcoating_config.wsgi:application
 
