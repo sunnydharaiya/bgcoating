@@ -65,9 +65,9 @@ export default function AuthModal({
     };
   }, [isOpen]);
 
-  // Handle escape key (disabled when login is compulsory)
+  // Handle escape key
   useEffect(() => {
-    if (!isOpen || isCompulsory) return;
+    if (!isOpen) return;
     const handleKeyDown = (e) => {
       if (e.key === 'Escape' && onClose) {
         onClose();
@@ -75,7 +75,7 @@ export default function AuthModal({
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, isCompulsory, onClose]);
+  }, [isOpen, onClose]);
 
   // Initialize official Google Identity Services SDK for Real Google Account Sign-In
   useEffect(() => {
@@ -204,8 +204,8 @@ export default function AuthModal({
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-950/75 backdrop-blur-sm animate-in fade-in duration-200"
-      onClick={!isCompulsory && onClose ? onClose : undefined}
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 bg-slate-950/75 backdrop-blur-sm animate-in fade-in duration-200"
+      onClick={onClose}
     >
       
       {/* Centered Clean Auth Modal */}
@@ -217,8 +217,8 @@ export default function AuthModal({
         onClick={(e) => e.stopPropagation()}
       >
         
-        {/* Close Button - hidden when login is compulsory */}
-        {!isCompulsory && onClose && (
+        {/* Close Button */}
+        {onClose && (
           <button
             type="button"
             onClick={onClose}
@@ -227,19 +227,6 @@ export default function AuthModal({
           >
             <X className="w-5 h-5" />
           </button>
-        )}
-
-        {/* Compulsory Login Notice when preview period ends */}
-        {isCompulsory && (
-          <div className="mb-4 px-3.5 py-2.5 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/90 rounded-2xl flex items-center gap-2.5 text-left text-amber-950 text-xs shadow-2xs">
-            <div className="w-7 h-7 rounded-xl bg-amber-500/20 text-amber-700 flex items-center justify-center shrink-0">
-              <ShieldCheck className="w-4 h-4" />
-            </div>
-            <div>
-              <p className="font-bold text-[11px] text-amber-900 leading-tight">Preview Period Ended</p>
-              <p className="text-[10px] text-amber-800/90 leading-normal mt-0.5">Please sign in or create an account to continue using BG CoatingOS™.</p>
-            </div>
-          </div>
         )}
 
         {/* Brand Header */}
@@ -549,6 +536,19 @@ export default function AuthModal({
           )}
 
         </div>
+
+        {/* Guest Skip Option */}
+        {onClose && (
+          <div className="mt-4 pt-3 border-t border-slate-100 text-center">
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-[11px] font-medium text-slate-500 hover:text-slate-800 transition cursor-pointer"
+            >
+              Continue browsing as Guest &rarr;
+            </button>
+          </div>
+        )}
 
       </div>
 

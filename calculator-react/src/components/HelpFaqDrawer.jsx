@@ -211,7 +211,7 @@ export default function HelpFaqDrawer({ isOpen, onClose, onSelectPage }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden">
+    <div className="fixed inset-0 z-[9000] overflow-hidden">
       {/* Backdrop */}
       <div 
         onClick={onClose}
