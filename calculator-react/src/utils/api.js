@@ -1,10 +1,28 @@
 // src/utils/api.js
 
-export const API_BASE_URL = (
-  import.meta.env.VITE_API_URL ||
-  (typeof window !== 'undefined' && (window.__ENV__?.API_URL || window.CONFIG?.apiUrl)) ||
-  'http://localhost:7777'
-).replace(/\/+$/, '');
+export function getApiBaseUrl() {
+  if (typeof window !== 'undefined') {
+    const envApi = window.__ENV__?.API_URL;
+    if (envApi && typeof envApi === 'string' && !envApi.startsWith('%') && envApi !== 'undefined') {
+      return envApi.replace(/\/+$/, '');
+    }
+    const configApi = window.CONFIG?.apiUrl;
+    if (configApi && typeof configApi === 'string' && !configApi.startsWith('%') && configApi !== 'undefined') {
+      return configApi.replace(/\/+$/, '');
+    }
+    const host = window.location.hostname;
+    if (host && host !== 'localhost' && host !== '127.0.0.1') {
+      return 'https://bgcoating.com';
+    }
+  }
+  const envUrl = import.meta.env.VITE_API_URL;
+  if (envUrl && typeof envUrl === 'string' && !envUrl.startsWith('%') && envUrl !== 'undefined') {
+    return envUrl.replace(/\/+$/, '');
+  }
+  return 'http://localhost:7777';
+}
+
+export const API_BASE_URL = getApiBaseUrl();
 
 /**
  * Retrieve current authentication token from localStorage

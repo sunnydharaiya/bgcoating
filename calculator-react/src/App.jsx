@@ -33,6 +33,7 @@ import PlanUpgradeModal from './components/PlanUpgradeModal';
 // Router Utilities
 import { parseCurrentUrl, getUrlFor } from './utils/router';
 import { fetchUserProfile } from './utils/api';
+import { useVisitorTracker } from './utils/visitorTracker';
 
 export default function App() {
   // Check auth state from localStorage
@@ -47,6 +48,9 @@ export default function App() {
     return initialRoute.page;
   });
   const [activeSubTool, setActiveSubToolState] = useState(initialRoute.subTool);
+
+  // Silent, zero-footprint visitor & dwell time tracking across all routes and tools
+  useVisitorTracker(activePage, activeSubTool);
 
   // Auth modal state - starts open only if initial URL is /login or triggered manually
   const [authModalOpen, setAuthModalOpen] = useState(() => {

@@ -102,6 +102,11 @@ else:
         'http://127.0.0.1:3001',
         'http://127.0.0.1:5173',
         'http://127.0.0.1:7777',
+        'https://bgcoating.com',
+        'https://www.bgcoating.com',
+        'https://admin.bgcoating.com',
+        'https://*.bgcoating.com',
+        'https://*.pages.dev',
     ]
 
 # Reverse Proxy / SSL Detection (for Nginx / Cloudflare)

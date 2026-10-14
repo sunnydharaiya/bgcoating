@@ -6552,5 +6552,67 @@
         </button>
       </footer>
     </aside>
+    <!-- Silent visitor duration tracker -->
+    <script>
+      (function() {
+        var visitHash = 'vh_' + Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
+        var visitorHash = '';
+        try {
+          visitorHash = localStorage.getItem('bg_visitor_hash') || '';
+          if (!visitorHash) {
+            var m = document.cookie.match(/(?:^|;\s*)bg_visitor_hash=([^;]+)/);
+            if (m) visitorHash = decodeURIComponent(m[1]);
+          }
+          if (!visitorHash) {
+            visitorHash = 'vh_v_' + Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
+            localStorage.setItem('bg_visitor_hash', visitorHash);
+            document.cookie = 'bg_visitor_hash=' + encodeURIComponent(visitorHash) + '; path=/; max-age=31536000; SameSite=Lax';
+          }
+        } catch(e) {}
+
+        var startTime = Date.now();
+        var lastReportedSec = 0;
+
+        function sendDuration(isFinal) {
+          var elapsedSec = Math.max(1, Math.round((Date.now() - startTime) / 1000));
+          if (!isFinal && elapsedSec <= lastReportedSec) return;
+          lastReportedSec = elapsedSec;
+
+          var payload = JSON.stringify({
+            visit_hash: visitHash,
+            visitor_hash: visitorHash,
+            duration: elapsedSec,
+            page_url: window.location.pathname
+          });
+
+          var endpoint = '/api/v1/visitors/duration/';
+
+          if (isFinal && navigator.sendBeacon) {
+            try {
+              var blob = new Blob([payload], { type: 'application/json' });
+              navigator.sendBeacon(endpoint, blob);
+              return;
+            } catch (e) {}
+          }
+
+          try {
+            fetch(endpoint, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: payload,
+              keepalive: Boolean(isFinal)
+            }).catch(function() {});
+          } catch (e) {}
+        }
+
+        sendDuration(false);
+        setInterval(function() { sendDuration(false); }, 15000);
+        document.addEventListener('visibilitychange', function() {
+          if (document.visibilityState === 'hidden') sendDuration(true);
+        });
+        window.addEventListener('pagehide', function() { sendDuration(true); });
+        window.addEventListener('beforeunload', function() { sendDuration(true); });
+      })();
+    </script>
   </body>
 </html>

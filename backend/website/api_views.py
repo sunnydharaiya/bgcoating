@@ -925,6 +925,7 @@ def api_update_visitor_duration(request):
             data = {}
 
         visit_hash = (data.get('visit_hash') or request.POST.get('visit_hash') or '').strip()
+        visitor_hash = (data.get('visitor_hash') or request.POST.get('visitor_hash') or '').strip()
         duration = data.get('duration') if data.get('duration') is not None else request.POST.get('duration')
         page_url = (data.get('page_url') or request.POST.get('page_url') or '').strip()[:255]
 
@@ -951,6 +952,7 @@ def api_update_visitor_duration(request):
             or request.META.get('HTTP_X_REAL_IP', '').strip()
             or request.META.get('REMOTE_ADDR', '')
         )
+        user_agent = request.META.get('HTTP_USER_AGENT', '')
 
         if not hit and session_key:
             hit = VisitorCount.objects.filter(session_key=session_key, page_url=page_url).order_by('-visited_at').first()
@@ -960,23 +962,32 @@ def api_update_visitor_duration(request):
 
         # 3. Update existing hit duration
         if hit:
+            update_fields = []
             if duration_sec > hit.duration_seconds:
                 hit.duration_seconds = duration_sec
-                hit.save(update_fields=['duration_seconds', 'updated_at'])
+                update_fields.append('duration_seconds')
+            if not hit.visitor_hash and visitor_hash:
+                hit.visitor_hash = visitor_hash
+                update_fields.append('visitor_hash')
+            if update_fields:
+                update_fields.append('updated_at')
+                hit.save(update_fields=update_fields)
             return Response({
                 'status': 'success',
                 'visit_hash': hit.visit_hash,
+                'visitor_hash': hit.visitor_hash,
                 'duration_seconds': hit.duration_seconds
             }, status=status.HTTP_200_OK)
 
         # 4. Upsert new hit record if visit wasn't pre-recorded
-        from .geo_utils import get_ip_location, parse_device_info, generate_visit_hash
-        user_agent = request.META.get('HTTP_USER_AGENT', '')
+        from .geo_utils import get_ip_location, parse_device_info, generate_visit_hash, generate_visitor_hash
         loc = get_ip_location(ip)
         dev = parse_device_info(user_agent)
-        final_hash = visit_hash or generate_visit_hash(ip or 'anon', page_url or '/')
+        computed_visitor_hash = visitor_hash or generate_visitor_hash(ip, user_agent, session_key)
+        final_hash = visit_hash or generate_visit_hash(computed_visitor_hash, page_url or '/')
 
         hit = VisitorCount.objects.create(
+            visitor_hash=computed_visitor_hash,
             visit_hash=final_hash,
             page_url=page_url or '/',
             ip_address=ip or None,
@@ -995,6 +1006,7 @@ def api_update_visitor_duration(request):
         return Response({
             'status': 'created',
             'visit_hash': hit.visit_hash,
+            'visitor_hash': hit.visitor_hash,
             'duration_seconds': hit.duration_seconds
         }, status=status.HTTP_200_OK)
     except Exception as ex:
