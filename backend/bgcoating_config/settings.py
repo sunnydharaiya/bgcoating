@@ -81,12 +81,45 @@ except ImportError:
     pass
 
 # CORS Configuration
-CORS_ALLOW_ALL_ORIGINS = os.environ.get('CORS_ALLOW_ALL_ORIGINS', 'True').lower() in ('true', '1', 'yes')
+# Allow all origins so frontend applications (Cloudflare Pages, subdomains, local dev) can communicate with API
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r"^https://([a-zA-Z0-9-]+\.)*bgcoating\.com$",
+    r"^https://([a-zA-Z0-9-]+\.)*pages\.dev$",
+    r"^http://localhost:[0-9]+$",
+    r"^http://127\.0\.0\.1:[0-9]+$",
+]
+
+default_cors_origins = [
+    'https://bgcoating.com',
+    'https://www.bgcoating.com',
+    'https://admin.bgcoating.com',
+    'https://calculator.bgcoating.com',
+    'https://calc.bgcoating.com',
+    'https://os.bgcoating.com',
+    'https://app.bgcoating.com',
+    'https://bgcoating-calculator.pages.dev',
+    'https://bgcoating-admin.pages.dev',
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:5173',
+    'http://localhost:7777',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:3001',
+    'http://127.0.0.1:5173',
+    'http://127.0.0.1:7777',
+]
+
 cors_origins_env = os.environ.get('CORS_ALLOWED_ORIGINS', '')
 if cors_origins_env:
     CORS_ALLOWED_ORIGINS = [origin.strip() for origin in cors_origins_env.split(',') if origin.strip()]
-
-CORS_ALLOW_CREDENTIALS = True
+    for origin in default_cors_origins:
+        if origin not in CORS_ALLOWED_ORIGINS:
+            CORS_ALLOWED_ORIGINS.append(origin)
+else:
+    CORS_ALLOWED_ORIGINS = default_cors_origins
 
 # CSRF Trusted Origins (Required for POST requests from Cloudflare hosted frontends & Admin)
 csrf_origins_env = os.environ.get('CSRF_TRUSTED_ORIGINS', '')
