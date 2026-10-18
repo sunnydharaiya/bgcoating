@@ -4,8 +4,10 @@
 # ==============================================================================
 set -e
 
-# Default directory (adjust if your project path on VPS is different)
-PROJECT_DIR="${VPS_PROJECT_DIR:-/var/www/bgcoating.com}"
+# Auto-detect repository directory from script location or use VPS_PROJECT_DIR
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DEFAULT_PROJECT_DIR="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+PROJECT_DIR="${VPS_PROJECT_DIR:-$DEFAULT_PROJECT_DIR}"
 BACKEND_DIR="${PROJECT_DIR}/backend"
 VENV_DIR="${BACKEND_DIR}/.venv"
 SERVICE_NAME="bgcoating-backend"

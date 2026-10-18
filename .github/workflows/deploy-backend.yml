@@ -55,7 +55,7 @@ jobs:
           script_stop: true
           envs: VPS_PROJECT_DIR
           script: |
-            export VPS_PROJECT_DIR="${{ secrets.VPS_PROJECT_DIR || '/var/www/bgcoating.com' }}"
+            export VPS_PROJECT_DIR="${{ secrets.VPS_PROJECT_DIR || '/var/www/bgcoating' }}"
             cd "${VPS_PROJECT_DIR}"
 
             # 1. Preserve server live SQLite database before any git update
