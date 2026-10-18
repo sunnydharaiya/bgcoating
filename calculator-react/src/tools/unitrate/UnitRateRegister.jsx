@@ -75,29 +75,29 @@ export default function UnitRateRegister({
   return (
     <div className="space-y-6">
       {/* Top Banner & KPI Stat Tiles */}
-      <div className="bg-slate-900/80 p-5 rounded-2xl border border-slate-700/80 shadow-xl space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-700/60 pb-3">
+      <div className="bg-white p-5 rounded-2xl border border-[#E6E8EC] shadow-2xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#E2E8F0] pb-3">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-lg bg-amber-500/20 text-amber-400">
+            <div className="p-2 rounded-lg bg-orange-50 text-orange-600 border border-orange-200">
               <FolderArchive className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-white">Commercial Unit-Rate Quotation Register</h2>
-              <p className="text-xs text-slate-400">Centralized register of tender estimates, unit-rate take-offs, and commercial approvals.</p>
+              <h2 className="text-base font-bold text-slate-800">Commercial Unit-Rate Quotation Register</h2>
+              <p className="text-xs text-slate-500">Centralized register of tender estimates, unit-rate take-offs, and commercial approvals.</p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
             <button
               onClick={handleExportCSV}
-              className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition border border-slate-600"
+              className="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition border border-slate-200 shadow-2xs"
             >
-              <Download className="w-3.5 h-3.5 text-emerald-400" />
+              <Download className="w-3.5 h-3.5 text-emerald-600" />
               Export CSV
             </button>
             <button
               onClick={onNewEstimation}
-              className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-[#F7941D] to-[#A50021] text-white text-xs font-bold flex items-center gap-1.5 shadow-md hover:opacity-90 transition"
+              className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-[#F97316] to-[#EA580C] hover:from-[#EA580C] hover:to-[#C2410C] text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition"
             >
               <Sparkles className="w-3.5 h-3.5" />
               New Estimation
@@ -107,24 +107,24 @@ export default function UnitRateRegister({
 
         {/* 4 KPI Stats Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="p-3 bg-slate-950/70 border border-slate-800 rounded-xl text-center">
-            <span className="text-[10px] text-slate-400 font-semibold uppercase block">Total Quotations</span>
-            <span className="text-xl font-bold font-mono text-white">{totalCount}</span>
+          <div className="p-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-center">
+            <span className="text-[10px] text-slate-500 font-semibold uppercase block">Total Quotations</span>
+            <span className="text-xl font-bold font-mono text-slate-800">{totalCount}</span>
           </div>
 
-          <div className="p-3 bg-slate-950/70 border border-slate-800 rounded-xl text-center">
-            <span className="text-[10px] text-slate-400 font-semibold uppercase block">Draft Take-offs</span>
-            <span className="text-xl font-bold font-mono text-amber-400">{draftCount}</span>
+          <div className="p-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-center">
+            <span className="text-[10px] text-slate-500 font-semibold uppercase block">Draft Take-offs</span>
+            <span className="text-xl font-bold font-mono text-amber-600">{draftCount}</span>
           </div>
 
-          <div className="p-3 bg-slate-950/70 border border-slate-800 rounded-xl text-center">
-            <span className="text-[10px] text-slate-400 font-semibold uppercase block">Approved Tender Estimates</span>
-            <span className="text-xl font-bold font-mono text-emerald-400">{approvedCount}</span>
+          <div className="p-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-center">
+            <span className="text-[10px] text-slate-500 font-semibold uppercase block">Approved Tender Estimates</span>
+            <span className="text-xl font-bold font-mono text-emerald-600">{approvedCount}</span>
           </div>
 
-          <div className="p-3 bg-slate-950/70 border border-slate-800 rounded-xl text-center">
-            <span className="text-[10px] text-slate-400 font-semibold uppercase block">Combined Value</span>
-            <span className="text-xl font-bold font-mono text-purple-400">
+          <div className="p-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-center">
+            <span className="text-[10px] text-slate-500 font-semibold uppercase block">Combined Value</span>
+            <span className="text-xl font-bold font-mono text-indigo-600">
               ₹ {totalValue.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
             </span>
           </div>
@@ -132,7 +132,7 @@ export default function UnitRateRegister({
       </div>
 
       {/* Filter & Search Bar */}
-      <div className="bg-slate-900/80 p-4 rounded-xl border border-slate-700/80 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div className="bg-white p-4 rounded-xl border border-[#E6E8EC] shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="relative w-full sm:w-80">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
           <input
@@ -140,7 +140,7 @@ export default function UnitRateRegister({
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search by Est No, project, client..."
-            className="w-full pl-9 pr-3 py-1.5 bg-slate-800 border border-slate-700 focus:border-amber-500 rounded-lg text-xs text-white placeholder-slate-500 focus:outline-none"
+            className="w-full pl-9 pr-3 py-1.5 bg-white border border-[#CBD5E1] focus:border-orange-500 rounded-lg text-xs text-slate-800 placeholder-slate-400 focus:outline-none"
           />
         </div>
 
@@ -151,8 +151,8 @@ export default function UnitRateRegister({
               onClick={() => setStatusFilter(status)}
               className={`px-3 py-1 text-xs font-semibold rounded-lg transition ${
                 statusFilter === status
-                  ? 'bg-amber-500 text-slate-950 font-bold'
-                  : 'bg-slate-800 text-slate-400 hover:text-white'
+                  ? 'bg-orange-500 text-white font-bold shadow-2xs'
+                  : 'bg-slate-100 text-slate-600 hover:text-slate-900'
               }`}
             >
               {status}
@@ -162,11 +162,11 @@ export default function UnitRateRegister({
       </div>
 
       {/* Register Records Table */}
-      <div className="bg-slate-900/80 rounded-2xl border border-slate-700/80 shadow-xl overflow-hidden">
+      <div className="bg-white rounded-2xl border border-[#E6E8EC] shadow-2xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="bg-slate-950 text-slate-400 font-mono text-[10px] uppercase border-b border-slate-800">
+              <tr className="bg-[#F8FAFC] text-slate-500 font-bold text-[10px] uppercase border-b border-[#E2E8F0]">
                 <th className="py-3 px-3 w-10 text-center">#</th>
                 <th className="py-3 px-3">Estimation Ref</th>
                 <th className="py-3 px-3 min-w-[180px]">Project &amp; Client</th>
@@ -177,50 +177,50 @@ export default function UnitRateRegister({
                 <th className="py-3 px-3 text-right min-w-[140px]">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800">
+            <tbody className="divide-y divide-[#F1F5F9] bg-white">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan="8" className="py-12 text-center text-slate-500 italic text-xs">
-                    No estimation records found. Click <strong className="text-amber-400">New Estimation</strong> to create one.
+                  <td colSpan="8" className="py-12 text-center text-slate-400 italic text-xs">
+                    No estimation records found. Click <strong className="text-orange-600">New Estimation</strong> to create one.
                   </td>
                 </tr>
               ) : (
                 filtered.map((record, idx) => {
                   const curr = CURRENCY_CONFIG[record.currency] || CURRENCY_CONFIG.INR;
                   return (
-                    <tr key={record.id || idx} className="hover:bg-slate-800/40 transition">
-                      <td className="py-2.5 px-3 font-mono text-slate-500 text-center">{idx + 1}</td>
+                    <tr key={record.id || idx} className="hover:bg-orange-50/30 transition">
+                      <td className="py-2.5 px-3 font-mono text-slate-400 text-center">{idx + 1}</td>
                       
-                      <td className="py-2.5 px-3 font-mono font-bold text-amber-400">
+                      <td className="py-2.5 px-3 font-mono font-bold text-orange-600">
                         {record.estNo || 'EST-DRAFT'}
                       </td>
 
                       <td className="py-2.5 px-3">
-                        <div className="font-semibold text-white truncate max-w-[220px]">
+                        <div className="font-semibold text-slate-800 truncate max-w-[220px]">
                           {record.projectName || 'Untitled Project'}
                         </div>
-                        <div className="text-[11px] text-slate-400 truncate max-w-[220px]">
+                        <div className="text-[11px] text-slate-500 truncate max-w-[220px]">
                           {record.customer || 'No Customer'}
                         </div>
                       </td>
 
-                      <td className="py-2.5 px-3 text-right font-mono text-slate-300">
+                      <td className="py-2.5 px-3 text-right font-mono text-slate-600">
                         {(record.totalArea || 0).toFixed(1)}
                       </td>
 
-                      <td className="py-2.5 px-3 text-right font-mono text-emerald-400 font-semibold">
+                      <td className="py-2.5 px-3 text-right font-mono text-emerald-600 font-semibold">
                         {curr.sym} {(record.costPerM2 || 0).toFixed(2)}
                       </td>
 
-                      <td className="py-2.5 px-3 text-right font-mono text-white font-bold">
+                      <td className="py-2.5 px-3 text-right font-mono text-slate-900 font-bold">
                         {curr.sym} {(record.grandTotal || 0).toLocaleString(curr.loc, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </td>
 
                       <td className="py-2.5 px-3 text-center">
-                        <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold border ${
                           record.status === 'Approved'
-                            ? 'bg-emerald-500/20 text-emerald-300'
-                            : 'bg-amber-500/20 text-amber-300'
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            : 'bg-amber-50 text-amber-700 border-amber-200'
                         }`}>
                           {record.status || 'Draft'}
                         </span>
@@ -230,35 +230,35 @@ export default function UnitRateRegister({
                         <div className="flex items-center justify-end gap-1">
                           <button
                             onClick={() => onLoadRecord(record)}
-                            className="p-1.5 text-slate-400 hover:text-amber-400 hover:bg-slate-800 rounded transition"
+                            className="p-1.5 text-slate-400 hover:text-orange-600 hover:bg-slate-100 rounded transition"
                             title="Edit & Load"
                           >
                             <Edit3 className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={() => onOpenPreviewRecord(record)}
-                            className="p-1.5 text-slate-400 hover:text-blue-400 hover:bg-slate-800 rounded transition"
+                            className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-slate-100 rounded transition"
                             title="Preview"
                           >
                             <Eye className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={() => onOpenPrintRecord(record)}
-                            className="p-1.5 text-slate-400 hover:text-emerald-400 hover:bg-slate-800 rounded transition"
+                            className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-slate-100 rounded transition"
                             title="Print Quotation"
                           >
                             <Printer className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={() => onDuplicateRecord(record)}
-                            className="p-1.5 text-slate-400 hover:text-purple-400 hover:bg-slate-800 rounded transition"
+                            className="p-1.5 text-slate-400 hover:text-purple-600 hover:bg-slate-100 rounded transition"
                             title="Duplicate"
                           >
                             <Copy className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={() => onDeleteRecord(record.id)}
-                            className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-slate-800 rounded transition"
+                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-slate-100 rounded transition"
                             title="Delete"
                           >
                             <Trash2 className="w-3.5 h-3.5" />

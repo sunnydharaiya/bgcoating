@@ -338,7 +338,7 @@ export default function InspectionReportingPage({
   ];
 
   return (
-    <div className={`space-y-6 ${currentSection === 'hub' ? 'max-w-6xl mx-auto' : 'max-w-7xl mx-auto'} pb-16 animate-in fade-in duration-200`}>
+    <div className="space-y-6 w-full pb-16 animate-in fade-in duration-200">
       
       {/* 1. Master Header Action Bar (Hidden on Hub view) */}
       {currentSection !== 'hub' && (

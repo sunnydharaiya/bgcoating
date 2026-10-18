@@ -75,7 +75,7 @@ export default function ProcedureHub({
   };
 
   return (
-    <div className="space-y-6 select-none font-sans max-w-7xl mx-auto">
+    <div className="space-y-6 select-none font-sans w-full">
       
       {/* 1. HERO BANNER (Matches media_1791472985773_f56bf798.png & ref-2.html) */}
       <section className="proc-home-hero">

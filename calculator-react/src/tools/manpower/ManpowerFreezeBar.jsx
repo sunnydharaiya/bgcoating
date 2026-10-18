@@ -1,174 +1,281 @@
 import React from 'react';
-import { RotateCcw, CheckCircle2, TrendingUp, Sparkles, AlertCircle } from 'lucide-react';
+import { RotateCcw } from 'lucide-react';
 
 export default function ManpowerFreezeBar({ state, metrics, onReset }) {
   const {
-    completionPct,
-    grandTotal,
-    costPerM2,
-    blastTotal,
-    paintTotal,
-    paintPM2,
-    rawTotal,
-    area,
-    tonnage,
-    blastOut,
-    dailyTarget,
-    totalDays,
-    reqBlastDays,
-    totalAbrTon,
-    totalAbrCost,
-    totalDieselL,
-    totalDieselCost,
+    completionPct = 0,
+    grandTotal = 0,
+    costPerM2 = 0,
+    blastTotal = 0,
+    paintTotal = 0,
+    paintPM2 = 0,
+    rawTotal = 0,
+    area = 0,
+    tonnage = 0,
+    blastOut = 0,
+    dailyTarget = 0,
+    totalDays = 0,
+    reqBlastDays = 0,
+    totalAbrTon = 0,
+    totalAbrCost = 0,
+    totalDieselL = 0,
+    totalDieselCost = 0,
+    currencyObj = { sym: '₹', loc: 'en-IN' },
     formatCur,
-    formatNum
-  } = metrics;
+    formatNum = (v, d = 0) => Number(v || 0).toLocaleString('en-IN', { minimumFractionDigits: d, maximumFractionDigits: d })
+  } = (metrics || {});
 
-  // Donut chart stroke math (radius 29, circumference = 2 * PI * 29 ~= 182.2)
-  const circumference = 182.2;
-  const strokeDash = `${((completionPct / 100) * circumference).toFixed(1)} ${circumference}`;
-
-  let stageLabel = 'Project Setup';
-  if (completionPct >= 85) stageLabel = 'Estimation Complete';
-  else if (completionPct >= 55) stageLabel = 'Costing in Progress';
-  else if (completionPct >= 25) stageLabel = 'Inputs Being Defined';
+  let stageLabel = 'PROJECT SETUP';
+  if (completionPct >= 85) stageLabel = 'ESTIMATION COMPLETE';
+  else if (completionPct >= 55) stageLabel = 'COSTING IN PROGRESS';
+  else if (completionPct >= 25) stageLabel = 'INPUTS DEFINED';
 
   return (
-    <div className="sticky top-0 z-30 bg-gradient-to-r from-[#180900] via-[#2A1205] to-[#180900] text-white border-b-2 border-[#E8700A]/40 shadow-xl px-3 sm:px-4 py-2 sm:py-2.5 backdrop-blur-md">
-      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-3 justify-between">
+    <div className="w-full bg-[#1F0D06] border border-[#4E2213] rounded-xl shadow-xl p-3 text-white space-y-2.5 select-none">
+      
+      {/* Top Header Row */}
+      <div className="flex flex-wrap items-center justify-between gap-2 pb-1.5 border-b border-[#3E1A0D]">
         
-        {/* Left: Progress Gauge + Project Identity */}
-        <div className="flex items-center gap-3 w-full lg:w-auto shrink-0 justify-between lg:justify-start">
-          <div className="relative w-12 h-12 shrink-0 flex items-center justify-center">
-            <svg className="w-12 h-12 -rotate-90" viewBox="0 0 70 70">
-              <circle
-                cx="35"
-                cy="35"
-                r="29"
-                fill="none"
-                stroke="#442211"
-                strokeWidth="6"
-              />
-              <circle
-                cx="35"
-                cy="35"
-                r="29"
-                fill="none"
-                stroke="url(#donutGrad)"
-                strokeWidth="6"
-                strokeDasharray={strokeDash}
-                strokeLinecap="round"
-                className="transition-all duration-500 ease-out"
-              />
-              <defs>
-                <linearGradient id="donutGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#F5911F" />
-                  <stop offset="100%" stopColor="#E8700A" />
-                </linearGradient>
-              </defs>
-            </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-              <span className="text-[11px] font-mono font-black text-[#F5911F] leading-none">
-                {completionPct}%
-              </span>
-            </div>
-          </div>
-
-          <div className="flex flex-col min-w-[120px]">
-            <div className="flex items-center gap-1.5">
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#F5911F]">
-                {stageLabel}
-              </span>
-            </div>
-            <div className="text-xs font-bold text-slate-200 truncate max-w-[180px]">
-              {state.projectName || 'Untitled Estimation'}
-            </div>
-            <div className="text-[10px] text-slate-400 truncate max-w-[180px]">
-              {state.customer || 'Customer not set'}
-            </div>
-          </div>
-
-          {/* Quick Clear Button */}
-          <button
-            onClick={onReset}
-            title="Reset form fields to blank"
-            className="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-semibold text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 transition"
-          >
-            <RotateCcw className="w-3 h-3" />
-            <span className="hidden sm:inline">Reset</span>
-          </button>
+        {/* Left Title & Auto-Calculated Pill */}
+        <div className="flex items-center gap-2">
+          {/* Multi-color mini-badge matching 1.png */}
+          <div className="w-3.5 h-3.5 rounded-sm bg-gradient-to-br from-emerald-500 via-amber-400 to-rose-500 shrink-0" />
+          <span className="font-mono font-black text-xs uppercase tracking-wider text-white">
+            ESTIMATION PROGRESS
+          </span>
+          <span className="text-[10px] font-bold font-mono px-2.5 py-0.5 rounded-full border border-[#F5911F]/60 bg-[#F5911F]/15 text-[#F5911F] tracking-tight">
+            @ AUTO-CALCULATED · REFERENCE
+          </span>
         </div>
 
-        {/* Center & Right: Dual Metric Grid */}
-        <div className="w-full grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-1.5 sm:gap-2">
+        {/* Right Status Badges & Reset Button */}
+        <div className="flex items-center gap-2">
+          <span className="border border-[#F5911F] bg-[#3B1909] text-[#F5911F] font-mono font-black text-[10px] px-2.5 py-0.5 rounded-sm uppercase tracking-wide">
+            {stageLabel}
+          </span>
           
-          {/* Tile 1: Grand Total */}
-          <div className="bg-gradient-to-br from-[#0F4D14]/90 to-[#1B5E20]/90 border border-emerald-500/40 rounded p-1.5 flex flex-col justify-center">
-            <span className="text-[9px] font-bold text-emerald-200 uppercase tracking-tight">Grand Total</span>
-            <span className="text-xs sm:text-sm font-mono font-black text-white truncate" title={formatCur(grandTotal)}>
-              {formatCur(grandTotal)}
+          <div className="flex flex-col items-center justify-center px-2 py-0.5 rounded-sm bg-[#150702] border border-[#4E2213] text-center leading-none">
+            <span className="text-[10px] font-mono font-black text-white">
+              {completionPct}%
+            </span>
+            <span className="text-[7px] font-mono text-slate-400 uppercase">
+              COMPLETE
             </span>
           </div>
 
-          {/* Tile 2: Per m² Cost */}
-          <div className="bg-gradient-to-br from-[#1565C0]/90 to-[#0D47A1]/90 border border-blue-500/40 rounded p-1.5 flex flex-col justify-center">
-            <span className="text-[9px] font-bold text-blue-200 uppercase tracking-tight">Cost / m²</span>
-            <span className="text-xs sm:text-sm font-mono font-bold text-white truncate">
-              {formatCur(costPerM2)}
-            </span>
-          </div>
+          <button
+            onClick={onReset}
+            title="Reset estimation inputs"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-sm border border-[#F5911F]/70 bg-[#2D1409] hover:bg-[#3D1A0C] text-[10px] font-mono font-bold text-[#F5911F] hover:text-white transition cursor-pointer"
+          >
+            <RotateCcw className="w-2.5 h-2.5 text-[#F5911F]" />
+            <span>RESET</span>
+          </button>
+        </div>
+      </div>
 
-          {/* Tile 3: Blasting Cost */}
-          <div className="bg-white/5 border border-[#E8700A]/30 rounded p-1.5 flex flex-col justify-center">
-            <span className="text-[9px] font-bold text-[#F5911F] uppercase tracking-tight">Blasting Cost</span>
-            <span className="text-[11px] sm:text-xs font-mono font-bold text-slate-100 truncate" title={formatCur(blastTotal)}>
-              {formatCur(blastTotal)}
-            </span>
-          </div>
+      {/* Progress Track Line */}
+      <div className="h-1 w-full bg-[#35160A] rounded-full overflow-hidden -mt-1">
+        <div 
+          className="h-full bg-gradient-to-r from-[#F5911F] to-[#E8700A] transition-all duration-300"
+          style={{ width: `${Math.max(completionPct, 2)}%` }}
+        />
+      </div>
 
-          {/* Tile 4: Paint App Cost */}
-          <div className="bg-white/5 border border-[#E8700A]/30 rounded p-1.5 flex flex-col justify-center">
-            <span className="text-[9px] font-bold text-[#F5911F] uppercase tracking-tight">Paint App Cost</span>
-            <span className="text-[11px] sm:text-xs font-mono font-bold text-slate-100 truncate" title={formatCur(paintTotal)}>
-              {formatCur(paintTotal)}
-            </span>
+      {/* Row 1: QUANTUM & SCHEDULE + DIESEL CONSUMPTION */}
+      <div className="grid grid-cols-1 lg:grid-cols-8 gap-2.5 items-end">
+        
+        {/* Left 6 Cards: QUANTUM & SCHEDULE */}
+        <div className="lg:col-span-6 space-y-1">
+          <div className="text-[9px] font-mono font-bold text-[#F5911F] uppercase tracking-wider">
+            QUANTUM &amp; SCHEDULE
           </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-1.5 sm:gap-2">
+            
+            <div className="bg-[#24120A] border border-[#552718] rounded-md p-2 flex flex-col justify-between min-h-[46px]">
+              <span className="text-[8px] font-mono text-slate-400 uppercase tracking-tight truncate">
+                TOTAL QUANTUM
+              </span>
+              <span className="text-xs font-mono font-black text-amber-300 mt-0.5">
+                {formatNum(area, 0)} <span className="text-[9px] font-normal text-slate-400">m²</span>
+              </span>
+            </div>
 
-          {/* Tile 5: Paint Raw Mat */}
-          <div className="bg-white/5 border border-[#E8700A]/30 rounded p-1.5 flex flex-col justify-center">
-            <span className="text-[9px] font-bold text-[#F5911F] uppercase tracking-tight">Paint Raw Mat</span>
-            <span className="text-[11px] sm:text-xs font-mono font-bold text-slate-100 truncate" title={formatCur(rawTotal)}>
-              {formatCur(rawTotal)}
-            </span>
+            <div className="bg-[#24120A] border border-[#552718] rounded-md p-2 flex flex-col justify-between min-h-[46px]">
+              <span className="text-[8px] font-mono text-slate-400 uppercase tracking-tight truncate">
+                TOTAL QUANTUM
+              </span>
+              <span className="text-xs font-mono font-black text-amber-300 mt-0.5">
+                {formatNum(tonnage, 0)} <span className="text-[9px] font-normal text-slate-400">MT</span>
+              </span>
+            </div>
+
+            <div className="bg-[#24120A] border border-[#552718] rounded-md p-2 flex flex-col justify-between min-h-[46px]">
+              <span className="text-[8px] font-mono text-slate-400 uppercase tracking-tight truncate">
+                BLAST OUTPUT CAP.
+              </span>
+              <span className="text-xs font-mono font-black text-amber-300 mt-0.5">
+                {formatNum(blastOut, 0)} <span className="text-[9px] font-normal text-slate-400">m²/shift</span>
+              </span>
+            </div>
+
+            <div className="bg-[#24120A] border border-[#552718] rounded-md p-2 flex flex-col justify-between min-h-[46px]">
+              <span className="text-[8px] font-mono text-slate-400 uppercase tracking-tight truncate">
+                BLAST TARGET CAP.
+              </span>
+              <span className="text-xs font-mono font-black text-amber-300 mt-0.5">
+                {formatNum(dailyTarget, 1)} <span className="text-[9px] font-normal text-slate-400">m²/day</span>
+              </span>
+            </div>
+
+            <div className="bg-[#24120A] border border-[#552718] rounded-md p-2 flex flex-col justify-between min-h-[46px]">
+              <span className="text-[8px] font-mono text-slate-400 uppercase tracking-tight truncate">
+                PROJECT SCHEDULE
+              </span>
+              <span className="text-xs font-mono font-black text-amber-300 mt-0.5">
+                {formatNum(totalDays, 0)} <span className="text-[9px] font-normal text-slate-400">days</span>
+              </span>
+            </div>
+
+            <div className="bg-[#24120A] border border-[#552718] rounded-md p-2 flex flex-col justify-between min-h-[46px]">
+              <span className="text-[8px] font-mono text-slate-400 uppercase tracking-tight truncate">
+                REQUIRED SCHEDULE
+              </span>
+              <span className="text-xs font-mono font-black text-amber-300 mt-0.5">
+                {formatNum(reqBlastDays, 1)} <span className="text-[9px] font-normal text-slate-400">days</span>
+              </span>
+            </div>
+
           </div>
+        </div>
 
-          {/* Tile 6: Surface Area */}
-          <div className="bg-white/5 border border-white/10 rounded p-1.5 flex flex-col justify-center">
-            <span className="text-[9px] font-bold text-slate-300 uppercase tracking-tight">Surface Area</span>
-            <span className="text-[11px] sm:text-xs font-mono font-bold text-slate-100 truncate">
-              {formatNum(area, 0)} <span className="text-[9px] text-slate-400">m²</span>
-            </span>
+        {/* Right Subcard: DIESEL CONSUMPTION */}
+        <div className="lg:col-span-2 space-y-1">
+          <div className="text-[9px] font-mono font-bold text-[#F5911F] uppercase tracking-wider">
+            DIESEL CONSUMPTION
           </div>
-
-          {/* Tile 7: Abrasive Metric */}
-          <div className="bg-white/5 border border-white/10 rounded p-1.5 flex flex-col justify-center">
-            <span className="text-[9px] font-bold text-slate-300 uppercase tracking-tight">Abrasive Qty</span>
-            <span className="text-[11px] sm:text-xs font-mono font-bold text-amber-300 truncate">
-              {formatNum(totalAbrTon, 2)} <span className="text-[9px] text-slate-400">Ton</span>
-            </span>
+          <div className="bg-[#24120A] border border-[#9A501F] rounded-md p-2 flex items-center justify-between min-h-[46px]">
+            <div className="flex flex-col">
+              <span className="text-[8px] font-mono text-slate-400 uppercase tracking-tight">
+                TOTAL DIESEL CONSUMPTION
+              </span>
+              <span className="text-xs font-mono font-black text-amber-300 mt-0.5">
+                {formatNum(totalDieselL, 1)} <span className="text-[9px] font-normal text-slate-400">L</span>
+              </span>
+            </div>
+            <div className="flex flex-col text-right">
+              <span className="text-[8px] font-mono text-slate-400 uppercase tracking-tight">
+                TOTAL DIESEL COST
+              </span>
+              <span className="text-xs font-mono font-black text-amber-300 mt-0.5">
+                {currencyObj.sym}{formatNum(totalDieselCost, 0)}
+              </span>
+            </div>
           </div>
-
-          {/* Tile 8: Schedule Duration */}
-          <div className="bg-white/5 border border-white/10 rounded p-1.5 flex flex-col justify-center">
-            <span className="text-[9px] font-bold text-slate-300 uppercase tracking-tight">Total Days</span>
-            <span className="text-[11px] sm:text-xs font-mono font-bold text-slate-100 truncate">
-              {formatNum(totalDays, 0)} <span className="text-[9px] text-slate-400">Days</span>
-            </span>
-          </div>
-
         </div>
 
       </div>
+
+      {/* Row 2: COMMERCIAL SUMMARY + ABRASIVE CONSUMPTION */}
+      <div className="grid grid-cols-1 lg:grid-cols-8 gap-2.5 items-end">
+        
+        {/* Left 6 Cards: COMMERCIAL SUMMARY */}
+        <div className="lg:col-span-6 space-y-1">
+          <div className="text-[9px] font-mono font-bold text-[#F5911F] uppercase tracking-wider">
+            COMMERCIAL SUMMARY
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-1.5 sm:gap-2">
+            
+            {/* Card 1: TOTAL COST (Vibrant Emerald Green) */}
+            <div className="bg-[#136C2B] border border-[#22C55E] rounded-md p-2 flex flex-col justify-between min-h-[46px] shadow-xs">
+              <span className="text-[8px] font-mono font-bold text-emerald-100 uppercase tracking-tight truncate">
+                TOTAL COST
+              </span>
+              <span className="text-xs sm:text-sm font-mono font-black text-white mt-0.5 truncate" title={formatCur ? formatCur(grandTotal) : grandTotal}>
+                {currencyObj.sym}{formatNum(grandTotal, 0)}
+              </span>
+            </div>
+
+            {/* Card 2: TOTAL COST / M² (Vibrant Emerald Green) */}
+            <div className="bg-[#136C2B] border border-[#22C55E] rounded-md p-2 flex flex-col justify-between min-h-[46px] shadow-xs">
+              <span className="text-[8px] font-mono font-bold text-emerald-100 uppercase tracking-tight truncate">
+                TOTAL COST / M²
+              </span>
+              <span className="text-xs sm:text-sm font-mono font-black text-white mt-0.5">
+                {costPerM2 > 0 ? `${currencyObj.sym}${formatNum(costPerM2, 0)}` : '—'}
+              </span>
+            </div>
+
+            {/* Card 3: BLASTING TOTAL COST */}
+            <div className="bg-[#24120A] border border-[#552718] rounded-md p-2 flex flex-col justify-between min-h-[46px]">
+              <span className="text-[8px] font-mono text-slate-400 uppercase tracking-tight truncate">
+                BLASTING TOTAL COST
+              </span>
+              <span className="text-xs font-mono font-black text-amber-300 mt-0.5 truncate" title={formatCur ? formatCur(blastTotal) : blastTotal}>
+                {currencyObj.sym}{formatNum(blastTotal, 0)}
+              </span>
+            </div>
+
+            {/* Card 4: PAINT APR. COST */}
+            <div className="bg-[#24120A] border border-[#552718] rounded-md p-2 flex flex-col justify-between min-h-[46px]">
+              <span className="text-[8px] font-mono text-slate-400 uppercase tracking-tight truncate">
+                PAINT APR. COST
+              </span>
+              <span className="text-xs font-mono font-black text-amber-300 mt-0.5 truncate" title={formatCur ? formatCur(paintTotal) : paintTotal}>
+                {currencyObj.sym}{formatNum(paintTotal, 0)}
+              </span>
+            </div>
+
+            {/* Card 5: PAINT APR. COST / M² */}
+            <div className="bg-[#24120A] border border-[#552718] rounded-md p-2 flex flex-col justify-between min-h-[46px]">
+              <span className="text-[8px] font-mono text-slate-400 uppercase tracking-tight truncate">
+                PAINT APR. COST / M²
+              </span>
+              <span className="text-xs font-mono font-black text-amber-300 mt-0.5">
+                {paintPM2 > 0 ? `${currencyObj.sym}${formatNum(paintPM2, 0)}` : '—'}
+              </span>
+            </div>
+
+            {/* Card 6: PAINT RAW MAT. COST */}
+            <div className="bg-[#24120A] border border-[#552718] rounded-md p-2 flex flex-col justify-between min-h-[46px]">
+              <span className="text-[8px] font-mono text-slate-400 uppercase tracking-tight truncate">
+                PAINT RAW MAT. COST
+              </span>
+              <span className="text-xs font-mono font-black text-amber-300 mt-0.5 truncate" title={formatCur ? formatCur(rawTotal) : rawTotal}>
+                {currencyObj.sym}{formatNum(rawTotal, 0)}
+              </span>
+            </div>
+
+          </div>
+        </div>
+
+        {/* Right Subcard: ABRASIVE CONSUMPTION */}
+        <div className="lg:col-span-2 space-y-1">
+          <div className="text-[9px] font-mono font-bold text-[#F5911F] uppercase tracking-wider">
+            ABRASIVE CONSUMPTION
+          </div>
+          <div className="bg-[#24120A] border border-[#552718] rounded-md p-2 flex items-center justify-between min-h-[46px]">
+            <div className="flex flex-col">
+              <span className="text-[8px] font-mono text-slate-400 uppercase tracking-tight">
+                TOTAL ABRASIVE CONSUMPTION
+              </span>
+              <span className="text-xs font-mono font-black text-amber-300 mt-0.5">
+                {formatNum(totalAbrTon, 2)} <span className="text-[9px] font-normal text-slate-400">Ton</span>
+              </span>
+            </div>
+            <div className="flex flex-col text-right">
+              <span className="text-[8px] font-mono text-slate-400 uppercase tracking-tight">
+                TOTAL ABRASIVE COST
+              </span>
+              <span className="text-xs font-mono font-black text-amber-300 mt-0.5">
+                {currencyObj.sym}{formatNum(totalAbrCost, 0)}
+              </span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
     </div>
   );
 }

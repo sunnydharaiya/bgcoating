@@ -180,8 +180,8 @@ export default function App() {
       case 'unit-rate-estimation':
       case 'cost-estimation':
         return (
-          <UnitRateEstimationPage 
-            key={`unitrate-${activeSubTool}`}
+          <UnitRateEstimationPage
+            key="unitrate-main"
             currentSubTool={activeSubTool}
             onNavigate={(page, subTool) => navigate(page, subTool)}
           />
@@ -190,6 +190,7 @@ export default function App() {
         return (
           <ManpowerEstimationPage 
             key={`manpower-${activeSubTool}`}
+            activePage="manpower-estimation"
             currentSubTool={activeSubTool}
             onNavigate={(page, subTool) => navigate(page, subTool)}
           />
@@ -305,7 +306,7 @@ export default function App() {
               isLoggedIn={isLoggedIn}
               onOpenAuthModal={() => setAuthModalOpen(true)}
             />
-            <main className="flex-1 p-4 md:p-6 max-w-7xl mx-auto w-full">
+            <main className="flex-1 p-4 md:p-6 w-full min-w-0">
               <ErrorBoundary title="Page View">
                 {renderPage()}
               </ErrorBoundary>

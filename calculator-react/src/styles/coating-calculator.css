@@ -105,7 +105,7 @@ a{color:inherit;}
 
 /* ════════════ PAGES ════════════ */
 .wrap{flex:1;}
-.pg{display:none;max-width:1180px;margin:0 auto;width:100%;padding:24px 26px 70px;}
+.pg{display:none;max-width:none;width:100%;padding:24px 0 70px;}
 .pg.active{display:block;animation:pgIn .34s cubic-bezier(.22,1,.36,1);}
 @keyframes pgIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
 .sh{margin-bottom:18px;}
@@ -379,7 +379,7 @@ a{color:inherit;}
 
 /* ── FOOTER ── */
 .footer{background:linear-gradient(120deg,#241813,#3A1418);border-top:3px solid var(--brand-orange);padding:28px 26px;margin-top:10px;}
-.footer-in{max-width:1180px;margin:0 auto;}
+.footer-in{max-width:none;width:100%;}
 .frow{display:flex;align-items:center;justify-content:center;gap:13px;margin-bottom:12px;flex-wrap:wrap;}
 .flogo{width:42px;height:42px;background:#fff;border-radius:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;}
 .flogo img{width:100%;height:100%;object-fit:contain;padding:3px;}

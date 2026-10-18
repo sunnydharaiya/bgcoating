@@ -22,22 +22,22 @@ export default function UnitRatePrintDossier({
   return (
     <div className="space-y-6">
       {/* Action Bar (Hidden in Print) */}
-      <div className="no-print bg-slate-900 p-4 rounded-xl border border-slate-700 flex items-center justify-between shadow-lg">
+      <div className="no-print bg-white p-4 rounded-xl border border-[#E6E8EC] flex items-center justify-between shadow-2xs">
         <button
           onClick={onBack}
-          className="px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold flex items-center gap-1.5 transition border border-slate-600"
+          className="px-3.5 py-1.5 rounded-lg bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition border border-slate-200 shadow-2xs"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Back to Estimation Hub</span>
         </button>
 
         <div className="flex items-center gap-3">
-          <span className="text-xs text-slate-400">
+          <span className="text-xs text-slate-500">
             A4 EPC Client Quotation Sheet • {formData.estNo || 'Draft'}
           </span>
           <button
             onClick={handlePrint}
-            className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#F7941D] to-[#A50021] text-white text-xs font-bold flex items-center gap-2 shadow-md hover:opacity-90 transition"
+            className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#F97316] to-[#EA580C] hover:from-[#EA580C] hover:to-[#C2410C] text-white text-xs font-bold flex items-center gap-2 shadow-sm transition"
           >
             <Printer className="w-4 h-4" />
             <span>Print Commercial Quotation</span>

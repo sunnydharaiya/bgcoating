@@ -53,10 +53,10 @@ export default function InspectionHub({
   };
 
   return (
-    <div className="space-y-8 max-w-6xl mx-auto pb-6 animate-in fade-in duration-200">
+    <div className="space-y-8 w-full pb-6 animate-in fade-in duration-200">
       
       {/* 1. Hero Card (Exact match to media_1791305330443.png) */}
-      <div className="bg-gradient-to-br from-[#2D160E] via-[#200F09] to-[#170905] border border-[#5A2C18] rounded-2xl md:rounded-3xl p-6 md:p-8 text-center text-white relative shadow-xl max-w-4xl mx-auto">
+      <div className="bg-gradient-to-br from-[#2D160E] via-[#200F09] to-[#170905] border border-[#5A2C18] rounded-2xl md:rounded-3xl p-6 md:p-8 text-center text-white relative shadow-xl w-full">
         
         {/* Top Capsule Badge */}
         <div className="inline-block mb-4">

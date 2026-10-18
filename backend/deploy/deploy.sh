@@ -18,10 +18,23 @@ echo "=========================================="
 
 cd "${PROJECT_DIR}"
 
-# 1. Pull latest code from GitHub
+# 1. Pull latest code from GitHub (Safely preserving production SQLite database)
+if [ -f "${BACKEND_DIR}/db.sqlite3" ]; then
+    echo "💾 Preserving server SQLite database before git update..."
+    mkdir -p "${BACKEND_DIR}/backups"
+    cp -a "${BACKEND_DIR}/db.sqlite3" "${BACKEND_DIR}/backups/db_backup_$(date +%Y%m%d_%H%M%S).sqlite3"
+    cp -a "${BACKEND_DIR}/db.sqlite3" "${BACKEND_DIR}/db.sqlite3.preserve"
+fi
+
 echo "📥 Pulling latest changes from origin/main..."
 git fetch origin main
 git reset --hard origin/main
+
+# Restore preserved database if git reset removed or touched it
+if [ -f "${BACKEND_DIR}/db.sqlite3.preserve" ]; then
+    echo "🔄 Restoring server SQLite database..."
+    mv -f "${BACKEND_DIR}/db.sqlite3.preserve" "${BACKEND_DIR}/db.sqlite3"
+fi
 
 # 2. Ensure virtual environment exists
 if [ ! -d "${VENV_DIR}" ]; then

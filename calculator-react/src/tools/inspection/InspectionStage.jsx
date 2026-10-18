@@ -232,7 +232,7 @@ export default function InspectionStage({
   const isDftAvgCompliant = minDft > 0 && parseFloat(overallDftAvg) >= minDft && (maxDft === 0 || parseFloat(overallDftAvg) <= maxDft);
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto animate-in fade-in duration-200">
+    <div className="space-y-6 w-full animate-in fade-in duration-200">
       
       {/* 1. Stage Selector Top Bar */}
       <div className="bg-white border border-slate-200 rounded-3xl p-4 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">

@@ -47,6 +47,10 @@ echo.
 echo [1/3] Staging all files (git add -A)...
 git add -A
 
+:: Ensure SQLite database files are NEVER staged or pushed
+git reset HEAD backend/db.sqlite3 >nul 2>&1
+git reset HEAD db.sqlite3 >nul 2>&1
+
 echo [2/3] Committing changes...
 git commit -m "%commit_msg%"
 if %errorlevel% neq 0 (

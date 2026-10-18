@@ -47,6 +47,7 @@ export default function Header({
   const isCalc = activePage === 'coating-calculator' || activePage === 'calc';
   const isSpec = activePage === 'specification-reading' || activePage === 'design';
   const isManpower = activePage === 'manpower-estimation';
+  const isUnitRate = activePage === 'unit-rate-estimation' || activePage === 'cost-estimation';
   const isBlaster = activePage === 'blaster-qualification' || activePage === 'blaster';
   const isPainter = activePage === 'painter-qualification' || activePage === 'painter';
   const isTsa = activePage === 'tsa-qualification' || activePage === 'tsa';
@@ -793,6 +794,15 @@ export default function Header({
             >
               <LogIn className="w-3.5 h-3.5" />
               <span>Sign In</span>
+            </button>
+          )}
+
+          {isManpower && (
+            <button
+              onClick={() => handleActionClick('new-estimation')}
+              className="hidden sm:flex items-center gap-1 px-3 py-1 rounded-lg bg-gradient-to-r from-[#D94F26] to-[#E8700A] hover:brightness-110 text-white font-bold text-xs shadow-xs transition cursor-pointer"
+            >
+              <span>+ NEW ESTIMATION</span>
             </button>
           )}
 

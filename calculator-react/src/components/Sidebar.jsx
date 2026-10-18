@@ -44,8 +44,37 @@ import {
   GraduationCap,
   Settings,
   LogOut,
-  LogIn
+  LogIn,
+  Pipette,
+  Droplet,
+  ClipboardList,
+  LayoutTemplate
 } from 'lucide-react';
+
+// 8-Point Blasting Starburst icon matching 1.png and 6.png
+function BlastBurstIcon({ className }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <line x1="12" y1="2" x2="12" y2="6" />
+      <line x1="12" y1="18" x2="12" y2="22" />
+      <line x1="2" y1="12" x2="6" y2="12" />
+      <line x1="18" y1="12" x2="22" y2="12" />
+      <line x1="4.93" y1="4.93" x2="7.76" y2="7.76" />
+      <line x1="16.24" y1="16.24" x2="19.07" y2="19.07" />
+      <line x1="4.93" y1="19.07" x2="7.76" y2="16.24" />
+      <line x1="16.24" y1="7.76" x2="19.07" y2="4.93" />
+      <circle cx="12" cy="12" r="2" fill="currentColor" />
+    </svg>
+  );
+}
 
 export default function Sidebar({
   activePage,
@@ -92,6 +121,7 @@ export default function Sidebar({
   const isCalc = activePage === 'coating-calculator' || activePage === 'calc';
   const isSpec = activePage === 'specification-reading' || activePage === 'design';
   const isManpower = activePage === 'manpower-estimation';
+  const isUnitRate = activePage === 'unit-rate-estimation' || activePage === 'cost-estimation';
   const isBlaster = activePage === 'blaster-qualification' || activePage === 'blaster';
   const isPainter = activePage === 'painter-qualification' || activePage === 'painter';
   const isTsa = activePage === 'tsa-qualification' || activePage === 'tsa';
@@ -124,15 +154,15 @@ export default function Sidebar({
     { id: 'validate', label: 'Validate / Save Draft', target: 'cost-matrix' }
   ];
 
-  // Manpower Estimation Sections (Matches media_1791302836632.png)
+  // Manpower Estimation Sections (Matches media_1791302836632.png, 1.png, 6.png)
   const manpowerSections = [
-    { id: 'project-info', label: 'Project Information', icon: FileText },
-    { id: 'blasting', label: 'Blasting Cost', icon: Flame },
-    { id: 'painting', label: 'Paint Application', icon: Paintbrush },
-    { id: 'raw-material', label: 'Paint Raw Material', icon: Layers },
-    { id: 'summary', label: 'Front Page Summary', icon: FileSpreadsheet },
-    { id: 'validate', label: 'Validate / Save Draft', icon: CheckCircle2, isAction: true },
-    { id: 'worker-ctc', label: 'Reference: Manpower CTC', icon: Users }
+    { id: 'project-info', label: 'Project Information', icon: FileText, iconColor: 'text-slate-400' },
+    { id: 'blasting', label: 'Blasting Cost', icon: BlastBurstIcon, iconColor: 'text-[#F87171]' },
+    { id: 'painting', label: 'Paint Application', icon: Paintbrush, iconColor: 'text-[#F472B6]' },
+    { id: 'raw-material', label: 'Paint Raw Material', icon: Pipette, iconColor: 'text-[#34D399]' },
+    { id: 'summary', label: 'Front Page Summary', icon: LayoutTemplate, iconColor: 'text-[#22D3EE]' },
+    { id: 'validate', label: 'Validate / Save Draft', icon: CheckCircle2, iconColor: 'text-[#C084FC]', isAction: true },
+    { id: 'worker-ctc', label: 'Reference: Manpower CTC', icon: Users, iconColor: 'text-[#818CF8]' }
   ];
 
   // Blaster Qualification Sections (Matches media_1791304029525.png)
@@ -276,6 +306,26 @@ export default function Sidebar({
                   PLATFORM
                 </span>
               </div>
+            </div>
+          ) : isUnitRate ? (
+            /* Mode: Unit Rate Estimation Suite Branding (Matches media_1792170562266_9449e0bb.png) */
+            <div className="space-y-1">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-white p-1 flex items-center justify-center shrink-0 shadow-2xs">
+                  <img src="/logo-2.png" alt="BG Group" className="w-full h-full object-contain" />
+                </div>
+                <div className="leading-tight">
+                  <span className="font-bold text-white text-[14px] tracking-wide block">
+                    BG GROUP
+                  </span>
+                  <span className="text-[9px] font-bold tracking-wider text-[#F7941D] uppercase block">
+                    COATING CONSULTANT
+                  </span>
+                </div>
+              </div>
+              <p className="text-[9px] text-slate-400 leading-tight pt-1">
+                Quick unit-rate estimation, validation &amp; reporting platform.
+              </p>
             </div>
           ) : isManpower ? (
             /* Mode 3: Manpower Suite Branding (Matches media_1791302836632.png) */
@@ -580,33 +630,32 @@ export default function Sidebar({
               </div>
 
             </div>
-          ) : isManpower ? (
+          ) : isUnitRate ? (
             /* ========================================================
-               MANPOWER MODULE NAVIGATION (Matches media_1791302836632.png)
+               UNIT RATE ESTIMATION NAVIGATION (Matches media_1792170562266_9449e0bb.png)
                ======================================================== */
-            <div className="space-y-4">
-              
-              {/* Active Section Banner: Reddish Orange */}
+            <div className="space-y-3">
+              {/* Active Hub / Top Banner */}
               <button
-                onClick={() => handleNav('manpower-estimation', 'hub')}
-                className="w-full bg-gradient-to-r from-[#D94F26] to-[#E8700A] text-white rounded-xl px-3 py-2 flex items-center gap-2.5 shadow-xs cursor-pointer text-left"
+                onClick={() => handleNav('unit-rate-estimation', 'hub')}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-slate-200 hover:text-white hover:bg-white/[0.04] transition group cursor-pointer"
               >
-                <FileText className="w-4 h-4 text-white shrink-0" />
-                <span className="font-semibold text-xs text-white truncate">
-                  Estimation — Manpower Based
+                <FileSpreadsheet className="w-4 h-4 text-[#E8700A] shrink-0" />
+                <span className="font-bold text-xs tracking-tight text-slate-200 group-hover:text-white truncate">
+                  Estimation — Quick Unit Rate
                 </span>
               </button>
 
-              {/* GROUP 1: ESTIMATION SECTIONS */}
+              {/* GROUP 1: PROJECT SECTIONS */}
               <div>
-                <div className="px-3 mb-1.5 text-[9px] font-mono font-bold text-slate-400 uppercase tracking-widest">
-                  ESTIMATION SECTIONS
+                <div className="px-3 mb-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                  PROJECT SECTIONS
                 </div>
 
                 <nav className="space-y-0.5">
-                  {manpowerSections.map((sec) => {
+                  {unitRateSections.map((sec) => {
                     const isActive = activeSubTool === sec.id;
-                    const Icon = sec.icon;
+
                     return (
                       <button
                         key={sec.id}
@@ -614,20 +663,30 @@ export default function Sidebar({
                           if (sec.id === 'validate') {
                             window.dispatchEvent(new CustomEvent('bg_header_action', { detail: { action: 'validate' } }));
                           } else {
-                            handleNav('manpower-estimation', sec.id);
+                            handleNav('unit-rate-estimation', sec.target || sec.id);
+                            if (sec.target) {
+                              setTimeout(() => {
+                                const targetId = `section-${sec.id}`;
+                                const el = document.getElementById(targetId);
+                                if (el) {
+                                  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                }
+                              }, 150);
+                            }
                           }
                         }}
-                        className={`w-full text-left px-3 py-1.5 rounded-lg text-xs transition cursor-pointer flex items-center justify-between ${
+                        className={`w-full text-left px-3 py-1.5 rounded-lg text-xs transition cursor-pointer flex items-center justify-between group ${
                           isActive
-                            ? 'text-white font-bold bg-[#F7941D]/15 border-l-2 border-[#F7941D]'
-                            : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
+                            ? 'text-white font-bold bg-[#E8700A] shadow-xs'
+                            : 'text-slate-300 hover:text-white hover:bg-white/[0.04]'
                         }`}
                       >
-                        <div className="flex items-center gap-2 truncate">
-                          <Icon className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                          <span className="truncate">{sec.label}</span>
-                        </div>
-                        <span className="text-[10px] text-slate-600">•</span>
+                        <span className="truncate">{sec.label}</span>
+                        {isActive ? (
+                          <span className="text-xs text-white font-bold">›</span>
+                        ) : (
+                          <span className="text-xs text-slate-600 group-hover:text-slate-400 group-hover:translate-x-0.5 transition">›</span>
+                        )}
                       </button>
                     );
                   })}
@@ -636,49 +695,62 @@ export default function Sidebar({
 
               {/* GROUP 2: REGISTER & OUTPUT */}
               <div className="pt-2 border-t border-white/[0.06]">
-                <div className="px-3 mb-1.5 text-[9px] font-mono font-bold text-slate-400 uppercase tracking-widest">
+                <div className="px-3 mb-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                   REGISTER &amp; OUTPUT
                 </div>
 
                 <nav className="space-y-0.5">
                   <button
-                    onClick={() => handleNav('manpower-estimation', 'register')}
-                    className="w-full text-left px-3 py-1.5 rounded-lg text-xs text-slate-400 hover:text-white hover:bg-white/[0.04] transition cursor-pointer flex items-center gap-2"
+                    onClick={() => handleNav('unit-rate-estimation', 'register')}
+                    className={`w-full text-left px-3 py-1.5 rounded-lg text-xs transition cursor-pointer flex items-center justify-between group ${
+                      activeSubTool === 'register'
+                        ? 'text-white font-bold bg-[#E8700A] shadow-xs'
+                        : 'text-slate-300 hover:text-white hover:bg-white/[0.04]'
+                    }`}
                   >
-                    <FileText className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Report Register</span>
-                  </button>
-
-                  <button
-                    onClick={() => handleNav('manpower-estimation', 'hub')}
-                    className="w-full text-left px-3 py-1.5 rounded-lg text-xs text-slate-400 hover:text-white hover:bg-white/[0.04] transition cursor-pointer flex items-center justify-between"
-                  >
-                    <div className="flex items-center gap-2">
-                      <LayoutDashboard className="w-3.5 h-3.5 text-slate-400" />
-                      <span>Dashboard</span>
+                    <div className="flex items-center gap-2 truncate">
+                      <BookOpen className={`w-3.5 h-3.5 shrink-0 ${activeSubTool === 'register' ? 'text-white' : 'text-[#FB923C]'}`} />
+                      <span className="truncate">Report Register</span>
                     </div>
-                    <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-amber-500/20 text-[#F7941D]">
-                      PRO
-                    </span>
+                    {activeSubTool === 'register' ? (
+                      <span className="text-xs text-white font-bold">›</span>
+                    ) : (
+                      <span className="text-xs text-slate-600 group-hover:text-slate-400 group-hover:translate-x-0.5 transition">›</span>
+                    )}
                   </button>
 
                   <button
-                    onClick={() => handleNav('manpower-estimation', 'preview')}
-                    className="w-full text-left px-3 py-1.5 rounded-lg text-xs text-slate-400 hover:text-white hover:bg-white/[0.04] transition cursor-pointer flex items-center gap-2"
+                    onClick={() => handleNav('unit-rate-estimation', 'preview')}
+                    className={`w-full text-left px-3 py-1.5 rounded-lg text-xs transition cursor-pointer flex items-center justify-between group ${
+                      activeSubTool === 'preview'
+                        ? 'text-white font-bold bg-[#E8700A] shadow-xs'
+                        : 'text-slate-300 hover:text-white hover:bg-white/[0.04]'
+                    }`}
                   >
-                    <Eye className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Preview</span>
-                  </button>
-
-                  <button
-                    onClick={() => handleNav('manpower-estimation', 'report')}
-                    className="w-full text-left px-3 py-1.5 rounded-lg text-xs text-slate-400 hover:text-white hover:bg-white/[0.04] transition cursor-pointer flex items-center justify-between"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Printer className="w-3.5 h-3.5 text-slate-400" />
-                      <span>Print</span>
+                    <div className="flex items-center gap-2 truncate">
+                      <Eye className={`w-3.5 h-3.5 shrink-0 ${activeSubTool === 'preview' ? 'text-white' : 'text-[#38BDF8]'}`} />
+                      <span className="truncate">Preview</span>
                     </div>
-                    <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-amber-500/20 text-[#F7941D]">
+                    {activeSubTool === 'preview' ? (
+                      <span className="text-xs text-white font-bold">›</span>
+                    ) : (
+                      <span className="text-xs text-slate-600 group-hover:text-slate-400 group-hover:translate-x-0.5 transition">›</span>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => handleNav('unit-rate-estimation', 'report')}
+                    className={`w-full text-left px-3 py-1.5 rounded-lg text-xs transition cursor-pointer flex items-center justify-between group ${
+                      activeSubTool === 'report' || activeSubTool === 'xlprint' || activeSubTool === 'print'
+                        ? 'text-white font-bold bg-[#E8700A] shadow-xs'
+                        : 'text-slate-300 hover:text-white hover:bg-white/[0.04]'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 truncate">
+                      <Printer className={`w-3.5 h-3.5 shrink-0 ${activeSubTool === 'report' || activeSubTool === 'xlprint' || activeSubTool === 'print' ? 'text-white' : 'text-slate-400'}`} />
+                      <span className="truncate">Print</span>
+                    </div>
+                    <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border border-[#F59E0B]/50 bg-[#78350F]/30 text-[#F59E0B] tracking-wide">
                       PRO
                     </span>
                   </button>
@@ -687,33 +759,264 @@ export default function Sidebar({
 
               {/* GROUP 3: CONFIGURATION */}
               <div className="pt-2 border-t border-white/[0.06]">
-                <div className="px-3 mb-1.5 text-[9px] font-mono font-bold text-slate-400 uppercase tracking-widest">
+                <div className="px-3 mb-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                  CONFIGURATION
+                </div>
+
+                <nav className="space-y-0.5">
+                  <button
+                    onClick={() => handleNav('unit-rate-estimation', 'company-details')}
+                    className={`w-full text-left px-3 py-1.5 rounded-lg text-xs transition cursor-pointer flex items-center justify-between group ${
+                      activeSubTool === 'company-details' || activeSubTool === 'company_details'
+                        ? 'text-white font-bold bg-[#E8700A] shadow-xs'
+                        : 'text-slate-300 hover:text-white hover:bg-white/[0.04]'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 truncate">
+                      <Building2 className={`w-3.5 h-3.5 shrink-0 ${activeSubTool === 'company-details' || activeSubTool === 'company_details' ? 'text-white' : 'text-[#FB923C]'}`} />
+                      <span className="truncate">Company Details</span>
+                    </div>
+                    <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border border-[#F59E0B]/50 bg-[#78350F]/30 text-[#F59E0B] tracking-wide">
+                      PRO
+                    </span>
+                  </button>
+
+                  <button
+                    onClick={() => handleNav('unit-rate-estimation', 'watermark')}
+                    className={`w-full text-left px-3 py-1.5 rounded-lg text-xs transition cursor-pointer flex items-center justify-between group ${
+                      activeSubTool === 'watermark'
+                        ? 'text-white font-bold bg-[#E8700A] shadow-xs'
+                        : 'text-slate-300 hover:text-white hover:bg-white/[0.04]'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 truncate">
+                      <Droplet className={`w-3.5 h-3.5 shrink-0 ${activeSubTool === 'watermark' ? 'text-white' : 'text-[#38BDF8]'}`} />
+                      <span className="truncate">Watermark</span>
+                    </div>
+                    <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border border-[#F59E0B]/50 bg-[#78350F]/30 text-[#F59E0B] tracking-wide">
+                      PRO
+                    </span>
+                  </button>
+                </nav>
+              </div>
+
+            </div>
+          ) : isManpower ? (
+            /* ========================================================
+               MANPOWER MODULE NAVIGATION (Matches 1.png & 6.png)
+               ======================================================== */
+            <div className="space-y-3">
+              
+              {/* Module Title Banner: Dark clean button with orange clipboard icon */}
+              <button
+                onClick={() => handleNav('manpower-estimation', 'hub')}
+                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left text-slate-200 hover:text-white hover:bg-white/[0.04] transition group cursor-pointer"
+              >
+                <ClipboardList className="w-4 h-4 text-[#E8700A] shrink-0" />
+                <span className="font-bold text-xs tracking-tight text-slate-200 group-hover:text-white truncate">
+                  Estimation — Manpower Based
+                </span>
+              </button>
+
+              {/* GROUP 1: ESTIMATION SECTIONS */}
+              <div>
+                <div className="px-3 mb-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                  ESTIMATION SECTIONS
+                </div>
+
+                <nav className="space-y-0.5">
+                  {manpowerSections.map((sec) => {
+                    const isActive = activeSubTool === sec.id;
+                    const Icon = sec.icon;
+                    const isProjectInfo = sec.id === 'project-info';
+
+                    const scrollToSection = (elementId) => {
+                      if (activeSubTool !== 'project-info') {
+                        handleNav('manpower-estimation', 'project-info');
+                        setTimeout(() => {
+                          document.getElementById(elementId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }, 150);
+                      } else {
+                        document.getElementById(elementId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }
+                    };
+
+                    return (
+                      <div key={sec.id} className="space-y-0.5">
+                        <button
+                          onClick={() => {
+                            if (sec.id === 'validate') {
+                              window.dispatchEvent(new CustomEvent('bg_header_action', { detail: { action: 'validate' } }));
+                            } else {
+                              handleNav('manpower-estimation', sec.id);
+                            }
+                          }}
+                          className={`w-full text-left px-3 py-1.5 rounded-lg text-xs transition cursor-pointer flex items-center justify-between group ${
+                            isActive
+                              ? 'text-white font-bold bg-[#E8700A] shadow-xs'
+                              : 'text-slate-300 hover:text-white hover:bg-white/[0.04]'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 truncate">
+                            <Icon
+                              className={`w-3.5 h-3.5 shrink-0 transition ${
+                                isActive ? 'text-white' : sec.iconColor || 'text-slate-400 group-hover:text-white'
+                              }`}
+                            />
+                            <span className="truncate">{sec.label}</span>
+                          </div>
+                          {isActive ? (
+                            <span className="text-xs text-white font-bold">›</span>
+                          ) : (
+                            <span className="text-xs text-slate-600 group-hover:text-slate-400 group-hover:translate-x-0.5 transition">›</span>
+                          )}
+                        </button>
+
+                        {/* Indented Sub-Items for Project Information matching 1.png */}
+                        {isProjectInfo && (isActive || activeSubTool === 'project-info') && (
+                          <div className="pl-6 pr-2 py-1 space-y-1 text-xs">
+                            <button
+                              onClick={() => scrollToSection('section-project-details')}
+                              className="w-full text-left py-1 px-2 rounded text-slate-300 hover:text-white hover:bg-white/5 transition flex items-center gap-2 cursor-pointer group"
+                            >
+                              <span className="text-orange-400 text-xs">•</span>
+                              <span className="truncate group-hover:text-white">Project Details</span>
+                            </button>
+                            <button
+                              onClick={() => scrollToSection('section-basic-requirements')}
+                              className="w-full text-left py-1 px-2 rounded text-slate-300 hover:text-white hover:bg-white/5 transition flex items-center gap-2 cursor-pointer group"
+                            >
+                              <span className="text-orange-400 text-xs">•</span>
+                              <span className="truncate group-hover:text-white">Basic Requirements</span>
+                            </button>
+                            <button
+                              onClick={() => scrollToSection('section-scale-schedule')}
+                              className="w-full text-left py-1 px-2 rounded text-slate-300 hover:text-white hover:bg-white/5 transition flex items-center gap-2 cursor-pointer group"
+                            >
+                              <span className="text-orange-400 text-xs">•</span>
+                              <span className="truncate group-hover:text-white">Project Scale &amp; Schedule</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </nav>
+              </div>
+
+              {/* GROUP 2: REGISTER & OUTPUT */}
+              <div className="pt-2 border-t border-white/[0.06]">
+                <div className="px-3 mb-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                  REGISTER &amp; OUTPUT
+                </div>
+
+                <nav className="space-y-0.5">
+                  <button
+                    onClick={() => handleNav('manpower-estimation', 'register')}
+                    className={`w-full text-left px-3 py-1.5 rounded-lg text-xs transition cursor-pointer flex items-center justify-between group ${
+                      activeSubTool === 'register'
+                        ? 'text-white font-bold bg-[#E8700A] shadow-xs'
+                        : 'text-slate-300 hover:text-white hover:bg-white/[0.04]'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 truncate">
+                      <BookOpen className={`w-3.5 h-3.5 shrink-0 ${activeSubTool === 'register' ? 'text-white' : 'text-[#FB923C]'}`} />
+                      <span className="truncate">Report Register</span>
+                    </div>
+                    {activeSubTool === 'register' ? (
+                      <span className="text-xs text-white font-bold">›</span>
+                    ) : (
+                      <span className="text-xs text-slate-600 group-hover:text-slate-400 group-hover:translate-x-0.5 transition">›</span>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => handleNav('manpower-estimation', 'dashboard')}
+                    className={`w-full text-left px-3 py-1.5 rounded-lg text-xs transition cursor-pointer flex items-center justify-between group ${
+                      activeSubTool === 'dashboard'
+                        ? 'text-white font-bold bg-[#E8700A] shadow-xs'
+                        : 'text-slate-300 hover:text-white hover:bg-white/[0.04]'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 truncate">
+                      <LayoutDashboard className={`w-3.5 h-3.5 shrink-0 ${activeSubTool === 'dashboard' ? 'text-white' : 'text-[#38BDF8]'}`} />
+                      <span className="truncate">Dashboard</span>
+                    </div>
+                    <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border border-[#F59E0B]/50 bg-[#78350F]/30 text-[#F59E0B] tracking-wide">
+                      PRO
+                    </span>
+                  </button>
+
+                  <button
+                    onClick={() => handleNav('manpower-estimation', 'preview')}
+                    className={`w-full text-left px-3 py-1.5 rounded-lg text-xs transition cursor-pointer flex items-center justify-between group ${
+                      activeSubTool === 'preview'
+                        ? 'text-white font-bold bg-[#E8700A] shadow-xs'
+                        : 'text-slate-300 hover:text-white hover:bg-white/[0.04]'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 truncate">
+                      <Eye className={`w-3.5 h-3.5 shrink-0 ${activeSubTool === 'preview' ? 'text-white' : 'text-[#38BDF8]'}`} />
+                      <span className="truncate">Preview</span>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => handleNav('manpower-estimation', 'report')}
+                    className={`w-full text-left px-3 py-1.5 rounded-lg text-xs transition cursor-pointer flex items-center justify-between group ${
+                      activeSubTool === 'report' || activeSubTool === 'print'
+                        ? 'text-white font-bold bg-[#E8700A] shadow-xs'
+                        : 'text-slate-300 hover:text-white hover:bg-white/[0.04]'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 truncate">
+                      <Printer className={`w-3.5 h-3.5 shrink-0 ${activeSubTool === 'report' || activeSubTool === 'print' ? 'text-white' : 'text-slate-400'}`} />
+                      <span className="truncate">Print</span>
+                    </div>
+                    <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border border-[#F59E0B]/50 bg-[#78350F]/30 text-[#F59E0B] tracking-wide">
+                      PRO
+                    </span>
+                  </button>
+                </nav>
+              </div>
+
+              {/* GROUP 3: CONFIGURATION */}
+              <div className="pt-2 border-t border-white/[0.06]">
+                <div className="px-3 mb-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                   CONFIGURATION
                 </div>
 
                 <nav className="space-y-0.5">
                   <button
                     onClick={() => handleNav('manpower-estimation', 'company-details')}
-                    className="w-full text-left px-3 py-1.5 rounded-lg text-xs text-slate-400 hover:text-white hover:bg-white/[0.04] transition cursor-pointer flex items-center justify-between"
+                    className={`w-full text-left px-3 py-1.5 rounded-lg text-xs transition cursor-pointer flex items-center justify-between group ${
+                      activeSubTool === 'company-details'
+                        ? 'text-white font-bold bg-[#E8700A] shadow-xs'
+                        : 'text-slate-300 hover:text-white hover:bg-white/[0.04]'
+                    }`}
                   >
-                    <div className="flex items-center gap-2">
-                      <Building2 className="w-3.5 h-3.5 text-slate-400" />
-                      <span>Company Details</span>
+                    <div className="flex items-center gap-2 truncate">
+                      <Building2 className={`w-3.5 h-3.5 shrink-0 ${activeSubTool === 'company-details' ? 'text-white' : 'text-[#FB923C]'}`} />
+                      <span className="truncate">Company Details</span>
                     </div>
-                    <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-amber-500/20 text-[#F7941D]">
+                    <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border border-[#F59E0B]/50 bg-[#78350F]/30 text-[#F59E0B] tracking-wide">
                       PRO
                     </span>
                   </button>
 
                   <button
                     onClick={() => handleNav('manpower-estimation', 'watermark')}
-                    className="w-full text-left px-3 py-1.5 rounded-lg text-xs text-slate-400 hover:text-white hover:bg-white/[0.04] transition cursor-pointer flex items-center justify-between"
+                    className={`w-full text-left px-3 py-1.5 rounded-lg text-xs transition cursor-pointer flex items-center justify-between group ${
+                      activeSubTool === 'watermark'
+                        ? 'text-white font-bold bg-[#E8700A] shadow-xs'
+                        : 'text-slate-300 hover:text-white hover:bg-white/[0.04]'
+                    }`}
                   >
-                    <div className="flex items-center gap-2">
-                      <Droplets className="w-3.5 h-3.5 text-slate-400" />
-                      <span>Watermark</span>
+                    <div className="flex items-center gap-2 truncate">
+                      <Droplet className={`w-3.5 h-3.5 shrink-0 ${activeSubTool === 'watermark' ? 'text-white' : 'text-[#38BDF8]'}`} />
+                      <span className="truncate">Watermark</span>
                     </div>
-                    <span className="text-[9px] font-mono font-bold px-1.5 py-0.2 rounded bg-amber-500/20 text-[#F7941D]">
+                    <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border border-[#F59E0B]/50 bg-[#78350F]/30 text-[#F59E0B] tracking-wide">
                       PRO
                     </span>
                   </button>
@@ -2257,11 +2560,10 @@ export default function Sidebar({
               <div className="bg-[#2A231C] border border-[#5E4226] text-white rounded-xl px-3 py-2 flex items-center gap-2.5 shadow-xs">
                 <FileText className="w-4 h-4 text-[#F7941D] shrink-0" />
                 <span className="font-semibold text-xs text-white truncate">
-                  {activePage === 'unit-rate-estimation' && 'Estimation — Quick Unit Rate'}
                   {activePage === 'specification-reading' && 'Coating Specification Reading'}
                   {activePage === 'coating-procedure' && 'Coating Procedure (ITP)'}
                   {activePage === 'coating-calculator' && 'Coating Calculator Suite'}
-                  {!['unit-rate-estimation', 'specification-reading', 'coating-procedure', 'coating-calculator'].includes(activePage) && activePage.toUpperCase()}
+                  {!['specification-reading', 'coating-procedure', 'coating-calculator'].includes(activePage) && activePage.toUpperCase()}
                 </span>
               </div>
 
@@ -2272,24 +2574,6 @@ export default function Sidebar({
                 </div>
 
                 <nav className="space-y-0.5">
-                  {activePage === 'unit-rate-estimation' && (
-                    unitRateSections.map((sec) => {
-                      const isActive = activeSubTool === sec.id || (sec.target && activeSubTool === sec.target);
-                      return (
-                        <button
-                          key={sec.id}
-                          onClick={() => handleNav('unit-rate-estimation', sec.target || sec.id)}
-                          className={`w-full text-left px-3 py-1.5 rounded-lg text-xs transition cursor-pointer flex items-center justify-between ${
-                            isActive
-                              ? 'text-white font-bold bg-[#F7941D]/15 border-l-2 border-[#F7941D]'
-                              : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
-                          }`}
-                        >
-                          <span className="truncate">{sec.label}</span>
-                        </button>
-                      );
-                    })
-                  )}
 
                   {activePage === 'specification-reading' && (
                     specSections.map((sec) => {
@@ -2440,7 +2724,7 @@ export default function Sidebar({
               <HelpCircle className="w-3.5 h-3.5 text-slate-400" />
               <span>Help &amp; FAQ</span>
             </button>
-          ) : isManpower ? (
+          ) : (isManpower || isUnitRate) ? (
             /* Bottom links matching media_1791302836632.png */
             <div className="space-y-1 text-[11px] text-slate-400 font-mono py-1">
               <a href="https://bgcoating.com" target="_blank" rel="noreferrer" className="flex items-center gap-2 hover:text-[#F7941D] transition">
@@ -2765,6 +3049,231 @@ export default function Sidebar({
                       className="w-full text-left px-3 py-1 text-xs rounded block text-slate-400 hover:text-white"
                     >
                       Print / PDF [PRO]
+                    </button>
+                  </div>
+                </div>
+              ) : isUnitRate ? (
+                <div className="space-y-3">
+                  <button
+                    onClick={() => { setMobileSidebarOpen(false); handleNav('dashboard'); }}
+                    className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-slate-400 hover:text-white text-xs hover:bg-white/[0.04] transition"
+                  >
+                    <span>←</span>
+                    <span>All Platform Modules</span>
+                  </button>
+                  <button
+                    onClick={() => { setMobileSidebarOpen(false); handleNav('unit-rate-estimation', 'hub'); }}
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left text-slate-200 hover:text-white hover:bg-white/[0.04] transition"
+                  >
+                    <FileSpreadsheet className="w-4 h-4 text-[#E8700A] shrink-0" />
+                    <span className="font-bold text-xs">Estimation — Quick Unit Rate</span>
+                  </button>
+                  <div className="pt-2 border-t border-white/[0.06]">
+                    <div className="px-2 mb-1 text-[9px] font-mono font-bold text-slate-400 uppercase">Project Sections</div>
+                    {unitRateSections.map((sec) => (
+                      <button
+                        key={sec.id}
+                        onClick={() => {
+                          setMobileSidebarOpen(false);
+                          if (sec.id === 'validate') {
+                            window.dispatchEvent(new CustomEvent('bg_header_action', { detail: { action: 'validate' } }));
+                          } else {
+                            handleNav('unit-rate-estimation', sec.target || sec.id);
+                          }
+                        }}
+                        className={`w-full text-left px-3 py-1.5 text-xs rounded flex items-center justify-between ${
+                          activeSubTool === sec.id ? 'text-white font-bold bg-[#E8700A]' : 'text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        <span className="truncate">{sec.label}</span>
+                        <span className="text-xs">›</span>
+                      </button>
+                    ))}
+                  </div>
+                  <div className="pt-2 border-t border-white/[0.06]">
+                    <div className="px-2 mb-1 text-[9px] font-mono font-bold text-slate-400 uppercase">Register & Output</div>
+                    <button
+                      onClick={() => { setMobileSidebarOpen(false); handleNav('unit-rate-estimation', 'register'); }}
+                      className={`w-full text-left px-3 py-1.5 text-xs rounded flex items-center justify-between ${
+                        activeSubTool === 'register' ? 'text-white font-bold bg-[#E8700A]' : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <BookOpen className={`w-3.5 h-3.5 ${activeSubTool === 'register' ? 'text-white' : 'text-[#FB923C]'}`} />
+                        <span>Report Register</span>
+                      </div>
+                      <span className="text-xs">›</span>
+                    </button>
+                    <button
+                      onClick={() => { setMobileSidebarOpen(false); handleNav('unit-rate-estimation', 'preview'); }}
+                      className={`w-full text-left px-3 py-1.5 text-xs rounded flex items-center justify-between ${
+                        activeSubTool === 'preview' ? 'text-white font-bold bg-[#E8700A]' : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Eye className={`w-3.5 h-3.5 ${activeSubTool === 'preview' ? 'text-white' : 'text-[#38BDF8]'}`} />
+                        <span>Preview</span>
+                      </div>
+                      <span className="text-xs">›</span>
+                    </button>
+                    <button
+                      onClick={() => { setMobileSidebarOpen(false); handleNav('unit-rate-estimation', 'report'); }}
+                      className={`w-full text-left px-3 py-1.5 text-xs rounded flex items-center justify-between ${
+                        activeSubTool === 'report' || activeSubTool === 'xlprint' || activeSubTool === 'print' ? 'text-white font-bold bg-[#E8700A]' : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Printer className="w-3.5 h-3.5 text-slate-400" />
+                        <span>Print</span>
+                      </div>
+                      <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border border-[#F59E0B]/50 bg-[#78350F]/30 text-[#F59E0B]">PRO</span>
+                    </button>
+                  </div>
+                  <div className="pt-2 border-t border-white/[0.06]">
+                    <div className="px-2 mb-1 text-[9px] font-mono font-bold text-slate-400 uppercase">Configuration</div>
+                    <button
+                      onClick={() => { setMobileSidebarOpen(false); handleNav('unit-rate-estimation', 'company-details'); }}
+                      className={`w-full text-left px-3 py-1.5 text-xs rounded flex items-center justify-between ${
+                        activeSubTool === 'company-details' || activeSubTool === 'company_details' ? 'text-white font-bold bg-[#E8700A]' : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Building2 className="w-3.5 h-3.5 text-[#FB923C]" />
+                        <span>Company Details</span>
+                      </div>
+                      <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border border-[#F59E0B]/50 bg-[#78350F]/30 text-[#F59E0B]">PRO</span>
+                    </button>
+                    <button
+                      onClick={() => { setMobileSidebarOpen(false); handleNav('unit-rate-estimation', 'watermark'); }}
+                      className={`w-full text-left px-3 py-1.5 text-xs rounded flex items-center justify-between ${
+                        activeSubTool === 'watermark' ? 'text-white font-bold bg-[#E8700A]' : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Droplet className="w-3.5 h-3.5 text-[#38BDF8]" />
+                        <span>Watermark</span>
+                      </div>
+                      <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border border-[#F59E0B]/50 bg-[#78350F]/30 text-[#F59E0B]">PRO</span>
+                    </button>
+                  </div>
+                </div>
+              ) : isManpower ? (
+                <div className="space-y-3">
+                  <button
+                    onClick={() => { setMobileSidebarOpen(false); handleNav('dashboard'); }}
+                    className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-slate-400 hover:text-white text-xs hover:bg-white/[0.04] transition"
+                  >
+                    <span>←</span>
+                    <span>All Platform Modules</span>
+                  </button>
+                  <button
+                    onClick={() => { setMobileSidebarOpen(false); handleNav('manpower-estimation', 'hub'); }}
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left text-slate-200 hover:text-white hover:bg-white/[0.04] transition"
+                  >
+                    <ClipboardList className="w-4 h-4 text-[#E8700A] shrink-0" />
+                    <span className="font-bold text-xs">Estimation — Manpower Based</span>
+                  </button>
+                  <div className="pt-2 border-t border-white/[0.06]">
+                    <div className="px-2 mb-1 text-[9px] font-mono font-bold text-slate-400 uppercase">Estimation Sections</div>
+                    {manpowerSections.map((sec) => (
+                      <button
+                        key={sec.id}
+                        onClick={() => {
+                          setMobileSidebarOpen(false);
+                          if (sec.id === 'validate') {
+                            window.dispatchEvent(new CustomEvent('bg_header_action', { detail: { action: 'validate' } }));
+                          } else {
+                            handleNav('manpower-estimation', sec.id);
+                          }
+                        }}
+                        className={`w-full text-left px-3 py-1.5 text-xs rounded flex items-center justify-between ${
+                          activeSubTool === sec.id ? 'text-white font-bold bg-[#E8700A]' : 'text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 truncate">
+                          <sec.icon className={`w-3.5 h-3.5 shrink-0 ${activeSubTool === sec.id ? 'text-white' : sec.iconColor || 'text-slate-400'}`} />
+                          <span className="truncate">{sec.label}</span>
+                        </div>
+                        <span className="text-xs">›</span>
+                      </button>
+                    ))}
+                  </div>
+                  <div className="pt-2 border-t border-white/[0.06]">
+                    <div className="px-2 mb-1 text-[9px] font-mono font-bold text-slate-400 uppercase">Register & Output</div>
+                    <button
+                      onClick={() => { setMobileSidebarOpen(false); handleNav('manpower-estimation', 'register'); }}
+                      className={`w-full text-left px-3 py-1.5 text-xs rounded flex items-center justify-between ${
+                        activeSubTool === 'register' ? 'text-white font-bold bg-[#E8700A]' : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <BookOpen className={`w-3.5 h-3.5 ${activeSubTool === 'register' ? 'text-white' : 'text-[#FB923C]'}`} />
+                        <span>Report Register</span>
+                      </div>
+                      <span className="text-xs">›</span>
+                    </button>
+                    <button
+                      onClick={() => { setMobileSidebarOpen(false); handleNav('manpower-estimation', 'dashboard'); }}
+                      className={`w-full text-left px-3 py-1.5 text-xs rounded flex items-center justify-between ${
+                        activeSubTool === 'dashboard' ? 'text-white font-bold bg-[#E8700A]' : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <LayoutDashboard className={`w-3.5 h-3.5 ${activeSubTool === 'dashboard' ? 'text-white' : 'text-[#38BDF8]'}`} />
+                        <span>Dashboard</span>
+                      </div>
+                      <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border border-[#F59E0B]/50 bg-[#78350F]/30 text-[#F59E0B]">PRO</span>
+                    </button>
+                    <button
+                      onClick={() => { setMobileSidebarOpen(false); handleNav('manpower-estimation', 'preview'); }}
+                      className={`w-full text-left px-3 py-1.5 text-xs rounded flex items-center justify-between ${
+                        activeSubTool === 'preview' ? 'text-white font-bold bg-[#E8700A]' : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Eye className={`w-3.5 h-3.5 ${activeSubTool === 'preview' ? 'text-white' : 'text-[#38BDF8]'}`} />
+                        <span>Preview</span>
+                      </div>
+                      <span className="text-xs">›</span>
+                    </button>
+                    <button
+                      onClick={() => { setMobileSidebarOpen(false); handleNav('manpower-estimation', 'report'); }}
+                      className={`w-full text-left px-3 py-1.5 text-xs rounded flex items-center justify-between ${
+                        activeSubTool === 'report' || activeSubTool === 'print' ? 'text-white font-bold bg-[#E8700A]' : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Printer className="w-3.5 h-3.5 text-slate-400" />
+                        <span>Print</span>
+                      </div>
+                      <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border border-[#F59E0B]/50 bg-[#78350F]/30 text-[#F59E0B]">PRO</span>
+                    </button>
+                  </div>
+                  <div className="pt-2 border-t border-white/[0.06]">
+                    <div className="px-2 mb-1 text-[9px] font-mono font-bold text-slate-400 uppercase">Configuration</div>
+                    <button
+                      onClick={() => { setMobileSidebarOpen(false); handleNav('manpower-estimation', 'company-details'); }}
+                      className={`w-full text-left px-3 py-1.5 text-xs rounded flex items-center justify-between ${
+                        activeSubTool === 'company-details' || activeSubTool === 'company_details' ? 'text-white font-bold bg-[#E8700A]' : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Building2 className="w-3.5 h-3.5 text-[#FB923C]" />
+                        <span>Company Details</span>
+                      </div>
+                      <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border border-[#F59E0B]/50 bg-[#78350F]/30 text-[#F59E0B]">PRO</span>
+                    </button>
+                    <button
+                      onClick={() => { setMobileSidebarOpen(false); handleNav('manpower-estimation', 'watermark'); }}
+                      className={`w-full text-left px-3 py-1.5 text-xs rounded flex items-center justify-between ${
+                        activeSubTool === 'watermark' ? 'text-white font-bold bg-[#E8700A]' : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Droplet className="w-3.5 h-3.5 text-[#38BDF8]" />
+                        <span>Watermark</span>
+                      </div>
+                      <span className="text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border border-[#F59E0B]/50 bg-[#78350F]/30 text-[#F59E0B]">PRO</span>
                     </button>
                   </div>
                 </div>

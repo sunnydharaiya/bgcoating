@@ -165,7 +165,7 @@ export default function AcademyLmsPage() {
   const passed = score >= 3;
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12 animate-in fade-in duration-200 font-sans">
+    <div className="space-y-6 w-full pb-12 animate-in fade-in duration-200 font-sans">
       
       {/* Header Banner */}
       <div className="bg-white border border-[#D8DEE5] rounded-2xl p-5 md:p-6 shadow-[0_2px_8px_rgba(20,24,32,0.06)] flex flex-col md:flex-row md:items-center justify-between gap-4">

@@ -30,7 +30,7 @@ export default function UnitRateHub({
   };
 
   return (
-    <div className="space-y-8 max-w-6xl mx-auto pb-6 animate-in fade-in duration-200">
+    <div className="space-y-8 w-full pb-6 animate-in fade-in duration-200">
       
       {/* 1. Hero Card (Exact match to Screenshot 3) */}
       <div className="bg-white rounded-2xl shadow-[0_2px_12px_rgba(20,24,32,0.04)] border border-[#E6E8EC] p-6 md:p-8 text-center relative">

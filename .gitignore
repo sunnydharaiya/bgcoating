@@ -108,3 +108,10 @@ desktop.ini
 *.swp
 *.swo
 *~
+
+# Temporary Screenshots & Scratch Files
+sc/
+**/sc/
+scratch/
+**/scratch/
+

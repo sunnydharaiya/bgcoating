@@ -55,6 +55,21 @@ jobs:
           envs: VPS_PROJECT_DIR
           script: |
             export VPS_PROJECT_DIR="${{ secrets.VPS_PROJECT_DIR || '/var/www/bgcoating.com' }}"
+            cd "${VPS_PROJECT_DIR}"
+
+            # 1. Preserve server live SQLite database before any git update
+            if [ -f "backend/db.sqlite3" ]; then
+              echo "💾 Preserving live server SQLite database before deployment..."
+              mkdir -p "backend/backups"
+              cp -a "backend/db.sqlite3" "backend/backups/db_backup_$(date +%Y%m%d_%H%M%S).sqlite3"
+              cp -a "backend/db.sqlite3" "backend/db.sqlite3.preserve"
+            fi
+
+            # 2. Fetch origin and checkout updated deploy script first
+            git fetch origin main
+            git checkout origin/main -- backend/deploy/deploy.sh 2>/dev/null || true
+
+            # 3. Execute backend deployment script
             if [ -f "${VPS_PROJECT_DIR}/backend/deploy/deploy.sh" ]; then
               chmod +x "${VPS_PROJECT_DIR}/backend/deploy/deploy.sh"
               bash "${VPS_PROJECT_DIR}/backend/deploy/deploy.sh"
@@ -62,3 +77,10 @@ jobs:
               echo "❌ Error: Deployment script not found at ${VPS_PROJECT_DIR}/backend/deploy/deploy.sh"
               exit 1
             fi
+
+            # 4. Final safety check: ensure live db exists
+            if [ ! -f "backend/db.sqlite3" ] && [ -f "backend/db.sqlite3.preserve" ]; then
+              echo "⚠️ Restoring server SQLite database from preserve copy..."
+              mv -f "backend/db.sqlite3.preserve" "backend/db.sqlite3"
+            fi
+            rm -f "backend/db.sqlite3.preserve"

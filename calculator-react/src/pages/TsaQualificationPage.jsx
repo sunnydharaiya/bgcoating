@@ -548,7 +548,7 @@ export default function TsaQualificationPage({
       )}
 
       {/* Main Container */}
-      <div className={currentSubTool === 'hub' ? 'max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-4' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6'}>
+      <div className={currentSubTool === 'hub' ? 'w-full px-4 sm:px-6 lg:px-8 pt-4' : 'w-full px-4 sm:px-6 lg:px-8 pt-6'}>
         {renderCurrentView()}
       </div>
 

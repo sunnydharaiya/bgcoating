@@ -445,6 +445,22 @@ export default function UnitRateEstimationPage({ currentSubTool = 'hub', onNavig
     return () => window.removeEventListener('bg_header_action', handleHeaderAction);
   }, [formData, completionPct, navigateTo]);
 
+  const SHEET_SECTIONS = ['project-info', 'scope', 'section-d', 'section-f', 'cost-matrix', 'revisions'];
+  const isSheetSection = SHEET_SECTIONS.includes(activeSubTool);
+
+  // Smooth scroll to active section anchor when navigating sheet sections
+  useEffect(() => {
+    if (isSheetSection) {
+      const el = document.getElementById(`section-${activeSubTool}`);
+      if (el) {
+        const timer = setTimeout(() => {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 80);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [activeSubTool, isSheetSection]);
+
   const currencyObj = CURRENCY_CONFIG[formData.currency] || CURRENCY_CONFIG.INR;
 
   const subTabs = [
@@ -460,6 +476,16 @@ export default function UnitRateEstimationPage({ currentSubTool = 'hub', onNavig
     { id: 'register', label: '📁 Register' }
   ];
 
+  const handleTabClick = (tabId) => {
+    navigateTo(tabId);
+    if (SHEET_SECTIONS.includes(tabId)) {
+      const el = document.getElementById(`section-${tabId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+  };
+
   return (
     <div className="w-full text-[#1B222C] flex flex-col font-sans">
       
@@ -473,7 +499,7 @@ export default function UnitRateEstimationPage({ currentSubTool = 'hub', onNavig
                 return (
                   <button
                     key={tab.id}
-                    onClick={() => navigateTo(tab.id)}
+                    onClick={() => handleTabClick(tab.id)}
                     className={`px-3 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition cursor-pointer flex items-center gap-1.5 ${
                       isActive
                         ? 'bg-gradient-to-r from-[#F7941D] to-[#E8700A] text-white font-bold shadow-xs'
@@ -522,70 +548,127 @@ export default function UnitRateEstimationPage({ currentSubTool = 'hub', onNavig
           />
         )}
 
-        {activeSubTool === 'project-info' && (
-          <UnitRateProjectInfo
-            formData={formData}
-            onUpdateField={handleUpdateField}
-            onNavigateNext={() => navigateTo('scope')}
-            onReset={handleResetCurrent}
-          />
-        )}
+        {isSheetSection && (
+          <div className="space-y-8">
+            <div id="section-project-info" className="scroll-mt-20">
+              <UnitRateProjectInfo
+                formData={formData}
+                onUpdateField={handleUpdateField}
+                onNavigateNext={() => navigateTo('scope')}
+                onReset={handleResetCurrent}
+              />
+            </div>
 
-        {activeSubTool === 'scope' && (
-          <UnitRateScope
-            formData={formData}
-            onUpdateField={handleUpdateField}
-            onNavigateNext={() => navigateTo('section-d')}
-            onNavigatePrev={() => navigateTo('project-info')}
-            onReset={handleResetCurrent}
-          />
-        )}
+            <div id="section-scope" className="scroll-mt-20">
+              <UnitRateScope
+                formData={formData}
+                onUpdateField={handleUpdateField}
+                onNavigateNext={() => navigateTo('section-d')}
+                onNavigatePrev={() => navigateTo('project-info')}
+                onReset={handleResetCurrent}
+              />
+            </div>
 
-        {activeSubTool === 'section-d' && (
-          <UnitRateSectionD
-            formData={formData}
-            onUpdateField={handleUpdateField}
-            onSyncSectionF={handleSyncSectionF}
-            onNavigateNext={() => navigateTo('section-f')}
-            onNavigatePrev={() => navigateTo('scope')}
-            onReset={handleResetCurrent}
-          />
-        )}
+            <div id="section-section-d" className="scroll-mt-20">
+              <UnitRateSectionD
+                formData={formData}
+                onUpdateField={handleUpdateField}
+                onSyncSectionF={handleSyncSectionF}
+                onNavigateNext={() => navigateTo('section-f')}
+                onNavigatePrev={() => navigateTo('scope')}
+                onReset={handleResetCurrent}
+              />
+            </div>
 
-        {activeSubTool === 'section-f' && (
-          <UnitRateSectionF
-            formData={formData}
-            onUpdateField={handleUpdateField}
-            onOpenPaintCalc={() => setPaintModalOpen(true)}
-            onNavigateNext={() => navigateTo('cost-matrix')}
-            onNavigatePrev={() => navigateTo('section-d')}
-            onReset={handleResetCurrent}
-          />
-        )}
+            <div id="section-section-f" className="scroll-mt-20">
+              <UnitRateSectionF
+                formData={formData}
+                onUpdateField={handleUpdateField}
+                onOpenPaintCalc={() => setPaintModalOpen(true)}
+                onNavigateNext={() => navigateTo('cost-matrix')}
+                onNavigatePrev={() => navigateTo('section-d')}
+                onReset={handleResetCurrent}
+              />
+            </div>
 
-        {activeSubTool === 'cost-matrix' && (
-          <UnitRateCostMatrix
-            formData={formData}
-            onUpdateField={handleUpdateField}
-            onRebuildRows={handleRebuildEstRows}
-            onOpenPaintCalc={() => setPaintModalOpen(true)}
-            onOpenAbrCalc={() => setAbrModalOpen(true)}
-            onNavigateNext={() => navigateTo('revisions')}
-            onNavigatePrev={() => navigateTo('section-f')}
-            onReset={handleResetCurrent}
-            metrics={metrics}
-          />
-        )}
+            <div id="section-cost-matrix" className="scroll-mt-20">
+              <UnitRateCostMatrix
+                formData={formData}
+                onUpdateField={handleUpdateField}
+                onRebuildRows={handleRebuildEstRows}
+                onOpenPaintCalc={() => setPaintModalOpen(true)}
+                onOpenAbrCalc={() => setAbrModalOpen(true)}
+                onNavigateNext={() => navigateTo('revisions')}
+                onNavigatePrev={() => navigateTo('section-f')}
+                onReset={handleResetCurrent}
+                metrics={metrics}
+              />
+            </div>
 
-        {activeSubTool === 'revisions' && (
-          <UnitRateRevisions
-            formData={formData}
-            onUpdateField={handleUpdateField}
-            onNavigatePrev={() => navigateTo('cost-matrix')}
-            onOpenPreview={() => setPreviewOpen(true)}
-            onOpenPrint={() => navigateTo('xlprint')}
-            onReset={handleResetCurrent}
-          />
+            <div id="section-revisions" className="scroll-mt-20">
+              <UnitRateRevisions
+                formData={formData}
+                onUpdateField={handleUpdateField}
+                onNavigatePrev={() => navigateTo('cost-matrix')}
+                onOpenPreview={() => setPreviewOpen(true)}
+                onOpenPrint={() => navigateTo('xlprint')}
+                onReset={handleResetCurrent}
+              />
+            </div>
+
+            {/* Bottom Final Action Bar */}
+            <div className="bg-white rounded-2xl border border-[#E6E8EC] p-5 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-orange-50 text-orange-600 border border-orange-200">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-slate-800">Final Commercial Estimation Actions</h4>
+                  <p className="text-xs text-slate-500">Save current proposal draft, validate all 6 sections, or generate client dossier.</p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2.5">
+                <button
+                  onClick={() => handleSaveToRegister('Draft')}
+                  className="px-4 py-2 rounded-lg bg-orange-50 hover:bg-orange-100 text-orange-700 text-xs font-semibold flex items-center gap-2 transition border border-orange-200 cursor-pointer"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>Save Draft</span>
+                </button>
+
+                <button
+                  onClick={() => handleSaveToRegister('Approved')}
+                  className="px-4 py-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold flex items-center gap-2 transition border border-emerald-200 shadow-2xs cursor-pointer"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  <span>Validate &amp; Finalize</span>
+                </button>
+
+                <button
+                  onClick={() => navigateTo('xlprint')}
+                  className="px-5 py-2 rounded-lg bg-gradient-to-r from-[#F97316] to-[#EA580C] hover:from-[#EA580C] hover:to-[#C2410C] text-white text-xs font-bold flex items-center gap-2 shadow-sm transition cursor-pointer"
+                >
+                  <Printer className="w-4 h-4" />
+                  <span>Print Quotation</span>
+                </button>
+
+                <button
+                  onClick={handleResetCurrent}
+                  className="px-4 py-2 rounded-lg bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition border border-slate-200 shadow-2xs cursor-pointer"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Reset Sheet</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Branded Footer */}
+            <div className="text-center py-6 border-t border-[#E2E8F0] text-xs text-slate-400 space-y-1">
+              <p className="font-semibold text-slate-600">BG COATING &amp; CORROSION ENGINEERING SERVICES</p>
+              <p>ISO 9001:2015 • NACE / SSPC Standards • Automated EPC Unit-Rate Take-off &amp; Commercial Quotation Engine</p>
+            </div>
+          </div>
         )}
 
         {activeSubTool === 'report-view' && (
@@ -598,7 +681,7 @@ export default function UnitRateEstimationPage({ currentSubTool = 'hub', onNavig
           />
         )}
 
-        {activeSubTool === 'xlprint' && (
+        {(activeSubTool === 'xlprint' || activeSubTool === 'report' || activeSubTool === 'print') && (
           <UnitRatePrintDossier
             formData={formData}
             metrics={metrics}
@@ -627,7 +710,7 @@ export default function UnitRateEstimationPage({ currentSubTool = 'hub', onNavig
         )}
 
         {/* Fallback */}
-        {!subTabs.some(t => t.id === activeSubTool) && (
+        {!subTabs.some(t => t.id === activeSubTool) && !isSheetSection && activeSubTool !== 'xlprint' && activeSubTool !== 'report' && activeSubTool !== 'print' && (
           <UnitRateHub
             formData={formData}
             onUpdateForm={setFormData}

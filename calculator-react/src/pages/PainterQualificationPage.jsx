@@ -718,7 +718,7 @@ export default function PainterQualificationPage({
   };
 
   return (
-    <div className={`space-y-5 ${currentSubTool === 'hub' ? 'max-w-6xl mx-auto' : 'max-w-7xl mx-auto'} pb-16 animate-in fade-in duration-200 font-sans`}>
+    <div className="space-y-5 w-full pb-16 animate-in fade-in duration-200 font-sans">
       
       {/* Sticky Progress Freeze Bar (Hidden on Hub view) */}
       {currentSubTool !== 'hub' && (

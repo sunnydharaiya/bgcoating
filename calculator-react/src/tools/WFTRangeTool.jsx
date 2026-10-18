@@ -22,7 +22,7 @@ export default function WFTRangeTool() {
   };
 
   return (
-    <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm space-y-6 max-w-4xl mx-auto">
+    <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm space-y-6 w-full">
       <div className="flex items-center justify-between border-b border-slate-100 pb-4">
         <div className="flex items-center gap-3">
           <div className="bg-amber-50 text-[#F7941D] p-3 rounded-2xl border border-amber-100 shadow-xs">

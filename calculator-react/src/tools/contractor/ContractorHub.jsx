@@ -67,7 +67,7 @@ export default function ContractorHub({
   }, []);
 
   return (
-    <div className="space-y-5 max-w-[1440px] mx-auto pb-16 font-sans text-slate-800 animate-in fade-in duration-200">
+    <div className="space-y-5 w-full pb-16 font-sans text-slate-800 animate-in fade-in duration-200">
       
       {/* ========================================================
           1. HERO BANNER: EXECUTIVE COMMAND CENTER

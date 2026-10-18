@@ -53,7 +53,7 @@ export default function InspectionMasterList({ onApplyPreset }) {
   ]);
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto animate-in fade-in duration-200">
+    <div className="space-y-6 w-full animate-in fade-in duration-200">
       
       {/* Header Banner */}
       <div className="bg-white border border-slate-200 rounded-3xl p-5 md:p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">

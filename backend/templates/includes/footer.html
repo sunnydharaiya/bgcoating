@@ -31,7 +31,7 @@
             <li><a href="{% url 'about' %}" data-route="">About Us</a></li>
             <li><a href="{% url 'gallery' %}" data-route="">Gallery</a></li>
             <li><a href="{% url 'blog' %}" data-route="">Blog</a></li>
-            <li><a href="{% url 'contact' %}" data-route="" data-anchor="enquiry">Contact Us</a></li>
+            <li><a href="{% url 'contact' %}#enquiry" data-anchor="enquiry">Contact Us</a></li>
           {% endif %}
         </ul>
       </div>
@@ -77,7 +77,7 @@
           <a href="{% url 'about' %}" data-route="">About</a>
           <a href="{% url 'gallery' %}" data-route="">Gallery</a>
           <a href="{% url 'blog' %}" data-route="">Blogs</a>
-          <a href="{% url 'contact' %}" data-route="" data-anchor="enquiry">Contact</a>
+          <a href="{% url 'contact' %}#enquiry" data-anchor="enquiry">Contact</a>
         {% endif %}
       </nav>
     </div>
@@ -694,38 +694,46 @@ if (form){
     const anchor = a.getAttribute('data-anchor') || a.getAttribute('data-frame-anchor');
     const isFrame = a.hasAttribute('data-frame-anchor');
 
-    if (href.startsWith('http') || href.startsWith('mailto:') || href.startsWith('tel:') || a.getAttribute('target') === '_blank') {
+    if (href.startsWith('mailto:') || href.startsWith('tel:') || a.getAttribute('target') === '_blank') {
+      return;
+    }
+    if (a.origin && a.origin !== location.origin) {
       return;
     }
 
     if (anchor) {
-      const curFile = (location.pathname.split('/').pop() || 'index.php').toLowerCase();
-      const rawTarget = (href.split('/').pop() || '').split('#')[0].toLowerCase();
-      const targetFile = rawTarget || 'index.php';
+      const curPath = (location.pathname || '/').replace(/index\.(php|html?)$/i, '').replace(/\/+$/, '') || '/';
+      const linkPath = (a.pathname || '/').replace(/index\.(php|html?)$/i, '').replace(/\/+$/, '') || '/';
+      const isSamePage = (curPath === linkPath);
 
-      if (curFile === targetFile || (targetFile === 'index.php' && curFile === '')) {
-        e.preventDefault();
-        const drawer = document.getElementById('drawer'), burger = document.getElementById('burger'), backdrop = document.getElementById('drawerBackdrop');
-        if (drawer && drawer.classList.contains('open')) {
-          drawer.classList.remove('open');
-          if (burger) {
-            burger.classList.remove('open');
-            burger.setAttribute('aria-expanded', 'false');
+      if (isSamePage) {
+        const targetEl = isFrame || (typeof frameEl === 'function' && frameEl(anchor)) || document.getElementById(anchor);
+        if (targetEl) {
+          e.preventDefault();
+          const drawer = document.getElementById('drawer'), burger = document.getElementById('burger'), backdrop = document.getElementById('drawerBackdrop');
+          if (drawer && drawer.classList.contains('open')) {
+            drawer.classList.remove('open');
+            if (burger) {
+              burger.classList.remove('open');
+              burger.setAttribute('aria-expanded', 'false');
+            }
+            if (backdrop) backdrop.classList.remove('show');
+            document.body.style.overflow = '';
           }
-          if (backdrop) backdrop.classList.remove('show');
-          document.body.style.overflow = '';
+          if (location.hash !== '#' + anchor) {
+            try { history.pushState(null, '', '#' + anchor); } catch(err) {}
+          }
+          if (isFrame || (typeof frameEl === 'function' && frameEl(anchor))) {
+            if (typeof scrollToFrameAnchor === 'function') scrollToFrameAnchor(anchor);
+          } else if (window.__scrollToAnchor) {
+            window.__scrollToAnchor(anchor);
+          }
+          return;
         }
-        if (location.hash !== '#' + anchor) {
-          try { history.pushState(null, '', '#' + anchor); } catch(err) {}
-        }
-        if (isFrame || frameEl(anchor)) {
-          scrollToFrameAnchor(anchor);
-        } else if (window.__scrollToAnchor) {
-          window.__scrollToAnchor(anchor);
-        }
-        return;
       } else {
-        a.setAttribute('href', targetFile + '#' + anchor);
+        if (!a.hash && anchor) {
+          a.setAttribute('href', a.pathname + (a.search || '') + '#' + anchor);
+        }
         return;
       }
     }
@@ -1148,34 +1156,20 @@ function initBASlider(ba, handle){
   });
   
   /* --- Smooth scroll to anchor / hash --- */
-  document.addEventListener('click', function(e) {
-    var a = e.target.closest('a[data-anchor]');
-    if (!a) return;
-    var anchorId = a.getAttribute('data-anchor');
-    var targetEl = document.getElementById(anchorId);
-    if (targetEl) {
-      var curPath = location.pathname.replace(/\/$/, '');
-      var linkPath = a.pathname.replace(/\/$/, '');
-      if (curPath === linkPath || !linkPath) {
-        e.preventDefault();
-        var headerH = (document.getElementById('siteHeader') ? document.getElementById('siteHeader').offsetHeight : 70) + 14;
-        var topPos = targetEl.getBoundingClientRect().top + window.pageYOffset - headerH;
-        window.scrollTo({ top: topPos, behavior: 'smooth' });
-        history.pushState(null, null, '#' + anchorId);
-      }
-    }
-  });
-
   function scrollToHash() {
     if (location.hash) {
       var id = location.hash.replace('#', '');
-      var targetEl = document.getElementById(id);
-      if (targetEl) {
-        setTimeout(function() {
-          var headerH = (document.getElementById('siteHeader') ? document.getElementById('siteHeader').offsetHeight : 70) + 14;
-          var topPos = targetEl.getBoundingClientRect().top + window.pageYOffset - headerH;
-          window.scrollTo({ top: topPos, behavior: 'smooth' });
-        }, 200);
+      if (window.__scrollToAnchor) {
+        window.__scrollToAnchor(id);
+      } else {
+        var targetEl = document.getElementById(id);
+        if (targetEl) {
+          setTimeout(function() {
+            var headerH = (document.getElementById('siteHeader') ? document.getElementById('siteHeader').offsetHeight : 70) + 14;
+            var topPos = targetEl.getBoundingClientRect().top + window.pageYOffset - headerH;
+            window.scrollTo({ top: topPos, behavior: 'smooth' });
+          }, 200);
+        }
       }
     }
   }

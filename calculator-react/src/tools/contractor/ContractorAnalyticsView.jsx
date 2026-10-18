@@ -21,7 +21,7 @@ export default function ContractorAnalyticsView({
   const [activeTab, setActiveTab] = useState(initialTab);
 
   return (
-    <div className="space-y-6 max-w-[1440px] mx-auto pb-16 font-sans">
+    <div className="space-y-6 w-full pb-16 font-sans">
       
       {/* Header */}
       <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">

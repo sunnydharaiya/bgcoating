@@ -61,7 +61,7 @@ export default function InspectionStandardsReference({
   );
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto animate-in fade-in duration-200">
+    <div className="space-y-6 w-full animate-in fade-in duration-200">
       
       {/* Tab Selector */}
       <div className="bg-white border border-slate-200 rounded-3xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">

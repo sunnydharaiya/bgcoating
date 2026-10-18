@@ -409,7 +409,7 @@ export default function BlasterQualificationPage({
         />
       )}
 
-      <div className={currentSubTool === 'hub' ? 'max-w-7xl mx-auto px-4 sm:px-6 pt-4' : 'max-w-7xl mx-auto px-4 sm:px-6 pt-4 space-y-6'}>
+      <div className={currentSubTool === 'hub' ? 'w-full px-4 sm:px-6 pt-4' : 'w-full px-4 sm:px-6 pt-4 space-y-6'}>
         
         {/* Navigation Rail & Quick Actions (Hidden on Hub view) */}
         {currentSubTool !== 'hub' && (
