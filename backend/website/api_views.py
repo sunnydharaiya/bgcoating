@@ -4,7 +4,7 @@ import re
 from django.utils import timezone
 from rest_framework import viewsets, mixins, status, filters
 from rest_framework.response import Response
-from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.decorators import action, api_view, permission_classes, authentication_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
@@ -102,6 +102,7 @@ def verify_google_credential(credential_str):
 
 
 @api_view(['POST'])
+@authentication_classes([])
 @permission_classes([AllowAny])
 def api_register(request):
     """
@@ -136,6 +137,7 @@ def api_register(request):
 
 
 @api_view(['POST'])
+@authentication_classes([])
 @permission_classes([AllowAny])
 def api_login(request):
     """
@@ -200,6 +202,7 @@ def api_login(request):
 
 
 @api_view(['POST'])
+@authentication_classes([])
 @permission_classes([AllowAny])
 def api_google_auth(request):
     """
@@ -906,6 +909,7 @@ class PaintProductViewSet(viewsets.ModelViewSet):
 
 @csrf_exempt
 @api_view(['POST'])
+@authentication_classes([])
 @permission_classes([AllowAny])
 def api_update_visitor_duration(request):
     """

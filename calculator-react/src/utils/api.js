@@ -95,7 +95,12 @@ export async function apiRequest(endpoint, { method = 'GET', body, headers = {},
     ...headers,
   };
 
-  const authToken = token || getAuthToken();
+  // Auth endpoints (login, register, google auth) should NEVER attach an existing session token
+  const isAuthEndpoint = endpoint.includes('/auth/login') || 
+                         endpoint.includes('/auth/register') || 
+                         endpoint.includes('/auth/google');
+
+  const authToken = token !== false && !isAuthEndpoint ? (token || getAuthToken()) : null;
   if (authToken) {
     reqHeaders['Authorization'] = `Token ${authToken}`;
   }
@@ -114,6 +119,11 @@ export async function apiRequest(endpoint, { method = 'GET', body, headers = {},
     const data = await res.json().catch(() => ({}));
 
     if (!res.ok) {
+      // If server reports an invalid or stale token, clear local state immediately
+      if (res.status === 401 && (data.detail === 'Invalid token.' || data.detail?.toLowerCase().includes('token'))) {
+        clearAuth();
+      }
+
       let errorMsg = 'An unexpected error occurred.';
       if (typeof data.error === 'string') {
         errorMsg = data.error;
@@ -148,8 +158,10 @@ export async function apiRequest(endpoint, { method = 'GET', body, headers = {},
  * 1. Email/Username + Password Sign In
  */
 export async function loginWithEmail(emailOrUsername, password) {
+  clearAuth();
   const data = await apiRequest('/api/v1/auth/login/', {
     method: 'POST',
+    token: false,
     body: {
       username: emailOrUsername,
       password: password,
@@ -185,8 +197,10 @@ export async function loginWithEmail(emailOrUsername, password) {
  * 2. Register Account
  */
 export async function registerWithEmail({ name, email, password, role, company }) {
+  clearAuth();
   const data = await apiRequest('/api/v1/auth/register/', {
     method: 'POST',
+    token: false,
     body: {
       name,
       email,
@@ -225,8 +239,10 @@ export async function registerWithEmail({ name, email, password, role, company }
  * 3. Google OAuth Sign-in & Register
  */
 export async function loginWithGoogle({ credential, token, email, name, picture, sub, google_id }) {
+  clearAuth();
   const data = await apiRequest('/api/v1/auth/google/', {
     method: 'POST',
+    token: false,
     body: {
       credential,
       token,
