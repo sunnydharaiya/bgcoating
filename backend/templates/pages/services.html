@@ -8,7 +8,7 @@
 
 <!-- ======================= SERVICES HERO ======================= -->
 <section class="page-hero svc-hero grid-bg" id="svc-top">
-    <div class="hero-bg svc-hero-photo" style="background-image:url('{% static 'assets/images/services-hero-bg.webp' %}')"></div>
+    <div class="hero-bg svc-hero-photo" style="background-image:url('{% if page_seo.og_image %}{{ page_seo.og_image.url }}{% else %}{% static 'assets/images/services-hero-bg.webp' %}{% endif %}')"></div>
   <div class="wrap">
     <div class="rv in" style="max-width:820px">
       <p class="crumbs"><a href="{% url 'home' %}" data-route="" class="active" aria-current="page">HOME</a> <i>›</i> <span>SERVICES</span></p>
@@ -83,182 +83,324 @@
 <section class="section-light grid-bg" id="cat-surface" data-alias="serv-surface-prep">
   <div class="wrap">
     <div class="cat-head rv"><span class="cno">01</span><h2 class="h-section">Surface Treatment &amp; Protective Coatings</h2><span class="line"></span></div>
-<div class="svc-row" id="service-refinery-equipment-coating"><div class="svc-visual rv">
+    
+    <!-- Service 1: Refinery Equipment -->
+    <div class="svc-row" id="service-refinery-equipment-coating">
+      {% with svc=services_map.refinery %}
+      <div class="svc-visual rv">
         <div class="svc-frame layer-visual" id="layerFrame">
-          <img class="layer-photo" loading="lazy" decoding="async" src="{% static 'assets/images/services-4layer-system.webp' %}" alt="BG Group surface treatment and protective coatings — 4-layer system (PU topcoat, epoxy MIO, zinc primer over SA 2½ blasted steel) and refinery equipment: pressure vessels, heat exchangers, columns and storage tanks">
+          <img class="layer-photo" loading="lazy" decoding="async"
+               src="{% if svc.image_url %}{{ svc.image_url }}{% else %}{% static 'assets/images/services-4layer-system.webp' %}{% endif %}"
+               onerror="this.onerror=null;this.src='{% static "assets/images/services-4layer-system.webp" %}';"
+               alt="{{ svc.title|default:'BG Group surface treatment and protective coatings' }}">
         </div>
-        
-      </div><div class="svc-copy rv rv-d1">
-        <p class="kicker">Coating &amp; Cleaning · Refinery</p>
-        <h3>Refinery Equipment Expert Solution</h3>
-        <p>Premier coating and cleaning for refinery equipment — vessels, exchangers, columns and structures maintained in peak protective condition, minimizing downtime during turnarounds.</p>
+      </div>
+      <div class="svc-copy rv rv-d1">
+        <p class="kicker">{{ svc.category.name|default:'Coating & Cleaning · Refinery' }}{% if svc.standard_code %} · {{ svc.standard_code }}{% endif %}</p>
+        <h3>{{ svc.title|default:'Refinery Equipment Expert Solution' }}</h3>
+        <p>{{ svc.excerpt|default:'Premier coating and cleaning for refinery equipment — vessels, exchangers, columns and structures maintained in peak protective condition, minimizing downtime during turnarounds.' }}</p>
         <div class="svc-tags"><span>Pressure Vessels</span><span>Heat Exchangers</span><span>Columns</span><span>Storage Tanks</span></div>
         <ul class="svc-deliver"><li><span class="tick">✓</span><span>Internal &amp; external tank/vessel coating</span></li><li><span class="tick">✓</span><span>Pickling &amp; passivation for stainless steel</span></li><li><span class="tick">✓</span><span>Turnaround-ready scheduling &amp; execution</span></li></ul>
-        <a class="btn btn-primary" href="{% url 'service_detail' 'refinery-equipment-coating' %}" data-route="">Explore This Service <span class="arr">→</span></a>
-      </div></div><div class="svc-row" id="service-industrial-floor-coating"><div class="svc-visual rv">
-        <div class="svc-frame"><!-- Industrial floor coating — live-site photo -->
-          <img loading="lazy" src="{% static 'assets/images/R2___1_Floor_Coating.jpg' %}" onerror="this.onerror=null;this.src='{% static "assets/images/R1__PNG___Inorganic_Zinc_Vs_Epoxy_Zinc.png" %}';" alt="Industrial epoxy and PU floor coating — seamless high-gloss factory flooring">
-        </div><div class="svc-badge" style="bottom:-16px;right:-16px"><div class="n">500+</div><div class="l">Projects Delivered</div></div>
-      </div><div class="svc-copy rv rv-d1">
-        <p class="kicker">Supply &amp; Application</p>
-        <h3>Floor Coating Solutions</h3>
-        <p>Enhance, protect, impress — innovative industrial flooring systems from epoxy and PU to waterproofing, specified and applied to withstand heavy plant traffic and chemical exposure.</p>
+        <a class="btn btn-primary" href="{% if svc %}{% url 'service_detail' svc.slug %}{% else %}{% url 'service_detail' 'refinery-equipment-coating' %}{% endif %}" data-route="">Explore This Service <span class="arr">→</span></a>
+      </div>
+      {% endwith %}
+    </div>
+
+    <!-- Service 2: Floor Coating -->
+    <div class="svc-row" id="service-industrial-floor-coating">
+      {% with svc=services_map.floor %}
+      <div class="svc-visual rv">
+        <div class="svc-frame">
+          <img loading="lazy" decoding="async"
+               src="{% if svc.image_url %}{{ svc.image_url }}{% else %}{% static 'assets/images/R2___1_Floor_Coating.jpg' %}{% endif %}"
+               onerror="this.onerror=null;this.src='{% static "assets/images/R2___1_Floor_Coating.jpg" %}';"
+               alt="{{ svc.title|default:'Industrial epoxy and PU floor coating' }}">
+        </div>
+        <div class="svc-badge" style="bottom:-16px;right:-16px"><div class="n">500+</div><div class="l">Projects Delivered</div></div>
+      </div>
+      <div class="svc-copy rv rv-d1">
+        <p class="kicker">{{ svc.category.name|default:'Supply & Application' }}{% if svc.standard_code %} · {{ svc.standard_code }}{% endif %}</p>
+        <h3>{{ svc.title|default:'Floor Coating Solutions' }}</h3>
+        <p>{{ svc.excerpt|default:'Enhance, protect, impress — innovative industrial flooring systems from epoxy and PU to waterproofing, specified and applied to withstand heavy plant traffic and chemical exposure.' }}</p>
         <div class="svc-tags"><span>Epoxy</span><span>Polyurethane</span><span>Waterproofing</span><span>Anti-Skid</span></div>
         <ul class="svc-deliver"><li><span class="tick">✓</span><span>Substrate preparation &amp; moisture control</span></li><li><span class="tick">✓</span><span>Seamless, chemical-resistant finishes</span></li><li><span class="tick">✓</span><span>Line-marking &amp; safety demarcation</span></li></ul>
-        <a class="btn btn-primary" href="{% url 'service_detail' 'industrial-floor-coating' %}" data-route="">Explore This Service <span class="arr">→</span></a>
-      </div></div><div class="svc-row" id="service-maintenance-coating"><div class="svc-visual rv">
-        <div class="svc-frame"><!-- CANVA AI / live-site image -->
-          <img loading="lazy" src="{% static "assets/images/R2_2_Maintenance.jpg" %}" onerror="this.onerror=null;this.src='{% static "assets/images/R2_2_Maintenance.jpg" %}';" alt="Maintenance coating supply and application">
-        </div><div class="svc-badge" style="top:-16px;right:-16px"><div class="n">22+</div><div class="l">Years Hands-On</div></div>
-      </div><div class="svc-copy rv rv-d1">
-        <p class="kicker">Supply &amp; Application</p>
-        <h3>Maintenance Coating</h3>
-        <p>Preserve, protect, prolong — precision maintenance painting programs that extend asset life and keep refinery downtime to a minimum, from spot repair to full recoat.</p>
+        <a class="btn btn-primary" href="{% if svc %}{% url 'service_detail' svc.slug %}{% else %}{% url 'service_detail' 'industrial-floor-coating' %}{% endif %}" data-route="">Explore This Service <span class="arr">→</span></a>
+      </div>
+      {% endwith %}
+    </div>
+
+    <!-- Service 3: Maintenance Coating -->
+    <div class="svc-row" id="service-maintenance-coating">
+      {% with svc=services_map.maintenance %}
+      <div class="svc-visual rv">
+        <div class="svc-frame">
+          <img loading="lazy" decoding="async"
+               src="{% if svc.image_url %}{{ svc.image_url }}{% else %}{% static 'assets/images/R2_2_Maintenance.jpg' %}{% endif %}"
+               onerror="this.onerror=null;this.src='{% static "assets/images/R2_2_Maintenance.jpg" %}';"
+               alt="{{ svc.title|default:'Maintenance coating supply and application' }}">
+        </div>
+        <div class="svc-badge" style="top:-16px;right:-16px"><div class="n">22+</div><div class="l">Years Hands-On</div></div>
+      </div>
+      <div class="svc-copy rv rv-d1">
+        <p class="kicker">{{ svc.category.name|default:'Supply & Application' }}{% if svc.standard_code %} · {{ svc.standard_code }}{% endif %}</p>
+        <h3>{{ svc.title|default:'Maintenance Coating' }}</h3>
+        <p>{{ svc.excerpt|default:'Preserve, protect, prolong — precision maintenance painting programs that extend asset life and keep refinery downtime to a minimum, from spot repair to full recoat.' }}</p>
         <div class="svc-tags"><span>Spot Repair</span><span>Full Recoat</span><span>Shutdown Support</span></div>
         <ul class="svc-deliver"><li><span class="tick">✓</span><span>Condition-based maintenance planning</span></li><li><span class="tick">✓</span><span>Surface-tolerant coating systems</span></li><li><span class="tick">✓</span><span>Minimal-downtime execution</span></li></ul>
-        <a class="btn btn-primary" href="{% url 'service_detail' 'maintenance-coating' %}" data-route="">Explore This Service <span class="arr">→</span></a>
-      </div></div>  </div>
+        <a class="btn btn-primary" href="{% if svc %}{% url 'service_detail' svc.slug %}{% else %}{% url 'service_detail' 'maintenance-coating' %}{% endif %}" data-route="">Explore This Service <span class="arr">→</span></a>
+      </div>
+      {% endwith %}
+    </div>
+  </div>
 </section>
 
 <!-- ======================= CATEGORY: INSPECTION & QA/QC ======================= -->
 <section class="grid-bg hex-bg" id="cat-inspection" data-alias="serv-inspection" style="background:#FFFFFF">
   <div class="wrap">
     <div class="cat-head rv"><span class="cno">02</span><h2 class="h-section">Inspection &amp; QA/QC</h2><span class="line"></span></div>
-<div class="svc-row" id="service-coating-survey-corrosion-assessment"><div class="svc-visual rv">
-        <div class="svc-frame"><!-- CANVA AI / live-site image -->
-          <img loading="lazy" src="{% static 'assets/images/services-corrosion-assessment.jpeg' %}" onerror="this.style.display='none'" alt="Coating inspector performing corrosion assessment with digital data overlays">
-        </div><div class="svc-badge" style="bottom:-16px;left:-16px"><div class="n">ISO·NACE</div><div class="l">Assessment Standards</div></div>
-      </div><div class="svc-copy rv rv-d1">
-        <p class="kicker">Refinery | Oil &amp; Gas</p>
-        <h3>Coating Survey &amp; Corrosion Assessment</h3>
-        <p>Turning surface observations into corrosion intelligence — structured surveys, condition mapping and prioritized maintenance planning that tell you exactly where your assets stand and what to protect first.</p>
+    
+    <!-- Service 4: Coating Survey & Corrosion Assessment -->
+    <div class="svc-row" id="service-coating-survey-corrosion-assessment">
+      {% with svc=services_map.survey %}
+      <div class="svc-visual rv">
+        <div class="svc-frame">
+          <img loading="lazy" decoding="async"
+               src="{% if svc.image_url %}{{ svc.image_url }}{% else %}{% static 'assets/images/services-corrosion-assessment.jpeg' %}{% endif %}"
+               onerror="this.onerror=null;this.src='{% static "assets/images/services-corrosion-assessment.jpeg" %}';"
+               alt="{{ svc.title|default:'Coating inspector performing corrosion assessment with digital data overlays' }}">
+        </div>
+        <div class="svc-badge" style="bottom:-16px;left:-16px"><div class="n">ISO·NACE</div><div class="l">Assessment Standards</div></div>
+      </div>
+      <div class="svc-copy rv rv-d1">
+        <p class="kicker">{{ svc.category.name|default:'Refinery | Oil & Gas' }}{% if svc.standard_code %} · {{ svc.standard_code }}{% endif %}</p>
+        <h3>{{ svc.title|default:'Coating Survey & Corrosion Assessment' }}</h3>
+        <p>{{ svc.excerpt|default:'Turning surface observations into corrosion intelligence — structured surveys, condition mapping and prioritized maintenance planning that tell you exactly where your assets stand and what to protect first.' }}</p>
         <div class="svc-tags"><span>Condition Mapping</span><span>Rust Grading</span><span>Salt Testing</span><span>Life Assessment</span></div>
         <ul class="svc-deliver"><li><span class="tick">✓</span><span>Full coating condition survey &amp; report</span></li><li><span class="tick">✓</span><span>Corrosion-risk prioritization matrix</span></li><li><span class="tick">✓</span><span>Standards-based remaining-life assessment</span></li></ul>
-        <a class="btn btn-primary" href="{% url 'service_detail' 'coating-survey-corrosion-assessment' %}" data-route="">Explore This Service <span class="arr">→</span></a>
-      </div></div><div class="svc-row" id="service-freelance-coating-experts"><div class="svc-visual rv">
-        <div class="svc-frame"><!-- CANVA AI / live-site image -->
-          <img loading="lazy" src="{% static 'assets/images/01__Coating_Survey_and_Corrosion_Assessment-transformed.png' %}" onerror="this.style.display='none'" alt="On-site coating quality expert conducting inspection">
-        </div><div class="svc-badge" style="top:-16px;right:-16px"><div class="n">5/5</div><div class="l">Client Rated</div></div>
-      </div><div class="svc-copy rv rv-d1">
-        <p class="kicker">Coating &amp; Paint Quality</p>
-        <h3>Freelancing : On-Site Coating Experts</h3>
-        <p>Empowering your projects by deputing qualified, professional on-site coating experts who safeguard quality at every stage — adhesion, DFT, holiday and environmental checks, all documented.</p>
+        <a class="btn btn-primary" href="{% if svc %}{% url 'service_detail' svc.slug %}{% else %}{% url 'service_detail' 'coating-survey-corrosion-assessment' %}{% endif %}" data-route="">Explore This Service <span class="arr">→</span></a>
+      </div>
+      {% endwith %}
+    </div>
+
+    <!-- Service 5: Freelance Coating Experts -->
+    <div class="svc-row" id="service-freelance-coating-experts">
+      {% with svc=services_map.freelance %}
+      <div class="svc-visual rv">
+        <div class="svc-frame">
+          <img loading="lazy" decoding="async"
+               src="{% if svc.image_url %}{{ svc.image_url }}{% else %}{% static 'assets/images/01__Coating_Survey_and_Corrosion_Assessment-transformed.png' %}{% endif %}"
+               onerror="this.onerror=null;this.src='{% static "assets/images/01__Coating_Survey_and_Corrosion_Assessment-transformed.png" %}';"
+               alt="{{ svc.title|default:'On-site coating quality expert conducting inspection' }}">
+        </div>
+        <div class="svc-badge" style="top:-16px;right:-16px"><div class="n">5/5</div><div class="l">Client Rated</div></div>
+      </div>
+      <div class="svc-copy rv rv-d1">
+        <p class="kicker">{{ svc.category.name|default:'Coating & Paint Quality' }}{% if svc.standard_code %} · {{ svc.standard_code }}{% endif %}</p>
+        <h3>{{ svc.title|default:'Freelancing : On-Site Coating Experts' }}</h3>
+        <p>{{ svc.excerpt|default:'Empowering your projects by deputing qualified, professional on-site coating experts who safeguard quality at every stage — adhesion, DFT, holiday and environmental checks, all documented.' }}</p>
         <div class="svc-tags"><span>Adhesion Test</span><span>DFT</span><span>Holiday Test</span><span>QA/QC Docs</span></div>
         <ul class="svc-deliver"><li><span class="tick">✓</span><span>Deputed NACE/AMPP-aligned inspectors</span></li><li><span class="tick">✓</span><span>Independent third-party quality oversight</span></li><li><span class="tick">✓</span><span>Digital inspection reporting</span></li></ul>
-        <a class="btn btn-primary" href="{% url 'service_detail' 'freelance-coating-experts' %}" data-route="">Explore This Service <span class="arr">→</span></a>
-      </div></div>  </div>
+        <a class="btn btn-primary" href="{% if svc %}{% url 'service_detail' svc.slug %}{% else %}{% url 'service_detail' 'freelance-coating-experts' %}{% endif %}" data-route="">Explore This Service <span class="arr">→</span></a>
+      </div>
+      {% endwith %}
+    </div>
+  </div>
 </section>
 
 <!-- ======================= CATEGORY: CONSULTANCY ======================= -->
 <section class="section-light grid-bg" id="cat-consultancy" data-alias="serv-consultancy">
   <div class="wrap">
     <div class="cat-head rv"><span class="cno">03</span><h2 class="h-section">Engineering Consultancy</h2><span class="line"></span></div>
-<div class="svc-row" id="service-consultancy-expedite-optimize-coating-process"><div class="svc-visual rv">
-        <div class="svc-frame"><!-- CANVA AI / live-site image -->
-          <img loading="lazy" src="{% static 'assets/images/services-process-optimization.jpeg' %}" onerror="this.style.display='none'" alt="Coating process optimization consultancy on site">
-        </div><div class="svc-badge" style="bottom:-16px;right:-16px"><div class="n">22+</div><div class="l">Years Expertise</div></div>
-      </div><div class="svc-copy rv rv-d1">
-        <p class="kicker">Productivity Focus</p>
-        <h3>Consultancy : Expedite &amp; Optimize Coating Process</h3>
-        <p>Optimize, expedite, excel — efficiency-driven consultancy that compresses coating schedules and cost without compromising quality or safety, backed by real refinery execution experience.</p>
+    
+    <!-- Service 6: Expedite & Optimize Coating Process -->
+    <div class="svc-row" id="service-consultancy-expedite-optimize-coating-process">
+      {% with svc=services_map.optimize %}
+      <div class="svc-visual rv">
+        <div class="svc-frame">
+          <img loading="lazy" decoding="async"
+               src="{% if svc.image_url %}{{ svc.image_url }}{% else %}{% static 'assets/images/services-process-optimization.jpeg' %}{% endif %}"
+               onerror="this.onerror=null;this.src='{% static "assets/images/services-process-optimization.jpeg" %}';"
+               alt="{{ svc.title|default:'Coating process optimization consultancy on site' }}">
+        </div>
+        <div class="svc-badge" style="bottom:-16px;right:-16px"><div class="n">22+</div><div class="l">Years Expertise</div></div>
+      </div>
+      <div class="svc-copy rv rv-d1">
+        <p class="kicker">{{ svc.category.name|default:'Productivity Focus' }}{% if svc.standard_code %} · {{ svc.standard_code }}{% endif %}</p>
+        <h3>{{ svc.title|default:'Consultancy : Expedite & Optimize Coating Process' }}</h3>
+        <p>{{ svc.excerpt|default:'Optimize, expedite, excel — efficiency-driven consultancy that compresses coating schedules and cost without compromising quality or safety, backed by real refinery execution experience.' }}</p>
         <div class="svc-tags"><span>Throughput</span><span>Bottleneck Analysis</span><span>Cost Optimization</span></div>
         <ul class="svc-deliver"><li><span class="tick">✓</span><span>Coating-process time &amp; motion study</span></li><li><span class="tick">✓</span><span>Productivity &amp; sequencing optimization</span></li><li><span class="tick">✓</span><span>Measurable schedule/cost reduction</span></li></ul>
-        <a class="btn btn-primary" href="{% url 'service_detail' 'consultancy-expedite-optimize-coating-process' %}" data-route="">Explore This Service <span class="arr">→</span></a>
-      </div></div><div class="svc-row" id="service-coating-procedure-specification-sop"><div class="svc-visual rv">
-        <div class="svc-frame"><!-- CANVA AI / live-site image -->
-          <img loading="lazy" src="{% static 'assets/images/R2_1_Specialized_Application.jpg' %}" onerror="this.style.display='none'" alt="Coating procedure and specification consulting">
-        </div><div class="svc-badge" style="top:-16px;left:-16px"><div class="n">SOP</div><div class="l">Audit-Ready</div></div>
-      </div><div class="svc-copy rv rv-d1">
-        <p class="kicker">Consulting</p>
-        <h3>Coating Procedure, Specification &amp; SOP</h3>
-        <p>Innovate, optimize, excel — standards-aligned procedures, specifications and SOPs that bring precision, repeatability and audit-ready documentation to every coating job.</p>
+        <a class="btn btn-primary" href="{% if svc %}{% url 'service_detail' svc.slug %}{% else %}{% url 'service_detail' 'consultancy-expedite-optimize-coating-process' %}{% endif %}" data-route="">Explore This Service <span class="arr">→</span></a>
+      </div>
+      {% endwith %}
+    </div>
+
+    <!-- Service 7: Coating Procedure, Specification & SOP -->
+    <div class="svc-row" id="service-coating-procedure-specification-sop">
+      {% with svc=services_map.sop %}
+      <div class="svc-visual rv">
+        <div class="svc-frame">
+          <img loading="lazy" decoding="async"
+               src="{% if svc.image_url %}{{ svc.image_url }}{% else %}{% static 'assets/images/Protective_Coating_Solutions_Poster_1.png' %}{% endif %}"
+               onerror="this.onerror=null;this.src='{% static "assets/images/R2_1_Specialized_Application.jpg" %}';"
+               alt="{{ svc.title|default:'Coating procedure and specification consulting' }}">
+        </div>
+        <div class="svc-badge" style="top:-16px;left:-16px"><div class="n">SOP</div><div class="l">Audit-Ready</div></div>
+      </div>
+      <div class="svc-copy rv rv-d1">
+        <p class="kicker">{{ svc.category.name|default:'Consulting' }}{% if svc.standard_code %} · {{ svc.standard_code }}{% endif %}</p>
+        <h3>{{ svc.title|default:'Coating Procedure, Specification & SOP' }}</h3>
+        <p>{{ svc.excerpt|default:'Innovate, optimize, excel — standards-aligned procedures, specifications and SOPs that bring precision, repeatability and audit-ready documentation to every coating job.' }}</p>
         <div class="svc-tags"><span>ISO 12944</span><span>NACE</span><span>AMPP</span><span>SSPC</span><span>ASTM</span></div>
         <ul class="svc-deliver"><li><span class="tick">✓</span><span>Project-specific coating specifications</span></li><li><span class="tick">✓</span><span>Application &amp; inspection SOPs</span></li><li><span class="tick">✓</span><span>Standards compliance documentation</span></li></ul>
-        <a class="btn btn-primary" href="{% url 'service_detail' 'coating-procedure-specification-sop' %}" data-route="">Explore This Service <span class="arr">→</span></a>
-      </div></div><div class="svc-row" id="service-customize-paint"><div class="svc-visual rv">
-        <div class="svc-frame"><!-- CANVA AI / live-site image -->
-          <img loading="lazy" src="{% static 'assets/images/R2_1_Customize_Paint_Solution.jpg' %}" onerror="this.style.display='none'" alt="Customized paint development and supply">
-        </div><div class="svc-badge" style="bottom:-16px;right:-16px"><div class="n">Bespoke</div><div class="l">Formulation</div></div>
-      </div><div class="svc-copy rv rv-d1">
-        <p class="kicker">Supply | Development | Application</p>
-        <h3>Customize Paint</h3>
-        <p>Tailored, applied, perfected — bespoke coating product development, approval and supply matched to your exact substrate, environment and performance requirements.</p>
+        <a class="btn btn-primary" href="{% if svc %}{% url 'service_detail' svc.slug %}{% else %}{% url 'service_detail' 'coating-procedure-specification-sop' %}{% endif %}" data-route="">Explore This Service <span class="arr">→</span></a>
+      </div>
+      {% endwith %}
+    </div>
+
+    <!-- Service 8: Customize Paint -->
+    <div class="svc-row" id="service-customize-paint">
+      {% with svc=services_map.paint %}
+      <div class="svc-visual rv">
+        <div class="svc-frame">
+          <img loading="lazy" decoding="async"
+               src="{% if svc.image_url %}{{ svc.image_url }}{% else %}{% static 'assets/images/R2_1_Customize_Paint_Solution.jpg' %}{% endif %}"
+               onerror="this.onerror=null;this.src='{% static "assets/images/R2_1_Customize_Paint_Solution.jpg" %}';"
+               alt="{{ svc.title|default:'Customized paint development and supply' }}">
+        </div>
+        <div class="svc-badge" style="bottom:-16px;right:-16px"><div class="n">Bespoke</div><div class="l">Formulation</div></div>
+      </div>
+      <div class="svc-copy rv rv-d1">
+        <p class="kicker">{{ svc.category.name|default:'Supply | Development | Application' }}{% if svc.standard_code %} · {{ svc.standard_code }}{% endif %}</p>
+        <h3>{{ svc.title|default:'Customize Paint' }}</h3>
+        <p>{{ svc.excerpt|default:'Tailored, applied, perfected — bespoke coating product development, approval and supply matched to your exact substrate, environment and performance requirements.' }}</p>
         <div class="svc-tags"><span>Product Development</span><span>Approval</span><span>Supply</span><span>Application</span></div>
         <ul class="svc-deliver"><li><span class="tick">✓</span><span>Custom formulation &amp; approval support</span></li><li><span class="tick">✓</span><span>Substrate-matched system design</span></li><li><span class="tick">✓</span><span>Supply and controlled site application</span></li></ul>
-        <a class="btn btn-primary" href="{% url 'service_detail' 'customize-paint' %}" data-route="">Explore This Service <span class="arr">→</span></a>
-      </div></div>  </div>
+        <a class="btn btn-primary" href="{% if svc %}{% url 'service_detail' svc.slug %}{% else %}{% url 'service_detail' 'customize-paint' %}{% endif %}" data-route="">Explore This Service <span class="arr">→</span></a>
+      </div>
+      {% endwith %}
+    </div>
+  </div>
 </section>
 
 <!-- ======================= CATEGORY: DIGITAL SOLUTIONS ======================= -->
 <section class="grid-bg hex-bg" id="cat-digital" data-alias="serv-corrosion" style="background:#FFFFFF">
   <div class="wrap">
     <div class="cat-head rv"><span class="cno">04</span><h2 class="h-section">Digital Coating Solutions</h2><span class="line"></span></div>
-<div class="svc-row" id="service-digital-coating-solution"><div class="svc-visual rv">
-        <div class="svc-frame"><!-- CANVA AI / live-site image -->
-          <img loading="lazy" src="{% static 'assets/images/services-digital-dashboard.jpeg' %}" onerror="this.style.display='none'" alt="Futuristic digital coating dashboard with DFT gauges and IoT data">
-        </div><div class="svc-badge" style="top:-16px;right:-16px"><div class="n">6</div><div class="l">Online Calculators</div></div>
-      </div><div class="svc-copy rv rv-d1">
-        <p class="kicker">Business Module</p>
-        <h3>Digital Coating Solution</h3>
-        <p>Coating-process integration with digital platforms and online system development — data-driven visibility across your entire coating workflow, from inspection dashboards to auto-generated reports.</p>
+    
+    <!-- Service 9: Digital Coating Solution -->
+    <div class="svc-row" id="service-digital-coating-solution">
+      {% with svc=services_map.digital %}
+      <div class="svc-visual rv">
+        <div class="svc-frame">
+          <img loading="lazy" decoding="async"
+               src="{% if svc.image_url %}{{ svc.image_url }}{% else %}{% static 'assets/images/services-digital-dashboard.jpeg' %}{% endif %}"
+               onerror="this.onerror=null;this.src='{% static "assets/images/services-digital-dashboard.jpeg" %}';"
+               alt="{{ svc.title|default:'Futuristic digital coating dashboard with DFT gauges and IoT data' }}">
+        </div>
+        <div class="svc-badge" style="top:-16px;right:-16px"><div class="n">6</div><div class="l">Online Calculators</div></div>
+      </div>
+      <div class="svc-copy rv rv-d1">
+        <p class="kicker">{{ svc.category.name|default:'Business Module' }}{% if svc.standard_code %} · {{ svc.standard_code }}{% endif %}</p>
+        <h3>{{ svc.title|default:'Digital Coating Solution' }}</h3>
+        <p>{{ svc.excerpt|default:'Coating-process integration with digital platforms and online system development — data-driven visibility across your entire coating workflow, from inspection dashboards to auto-generated reports.' }}</p>
         <div class="svc-tags"><span>Dashboards</span><span>Digital Reports</span><span>IoT</span><span>AI Workflows</span><span>Calculators</span></div>
         <ul class="svc-deliver"><li><span class="tick">✓</span><span>Custom digital business modules</span></li><li><span class="tick">✓</span><span>Online inspection &amp; reporting systems</span></li><li><span class="tick">✓</span><span>Coating calculators &amp; automation</span></li></ul>
-        <a class="btn btn-primary" href="{% url 'service_detail' 'digital-coating-solution' %}" data-route="">Explore This Service <span class="arr">→</span></a>
-      </div></div>  </div>
+        <a class="btn btn-primary" href="{% if svc %}{% url 'service_detail' svc.slug %}{% else %}{% url 'service_detail' 'digital-coating-solution' %}{% endif %}" data-route="">Explore This Service <span class="arr">→</span></a>
+      </div>
+      {% endwith %}
+    </div>
+  </div>
 </section>
 
 <!-- ======================= CATEGORY: TRAINING ======================= -->
 <section class="section-light grid-bg" id="cat-training" data-alias="serv-training">
   <div class="wrap">
     <div class="cat-head rv"><span class="cno">05</span><h2 class="h-section">Training &amp; Certification</h2><span class="line"></span></div>
-<div class="svc-row" id="service-coating-training-certification"><div class="svc-visual rv">
-        <div class="svc-frame"><!-- CANVA AI / live-site image -->
-          <img loading="lazy" src="{% static 'assets/images/R2_1_Training.jpg' %}" onerror="this.style.display='none'" alt="Coating training session for blasters, painters and supervisors">
-        </div><div class="svc-badge" style="bottom:-16px;left:-16px"><div class="n">Certified</div><div class="l">Programs</div></div>
-      </div><div class="svc-copy rv rv-d1">
-        <p class="kicker">Blaster | Painter | Coater | Supervisors</p>
-        <h3>Coating Training &amp; Certification</h3>
-        <p>Equip, educate, elevate — structured training paths that build certified expertise in refinery coating for crews and supervisors, reinforced by digital learning modules.</p>
+    
+    <!-- Service 10: Coating Training & Certification -->
+    <div class="svc-row" id="service-coating-training-certification">
+      {% with svc=services_map.training %}
+      <div class="svc-visual rv">
+        <div class="svc-frame">
+          <img loading="lazy" decoding="async"
+               src="{% if svc.image_url %}{{ svc.image_url }}{% else %}{% static 'assets/images/R2_1_Training.jpg' %}{% endif %}"
+               onerror="this.onerror=null;this.src='{% static "assets/images/R2_1_Training.jpg" %}';"
+               alt="{{ svc.title|default:'Coating training session for blasters, painters and supervisors' }}">
+        </div>
+        <div class="svc-badge" style="bottom:-16px;left:-16px"><div class="n">Certified</div><div class="l">Programs</div></div>
+      </div>
+      <div class="svc-copy rv rv-d1">
+        <p class="kicker">{{ svc.category.name|default:'Blaster | Painter | Coater | Supervisors' }}{% if svc.standard_code %} · {{ svc.standard_code }}{% endif %}</p>
+        <h3>{{ svc.title|default:'Coating Training & Certification' }}</h3>
+        <p>{{ svc.excerpt|default:'Equip, educate, elevate — structured training paths that build certified expertise in refinery coating for crews and supervisors, reinforced by digital learning modules.' }}</p>
         <div class="svc-tags"><span>Blasters</span><span>Painters</span><span>Coaters</span><span>Supervisors</span></div>
         <ul class="svc-deliver"><li><span class="tick">✓</span><span>Practical, standards-based curriculum</span></li><li><span class="tick">✓</span><span>Hands-on assessment &amp; certification</span></li><li><span class="tick">✓</span><span>Digital learning reinforcement</span></li></ul>
-        <a class="btn btn-primary" href="{% url 'service_detail' 'coating-training-certification' %}" data-route="">Explore This Service <span class="arr">→</span></a>
-      </div></div>  </div>
+        <a class="btn btn-primary" href="{% if svc %}{% url 'service_detail' svc.slug %}{% else %}{% url 'service_detail' 'coating-training-certification' %}{% endif %}" data-route="">Explore This Service <span class="arr">→</span></a>
+      </div>
+      {% endwith %}
+    </div>
+  </div>
 </section>
 
 <!-- ======================= CATEGORY: EQUIPMENT & BOOTHS ======================= -->
 <section class="grid-bg hex-bg" id="cat-equipment" data-alias="serv-audit" style="background:#FFFFFF">
   <div class="wrap">
     <div class="cat-head rv"><span class="cno">06</span><h2 class="h-section">Equipment &amp; Booth Solutions</h2><span class="line"></span></div>
-<div class="svc-row" id="service-booth-blasting-painting"><div class="svc-visual rv">
-        <div class="svc-frame"><!-- CANVA AI / live-site image -->
-          <img loading="lazy" src="{% static 'assets/images/R2___1_Blasting_and_Painting_Booth.jpg' %}" onerror="this.style.display='none'" alt="IoT-enabled blasting and painting booth installation">
-        </div><div class="svc-badge" style="top:-16px;right:-16px"><div class="n">IoT</div><div class="l">Connected Booths</div></div>
-      </div><div class="svc-copy rv rv-d1">
-        <p class="kicker">Asset | Installation | IoT</p>
-        <h3>Booth Blasting &amp; Painting</h3>
-        <p>Elevate, install, innovate — advanced blasting and painting booth assets with IoT-enabled monitoring for consistent, controlled, climate-managed application.</p>
+    
+    <!-- Service 11: Booth Blasting & Painting -->
+    <div class="svc-row" id="service-booth-blasting-painting">
+      {% with svc=services_map.booth %}
+      <div class="svc-visual rv">
+        <div class="svc-frame">
+          <img loading="lazy" decoding="async"
+               src="{% if svc.image_url %}{{ svc.image_url }}{% else %}{% static 'assets/images/R2___1_Blasting_and_Painting_Booth.jpg' %}{% endif %}"
+               onerror="this.onerror=null;this.src='{% static "assets/images/R2___1_Blasting_and_Painting_Booth.jpg" %}';"
+               alt="{{ svc.title|default:'IoT-enabled blasting and painting booth installation' }}">
+        </div>
+        <div class="svc-badge" style="top:-16px;right:-16px"><div class="n">IoT</div><div class="l">Connected Booths</div></div>
+      </div>
+      <div class="svc-copy rv rv-d1">
+        <p class="kicker">{{ svc.category.name|default:'Asset | Installation | IoT' }}{% if svc.standard_code %} · {{ svc.standard_code }}{% endif %}</p>
+        <h3>{{ svc.title|default:'Booth Blasting & Painting' }}</h3>
+        <p>{{ svc.excerpt|default:'Elevate, install, innovate — advanced blasting and painting booth assets with IoT-enabled monitoring for consistent, controlled, climate-managed application.' }}</p>
         <div class="svc-tags"><span>Booth Installation</span><span>IoT Monitoring</span><span>Climate Control</span><span>Asset Dev</span></div>
         <ul class="svc-deliver"><li><span class="tick">✓</span><span>New booth design &amp; installation</span></li><li><span class="tick">✓</span><span>IoT sensors &amp; efficiency monitoring</span></li><li><span class="tick">✓</span><span>Controlled-environment application</span></li></ul>
-        <a class="btn btn-primary" href="{% url 'service_detail' 'booth-blasting-painting' %}" data-route="">Explore This Service <span class="arr">→</span></a>
-      </div></div>  </div>
+        <a class="btn btn-primary" href="{% if svc %}{% url 'service_detail' svc.slug %}{% else %}{% url 'service_detail' 'booth-blasting-painting' %}{% endif %}" data-route="">Explore This Service <span class="arr">→</span></a>
+      </div>
+      {% endwith %}
+    </div>
+  </div>
 </section>
 
 <!-- ======================= CATEGORY: SPECIALIZED APPLICATION ======================= -->
 <section class="section-light grid-bg" id="cat-specialized" data-alias="serv-paint-app">
   <div class="wrap">
     <div class="cat-head rv"><span class="cno">07</span><h2 class="h-section">Specialized Application</h2><span class="line"></span></div>
-<div class="svc-row" id="service-specialized-applications-tsa-pfp"><div class="svc-visual rv">
-        <div class="svc-frame"><!-- CANVA AI / live-site image -->
-          <img loading="lazy" src="{% static 'assets/images/R2_1_Specialized_Application.jpg' %}" onerror="this.style.display='none'" alt="Specialized coating application including TSA and fireproofing">
-        </div><div class="svc-badge" style="bottom:-16px;right:-16px"><div class="n">Expert</div><div class="l">Solutions</div></div>
-      </div><div class="svc-copy rv rv-d1">
-        <p class="kicker">TSA | PFP | FRE | Insulation</p>
-        <h3>Specialized Application</h3>
-        <p>Elevate, protect, enhance — specialized excellence in refinery applications: thermal spray aluminium (TSA), passive fire protection (PFP), fibre-reinforced epoxy (FRE) and insulation systems.</p>
+    
+    <!-- Service 12: Specialized Application -->
+    <div class="svc-row" id="service-specialized-applications-tsa-pfp">
+      {% with svc=services_map.specialized %}
+      <div class="svc-visual rv">
+        <div class="svc-frame">
+          <img loading="lazy" decoding="async"
+               src="{% if svc.image_url %}{{ svc.image_url }}{% else %}{% static 'assets/images/R2_1_Specialized_Application.jpg' %}{% endif %}"
+               onerror="this.onerror=null;this.src='{% static "assets/images/R2_1_Specialized_Application.jpg" %}';"
+               alt="{{ svc.title|default:'Specialized coating application including TSA and fireproofing' }}">
+        </div>
+        <div class="svc-badge" style="bottom:-16px;right:-16px"><div class="n">Expert</div><div class="l">Solutions</div></div>
+      </div>
+      <div class="svc-copy rv rv-d1">
+        <p class="kicker">{{ svc.category.name|default:'TSA | PFP | FRE | Insulation' }}{% if svc.standard_code %} · {{ svc.standard_code }}{% endif %}</p>
+        <h3>{{ svc.title|default:'Specialized Application' }}</h3>
+        <p>{{ svc.excerpt|default:'Elevate, protect, enhance — specialized excellence in refinery applications: thermal spray aluminium (TSA), passive fire protection (PFP), fibre-reinforced epoxy (FRE) and insulation systems.' }}</p>
         <div class="svc-tags"><span>TSA</span><span>PFP</span><span>FRE</span><span>Insulation</span><span>Fireproofing</span></div>
         <ul class="svc-deliver"><li><span class="tick">✓</span><span>Thermal spray aluminium for high-temp assets</span></li><li><span class="tick">✓</span><span>Passive fire protection systems</span></li><li><span class="tick">✓</span><span>FRE lining &amp; insulation solutions</span></li></ul>
-        <a class="btn btn-primary" href="{% url 'service_detail' 'specialized-applications-tsa-pfp' %}" data-route="">Explore This Service <span class="arr">→</span></a>
-      </div></div>  </div>
+        <a class="btn btn-primary" href="{% if svc %}{% url 'service_detail' svc.slug %}{% else %}{% url 'service_detail' 'specialized-applications-tsa-pfp' %}{% endif %}" data-route="">Explore This Service <span class="arr">→</span></a>
+      </div>
+      {% endwith %}
+    </div>
+  </div>
 </section>
 
 <!-- ======================= WHY CHOOSE ======================= -->
@@ -300,61 +442,22 @@
     </div>
     <div class="testi-viewport rv">
       <div class="testi-track" id="testiTrack">
-
+        {% for t in testimonials %}
+        <article class="tcard glass">
+          <span class="stars" aria-label="{{ t.rating|default:5 }} star rating">★★★★★</span>
+          <p class="quote">{{ t.testimonial_text }}</p>
+          <div class="who">
+            <img loading="lazy" decoding="async" src="{{ t.avatar_url }}" alt="{{ t.client_name }}">
+            <span><b>{{ t.client_name }}</b><small>{{ t.client_role }}{% if t.company_name %} · {{ t.company_name }}{% endif %}</small></span>
+          </div>
+        </article>
+        {% empty %}
         <article class="tcard glass">
           <span class="stars" aria-label="5 star rating">★★★★★</span>
           <p class="quote">Experienced team of professionals with an "On Time In Full" approach towards customers. Keep it up!</p>
           <div class="who"><img loading="lazy" src="{% static 'assets/images/Nirav_Lad___Image.png' %}" alt=""><span><b>Nirav Lad</b><small>GM · Google Review</small></span></div>
         </article>
-
-        <article class="tcard glass">
-          <span class="stars" aria-label="5 star rating">★★★★★</span>
-          <p class="quote">M/s BG Group of Paint and Coating Consultants excels in professionalism and efficiency. Their quick response and genuine commitment to resolving issues swiftly sets them apart. Without hesitation, I rate them 5/5.</p>
-          <div class="who"><img loading="lazy" src="{% static 'assets/images/Ankit_Solanki.png' %}" alt=""><span><b>Ankit Solanti</b><small>Coating Inspector</small></span></div>
-        </article>
-
-        <article class="tcard glass">
-          <span class="stars" aria-label="5 star rating">★★★★★</span>
-          <p class="quote">Good and informative team with widely experienced personnel. Problem solving with technical knowledge discussion and the right methods of industrial coating and application.</p>
-          <div class="who"><img loading="lazy" src="{% static 'assets/images/Vimal_Harley.png' %}" alt=""><span><b>Vimal Harley</b><small>Aramco Coating Inspector</small></span></div>
-        </article>
-
-        <article class="tcard glass">
-          <span class="stars" aria-label="5 star rating">★★★★★</span>
-          <p class="quote">Provide the best surface treatment, sandblasting, blasting and painting services. Their expert coating team guides us continuously — including pickling and passivation for stainless steel projects.</p>
-          <div class="who"><img loading="lazy" src="{% static 'assets/images/unnamed.png' %}" alt=""><span><b>Shailesh Patel</b><small>Technical Maintenance Expert</small></span></div>
-        </article>
-
-        <article class="tcard glass">
-          <span class="stars" aria-label="5 star rating">★★★★★</span>
-          <p class="quote">Excellent knowledge and vast experience is the advantage we get when working with BG Group. Thanks for your service.</p>
-          <div class="who"><img loading="lazy" src="{% static 'assets/images/Jotesh.jpeg' %}" alt=""><span><b>Jotesh Chakravarthy</b><small>Deputy Manager</small></span></div>
-        </article>
-
-        <article class="tcard glass">
-          <span class="stars" aria-label="5 star rating">★★★★★</span>
-          <p class="quote">Excellent service. Very knowledgeable in the subject and gives practical and cost-effective solutions.</p>
-          <div class="who"><img loading="lazy" src="{% static 'assets/images/Sandip_Ayachit.png' %}" alt=""><span><b>Sandip Ayachit</b><small>JGM</small></span></div>
-        </article>
-
-        <article class="tcard glass">
-          <span class="stars" aria-label="5 star rating">★★★★★</span>
-          <p class="quote">Excellent experience concluding our project painting activities smoothly, exactly according to the project-specific requirements.</p>
-          <div class="who"><img loading="lazy" src="{% static 'assets/images/Gopal_Krishna.png' %}" alt=""><span><b>Gopal Krishna</b><small>Project Manager</small></span></div>
-        </article>
-
-        <article class="tcard glass">
-          <span class="stars" aria-label="5 star rating">★★★★★</span>
-          <p class="quote">Excellent work, good service and smooth coordination. Adequate and excellent technical performance.</p>
-          <div class="who"><img loading="lazy" src="{% static 'assets/images/Prakash_Ramavat.jpeg' %}" alt=""><span><b>Prakash Ramawat</b><small>QA / QC Head</small></span></div>
-        </article>
-
-        <article class="tcard glass">
-          <span class="stars" aria-label="5 star rating">★★★★★</span>
-          <p class="quote">Honest and professional team, where you can trust that you will get proper service.</p>
-          <div class="who"><img loading="lazy" src="{% static 'assets/images/Swaroop___Image.png' %}" alt=""><span><b>Swaroop Daiya</b><small>Co-Founder · Google Review</small></span></div>
-        </article>
-
+        {% endfor %}
       </div>
     </div>
     <div class="testi-nav">

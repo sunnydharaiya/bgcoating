@@ -79,8 +79,45 @@ def services(request):
         'Services | BG Group Of Paint & Coatings Consultant',
         'Comprehensive coating consultancy, surface preparation, paint inspection, third-party audit, and technical training.',
     )
+    categories = ServiceCategory.objects.prefetch_related('services').all()
+    all_services = Service.objects.all().select_related('category')
+
+    # Map services by key, id, and slug for dynamic template binding
+    services_map = {}
+    for s in all_services:
+        services_map[s.id] = s
+        services_map[s.slug] = s
+        slug_lower = s.slug.lower()
+        if 'refinery' in slug_lower:
+            services_map['refinery'] = s
+        elif 'floor' in slug_lower:
+            services_map['floor'] = s
+        elif 'maintenance' in slug_lower:
+            services_map['maintenance'] = s
+        elif 'corrosion' in slug_lower or 'audit' in slug_lower or 'survey' in slug_lower:
+            services_map['survey'] = s
+        elif 'manpower' in slug_lower or 'freelanc' in slug_lower or 'inspectors' in slug_lower:
+            services_map['freelance'] = s
+        elif 'optimize' in slug_lower or 'expedite' in slug_lower:
+            services_map['optimize'] = s
+        elif 'specifications' in slug_lower or 'procedure' in slug_lower or 'sop' in slug_lower:
+            services_map['sop'] = s
+        elif 'custom' in slug_lower or slug_lower == 'customize-paint':
+            services_map['paint'] = s
+        elif 'digital' in slug_lower:
+            services_map['digital'] = s
+        elif 'training' in slug_lower:
+            services_map['training'] = s
+        elif 'booth' in slug_lower or 'blasting' in slug_lower:
+            services_map['booth'] = s
+        elif 'specialized' in slug_lower or 'tsa' in slug_lower:
+            services_map['specialized'] = s
+
     context.update({
-        'categories': ServiceCategory.objects.prefetch_related('services').all(),
+        'categories': categories,
+        'services_map': services_map,
+        'all_services': all_services,
+        'testimonials': ClientTestimonial.objects.all().order_by('order', 'id'),
     })
     return render(request, 'pages/services.html', context)
 

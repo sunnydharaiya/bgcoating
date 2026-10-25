@@ -198,6 +198,22 @@ class Service(models.Model):
     def __str__(self):
         return self.title
 
+    @property
+    def image_url(self):
+        """Dynamic URL for the service cover image, handling media uploads and static fallbacks."""
+        if self.cover_image:
+            try:
+                name = self.cover_image.name
+                if name.startswith('http://') or name.startswith('https://'):
+                    return name
+                if 'assets/images' in name:
+                    from django.templatetags.static import static
+                    return static(name)
+                return self.cover_image.url
+            except Exception:
+                pass
+        return None
+
 
 class BlogPost(models.Model):
     """Technical blog article / guide entry."""
@@ -320,6 +336,20 @@ class ClientTestimonial(models.Model):
 
     def __str__(self):
         return f"{self.client_name} - {self.company_name}"
+
+    @property
+    def avatar_url(self):
+        """Dynamic URL for testimonial avatar, supporting uploaded photos and static avatars."""
+        if self.client_photo:
+            try:
+                return self.client_photo.url
+            except Exception:
+                pass
+        if self.client_avatar:
+            from django.templatetags.static import static
+            return static(f"assets/images/{self.client_avatar}")
+        from django.templatetags.static import static
+        return static("assets/images/unnamed.png")
 
 
 class TechnicalStandard(models.Model):
