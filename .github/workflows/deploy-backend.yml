@@ -44,13 +44,21 @@ jobs:
     needs: validate
     runs-on: ubuntu-latest
     steps:
+      - name: Verify Deployment Secrets Available
+        run: |
+          echo "Checking presence of deployment configuration..."
+          [ -n "${{ secrets.VPS_HOST }}" ] && echo "VPS_HOST: set in secrets" || echo "VPS_HOST: using fallback"
+          [ -n "${{ secrets.VPS_USERNAME }}" ] && echo "VPS_USERNAME: set in secrets" || echo "VPS_USERNAME: using fallback"
+          [ -n "${{ secrets.VPS_SSH_KEY }}" ] && echo "VPS_SSH_KEY: set in secrets" || echo "VPS_SSH_KEY: unset"
+          [ -n "${{ secrets.VPS_PASSWORD }}" ] && echo "VPS_PASSWORD: set in secrets" || echo "VPS_PASSWORD: unset"
+
       - name: Execute Remote Deployment via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USERNAME }}
-          key: ${{ secrets.VPS_SSH_KEY || '' }}
-          password: ${{ secrets.VPS_PASSWORD || '' }}
+          host: ${{ secrets.VPS_HOST || '31.97.61.136' }}
+          username: ${{ secrets.VPS_USERNAME || 'root' }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          password: ${{ secrets.VPS_PASSWORD }}
           port: ${{ secrets.VPS_PORT || '22' }}
           passphrase: ${{ secrets.VPS_SSH_PASSPHRASE || '' }}
           script_stop: true

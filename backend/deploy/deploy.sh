@@ -78,10 +78,12 @@ fi
 # 6. Ensure permissions for media, staticfiles, and SQLite database
 if [ -f "${BACKEND_DIR}/db.sqlite3" ]; then
     chmod 664 "${BACKEND_DIR}/db.sqlite3" || true
+    chown www-data:www-data "${BACKEND_DIR}/db.sqlite3" || true
 fi
 chmod 775 "${BACKEND_DIR}" || true
-mkdir -p "${BACKEND_DIR}/media" "${BACKEND_DIR}/staticfiles"
-chmod -R 775 "${BACKEND_DIR}/media" "${BACKEND_DIR}/staticfiles" || true
+mkdir -p "${BACKEND_DIR}/media" "${BACKEND_DIR}/staticfiles" "${BACKEND_DIR}/backups"
+chmod -R 775 "${BACKEND_DIR}/media" "${BACKEND_DIR}/staticfiles" "${BACKEND_DIR}/backups" || true
+chown -R www-data:www-data "${BACKEND_DIR}/media" "${BACKEND_DIR}/staticfiles" "${BACKEND_DIR}/backups" || true
 
 # 7. Restart / Reload Gunicorn systemd service
 echo "🔄 Reloading Gunicorn service (${SERVICE_NAME})..."
