@@ -14,6 +14,7 @@ import {
   Download,
   Search,
   CheckCircle2,
+  Check,
   Clock,
   XCircle,
   Copy,
@@ -859,6 +860,20 @@ export default function SpecificationReadingPage({ activeSubSection, onNavigateS
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          {/* Start Extraction Button */}
+          <button
+            type="button"
+            onClick={() => {
+              expandAndScroll('secAB');
+              addToast('Document Extraction', 'Upload or specify project technical documents in Section A & B.', 'info');
+            }}
+            className="px-3 py-1.5 bg-gradient-to-r from-[#F7941D] to-[#E8700A] hover:brightness-110 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+            title="Start automated document extraction"
+          >
+            <span>✨</span>
+            <span>Start Extraction</span>
+          </button>
+
           {/* Company Details Pro Button */}
           <button
             type="button"
@@ -880,6 +895,20 @@ export default function SpecificationReadingPage({ activeSubSection, onNavigateS
           >
             <Eye className="w-3.5 h-3.5" />
             <span>Preview Dossier</span>
+          </button>
+
+          {/* Validate Button */}
+          <button
+            type="button"
+            onClick={() => {
+              handleSaveToRegister();
+              setValidationModalOpen(true);
+            }}
+            className="px-3 py-1.5 bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-300 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+            title="Validate all sections and review findings"
+          >
+            <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2.5]" />
+            <span>Validate</span>
           </button>
 
           {/* Report Register Button */}

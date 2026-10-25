@@ -195,11 +195,11 @@ export default function DashboardPage({ setActivePage }) {
       badgeBorder: 'border-amber-400',
       lineColor: 'border-amber-500',
       bullets: [
-        'Inspection Reports',
-        'Daily Reports',
-        'Quality Records',
-        'Image Management',
-        'Document Library',
+        'Coating Inspection & Reporting',
+        'Spray Painter Qualification (PQR)',
+        'Blaster Qualification (OQR)',
+        'TSA Operator Qualification',
+        'Quality & Compliance Records',
         'Export & Share'
       ],
       target: 'inspection-reporting'
@@ -240,7 +240,8 @@ export default function DashboardPage({ setActivePage }) {
         'Progress Tracking',
         'Certificate Library'
       ],
-      target: 'academy-lms'
+      disabled: true,
+      target: null
     },
     {
       id: 'ai-assistant',
@@ -365,13 +366,18 @@ export default function DashboardPage({ setActivePage }) {
                 <div
                   key={mod.id}
                   onClick={() => {
+                    if (mod.disabled) return;
                     if (mod.target === 'ai-modal') {
                       setAiModalOpen(true);
-                    } else {
+                    } else if (mod.target) {
                       handleNav(mod.target);
                     }
                   }}
-                  className="bg-white border border-slate-200/90 rounded-2xl p-3.5 shadow-2xs hover:shadow-md hover:border-amber-400/80 transition-all flex flex-col justify-between group cursor-pointer text-left"
+                  className={`bg-white border border-slate-200/90 rounded-2xl p-3.5 shadow-2xs transition-all flex flex-col justify-between group text-left ${
+                    mod.disabled
+                      ? 'opacity-65 cursor-not-allowed border-dashed'
+                      : 'hover:shadow-md hover:border-amber-400/80 cursor-pointer'
+                  }`}
                 >
                   <div>
                     {/* Module Icon Badge */}
@@ -404,8 +410,10 @@ export default function DashboardPage({ setActivePage }) {
 
                   {/* Bottom Link Button */}
                   <div className="pt-3 mt-2 border-t border-slate-100/80 text-center">
-                    <span className="text-[10px] font-semibold text-slate-400 group-hover:text-[#F7941D] inline-flex items-center gap-1 transition-colors">
-                      + More Tools
+                    <span className={`text-[10px] font-semibold inline-flex items-center gap-1 transition-colors ${
+                      mod.disabled ? 'text-slate-400 font-mono uppercase' : 'text-slate-400 group-hover:text-[#F7941D]'
+                    }`}>
+                      {mod.disabled ? 'Disabled' : '+ More Tools'}
                     </span>
                   </div>
                 </div>

@@ -491,7 +491,7 @@ export default function UnitRateEstimationPage({ currentSubTool = 'hub', onNavig
       
       {/* Sub-Navigation Rail (Only visible when activeSubTool !== 'hub') */}
       {activeSubTool !== 'hub' && (
-        <div className="bg-white border-b border-[#E6E8EC] sticky top-0 z-30 shadow-2xs -mt-4 -mx-4 md:-mx-6 mb-4">
+        <div className="bg-white border-b border-[#E6E8EC] sticky top-14 md:top-15 z-20 shadow-2xs -mt-4 -mx-4 md:-mx-6 mb-4">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2 flex items-center justify-between gap-3">
             <div className="flex items-center gap-1 overflow-x-auto py-0.5 no-scrollbar">
               {subTabs.map((tab) => {
@@ -512,14 +512,29 @@ export default function UnitRateEstimationPage({ currentSubTool = 'hub', onNavig
               })}
             </div>
 
-            <div className="hidden sm:flex items-center gap-3 shrink-0 text-xs">
-              <span className="font-mono font-bold text-[#D97706]">
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0 text-xs">
+              <span className="font-mono font-bold text-[#D97706] hidden md:inline">
                 {completionPct}% Complete
               </span>
-              <span className="text-slate-400">|</span>
-              <span className="font-mono font-bold text-[#1B222C]">
-                {metrics.totalArea.toFixed(1)} m²
-              </span>
+              <span className="text-slate-300 hidden md:inline">|</span>
+              <button
+                type="button"
+                onClick={() => handleSaveToRegister('Draft')}
+                className="px-2.5 py-1 rounded-lg border border-slate-200 bg-white hover:bg-orange-50 text-slate-700 hover:text-orange-600 text-xs font-semibold flex items-center gap-1 shadow-2xs transition cursor-pointer"
+                title="Save Draft to Register"
+              >
+                <Save className="w-3.5 h-3.5 text-orange-600" />
+                <span className="hidden sm:inline">Save Draft</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setPreviewOpen(true)}
+                className="px-3 py-1 rounded-lg bg-gradient-to-r from-[#F97316] to-[#EA580C] text-white text-xs font-bold flex items-center gap-1 shadow-2xs hover:opacity-90 transition cursor-pointer"
+                title="Preview Quotation Dossier"
+              >
+                <Eye className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Preview</span>
+              </button>
             </div>
           </div>
         </div>

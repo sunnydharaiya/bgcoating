@@ -74,8 +74,16 @@ export default function ManpowerEstimationPage({ activePage = 'manpower-estimati
         setIsPreviewModalOpen(false);
         setIsApprovalModalOpen(false);
 
-        // Normalize aliases
-        if (currentSubTool === 'blasting-cost' || currentSubTool === 'blasting_cost') {
+        // Normalize aliases & modal triggers
+        if (currentSubTool === 'company-details' || currentSubTool === 'company') {
+          setIsCompanyModalOpen(true);
+        } else if (currentSubTool === 'watermark') {
+          setIsWatermarkModalOpen(true);
+        } else if (currentSubTool === 'preview') {
+          setIsPreviewModalOpen(true);
+        } else if (currentSubTool === 'print' || currentSubTool === 'xlprint') {
+          handleDirectPrint();
+        } else if (currentSubTool === 'blasting-cost' || currentSubTool === 'blasting_cost') {
           setActiveTab('blasting');
         } else if (currentSubTool === 'paint-application' || currentSubTool === 'paint_application') {
           setActiveTab('painting');
@@ -280,6 +288,12 @@ export default function ManpowerEstimationPage({ activePage = 'manpower-estimati
         setIsPreviewModalOpen(true);
       } else if (action === 'validate') {
         setIsApprovalModalOpen(true);
+      } else if (action === 'company' || action === 'company-details') {
+        setIsCompanyModalOpen(true);
+      } else if (action === 'watermark') {
+        setIsWatermarkModalOpen(true);
+      } else if (action === 'print' || action === 'xlprint') {
+        handleDirectPrint();
       } else if (action === 'register') {
         handleTabChange('register');
       } else if (action === 'reset') {
@@ -359,16 +373,20 @@ export default function ManpowerEstimationPage({ activePage = 'manpower-estimati
     { id: 'register', label: '08. Register', icon: HardHat },
   ];
 
+  const showFreezeBar = ['project-info', 'blasting', 'painting', 'raw-material', 'summary'].includes(activeTab);
+
   return (
-    <div className="w-full text-[#1B222C] font-sans">
+    <div className="w-full max-w-[1240px] mx-auto text-[#1B222C] font-sans pb-12">
       
-      {/* Top Sticky Freeze Dashboard Bar (Only in sub-tools, matching 1.png - 7.png) */}
-      {activeTab !== 'hub' && activeTab !== 'dashboard' && (
+      {/* Top Sticky Freeze Dashboard Bar (Only in estimation workflow tabs, matching 1.png - 4.png) */}
+      {showFreezeBar && (
         <div className="sticky top-[56px] md:top-[60px] z-20 pt-0.5 pb-2 -mt-1 bg-[#F3F5F8]/95 backdrop-blur-xs transition-all">
           <ManpowerFreezeBar
             state={state}
             metrics={metrics}
             onReset={handleReset}
+            onSaveDraft={() => handleSaveReport('Draft')}
+            onPreview={() => setIsPreviewModalOpen(true)}
           />
         </div>
       )}
@@ -417,6 +435,9 @@ export default function ManpowerEstimationPage({ activePage = 'manpower-estimati
               onChange={handleFieldChange}
               metrics={metrics}
               onNavigate={handleTabChange}
+              onSaveDraft={() => handleSaveReport('Draft')}
+              onValidate={() => setIsApprovalModalOpen(true)}
+              onReset={handleReset}
             />
           )}
 
@@ -426,6 +447,9 @@ export default function ManpowerEstimationPage({ activePage = 'manpower-estimati
               onChange={handleFieldChange}
               metrics={metrics}
               onNavigate={handleTabChange}
+              onSaveDraft={() => handleSaveReport('Draft')}
+              onValidate={() => setIsApprovalModalOpen(true)}
+              onReset={handleReset}
             />
           )}
 
@@ -435,6 +459,9 @@ export default function ManpowerEstimationPage({ activePage = 'manpower-estimati
               onChange={handleFieldChange}
               metrics={metrics}
               onNavigate={handleTabChange}
+              onSaveDraft={() => handleSaveReport('Draft')}
+              onValidate={() => setIsApprovalModalOpen(true)}
+              onReset={handleReset}
             />
           )}
 
@@ -464,6 +491,7 @@ export default function ManpowerEstimationPage({ activePage = 'manpower-estimati
               onOpenApproval={() => setIsApprovalModalOpen(true)}
               onOpenPreview={() => setIsPreviewModalOpen(true)}
               onNavigate={handleTabChange}
+              onReset={handleReset}
             />
           )}
 

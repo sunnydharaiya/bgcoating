@@ -741,10 +741,14 @@ if (form){
   addEventListener('popstate',e=>{ const route=(e.state&&e.state.route)||currentRoute()||'home'; show(route,false); });
   function initVisitors(){
     const el=document.getElementById('visitorCount'); if(!el) return;
-    var BASE=127959; var n=0; try{ n=parseInt(localStorage.getItem('bg_visits')||'0',10)||0; }catch(e){}
-    if(!n || n<BASE){ n=BASE; } else { n=n+1; }
+    var serverBaseline = parseInt(el.getAttribute('data-count'), 10) || 160222;
+    var n=0; try{ n=parseInt(localStorage.getItem('bg_visits')||'0',10)||0; }catch(e){}
+    if(!n || n<serverBaseline){ n=serverBaseline; } else { n=n+1; }
     try{ localStorage.setItem('bg_visits',String(n)); }catch(e){}
     el.setAttribute('data-count', n);
+    if(el.dataset.done){
+      el.textContent = n.toLocaleString('en-US') + (el.getAttribute('data-suffix') || '+');
+    }
   }
   initVisitors();
   /* never let the browser restore or fragment-jump the scroll position */
@@ -861,7 +865,7 @@ function initBASlider(ba, handle){
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg>
     </button>
   </div>
-  <a class="fab fab-wa" href="https://wa.me/919925810408" target="_blank" rel="noopener noreferrer" aria-label="Chat with a BG Group consultant on WhatsApp">
+  <a class="fab fab-wa" href="https://wa.me/{{ site_settings.whatsapp_number|default:'919925810408' }}" target="_blank" rel="noopener noreferrer" aria-label="Chat with a BG Group consultant on WhatsApp">
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.15-1.7-.85-2-.95-.26-.1-.45-.15-.64.15-.2.3-.74.94-.9 1.13-.17.2-.34.22-.63.08-.3-.15-1.25-.46-2.38-1.47-.88-.78-1.47-1.75-1.64-2.05-.17-.3-.02-.46.13-.6.13-.14.3-.34.44-.52.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.08-.15-.64-1.55-.88-2.12-.23-.55-.47-.48-.64-.48h-.55c-.2 0-.5.07-.77.37-.26.3-1 .98-1 2.4s1.03 2.78 1.17 2.97c.15.2 2.03 3.1 4.9 4.35.68.3 1.22.47 1.64.6.69.22 1.31.19 1.8.11.55-.08 1.7-.7 1.94-1.36.24-.67.24-1.24.17-1.36-.07-.12-.26-.2-.55-.34zM12 2a10 10 0 0 0-8.6 15.06L2 22l5.06-1.33A10 10 0 1 0 12 2z"></path></svg>
     <span class="fab-label">Chat With Us</span>
   </a>

@@ -1,28 +1,21 @@
 // src/tools/painter/PainterPhotoReport.jsx
 import React, { useState, useRef } from 'react';
-import { 
-  Camera, 
-  Plus, 
-  Trash2, 
-  Upload, 
-  Sparkles, 
-  Maximize2, 
-  X,
-  RotateCcw,
-  CheckCircle2,
-  AlertTriangle
-} from 'lucide-react';
 import { PHOTO_PRESETS } from '../../data/painterDatabase';
 
 export default function PainterPhotoReport({
   formData,
-  onChange
+  onChange,
+  onSaveDraft,
+  onValidateApprove,
+  onReset,
+  onNavigate
 }) {
   const [lightboxSrc, setLightboxSrc] = useState(null);
+  const fileInputRefs = useRef({});
   const photos = formData?._photos || [];
 
   const handleAddPhoto = (preset = null) => {
-    const nextId = photos.length > 0 ? Math.max(...photos.map(p => p.id)) + 1 : 1;
+    const nextId = photos.length > 0 ? Math.max(...photos.map(p => p.id || 0)) + 1 : 1;
     const today = new Date().toISOString().split('T')[0];
     const newPhoto = {
       id: nextId,
@@ -100,240 +93,255 @@ export default function PainterPhotoReport({
   };
 
   const handleClearAll = () => {
-    if (window.confirm('Remove all photograph evidence cards?')) {
-      onChange('_photos', []);
-    }
+    onChange('_photos', []);
   };
 
-  const attachedCount = photos.filter(p => !!p.b64).length;
+  const totalPhotos = photos.length;
+  const withImg = photos.filter(p => !!p.b64).length;
+  const captionedCount = photos.filter(p => !!p.cap).length;
 
   return (
-    <div className="space-y-6">
-      
-      {/* Top Header & Actions */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-5 md:p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
-          <Camera className="w-5 h-5 text-[#E87B1E]" />
-          <div>
-            <h2 className="text-base font-black uppercase tracking-wider text-slate-800 font-rajdhani">
-              Section 08: Photographic Evidence Report (Annexure B)
-            </h2>
-            <p className="text-xs text-slate-500">
-              Visual records of substrate preparation, spray technique, WFT/DFT measurement, and adhesion tests
-            </p>
+    <div className="sheet" id="sh-photo">
+      {/* Corporate Header */}
+      <div className="xl-corp">
+        <div className="xl-corp-inner">
+          <div className="xl-corp-l">BG Group of Paint &amp; Coating Consultant</div>
+          <div className="xl-corp-t">PHOTOGRAPHIC EVIDENCE REPORT</div>
+          <div className="xl-corp-s">
+            Visual documentation of operator qualification activity · field photographs with metadata
           </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${
-            attachedCount >= 3
-              ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
-              : 'bg-amber-50 text-amber-700 border-amber-300'
-          }`}>
-            {attachedCount}/{photos.length} Photos Attached
-          </span>
-
-          <button
-            type="button"
-            onClick={handleLoadStandardSet}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition cursor-pointer"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-[#E87B1E]" />
-            <span>Load 6-Photo Standard Set</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleAddPhoto()}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-gradient-to-r from-[#E87B1E] to-[#9E1B1E] hover:from-[#F39322] hover:to-[#A50021] transition shadow-xs cursor-pointer"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Add Photo Card</span>
-          </button>
-
-          {photos.length > 0 && (
-            <button
-              type="button"
-              onClick={handleClearAll}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 transition cursor-pointer"
-              title="Clear all photos"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
-          )}
         </div>
       </div>
 
-      {/* Photo Cards Grid */}
-      {photos.length === 0 ? (
-        <div className="bg-white rounded-2xl border-2 border-dashed border-slate-300 p-12 text-center space-y-3">
-          <Camera className="w-12 h-12 text-slate-300 mx-auto" />
-          <h3 className="text-sm font-bold text-slate-700 font-rajdhani uppercase tracking-wider">
-            No Photographic Evidence Attached
-          </h3>
-          <p className="text-xs text-slate-500 max-w-sm mx-auto">
-            Click "Load 6-Photo Standard Set" to create preset slots for substrate, mixing, primer, WFT, DFT, and adhesion.
-          </p>
-          <button
-            type="button"
-            onClick={handleLoadStandardSet}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold text-white bg-[#E87B1E] hover:bg-[#F39322] transition shadow-xs cursor-pointer"
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Load Standard 6-Photo Set</span>
-          </button>
+      {/* Photo Capture Guidance Box */}
+      <div className="remark-box" style={{ borderLeftColor: '#1565C0', marginTop: '12px' }}>
+        <div className="remark-l" style={{ color: '#1565C0' }}>📷 Photo Capture Guidance</div>
+        <div style={{ fontSize: '11.5px', color: 'var(--txt)', lineHeight: 1.55 }}>
+          Add photographs documenting the qualification activity — pre-blast surface, blasting in progress, post-blast cleanliness, profile measurement, dust tape test, abrasive sample, and finished test panel. Each photo supports the inspection findings and creates an auditable trail. Photos are embedded into <b>Annexure-B</b> of the printed report.
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {photos.map((photo, idx) => (
+      </div>
+
+      {/* Compliance Bar */}
+      <div className="compl-bar" style={{ marginTop: '14px' }}>
+        <div className="compl-item">
+          <div className="compl-dot g" />
+          <span className="compl-lbl">Photos Added:</span>
+          <span className="compl-val" id="photo-count">
+            {withImg}{totalPhotos > withImg ? `/${totalPhotos}` : ''}
+          </span>
+        </div>
+        <div className="compl-item">
+          <div className="compl-dot y" />
+          <span className="compl-lbl">Captioned:</span>
+          <span className="compl-val" id="photo-cap-count">{captionedCount}</span>
+        </div>
+        <div
+          className="compl-pct"
+          id="photo-status"
+          style={{
+            color: withImg === 0 ? 'var(--gr)' : withImg < 3 ? 'var(--gy)' : 'var(--gs)'
+          }}
+        >
+          {withImg === 0
+            ? 'EVIDENCE PENDING'
+            : withImg < 3
+            ? 'MORE EVIDENCE RECOMMENDED'
+            : 'EVIDENCE SUFFICIENT'}
+        </div>
+      </div>
+
+      {/* Photo Action Bar */}
+      <div className="photo-add-bar">
+        <button
+          type="button"
+          className="btn btn-add"
+          onClick={() => handleAddPhoto()}
+        >
+          ＋ Add Photo Slot
+        </button>
+        <button
+          type="button"
+          className="btn btn-save"
+          onClick={handleLoadStandardSet}
+        >
+          ⊞ Add Standard 6-Photo Set
+        </button>
+        <button
+          type="button"
+          className="btn btn-reset"
+          onClick={handleClearAll}
+        >
+          ↺ Clear All
+        </button>
+      </div>
+
+      {/* Photo Row Grid */}
+      <div className="photo-row-grid" id="photo-grid">
+        {photos.map((photo, idx) => (
+          <div className="photo-card" key={photo.id || idx}>
+            <div className="photo-card-h">
+              <span className="pc-tag">#{idx + 1} PHOTO</span>
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '170px' }}>
+                {photo.title || `Photograph ${idx + 1}`}
+              </span>
+              <button
+                type="button"
+                className="photo-card-del"
+                onClick={() => handleRemovePhoto(idx)}
+                title="Delete photo slot"
+              >
+                ✕ DELETE
+              </button>
+            </div>
+
             <div
-              key={photo.id || idx}
-              className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm flex flex-col justify-between group hover:border-[#E87B1E]/60 transition"
+              className={`photo-card-slot ${photo.b64 ? 'has-photo' : ''}`}
+              onClick={() => {
+                if (!photo.b64) {
+                  fileInputRefs.current[idx]?.click();
+                } else {
+                  setLightboxSrc(photo.b64);
+                }
+              }}
             >
-              {/* Photo Card Top Bar */}
-              <div className="bg-gradient-to-r from-slate-100 to-slate-50 p-2.5 border-b border-slate-200 flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-800 font-rajdhani uppercase truncate">
-                  Photo #{idx + 1} · {photo.title}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => handleRemovePhoto(idx)}
-                  className="text-slate-400 hover:text-rose-600 transition p-1 cursor-pointer"
-                  title="Remove card"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
+              {photo.b64 ? (
+                <>
+                  <img src={photo.b64} alt={photo.title || `Photograph ${idx + 1}`} />
+                  <button
+                    type="button"
+                    className="pc-rm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemoveImage(idx);
+                    }}
+                    title="Remove photo"
+                  >
+                    ✕
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div className="pc-ic">📷</div>
+                  <div className="pc-l">Click or Paste to Upload</div>
+                  <div className="pc-s">JPEG / PNG / WEBP · Auto-compressed</div>
+                </>
+              )}
+              <input
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+                ref={(el) => (fileInputRefs.current[idx] = el)}
+                onChange={(e) => handleImageUpload(idx, e)}
+              />
+            </div>
+
+            <div className="photo-card-meta">
+              <div className="photo-card-meta-row">
+                <div className="pm-lbl">Photo Title</div>
+                <input
+                  type="text"
+                  className="pm-title"
+                  placeholder="e.g. Surface Profile Measurement"
+                  value={photo.title || ''}
+                  onChange={(e) => handlePhotoFieldChange(idx, 'title', e.target.value)}
+                />
               </div>
-
-              {/* Photo Image Upload Slot */}
-              <div className="p-3">
-                <div className="relative aspect-4/3 rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 overflow-hidden flex items-center justify-center group/slot">
-                  {photo.b64 ? (
-                    <>
-                      <img
-                        src={photo.b64}
-                        alt={photo.title}
-                        className="w-full h-full object-cover cursor-pointer"
-                        onClick={() => setLightboxSrc(photo.b64)}
-                      />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/slot:opacity-100 transition flex items-center justify-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setLightboxSrc(photo.b64)}
-                          className="p-2 bg-white/90 hover:bg-white text-slate-800 rounded-lg text-xs font-bold shadow-md cursor-pointer"
-                          title="View Full Size"
-                        >
-                          <Maximize2 className="w-4 h-4" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveImage(idx)}
-                          className="p-2 bg-rose-600/90 hover:bg-rose-700 text-white rounded-lg text-xs font-bold shadow-md cursor-pointer"
-                          title="Remove Image"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </>
-                  ) : (
-                    <label className="flex flex-col items-center justify-center w-full h-full p-4 text-center cursor-pointer hover:bg-amber-50/50 transition">
-                      <Camera className="w-8 h-8 text-slate-300 mb-1" />
-                      <span className="text-xs font-bold text-slate-600 uppercase">
-                        Tap to Upload Image
-                      </span>
-                      <span className="text-[10px] text-slate-400 mt-0.5">JPG / PNG</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => handleImageUpload(idx, e)}
-                      />
-                    </label>
-                  )}
-                </div>
+              <div className="photo-card-meta-row">
+                <div className="pm-lbl">Location / Area</div>
+                <input
+                  type="text"
+                  className="pm-loc"
+                  placeholder="e.g. Test Plate Front"
+                  value={photo.loc || ''}
+                  onChange={(e) => handlePhotoFieldChange(idx, 'loc', e.target.value)}
+                />
               </div>
-
-              {/* Photo Metadata Form */}
-              <div className="p-3 pt-0 space-y-2 text-xs">
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">
-                    Title / Tag
-                  </label>
-                  <input
-                    type="text"
-                    value={photo.title || ''}
-                    onChange={(e) => handlePhotoFieldChange(idx, 'title', e.target.value)}
-                    className="w-full text-xs font-medium text-slate-800 bg-slate-50 border border-slate-200 rounded p-1.5 focus:bg-white focus:border-[#E87B1E] outline-none"
-                    placeholder="e.g. Surface Condition (Pre-Coating)"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">
-                      Location / Bay
-                    </label>
-                    <input
-                      type="text"
-                      value={photo.loc || ''}
-                      onChange={(e) => handlePhotoFieldChange(idx, 'loc', e.target.value)}
-                      className="w-full text-xs text-slate-700 bg-slate-50 border border-slate-200 rounded p-1.5 focus:bg-white focus:border-[#E87B1E] outline-none"
-                      placeholder="e.g. Bay 3 · Test Plate 1"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">
-                      Date Taken
-                    </label>
-                    <input
-                      type="date"
-                      value={photo.date || ''}
-                      onChange={(e) => handlePhotoFieldChange(idx, 'date', e.target.value)}
-                      className="w-full text-xs text-slate-700 bg-slate-50 border border-slate-200 rounded p-1.5 focus:bg-white focus:border-[#E87B1E] outline-none"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">
-                    Inspector Observation / Caption
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={photo.cap || ''}
-                    onChange={(e) => handlePhotoFieldChange(idx, 'cap', e.target.value)}
-                    className="w-full text-xs text-slate-700 bg-slate-50 border border-slate-200 rounded p-1.5 focus:bg-white focus:border-[#E87B1E] outline-none resize-none"
-                    placeholder="Describe what this photograph illustrates..."
-                  />
-                </div>
+              <div className="photo-card-meta-row">
+                <div className="pm-lbl">Date of Photo</div>
+                <input
+                  type="date"
+                  className="pm-date"
+                  value={photo.date || ''}
+                  onChange={(e) => handlePhotoFieldChange(idx, 'date', e.target.value)}
+                />
+              </div>
+              <div className="photo-card-meta-row">
+                <div className="pm-lbl">Inspector Initial</div>
+                <input
+                  type="text"
+                  className="pm-init"
+                  placeholder="e.g. RP"
+                  value={photo.init || ''}
+                  onChange={(e) => handlePhotoFieldChange(idx, 'init', e.target.value)}
+                />
+              </div>
+              <div className="photo-card-meta-row span-2">
+                <div className="pm-lbl">Caption / Technical Observation</div>
+                <textarea
+                  className="pm-cap"
+                  rows={2}
+                  placeholder="Describe technical observations, compliance with standards, or surface defect findings..."
+                  value={photo.cap || ''}
+                  onChange={(e) => handlePhotoFieldChange(idx, 'cap', e.target.value)}
+                />
               </div>
             </div>
-          ))}
-        </div>
-      )}
+          </div>
+        ))}
+      </div>
+
+      {/* Remark Box */}
+      <div className="remark-box" style={{ marginTop: '14px' }}>
+        <div className="remark-l">📝 Photo Report Remark</div>
+        <textarea
+          className="remark-t"
+          id="f-remark-photo"
+          rows={3}
+          placeholder="Overall photographic evidence remarks, audit trail observations, or client witnessed notes..."
+          value={formData?.['f-remark-photo'] || formData?.remarkPhoto || ''}
+          onChange={(e) => {
+            onChange('f-remark-photo', e.target.value);
+            onChange('remarkPhoto', e.target.value);
+          }}
+        />
+      </div>
+
+      {/* Standard Button Row */}
+      <div className="btn-row btn-row-std">
+        <button type="button" className="btn sd" onClick={onSaveDraft}>💾 Save Draft</button>
+        <button type="button" className="btn va" onClick={onValidateApprove}>✓ Validate &amp; Approve</button>
+        <button type="button" className="btn rs" onClick={onReset}>↺ Reset</button>
+        <button
+          type="button"
+          className="btn nx"
+          onClick={() => onNavigate && onNavigate('painter', 'verdict')}
+        >
+          Next: Verdict &amp; Approval →
+        </button>
+      </div>
 
       {/* Lightbox Modal */}
       {lightboxSrc && (
         <div
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 backdrop-blur-sm cursor-zoom-out"
           onClick={() => setLightboxSrc(null)}
-          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 cursor-zoom-out"
         >
           <div className="relative max-w-4xl max-h-[90vh]">
             <img
               src={lightboxSrc}
-              alt="Enlarged preview"
-              className="max-w-full max-h-[85vh] object-contain rounded-xl shadow-2xl"
+              alt="Enlarged view"
+              className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl"
             />
             <button
+              type="button"
+              className="absolute -top-10 right-0 text-white font-bold text-sm bg-black/50 px-3 py-1 rounded hover:bg-black/80"
               onClick={() => setLightboxSrc(null)}
-              className="absolute top-3 right-3 p-2 rounded-full bg-black/60 hover:bg-black text-white transition shadow-lg cursor-pointer"
             >
-              <X className="w-5 h-5" />
+              ✕ Close
             </button>
           </div>
         </div>
       )}
-
     </div>
   );
 }

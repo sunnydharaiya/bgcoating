@@ -1,16 +1,4 @@
 import React, { useRef } from 'react';
-import {
-  Building2,
-  Camera,
-  Upload,
-  Trash2,
-  User,
-  ArrowRight,
-  ShieldCheck,
-  Save,
-  CheckCircle2,
-  Image as ImageIcon
-} from 'lucide-react';
 
 export default function BlasterProjectInfo({
   state,
@@ -36,280 +24,246 @@ export default function BlasterProjectInfo({
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  const handlePastePhoto = async () => {
+    try {
+      const items = await navigator.clipboard.read();
+      for (const item of items) {
+        for (const type of item.types) {
+          if (type.startsWith('image/')) {
+            const blob = await item.getType(type);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              onChange('operatorPhoto', reader.result);
+            };
+            reader.readAsDataURL(blob);
+            return;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Clipboard read failed or permission denied:', e);
+    }
+  };
+
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
-      
-      {/* Header */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <span className="text-[10.5px] font-mono uppercase tracking-widest text-[#E8700A] font-bold">
-            Section 01 · Step 1 of 8
-          </span>
-          <h2 className="text-xl font-black text-slate-900 dark:text-white mt-0.5">
-            Project &amp; Operator Identification
-          </h2>
-          <p className="text-xs text-slate-500 mt-1">
-            Capture project context, specification standards, and operator biographical identity with photograph.
-          </p>
+    <div className="sheet act" id="sh-info">
+      <div className="xl-corp">
+        <div className="xl-corp-inner">
+          <div className="xl-corp-l">BG Group of Paint &amp; Coating Consultant</div>
+          <div className="xl-corp-t">PROJECT &amp; OPERATOR INFORMATION</div>
+          <div className="xl-corp-s">Step 1 of 8 — Capture project context and operator identification</div>
         </div>
+      </div>
 
-        <button
-          onClick={() => onNavigate('train')}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#E8700A] hover:bg-[#F5911F] text-white text-xs font-bold transition shadow-xs cursor-pointer"
+      <div className="xl-sec-h" id="sec-info-0">
+        <span className="ic">📸</span>Operator Photograph<span className="num">REQUIRED FOR ID CARD &amp; PRINT REPORT</span>
+      </div>
+      <div className="op-photo-w">
+        <div 
+          className="op-photo-slot" 
+          id="op-photo-slot" 
+          tabIndex={0} 
+          onClick={() => fileInputRef.current?.click()}
         >
-          <span>Next: Training &amp; Test</span>
-          <ArrowRight className="w-3.5 h-3.5" />
-        </button>
-      </div>
-
-      {/* Operator Photograph Upload Box */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs space-y-4">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
-          <Camera className="w-4 h-4 text-[#E8700A]" />
-          <span>Operator Photograph (Required for ID Card &amp; Print Dossier)</span>
-        </h3>
-
-        <div className="flex flex-col sm:flex-row items-center gap-6 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-dashed border-slate-300 dark:border-slate-700">
-          
-          {/* Photo Preview / Slot */}
-          <div className="relative w-32 h-40 rounded-xl border-2 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 overflow-hidden flex items-center justify-center shrink-0 shadow-xs">
-            {state.operatorPhoto ? (
-              <img
-                src={state.operatorPhoto}
-                alt="Operator"
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="flex flex-col items-center justify-center p-3 text-center text-slate-400">
-                <User className="w-10 h-10 stroke-1 mb-1 text-slate-300 dark:text-slate-600" />
-                <span className="text-[10px] font-bold uppercase">No Photo</span>
-              </div>
-            )}
-
-            {state.operatorPhoto && (
-              <button
-                onClick={handleRemovePhoto}
-                className="absolute top-1.5 right-1.5 p-1 rounded-md bg-red-600/80 hover:bg-red-600 text-white shadow-xs transition cursor-pointer"
-                title="Remove Photo"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
-            )}
+          {state.operatorPhoto ? (
+            <img 
+              src={state.operatorPhoto} 
+              alt="Operator" 
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+            />
+          ) : (
+            <>
+              <div className="op-ph-ic">👤</div>
+              <div className="op-ph-l">Tap to Upload</div>
+              <div className="op-ph-s">Click here, or drop / paste an image. JPG / PNG · Portrait orientation recommended.</div>
+            </>
+          )}
+          {state.operatorPhoto && (
+            <button 
+              className="op-ph-rm" 
+              type="button" 
+              onClick={(e) => { e.stopPropagation(); handleRemovePhoto(); }} 
+              title="Remove photo"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+        <input 
+          type="file" 
+          ref={fileInputRef} 
+          id="op-photo-input" 
+          accept="image/*" 
+          style={{ display: 'none' }} 
+          onChange={handlePhotoUpload} 
+        />
+        <div className="op-photo-info">
+          <div className="op-photo-info-h">📌 Photo Guidelines</div>
+          <div className="op-photo-info-t">
+            Upload a recent passport-style photograph of the operator. This photograph will:
+            <ul>
+              <li>Appear in the printed report header</li>
+              <li>Be embedded in the qualification certificate</li>
+              <li>Used for site ID-card verification</li>
+            </ul>
           </div>
-
-          {/* Photo Guidelines & Actions */}
-          <div className="flex-1 space-y-3">
-            <div className="text-xs text-slate-600 dark:text-slate-300 space-y-1">
-              <span className="font-bold text-slate-900 dark:text-white block">📌 Photograph Guidelines:</span>
-              <p className="text-[11.5px] text-slate-500">
-                Upload a recent passport-style portrait photograph of the operator (JPG / PNG).
-                The photograph will appear in the printed report header, qualification certificate, and ID card dossier.
-              </p>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2 pt-1">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handlePhotoUpload}
-                className="hidden"
-              />
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#E8700A] hover:bg-[#F5911F] text-white text-xs font-bold transition shadow-xs cursor-pointer"
-              >
-                <Upload className="w-3.5 h-3.5" />
-                <span>Upload Photograph</span>
-              </button>
-
-              {state.operatorPhoto && (
-                <button
-                  type="button"
-                  onClick={handleRemovePhoto}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-red-300 dark:border-red-900 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 text-xs font-semibold transition cursor-pointer"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span>Remove</span>
-                </button>
-              )}
-            </div>
+          <div className="op-photo-actions">
+            <button type="button" className="op-photo-btn" onClick={() => fileInputRef.current?.click()}>📁 Choose File</button>
+            <button type="button" className="op-photo-btn alt" onClick={handlePastePhoto}>📋 Paste from Clipboard</button>
+            <button type="button" className="op-photo-btn del" onClick={handleRemovePhoto}>🗑️ Remove</button>
           </div>
-
         </div>
       </div>
 
-      {/* Section A: Project Details */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs space-y-4">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
-          <Building2 className="w-4 h-4 text-[#E8700A]" />
-          <span>Project &amp; Specification Parameters</span>
-        </h3>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-              Report Number
-            </label>
-            <input
-              type="text"
-              value={state.repNo || 'Auto-generated on Save / Validate'}
-              readOnly
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 font-mono text-xs font-bold text-[#E8700A] cursor-not-allowed"
+      <div className="xl-sec-h" id="sec-info-1">
+        <span className="ic">🏗️</span>Project Details
+      </div>
+      <div className="xl-info">
+        <div className="xl-cell">
+          <div className="xl-cell-l">Report No.</div>
+          <div className="xl-cell-v">
+            <input 
+              type="text" 
+              id="f-rep-no" 
+              value={state.reportNo || ''} 
+              placeholder="Auto-generated on Save / Validate" 
+              readOnly 
+              title="The Report No. is generated automatically when you Save Draft or Validate & Approve." 
+              style={{ background: 'var(--bg5)', color: 'var(--o1)', fontWeight: 700, cursor: 'not-allowed' }} 
             />
           </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-              Report Date
-            </label>
-            <input
-              type="date"
-              value={state.repDate}
-              onChange={(e) => onChange('repDate', e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-[#E8700A] focus:outline-hidden"
+        </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">Report Date</div>
+          <div className="xl-cell-v">
+            <input 
+              type="date" 
+              id="f-rep-date" 
+              value={state.reportDate || ''} 
+              onChange={(e) => onChange('reportDate', e.target.value)} 
             />
           </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-              Project Number / Ref
-            </label>
-            <input
-              type="text"
-              value={state.projectNo}
-              onChange={(e) => onChange('projectNo', e.target.value)}
-              placeholder="e.g. NFS-Q-2026"
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-[#E8700A] focus:outline-hidden"
+        </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">Project Name</div>
+          <div className="xl-cell-v">
+            <input 
+              type="text" 
+              id="f-proj" 
+              placeholder="e.g. NFS Qatar Gas" 
+              value={state.projectName || ''} 
+              onChange={(e) => onChange('projectName', e.target.value)} 
             />
           </div>
-
-          <div className="sm:col-span-2 space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-              Project Name
-            </label>
-            <input
-              type="text"
-              value={state.projectName}
-              onChange={(e) => onChange('projectName', e.target.value)}
-              placeholder="e.g. NFS Qatar Gas Complex Expansion"
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-[#E8700A] focus:outline-hidden font-medium"
+        </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">Project No.</div>
+          <div className="xl-cell-v">
+            <input 
+              type="text" 
+              id="f-proj-no" 
+              placeholder="e.g. NFS-Q-2025" 
+              value={state.projectNo || ''} 
+              onChange={(e) => onChange('projectNo', e.target.value)} 
             />
           </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-              Client / Asset Owner
-            </label>
-            <input
-              type="text"
-              value={state.client}
-              onChange={(e) => onChange('client', e.target.value)}
-              placeholder="e.g. QatarEnergy LNG"
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-[#E8700A] focus:outline-hidden"
+        </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">Client</div>
+          <div className="xl-cell-v">
+            <input 
+              type="text" 
+              id="f-client" 
+              placeholder="e.g. QatarEnergy LNG" 
+              value={state.client || ''} 
+              onChange={(e) => onChange('client', e.target.value)} 
             />
           </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-              EPC Main Contractor
-            </label>
-            <input
-              type="text"
-              value={state.epcContractor}
-              onChange={(e) => onChange('epcContractor', e.target.value)}
-              placeholder="e.g. CTJV"
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-[#E8700A] focus:outline-hidden"
+        </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">EPC Contractor</div>
+          <div className="xl-cell-v">
+            <input 
+              type="text" 
+              id="f-epc" 
+              placeholder="e.g. EPC Contractor Name" 
+              value={state.epcContractor || ''} 
+              onChange={(e) => onChange('epcContractor', e.target.value)} 
             />
           </div>
-
-          <div className="sm:col-span-2 space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-              Painting / Coating Contractor
-            </label>
-            <input
-              type="text"
-              value={state.contractor}
-              onChange={(e) => onChange('contractor', e.target.value)}
-              placeholder="e.g. BG Industrial Coatings W.L.L."
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-[#E8700A] focus:outline-hidden"
+        </div>
+        <div className="xl-cell xl-cell-span-2">
+          <div className="xl-cell-l">Coating Contractor</div>
+          <div className="xl-cell-v">
+            <input 
+              type="text" 
+              id="f-contractor" 
+              placeholder="Coating Contractor" 
+              value={state.coatingContractor || ''} 
+              onChange={(e) => onChange('coatingContractor', e.target.value)} 
             />
           </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-              Work Location / Yard
-            </label>
-            <input
-              type="text"
-              value={state.location}
-              onChange={(e) => onChange('location', e.target.value)}
-              placeholder="e.g. Ras Laffan Yard Bay 4"
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-[#E8700A] focus:outline-hidden"
+        </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">Work Location</div>
+          <div className="xl-cell-v">
+            <input 
+              type="text" 
+              id="f-location" 
+              placeholder="e.g. Qatar Site / Workshop" 
+              value={state.location || ''} 
+              onChange={(e) => onChange('location', e.target.value)} 
             />
           </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-              Governing Standards
-            </label>
-            <input
-              type="text"
-              value={state.referenceStandard}
-              onChange={(e) => onChange('referenceStandard', e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-[#E8700A] focus:outline-hidden"
+        </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">Reference Standard</div>
+          <div className="xl-cell-v">
+            <input 
+              type="text" 
+              id="f-ref" 
+              value={state.referenceStandard || 'ASTM D 4228, SSPC, NACE, ISO 8501'} 
+              onChange={(e) => onChange('referenceStandard', e.target.value)} 
             />
           </div>
-
-          <div className="sm:col-span-2 space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-              Specified Protective Coating System
-            </label>
-            <input
-              type="text"
-              value={state.coatingSystem}
-              onChange={(e) => onChange('coatingSystem', e.target.value)}
-              placeholder="e.g. Zinc Ethyl Silicate + Epoxy + Polyurethane"
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-[#E8700A] focus:outline-hidden"
+        </div>
+        <div className="xl-cell xl-cell-span-2">
+          <div className="xl-cell-l">Coating System</div>
+          <div className="xl-cell-v">
+            <input 
+              type="text" 
+              id="f-coat-sys" 
+              placeholder="e.g. Epoxy Primer + Polyurethane Topcoat" 
+              value={state.coatingSystem || ''} 
+              onChange={(e) => onChange('coatingSystem', e.target.value)} 
             />
           </div>
-
         </div>
       </div>
 
-      {/* Section B: Operator / Blaster Identification */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs space-y-4">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
-          <User className="w-4 h-4 text-[#E8700A]" />
-          <span>Operator / Blaster Identification</span>
-        </h3>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-              Full Name
-            </label>
-            <input
-              type="text"
-              required
-              value={state.operatorName}
-              onChange={(e) => onChange('operatorName', e.target.value)}
-              placeholder="e.g. Rajesh M. Patel"
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-[#E8700A] focus:outline-hidden"
+      <div className="xl-sec-h" id="sec-info-2">
+        <span className="ic">👷</span>Operator / Blaster Identification
+      </div>
+      <div className="xl-info">
+        <div className="xl-cell">
+          <div className="xl-cell-l">Full Name</div>
+          <div className="xl-cell-v">
+            <input 
+              type="text" 
+              id="f-name" 
+              placeholder="Operator full name" 
+              value={state.operatorName || ''} 
+              onChange={(e) => onChange('operatorName', e.target.value)} 
             />
           </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-              Trade Category
-            </label>
-            <select
-              value={state.category}
+        </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">Category</div>
+          <div className="xl-cell-v">
+            <select 
+              id="f-category" 
+              value={state.category || 'Blaster'} 
               onChange={(e) => onChange('category', e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-900 dark:text-white focus:ring-2 focus:ring-[#E8700A] focus:outline-hidden"
             >
               <option>Blaster</option>
               <option>Painter</option>
@@ -318,111 +272,136 @@ export default function BlasterProjectInfo({
               <option>Coating Inspector</option>
             </select>
           </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-              Civil ID / Passport No.
-            </label>
-            <input
-              type="text"
-              value={state.civilId}
-              onChange={(e) => onChange('civilId', e.target.value)}
-              placeholder="e.g. 284051209341"
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-mono text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-[#E8700A] focus:outline-hidden"
+        </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">Civil ID / Passport No.</div>
+          <div className="xl-cell-v">
+            <input 
+              type="text" 
+              id="f-civil" 
+              placeholder="Civil ID / Passport No." 
+              value={state.civilId || ''} 
+              onChange={(e) => onChange('civilId', e.target.value)} 
             />
           </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-              Nationality
-            </label>
-            <input
-              type="text"
-              value={state.nationality}
-              onChange={(e) => onChange('nationality', e.target.value)}
-              placeholder="e.g. INDIAN / FILIPINO / NEPALI"
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-[#E8700A] focus:outline-hidden uppercase"
+        </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">Nationality</div>
+          <div className="xl-cell-v">
+            <input 
+              type="text" 
+              id="f-nationality" 
+              placeholder="e.g. INDIAN / FILIPINO / NEPALI" 
+              value={state.nationality || ''} 
+              onChange={(e) => onChange('nationality', e.target.value)} 
             />
           </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-              Date of Birth
-            </label>
-            <input
-              type="date"
-              value={state.dob}
-              onChange={(e) => onChange('dob', e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-[#E8700A] focus:outline-hidden"
+        </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">Date of Birth</div>
+          <div className="xl-cell-v">
+            <input 
+              type="date" 
+              id="f-dob" 
+              value={state.dob || ''} 
+              onChange={(e) => onChange('dob', e.target.value)} 
             />
           </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-              Relevant Experience (Years)
-            </label>
-            <input
-              type="number"
-              min="0"
-              step="0.5"
-              value={state.experienceYears}
-              onChange={(e) => onChange('experienceYears', parseFloat(e.target.value) || 0)}
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-mono text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-[#E8700A] focus:outline-hidden"
+        </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">Experience (Years)</div>
+          <div className="xl-cell-v">
+            <input 
+              type="number" 
+              id="f-exp" 
+              min="0" 
+              step="0.5" 
+              placeholder="0" 
+              value={state.experience || ''} 
+              onChange={(e) => onChange('experience', e.target.value)} 
             />
           </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-              Direct Employer
-            </label>
-            <input
-              type="text"
-              value={state.employer}
-              onChange={(e) => onChange('employer', e.target.value)}
-              placeholder="e.g. BG Industrial Coatings W.L.L."
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-[#E8700A] focus:outline-hidden"
+        </div>
+        <div className="xl-cell xl-cell-span-2">
+          <div className="xl-cell-l">Employer</div>
+          <div className="xl-cell-v">
+            <input 
+              type="text" 
+              id="f-employer" 
+              placeholder="Operator employer" 
+              value={state.employer || ''} 
+              onChange={(e) => onChange('employer', e.target.value)} 
             />
           </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-              Qualification Card / Certificate No.
-            </label>
-            <input
-              type="text"
-              value={state.qualificationCardNo}
-              onChange={(e) => onChange('qualificationCardNo', e.target.value)}
-              placeholder="e.g. BG-QC-BL-2026-084"
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-mono text-xs font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-[#E8700A] focus:outline-hidden"
+        </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">Qualification Card No.</div>
+          <div className="xl-cell-v">
+            <input 
+              type="text" 
+              id="f-card" 
+              placeholder="Qualification card / certificate no." 
+              value={state.cardNo || ''} 
+              onChange={(e) => onChange('cardNo', e.target.value)} 
             />
           </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-              Next Re-Assessment Due Date
-            </label>
-            <input
-              type="date"
-              value={state.nextAssessmentDate}
-              onChange={(e) => onChange('nextAssessmentDate', e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-[#E8700A] focus:outline-hidden"
+        </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">Qualification Date</div>
+          <div className="xl-cell-v">
+            <input 
+              type="date" 
+              id="f-qual-date" 
+              value={state.qualificationDate || ''} 
+              onChange={(e) => onChange('qualificationDate', e.target.value)} 
             />
           </div>
-
+        </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">Next Assessment Date</div>
+          <div className="xl-cell-v">
+            <input 
+              type="date" 
+              id="f-next-date" 
+              value={state.nextAssessmentDate || ''} 
+              onChange={(e) => onChange('nextAssessmentDate', e.target.value)} 
+            />
+          </div>
         </div>
       </div>
 
-      {/* Footer Navigation Bar */}
-      <div className="flex items-center justify-end gap-3 pt-2">
-        <button
-          onClick={() => onNavigate('train')}
-          className="flex items-center gap-1.5 px-5 py-2 rounded-lg bg-[#E8700A] hover:bg-[#F5911F] text-white text-xs font-bold transition shadow-md cursor-pointer"
+      <div className="btn-row">
+        <button 
+          type="button" 
+          className="btn btn-save" 
+          onClick={() => window.dispatchEvent(new CustomEvent('bg_header_action', { detail: { action: 'draft' } }))}
         >
-          <span>Proceed to 02. Training &amp; Test</span>
-          <ArrowRight className="w-3.5 h-3.5" />
+          💾 Save Draft
+        </button>
+        <button 
+          type="button" 
+          className="btn" 
+          style={{ background: 'linear-gradient(135deg,var(--o2),var(--o1))', color: '#fff' }} 
+          onClick={() => window.dispatchEvent(new CustomEvent('bg_header_action', { detail: { action: 'validate' } }))}
+        >
+          ✓ Validate &amp; Approve
+        </button>
+        <button 
+          type="button" 
+          className="btn btn-reset" 
+          onClick={() => window.dispatchEvent(new CustomEvent('bg_header_action', { detail: { action: 'reset' } }))}
+        >
+          ↺ Reset
+        </button>
+        <button 
+          type="button" 
+          className="btn" 
+          style={{ background: 'linear-gradient(135deg,var(--o3),var(--o2))', color: '#fff' }} 
+          onClick={() => onNavigate('train')}
+        >
+          Next: Training &amp; Test →
         </button>
       </div>
-
     </div>
   );
 }

@@ -1,21 +1,17 @@
 import React, { useState, useMemo } from 'react';
 import {
-  HardHat,
+  FileSpreadsheet,
   Search,
-  Download,
   Plus,
+  Download,
   Printer,
   Edit,
   Eye,
   Copy,
   Trash2,
-  FilterX,
-  FileSpreadsheet,
-  CheckCircle2,
-  Clock,
-  Coins
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
-import { CURRENCY_CONFIG } from '../../data/manpowerDatabase';
 
 export default function ManpowerRegister({
   reports = [],
@@ -38,22 +34,10 @@ export default function ManpowerRegister({
     saved: ''
   });
 
+  const [openA, setOpenA] = useState(true);
+
   const handleFilterChange = (col, val) => {
     setFilters(prev => ({ ...prev, [col]: val.toLowerCase() }));
-  };
-
-  const handleClearFilters = () => {
-    setSearchTerm('');
-    setFilters({
-      estNo: '',
-      proj: '',
-      cust: '',
-      area: '',
-      grand: '',
-      pm2: '',
-      status: '',
-      saved: ''
-    });
   };
 
   // KPIs
@@ -119,297 +103,342 @@ export default function ManpowerRegister({
     document.body.removeChild(link);
   };
 
+  const formatCur = (v) => Number(v || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 });
+  const formatNum = (v, d = 0) => Number(v || 0).toLocaleString('en-IN', { minimumFractionDigits: d, maximumFractionDigits: d });
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       
-      {/* Top Header & Quick Actions */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase text-[#E8700A]">
-            <span>Module 08 · Enterprise Register</span>
-          </div>
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white mt-1">
-            Estimation Report Register &amp; Database Archive
-          </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Historical project quotations, status revision tracking, one-click spreadsheet export, and duplicate template workflows.
-          </p>
+      {/* MODULE 8 BANNER (Matches 6.png) */}
+      <div className="bg-gradient-to-r from-[#C23A1B] via-[#B83216] to-[#A82B12] text-white p-4 rounded-xl shadow-md border border-[#D94F26]/60">
+        <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-300">
+          MODULE 8 · RECORDS
         </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            onClick={onNewEstimation}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-gradient-to-r from-[#F5911F] to-[#E8700A] hover:brightness-110 text-white text-xs font-bold transition shadow-md cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-            <span>New Estimation</span>
-          </button>
-
-          <button
-            onClick={handleExportCSV}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition shadow-xs cursor-pointer"
-          >
-            <Download className="w-4 h-4" />
-            <span>Export Excel (CSV)</span>
-          </button>
-        </div>
+        <h2 className="text-lg sm:text-xl font-black text-white mt-0.5 tracking-tight">
+          Estimation Report — Saved Records
+        </h2>
+        <p className="text-xs text-rose-100/90 mt-1">
+          All saved estimations are stored locally with a full data snapshot — for history tracking and future Dashboard analytics. Use Save to Report on the Front Page Summary to add the current estimation here.
+        </p>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xs">
-          <span className="text-[10px] uppercase font-bold text-slate-500">Total Saved</span>
-          <div className="text-xl font-mono font-black text-slate-900 dark:text-white mt-1">
-            {totalCount}
-          </div>
-          <div className="text-[10px] text-slate-400 mt-0.5">Quotations in archive</div>
-        </div>
-
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xs">
-          <span className="text-[10px] uppercase font-bold text-emerald-600 dark:text-emerald-400">Approved</span>
-          <div className="text-xl font-mono font-black text-emerald-600 dark:text-emerald-400 mt-1">
-            {approvedCount}
-          </div>
-          <div className="text-[10px] text-slate-400 mt-0.5">Commercial approvals</div>
-        </div>
-
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xs">
-          <span className="text-[10px] uppercase font-bold text-amber-600 dark:text-amber-400">Drafts</span>
-          <div className="text-xl font-mono font-black text-amber-600 dark:text-amber-400 mt-1">
-            {draftCount}
-          </div>
-          <div className="text-[10px] text-slate-400 mt-0.5">Work-in-progress</div>
-        </div>
-
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xs">
-          <span className="text-[10px] uppercase font-bold text-blue-600 dark:text-blue-400">Combined Value</span>
-          <div className="text-xl font-mono font-black text-blue-600 dark:text-blue-400 mt-1 truncate">
-            ₹ {Number(combinedValue).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
-          </div>
-          <div className="text-[10px] text-slate-400 mt-0.5">Pipeline quotation total</div>
-        </div>
-      </div>
-
-      {/* Register Table with Filters */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xs overflow-hidden">
-        
-        {/* Search Bar & Clear Filter */}
-        <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-800/20">
-          <div className="relative w-full sm:w-80">
-            <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search by project, client, est no..."
-              className="w-full pl-9 pr-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-[#E8700A] focus:outline-hidden"
-            />
+      {/* SECTION: Saved Estimations */}
+      <div className="rounded-xl overflow-hidden border border-[#F5C296] shadow-2xs">
+        <button
+          type="button"
+          onClick={() => setOpenA(!openA)}
+          className="w-full bg-[#FFEAD5] hover:bg-[#FFE3C8] transition px-4 py-3 flex items-center justify-between text-left cursor-pointer"
+        >
+          <div className="flex items-center gap-2.5">
+            <div className="p-1.5 rounded-lg bg-[#E8700A]/15 text-[#D94F26]">
+              <FileSpreadsheet className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="text-sm font-bold text-[#351907]">
+                Saved Estimations
+              </div>
+              <div className="text-[11px] text-[#7A5B46]">
+                History &amp; records
+              </div>
+            </div>
           </div>
 
-          <button
-            onClick={handleClearFilters}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer"
-          >
-            <FilterX className="w-3.5 h-3.5" />
-            <span>Clear Filters</span>
-          </button>
-        </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-[#4A170B] text-white border border-[#300E06]">
+              TOTAL RECORDS {totalCount}
+            </span>
+            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-[#EA580C] text-white border border-orange-600">
+              DRAFTS {draftCount}
+            </span>
+            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-[#16A34A] text-white border border-green-600">
+              APPROVED {approvedCount}
+            </span>
+            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-[#0284C7] text-white border border-blue-600">
+              COMBINED VALUE ₹{formatCur(combinedValue)}
+            </span>
+            {openA ? (
+              <ChevronUp className="w-4 h-4 text-orange-800 ml-1" />
+            ) : (
+              <ChevronDown className="w-4 h-4 text-orange-800 ml-1" />
+            )}
+          </div>
+        </button>
 
-        {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs text-left border-collapse min-w-[900px]">
-            <thead>
-              <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/70 text-slate-700 dark:text-slate-300 font-bold">
-                <th className="py-2.5 px-2 text-center w-10">Sr.</th>
-                <th className="py-2.5 px-3">Est No.</th>
-                <th className="py-2.5 px-3">Project Name</th>
-                <th className="py-2.5 px-3">Customer</th>
-                <th className="py-2.5 px-3 text-right">Area (m²)</th>
-                <th className="py-2.5 px-3 text-right">Grand Total</th>
-                <th className="py-2.5 px-3 text-right">Cost / m²</th>
-                <th className="py-2.5 px-3 text-center">Status</th>
-                <th className="py-2.5 px-3">Date Saved</th>
-                <th className="py-2.5 px-2 text-center" title="Print">🖨</th>
-                <th className="py-2.5 px-2 text-center" title="Edit">✎</th>
-                <th className="py-2.5 px-2 text-center" title="Preview">👁</th>
-                <th className="py-2.5 px-2 text-center" title="Copy">⧉</th>
-                <th className="py-2.5 px-2 text-center" title="Delete">✕</th>
-              </tr>
+        {openA && (
+          <div className="bg-[#FFFDFB] p-4 sm:p-5 space-y-4">
+            
+            {/* Primary Action Callout Box */}
+            <div className="p-3.5 rounded-xl border border-orange-200 bg-white flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-2xs">
+              <div className="space-y-0.5">
+                <div className="text-xs font-bold font-mono text-[#A82B12] flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-xs bg-[#E8700A]" />
+                  <span>REPORT REGISTER — PRIMARY ACTIONS</span>
+                </div>
+                <div className="text-[11px] text-slate-500">
+                  Start a new estimation, or export the full register to Excel/CSV. Use the table below to search, filter, edit, view, print, copy or delete records.
+                </div>
+              </div>
 
-              {/* Column Filter Row */}
-              <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-100/50 dark:bg-slate-800/30">
-                <th className="p-1"></th>
-                <th className="p-1">
-                  <input
-                    type="text"
-                    value={filters.estNo}
-                    onChange={(e) => handleFilterChange('estNo', e.target.value)}
-                    placeholder="Filter…"
-                    className="w-full px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-[10px]"
-                  />
-                </th>
-                <th className="p-1">
-                  <input
-                    type="text"
-                    value={filters.proj}
-                    onChange={(e) => handleFilterChange('proj', e.target.value)}
-                    placeholder="Filter…"
-                    className="w-full px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-[10px]"
-                  />
-                </th>
-                <th className="p-1">
-                  <input
-                    type="text"
-                    value={filters.cust}
-                    onChange={(e) => handleFilterChange('cust', e.target.value)}
-                    placeholder="Filter…"
-                    className="w-full px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-[10px]"
-                  />
-                </th>
-                <th className="p-1">
-                  <input
-                    type="text"
-                    value={filters.area}
-                    onChange={(e) => handleFilterChange('area', e.target.value)}
-                    placeholder="Area…"
-                    className="w-full px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-[10px] text-right"
-                  />
-                </th>
-                <th className="p-1">
-                  <input
-                    type="text"
-                    value={filters.grand}
-                    onChange={(e) => handleFilterChange('grand', e.target.value)}
-                    placeholder="Total…"
-                    className="w-full px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-[10px] text-right"
-                  />
-                </th>
-                <th className="p-1">
-                  <input
-                    type="text"
-                    value={filters.pm2}
-                    onChange={(e) => handleFilterChange('pm2', e.target.value)}
-                    placeholder="/m²…"
-                    className="w-full px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-[10px] text-right"
-                  />
-                </th>
-                <th className="p-1">
-                  <input
-                    type="text"
-                    value={filters.status}
-                    onChange={(e) => handleFilterChange('status', e.target.value)}
-                    placeholder="Status…"
-                    className="w-full px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-[10px] text-center"
-                  />
-                </th>
-                <th className="p-1">
-                  <input
-                    type="text"
-                    value={filters.saved}
-                    onChange={(e) => handleFilterChange('saved', e.target.value)}
-                    placeholder="Date…"
-                    className="w-full px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-[10px]"
-                  />
-                </th>
-                <th colSpan={5} className="p-1"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {filteredReports.length === 0 ? (
-                <tr>
-                  <td colSpan={14} className="py-10 text-center text-slate-400 text-xs italic">
-                    {reports.length === 0
-                      ? 'No saved estimations yet. Fill out the estimation sheets and click "Save Draft" or "Validate & Approve".'
-                      : 'No records match your active search filters.'}
-                  </td>
-                </tr>
-              ) : (
-                filteredReports.map((r, idx) => {
-                  const curConf = CURRENCY_CONFIG[r.currency] || CURRENCY_CONFIG.INR;
-                  const isApproved = r.status === 'Approved';
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={onNewEstimation}
+                  className="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-[#E85D22] to-[#CB3A14] hover:brightness-110 text-white text-xs font-black tracking-wider flex items-center gap-1.5 transition shadow-sm cursor-pointer uppercase font-mono"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>+ NEW GENERATION</span>
+                </button>
 
-                  return (
-                    <tr key={r.id || idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                      <td className="py-2.5 px-2 text-center font-bold text-[#E8700A]">{idx + 1}</td>
-                      <td className="py-2.5 px-3 font-mono font-bold text-slate-900 dark:text-white">{r.estNo || '—'}</td>
-                      <td className="py-2.5 px-3 font-semibold text-slate-800 dark:text-slate-200">{r.proj || '—'}</td>
-                      <td className="py-2.5 px-3 text-slate-600 dark:text-slate-400">{r.cust || '—'}</td>
-                      <td className="py-2.5 px-3 text-right font-mono text-slate-700 dark:text-slate-300">{Number(r.area || 0).toLocaleString()}</td>
-                      <td className="py-2.5 px-3 text-right font-mono font-black text-orange-600 dark:text-orange-400">
-                        {curConf.sym} {Number(r.grand || 0).toLocaleString(curConf.loc, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </td>
-                      <td className="py-2.5 px-3 text-right font-mono text-slate-700 dark:text-slate-300">
-                        {curConf.sym} {Number(r.pm2 || 0).toLocaleString(curConf.loc, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </td>
-                      <td className="py-2.5 px-3 text-center">
-                        <span
-                          className={`inline-block px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
-                            isApproved
-                              ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800'
-                              : 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-800'
-                          }`}
-                        >
-                          {isApproved ? '✓ Approved' : '✎ Draft'}
-                        </span>
-                      </td>
-                      <td className="py-2.5 px-3 text-slate-400 text-[10px]">
-                        {r.savedAt ? new Date(r.savedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
-                      </td>
+                <button
+                  type="button"
+                  onClick={handleExportCSV}
+                  className="px-3.5 py-1.5 rounded-lg bg-[#15803D] hover:bg-[#166534] text-white text-xs font-bold flex items-center gap-1.5 transition shadow-sm cursor-pointer uppercase font-mono"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>EXPORT EXCEL</span>
+                </button>
+              </div>
+            </div>
 
-                      {/* Action buttons */}
-                      <td className="py-2 px-1 text-center">
-                        <button
-                          onClick={() => onPrintReport(r)}
-                          className="p-1 rounded text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition cursor-pointer"
-                          title="Print Dossier"
-                        >
-                          🖨
-                        </button>
-                      </td>
-                      <td className="py-2 px-1 text-center">
-                        <button
-                          onClick={() => onLoadReport(r)}
-                          className="p-1 rounded text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 transition cursor-pointer"
-                          title="Edit / Load"
-                        >
-                          ✎
-                        </button>
-                      </td>
-                      <td className="py-2 px-1 text-center">
-                        <button
-                          onClick={() => onPreviewReport(r)}
-                          className="p-1 rounded text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition cursor-pointer"
-                          title="Preview Dossier"
-                        >
-                          👁
-                        </button>
-                      </td>
-                      <td className="py-2 px-1 text-center">
-                        <button
-                          onClick={() => onCopyReport(r)}
-                          className="p-1 rounded text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950/40 transition cursor-pointer"
-                          title="Duplicate Copy"
-                        >
-                          ⧉
-                        </button>
-                      </td>
-                      <td className="py-2 px-1 text-center">
-                        <button
-                          onClick={() => onDeleteReport(r.id)}
-                          className="p-1 rounded text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 transition cursor-pointer"
-                          title="Delete"
-                        >
-                          ✕
-                        </button>
+            {/* Search Input Bar */}
+            <div className="relative">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search by Estimation No, Project, Customer, Status, Date, Prepared By..."
+                className="w-full pl-9 pr-3 py-2 rounded-lg border border-orange-200/90 bg-white text-xs font-medium text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#F5911F] transition shadow-2xs"
+              />
+            </div>
+
+            {/* Table */}
+            <div className="overflow-x-auto rounded-lg border border-orange-200 shadow-2xs bg-white">
+              <table className="w-full text-xs text-left">
+                <thead className="bg-[#FFEAD5] text-[#5A240A] text-[10px] font-mono font-bold uppercase tracking-wider border-b border-orange-200">
+                  <tr>
+                    <th className="py-2 px-2 text-center">SR.</th>
+                    <th className="py-2 px-2.5">ESTIMATION NO.</th>
+                    <th className="py-2 px-2.5">PROJECT</th>
+                    <th className="py-2 px-2.5">CUSTOMER</th>
+                    <th className="py-2 px-2 text-right">AREA (M²)</th>
+                    <th className="py-2 px-2 text-right">GRAND TOTAL</th>
+                    <th className="py-2 px-2 text-right">PER M²</th>
+                    <th className="py-2 px-2 text-center">STATUS</th>
+                    <th className="py-2 px-2 text-center">SAVED ON</th>
+                    <th className="py-2 px-1.5 text-center">PRINT</th>
+                    <th className="py-2 px-1.5 text-center">EDIT</th>
+                    <th className="py-2 px-1.5 text-center">VIEW</th>
+                    <th className="py-2 px-1.5 text-center">COPY</th>
+                    <th className="py-2 px-1.5 text-center">DELETE</th>
+                  </tr>
+                  
+                  {/* Filter Inputs Row */}
+                  <tr className="bg-[#FFF8F2] border-b border-orange-100 font-normal">
+                    <th className="p-1"></th>
+                    <th className="p-1">
+                      <input
+                        type="text"
+                        placeholder="Filter..."
+                        value={filters.estNo}
+                        onChange={(e) => handleFilterChange('estNo', e.target.value)}
+                        className="w-full px-1.5 py-0.5 text-[10px] rounded border border-orange-200 bg-white"
+                      />
+                    </th>
+                    <th className="p-1">
+                      <input
+                        type="text"
+                        placeholder="Filter..."
+                        value={filters.proj}
+                        onChange={(e) => handleFilterChange('proj', e.target.value)}
+                        className="w-full px-1.5 py-0.5 text-[10px] rounded border border-orange-200 bg-white"
+                      />
+                    </th>
+                    <th className="p-1">
+                      <input
+                        type="text"
+                        placeholder="Filter..."
+                        value={filters.cust}
+                        onChange={(e) => handleFilterChange('cust', e.target.value)}
+                        className="w-full px-1.5 py-0.5 text-[10px] rounded border border-orange-200 bg-white"
+                      />
+                    </th>
+                    <th className="p-1">
+                      <input
+                        type="text"
+                        placeholder="Area..."
+                        value={filters.area}
+                        onChange={(e) => handleFilterChange('area', e.target.value)}
+                        className="w-full px-1.5 py-0.5 text-[10px] rounded border border-orange-200 bg-white text-right"
+                      />
+                    </th>
+                    <th className="p-1">
+                      <input
+                        type="text"
+                        placeholder="Total..."
+                        value={filters.grand}
+                        onChange={(e) => handleFilterChange('grand', e.target.value)}
+                        className="w-full px-1.5 py-0.5 text-[10px] rounded border border-orange-200 bg-white text-right"
+                      />
+                    </th>
+                    <th className="p-1">
+                      <input
+                        type="text"
+                        placeholder="/m²..."
+                        value={filters.pm2}
+                        onChange={(e) => handleFilterChange('pm2', e.target.value)}
+                        className="w-full px-1.5 py-0.5 text-[10px] rounded border border-orange-200 bg-white text-right"
+                      />
+                    </th>
+                    <th className="p-1">
+                      <input
+                        type="text"
+                        placeholder="Status..."
+                        value={filters.status}
+                        onChange={(e) => handleFilterChange('status', e.target.value)}
+                        className="w-full px-1.5 py-0.5 text-[10px] rounded border border-orange-200 bg-white text-center"
+                      />
+                    </th>
+                    <th className="p-1">
+                      <input
+                        type="text"
+                        placeholder="Date..."
+                        value={filters.saved}
+                        onChange={(e) => handleFilterChange('saved', e.target.value)}
+                        className="w-full px-1.5 py-0.5 text-[10px] rounded border border-orange-200 bg-white text-center"
+                      />
+                    </th>
+                    <th colSpan={5} className="p-1"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-orange-100 font-medium text-slate-800">
+                  {filteredReports.length === 0 ? (
+                    <tr>
+                      <td colSpan={14} className="py-8 text-center text-xs text-slate-400 italic">
+                        No saved estimations yet. Fill the estimation and click "Save to Report" on the Front Page Summary.
                       </td>
                     </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+                  ) : (
+                    filteredReports.map((rec, idx) => (
+                      <tr key={rec.id || idx} className="hover:bg-orange-50/50">
+                        <td className="py-2 px-2 text-center font-mono font-bold text-slate-500">
+                          {idx + 1}
+                        </td>
+                        <td className="py-2 px-2.5 font-mono font-semibold text-slate-900">
+                          {rec.estNo}
+                        </td>
+                        <td className="py-2 px-2.5 font-semibold text-slate-900 truncate max-w-[140px]">
+                          {rec.proj}
+                        </td>
+                        <td className="py-2 px-2.5 text-slate-700 truncate max-w-[120px]">
+                          {rec.cust}
+                        </td>
+                        <td className="py-2 px-2 text-right font-mono font-bold text-[#0066CC]">
+                          {formatNum(rec.area, 0)}
+                        </td>
+                        <td className="py-2 px-2 text-right font-mono font-black text-[#C23A1B]">
+                          ₹{formatCur(rec.grand)}
+                        </td>
+                        <td className="py-2 px-2 text-right font-mono font-semibold text-slate-700">
+                          ₹{formatCur(rec.pm2)}
+                        </td>
+                        <td className="py-2 px-2 text-center">
+                          <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded ${
+                            rec.status === 'Approved'
+                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                              : 'bg-amber-100 text-amber-800 border border-amber-300'
+                          }`}>
+                            {rec.status || 'Draft'}
+                          </span>
+                        </td>
+                        <td className="py-2 px-2 text-center text-[10px] font-mono text-slate-500">
+                          {rec.savedAt ? new Date(rec.savedAt).toLocaleDateString() : '—'}
+                        </td>
+                        
+                        {/* Action Buttons */}
+                        <td className="py-2 px-1 text-center">
+                          <button
+                            type="button"
+                            onClick={() => onPrintReport(rec)}
+                            title="Print"
+                            className="p-1 rounded hover:bg-orange-100 text-slate-600 hover:text-[#C23A1B] transition cursor-pointer"
+                          >
+                            <Printer className="w-3.5 h-3.5" />
+                          </button>
+                        </td>
+                        <td className="py-2 px-1 text-center">
+                          <button
+                            type="button"
+                            onClick={() => onLoadReport(rec)}
+                            title="Edit"
+                            className="p-1 rounded hover:bg-orange-100 text-slate-600 hover:text-[#C23A1B] transition cursor-pointer"
+                          >
+                            <Edit className="w-3.5 h-3.5" />
+                          </button>
+                        </td>
+                        <td className="py-2 px-1 text-center">
+                          <button
+                            type="button"
+                            onClick={() => onPreviewReport(rec)}
+                            title="View"
+                            className="p-1 rounded hover:bg-orange-100 text-slate-600 hover:text-[#C23A1B] transition cursor-pointer"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                          </button>
+                        </td>
+                        <td className="py-2 px-1 text-center">
+                          <button
+                            type="button"
+                            onClick={() => onCopyReport(rec)}
+                            title="Copy"
+                            className="p-1 rounded hover:bg-orange-100 text-slate-600 hover:text-[#C23A1B] transition cursor-pointer"
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                          </button>
+                        </td>
+                        <td className="py-2 px-1 text-center">
+                          <button
+                            type="button"
+                            onClick={() => onDeleteReport(rec.id)}
+                            title="Delete"
+                            className="p-1 rounded hover:bg-rose-100 text-rose-500 transition cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
 
+          </div>
+        )}
+      </div>
+
+      {/* BRANDED FOOTER (Matches 6.png) */}
+      <div className="bg-[#2B0E10] text-[#D8BDBE] rounded-xl p-4 sm:p-5 border-t-2 border-[#5C1E23] flex flex-col items-center justify-center text-center space-y-1.5 mt-6">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded bg-white p-0.5 flex items-center justify-center shrink-0">
+            <img src="/logo-2.png" alt="BG Logo" className="w-full h-full object-contain" />
+          </div>
+          <span className="font-extrabold text-sm text-white tracking-wide font-mono">
+            BG GROUP <span className="text-xs font-normal text-rose-200">of Paint and Coating Consultant</span>
+          </span>
+        </div>
+        <div className="text-[11px] text-rose-200/90 font-medium">
+          Industrial Cost Estimation · Surface Protection · Coating Engineering
+        </div>
+        <div className="text-[10px] text-rose-300/60 font-mono flex flex-wrap justify-center gap-x-2">
+          <span>E 103, Akash Echo Point, Bhimrad, Surat - 395007, Gujarat, India</span>
+          <span>|</span>
+          <span>+91 98258 10408</span>
+          <span>|</span>
+          <span>support@bgcoating.com</span>
+          <span>|</span>
+          <span>www.bgcoating.com</span>
+        </div>
       </div>
 
     </div>

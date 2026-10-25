@@ -58,7 +58,7 @@
               <p style="color:var(--txt-lo);max-width:44ch;margin:0 auto 1.5rem">Thank you for submitting your enquiry. Storing your details and redirecting to confirmation...</p>
               <div class="hero-ctas" style="justify-content:center">
                 <a class="btn btn-primary" id="thankyouLink" href="{% url 'thank_you' %}">View Confirmation <span class="arr">→</span></a>
-                <a class="btn btn-ghost" href="https://wa.me/919925810408" target="_blank" rel="noopener">WhatsApp Instead</a>
+                <a class="btn btn-ghost" href="https://wa.me/{{ site_settings.whatsapp_number|default:'919925810408' }}" target="_blank" rel="noopener">WhatsApp Instead</a>
               </div>
             </div>
           </div>
@@ -92,7 +92,7 @@
             <div class="info-block">
               <h3>Connect</h3>
               <div class="social-row">
-                <a href="https://wa.me/919925810408" target="_blank" rel="noopener" aria-label="WhatsApp"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                <a href="https://wa.me/{{ site_settings.whatsapp_number|default:'919925810408' }}" target="_blank" rel="noopener" aria-label="WhatsApp"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-4-1L3 20l1-5.5a8.5 8.5 0 0 1-1-4A8.38 8.38 0 0 1 11.5 2 8.5 8.5 0 0 1 21 11.5z"></path>
                   </svg></a>
                 <a href="{% url 'home' %}" aria-label="LinkedIn"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -238,14 +238,14 @@
             <p class="lead">From a single inspection to a full digital coating program — talk to a consultant with 22+ years of hands-on refinery and oil &amp; gas experience.</p>
           </div>
           <div class="cta-actions">
-            <a class="cta-phone" href="tel:+919925810408">
+            <a class="cta-phone" href="tel:{{ site_settings.phone_number|default:'+919925810408' }}">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"></path>
               </svg>
               +91-99258-10408
             </a>
             <a class="btn btn-primary" href="{% url 'contact' %}#enquiry" data-anchor="enquiry">Request a Consultation <span class="arr">→</span></a>
-            <a class="btn btn-ghost" href="https://wa.me/919925810408" target="_blank" rel="noopener">WhatsApp Us</a>
+            <a class="btn btn-ghost" href="https://wa.me/{{ site_settings.whatsapp_number|default:'919925810408' }}" target="_blank" rel="noopener">WhatsApp Us</a>
           </div>
         </div>
       </div>

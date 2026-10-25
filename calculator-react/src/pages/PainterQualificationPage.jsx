@@ -1,20 +1,5 @@
 // src/pages/PainterQualificationPage.jsx
 import React, { useState, useEffect } from 'react';
-import { 
-  Award, 
-  BookOpen, 
-  CheckCircle2, 
-  Building2, 
-  ShieldCheck, 
-  FileSpreadsheet, 
-  Paintbrush, 
-  RotateCcw, 
-  Sparkles, 
-  Save, 
-  Printer,
-  Layers,
-  Sliders
-} from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { useGuideline } from '../context/GuidelineContext';
 import { 
@@ -27,7 +12,6 @@ import {
 // Sub-Tool Components
 import PainterFreezeBar from '../tools/painter/PainterFreezeBar';
 import PainterHub from '../tools/painter/PainterHub';
-import PainterDashboard from '../tools/painter/PainterDashboard';
 import PainterProjectInfo from '../tools/painter/PainterProjectInfo';
 import PainterTrainingTest from '../tools/painter/PainterTrainingTest';
 import PainterChecklist from '../tools/painter/PainterChecklist';
@@ -36,6 +20,8 @@ import PainterPhotoReport from '../tools/painter/PainterPhotoReport';
 import PainterVerdictApproval from '../tools/painter/PainterVerdictApproval';
 import PainterSummary from '../tools/painter/PainterSummary';
 import PainterRegister from '../tools/painter/PainterRegister';
+import PainterCompanySheet from '../tools/painter/PainterCompanySheet';
+import PainterWatermarkSheet from '../tools/painter/PainterWatermarkSheet';
 
 // Modals
 import PainterTestCatalogModal from '../tools/painter/PainterTestCatalogModal';
@@ -130,51 +116,33 @@ export default function PainterQualificationPage({
   const [isWatermarkModalOpen, setIsWatermarkModalOpen] = useState(false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
 
-  // Sync modal routing when navigated from sidebar or direct URL
-  useEffect(() => {
-    if (currentSubTool === 'company-details' || currentSubTool === 'company_details') {
-      setIsCompanyModalOpen(true);
-      setIsWatermarkModalOpen(false);
-      setIsPreviewModalOpen(false);
-    } else if (currentSubTool === 'watermark') {
-      setIsWatermarkModalOpen(true);
-      setIsCompanyModalOpen(false);
-      setIsPreviewModalOpen(false);
-    } else if (currentSubTool === 'preview' || currentSubTool === 'report') {
-      setIsPreviewModalOpen(true);
-      setIsCompanyModalOpen(false);
-      setIsWatermarkModalOpen(false);
-    } else {
-      setIsCompanyModalOpen(false);
-      setIsWatermarkModalOpen(false);
-      setIsPreviewModalOpen(false);
-    }
-  }, [currentSubTool]);
+  // Evaluate current state
+  const evaluation = calculatePainterQualification(state);
 
-  // Auto-save draft on changes
+  // Auto-save working draft to localStorage
   useEffect(() => {
     try {
       localStorage.setItem(DRAFT_KEY, JSON.stringify(state));
-    } catch (e) {
-      console.error('Failed to auto-save painter draft:', e);
+    } catch (err) {
+      console.warn('Failed to save painter draft to localStorage:', err);
     }
   }, [state]);
 
-  // Persist reports register
+  // Persist reports
   useEffect(() => {
     try {
       localStorage.setItem(REGISTER_KEY, JSON.stringify(reports));
-    } catch (e) {
-      console.error('Failed to save reports register:', e);
+    } catch (err) {
+      console.warn('Failed to save reports to localStorage:', err);
     }
   }, [reports]);
 
-  // Persist company branding
+  // Persist company
   useEffect(() => {
     try {
       localStorage.setItem(COMPANY_KEY, JSON.stringify(company));
-    } catch (e) {
-      console.error('Failed to save company settings:', e);
+    } catch (err) {
+      console.warn('Failed to save company to localStorage:', err);
     }
   }, [company]);
 
@@ -182,15 +150,12 @@ export default function PainterQualificationPage({
   useEffect(() => {
     try {
       localStorage.setItem(WATERMARK_KEY, JSON.stringify(watermark));
-    } catch (e) {
-      console.error('Failed to save watermark settings:', e);
+    } catch (err) {
+      console.warn('Failed to save watermark to localStorage:', err);
     }
   }, [watermark]);
 
-  // Calculate live qualification metrics
-  const evaluation = calculatePainterQualification(state);
-
-  // Field change handler
+  // Handle field update in state
   const handleFieldChange = (field, value) => {
     setState(prev => ({
       ...prev,
@@ -299,18 +264,17 @@ export default function PainterQualificationPage({
         mfr: cs.mfr || updatedSheets[sid]?.mfr || '',
         product: cs.brand || updatedSheets[sid]?.product || '',
         generic: cs.generic || updatedSheets[sid]?.generic || '',
-        shade: cs.shade || updatedSheets[sid]?.shade || '',
-        dftspec_min: cs.min || '',
-        dftspec_max: cs.max || '',
-        cum_min: cumMin.toFixed(0),
-        cum_max: cumMax.toFixed(0)
+        shade: cs.color || updatedSheets[sid]?.shade || '',
+        dftMin: cs.min || updatedSheets[sid]?.dftMin || '',
+        dftMax: cs.max || updatedSheets[sid]?.dftMax || '',
+        cumDFTRequired: `${cumMin} – ${cumMax} µm`
       };
 
-      // Update DFT range for that stage
+      // Also sync into coatDFT bounds
       updatedDFT[sid] = {
         ...(updatedDFT[sid] || {}),
-        min: isNaN(cumMin) ? '' : cumMin.toFixed(0),
-        max: isNaN(cumMax) ? '' : cumMax.toFixed(0)
+        min: cs.min || updatedDFT[sid]?.min || '',
+        max: cs.max || updatedDFT[sid]?.max || ''
       };
     });
 
@@ -320,31 +284,33 @@ export default function PainterQualificationPage({
       _coatDFT: updatedDFT
     }));
 
-    addToast('Stages Synced', 'Coating System specification pushed to Stages s1–s4.', 'success');
+    addToast('System Synchronized', 'Coating system pushed into Stages 1 through 4.', 'success');
   };
 
-  // Test catalog selection handler
-  const handleSelectCatalogTest = (testItem) => {
-    const sid = activeCatalogCoatSID;
-    const currentCoatSheet = state._coatSheets?.[sid] || {};
-    const currentTests = currentCoatSheet.tests || [];
-
+  const handleSelectCatalogTest = (test) => {
+    if (!test || !activeCatalogCoatSID) return;
+    const coatSheet = state._coatSheets?.[activeCatalogCoatSID] || {};
+    const existingTests = coatSheet.tests || [];
     const newTest = {
-      t: testItem.t,
-      std: testItem.std,
-      req: testItem.req,
+      t: test.t,
+      std: test.std,
+      req: test.req,
       act: '',
-      res: 'Pass'
+      res: ''
     };
 
-    const updatedSheets = { ...state._coatSheets };
-    updatedSheets[sid] = {
-      ...currentCoatSheet,
-      tests: [...currentTests, newTest]
+    const updatedSheets = { ...(state._coatSheets || {}) };
+    updatedSheets[activeCatalogCoatSID] = {
+      ...coatSheet,
+      tests: [...existingTests, newTest]
     };
 
-    handleFieldChange('_coatSheets', updatedSheets);
-    addToast('Test Added', `Added "${testItem.t}" to ${sid.toUpperCase()}.`, 'success');
+    setState(prev => ({
+      ...prev,
+      _coatSheets: updatedSheets
+    }));
+
+    addToast('Test Added', `Added "${test.t}" to ${activeCatalogCoatSID.toUpperCase()}.`, 'info');
   };
 
   const handleOpenTestCatalog = (sid) => {
@@ -377,6 +343,10 @@ export default function PainterQualificationPage({
     addToast('Draft Saved', `Qualification report "${repNo}" saved to register.`, 'success');
   };
 
+  const handleValidateAndApprove = () => {
+    setIsApprovalModalOpen(true);
+  };
+
   const handleApproveReport = (status = 'Approved') => {
     const repNo = state['f-rep-no'] || `SP-QR-${Date.now().toString().slice(-6)}`;
     const approvedRecord = {
@@ -406,7 +376,7 @@ export default function PainterQualificationPage({
       if (window.confirm(`Load report "${record.repNo}" for ${record.name}? This will replace current draft.`)) {
         setState(record.data);
         addToast('Report Loaded', `Loaded "${record.repNo}".`, 'info');
-        if (onNavigate) onNavigate('dashboard');
+        handleNavigateSub('info');
       }
     }
   };
@@ -418,13 +388,20 @@ export default function PainterQualificationPage({
     dupState['f-rep-no'] = newRepNo;
     setState(dupState);
     addToast('Report Duplicated', `Duplicated as new draft: ${newRepNo}`, 'success');
-    if (onNavigate) onNavigate('project-info');
+    handleNavigateSub('info');
   };
 
   const handleDeleteReport = (id) => {
     if (window.confirm('Delete this qualification report record from register?')) {
       setReports(prev => prev.filter(r => r.id !== id));
       addToast('Record Deleted', 'Qualification report removed from register.', 'info');
+    }
+  };
+
+  const handleClearAllReports = () => {
+    if (window.confirm('Clear all saved reports from register? This cannot be undone.')) {
+      setReports([]);
+      addToast('Register Cleared', 'All qualification records have been removed.', 'info');
     }
   };
 
@@ -482,78 +459,62 @@ export default function PainterQualificationPage({
     window.print();
   };
 
-  const handleOpenGuideline = () => {
-    openGuideline({
-      title: 'Module 07 · Spray Painter Qualification (PQR)',
-      standards: [
-        'ASTM D 4228: Standard Practice for Qualification of Coating Applicators',
-        'SSPC PA-2: Measurement of Dry Coating Thickness with Magnetic Gages (80%–120% Rule)',
-        'ASTM D 7091: Nondestructive Measurement of Dry Film Thickness of Nonmagnetic Coatings',
-        'ASTM D 3359: Standard Test Methods for Rating Adhesion by Tape Test',
-        'ASTM D 4541: Pull-Off Strength of Coatings Using Portable Adhesion Testers',
-        'ISO 12944-7: Protective Paint Systems Execution and Supervision'
-      ],
-      overview:
-        'Standardized technical system for industrial spray painter evaluation. Enforces a 6-tier weighted scoring matrix, 4-stage coating chronology (s1 Blasting & Primer, s2 1st Intermediate, s3 2nd Intermediate, s4 3rd Topcoat), 4-mini-table DFT matrices (Plane, Pipe, T-Beam, Flange), and multi-party digital sign-off.',
-      formula:
-        'Weighted Composite Score = (Post-Test × 25%) + (Improvement Gain Δ × 10%) + (Checklist Compliance × 20%) + (DFT SSPC PA-2 × 20%) + (Process Inspection × 15%) + (Environmental Psychrometric × 10%)\n\nPassing Qualification Threshold: Composite Score ≥ 80.0% with 0 critical defects.',
-      rules: [
-        'Stage 1 (s1): Substrate cleanliness must meet Sa 2.5 (Near-White Metal) before primer application.',
-        'Overcoating Intervals: Recoat gap between consecutive coats must strictly adhere to product Technical Data Sheets (TDS).',
-        'DFT SSPC PA-2: Spot readings must be within 80% to 120% of specified thickness band across all 4 substrate configurations.',
-        'Environmental Limit: Relative Humidity (RH) ≤ 85% and Steel Metal Temp (MT) must exceed Dew Point (DP) by at least 3.0°C.'
-      ],
-      advice:
-        'Ensure stripe coating is thoroughly applied on all welds, edges, bolts, and tight angles prior to full airless spray fan application.'
-    });
+  // Flexible navigator helper for subtool navigation
+  const handleNavigateSub = (arg1, arg2) => {
+    const targetSub = arg2 || arg1;
+    if (onNavigate) {
+      onNavigate('painter-qualification', targetSub);
+    }
   };
 
   // Listen for Top Header Actions (preview, save-draft, validate, register, reset)
   useEffect(() => {
     const handleHeaderAction = (e) => {
       const action = e.detail?.action;
-      if (action === 'save-draft') {
-        handleSaveDraft();
-      } else if (action === 'preview') {
-        setIsPreviewModalOpen(true);
-      } else if (action === 'validate') {
-        setIsApprovalModalOpen(true);
-      } else if (action === 'register') {
-        if (onNavigate) onNavigate('painter', 'register');
-      } else if (action === 'reset') {
-        handleResetState();
-      }
+      if (action === 'save' || action === 'save-draft') handleSaveDraft();
+      else if (action === 'validate') handleValidateAndApprove();
+      else if (action === 'preview') setIsPreviewModalOpen(true);
+      else if (action === 'register') handleNavigateSub('register');
+      else if (action === 'reset') handleResetState();
     };
 
     window.addEventListener('bg_header_action', handleHeaderAction);
     return () => window.removeEventListener('bg_header_action', handleHeaderAction);
-  }, [reports, state, evaluation]);
+  }, [state, evaluation]);
+
+  // Toggle sidebar event dispatcher
+  const handleToggleSidebar = () => {
+    window.dispatchEvent(new CustomEvent('bg_toggle_sidebar'));
+  };
 
   // Sub-Tool View Router
   const renderSubTool = () => {
+    const commonProps = {
+      formData: state,
+      onChange: handleFieldChange,
+      evaluation,
+      onSaveDraft: handleSaveDraft,
+      onValidate: handleValidateAndApprove,
+      onValidateApprove: handleValidateAndApprove,
+      onReset: handleResetState,
+      onNavigate: handleNavigateSub
+    };
+
     switch (currentSubTool) {
       case 'hub':
+      case 'home':
         return (
           <PainterHub
             reports={reports}
             evaluation={evaluation}
-            onNavigate={(sub) => onNavigate ? onNavigate('painter', sub) : null}
+            onNavigate={handleNavigateSub}
             onLoadPreset={handleLoadPreset}
             onNewGeneration={() => {
               setState(INITIAL_PAINTER_STATE);
-              if (onNavigate) onNavigate('painter', 'info');
+              handleNavigateSub('info');
             }}
             onOpenPreview={() => setIsPreviewModalOpen(true)}
             onOpenPrint={() => window.print()}
-          />
-        );
-
-      case 'dashboard':
-        return (
-          <PainterDashboard
-            formData={state}
-            evaluation={evaluation}
-            onNavigate={onNavigate}
           />
         );
 
@@ -562,8 +523,7 @@ export default function PainterQualificationPage({
       case 'project_info':
         return (
           <PainterProjectInfo
-            formData={state}
-            onChange={handleFieldChange}
+            {...commonProps}
             onPhotoUpload={handlePhotoUpload}
             onPhotoRemove={handlePhotoRemove}
             onSyncCoatingSystem={handleSyncCoatingSystem}
@@ -575,18 +535,14 @@ export default function PainterQualificationPage({
       case 'training_test':
         return (
           <PainterTrainingTest
-            formData={state}
-            onChange={handleFieldChange}
-            evaluation={evaluation}
+            {...commonProps}
           />
         );
 
       case 'checklist':
         return (
           <PainterChecklist
-            formData={state}
-            onChange={handleFieldChange}
-            evaluation={evaluation}
+            {...commonProps}
           />
         );
 
@@ -596,8 +552,7 @@ export default function PainterQualificationPage({
         return (
           <PainterCoatStage
             sid="s1"
-            formData={state}
-            onChange={handleFieldChange}
+            {...commonProps}
             onOpenTestCatalog={handleOpenTestCatalog}
             onSyncCoatingSystem={handleSyncCoatingSystem}
           />
@@ -609,8 +564,7 @@ export default function PainterQualificationPage({
         return (
           <PainterCoatStage
             sid="s2"
-            formData={state}
-            onChange={handleFieldChange}
+            {...commonProps}
             onOpenTestCatalog={handleOpenTestCatalog}
             onSyncCoatingSystem={handleSyncCoatingSystem}
           />
@@ -622,8 +576,7 @@ export default function PainterQualificationPage({
         return (
           <PainterCoatStage
             sid="s3"
-            formData={state}
-            onChange={handleFieldChange}
+            {...commonProps}
             onOpenTestCatalog={handleOpenTestCatalog}
             onSyncCoatingSystem={handleSyncCoatingSystem}
           />
@@ -635,8 +588,7 @@ export default function PainterQualificationPage({
         return (
           <PainterCoatStage
             sid="s4"
-            formData={state}
-            onChange={handleFieldChange}
+            {...commonProps}
             onOpenTestCatalog={handleOpenTestCatalog}
             onSyncCoatingSystem={handleSyncCoatingSystem}
           />
@@ -647,8 +599,7 @@ export default function PainterQualificationPage({
       case 'photo_report':
         return (
           <PainterPhotoReport
-            formData={state}
-            onChange={handleFieldChange}
+            {...commonProps}
           />
         );
 
@@ -657,9 +608,7 @@ export default function PainterQualificationPage({
       case 'verdict_approval':
         return (
           <PainterVerdictApproval
-            formData={state}
-            onChange={handleFieldChange}
-            evaluation={evaluation}
+            {...commonProps}
             onOpenApprovalModal={() => setIsApprovalModalOpen(true)}
             onStampUpload={handleStampUpload}
             onStampRemove={handleStampRemove}
@@ -667,14 +616,14 @@ export default function PainterQualificationPage({
         );
 
       case 'summary':
+      case 'preview':
         return (
           <PainterSummary
-            formData={state}
-            evaluation={evaluation}
-            onNavigate={onNavigate}
+            {...commonProps}
           />
         );
 
+      case 'reports':
       case 'register':
         return (
           <PainterRegister
@@ -687,15 +636,43 @@ export default function PainterQualificationPage({
               setIsPreviewModalOpen(true);
             }}
             onExportCSV={handleExportCSV}
+            onNewGeneration={() => {
+              setState(INITIAL_PAINTER_STATE);
+              handleNavigateSub('info');
+            }}
+            onClearAll={handleClearAllReports}
           />
         );
 
-      case 'preview':
+      case 'company':
+      case 'company-details':
+      case 'company_details':
+        return (
+          <PainterCompanySheet
+            company={company}
+            onChange={handleCompanyChange}
+            onNavigate={handleNavigateSub}
+            onSaveDraft={handleSaveDraft}
+            onValidate={handleValidateAndApprove}
+          />
+        );
+
+      case 'watermark':
+        return (
+          <PainterWatermarkSheet
+            watermark={watermark}
+            onChange={handleWatermarkChange}
+            onNavigate={handleNavigateSub}
+            onSaveDraft={handleSaveDraft}
+            onValidate={handleValidateAndApprove}
+          />
+        );
+
+      case 'print':
+        // Show summary and trigger print
         return (
           <PainterSummary
-            formData={state}
-            evaluation={evaluation}
-            onNavigate={onNavigate}
+            {...commonProps}
           />
         );
 
@@ -704,11 +681,11 @@ export default function PainterQualificationPage({
           <PainterHub
             reports={reports}
             evaluation={evaluation}
-            onNavigate={(sub) => onNavigate ? onNavigate('painter', sub) : null}
+            onNavigate={handleNavigateSub}
             onLoadPreset={handleLoadPreset}
             onNewGeneration={() => {
               setState(INITIAL_PAINTER_STATE);
-              if (onNavigate) onNavigate('painter', 'info');
+              handleNavigateSub('info');
             }}
             onOpenPreview={() => setIsPreviewModalOpen(true)}
             onOpenPrint={() => window.print()}
@@ -717,86 +694,91 @@ export default function PainterQualificationPage({
     }
   };
 
+  const isWorkflowStage = [
+    'info', 'project-info', 'project_info',
+    'train', 'training-test', 'training_test',
+    'checklist',
+    's1', 'coat-stage-s1', 'coat_stage_s1',
+    's2', 'coat-stage-s2', 'coat_stage_s2',
+    's3', 'coat-stage-s3', 'coat_stage_s3',
+    's4', 'coat-stage-s4', 'coat_stage_s4',
+    'photo', 'photo-report', 'photo_report',
+    'verdict', 'verdict-approval', 'verdict_approval'
+  ].includes(currentSubTool);
+
   return (
-    <div className="space-y-5 w-full pb-16 animate-in fade-in duration-200 font-sans">
-      
-      {/* Sticky Progress Freeze Bar (Hidden on Hub view) */}
-      {currentSubTool !== 'hub' && (
-        <PainterFreezeBar
-          currentSubTool={currentSubTool}
-          evaluation={evaluation}
-          formData={state}
-          onNavigate={onNavigate}
-          onReset={handleResetState}
-        />
-      )}
-
-      {/* Action Toolbar (Hidden on Hub view) */}
-      {currentSubTool !== 'hub' && (
-        <div className="bg-white rounded-2xl border border-[#D8DEE5] p-3.5 shadow-[0_2px_8px_rgba(20,24,32,0.06)] flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              type="button"
-              onClick={handleSaveDraft}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-[#4E5B6A] bg-[#F7F8FA] hover:bg-[#FFF4E3] hover:text-[#9E1B1E] border border-[#D8DEE5] transition cursor-pointer"
-            >
-              <Save className="w-3.5 h-3.5 text-[#E87B1E]" />
-              <span>Save Draft</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setIsPreviewModalOpen(true)}
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold font-rajdhani uppercase tracking-wider text-white bg-gradient-to-r from-[#E87B1E] to-[#9E1B1E] hover:opacity-90 transition shadow-xs cursor-pointer"
-            >
-              <Printer className="w-3.5 h-3.5" />
-              <span>Print Dossier (A4)</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleSyncCoatingSystem}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-[#9E1B1E] bg-[#FFF4E3] hover:bg-[#FEE9C7] border border-[#F3D2A0] transition cursor-pointer"
-              title="Push Coating System spec into Stages s1..s4"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-[#E87B1E]" />
-              <span>Sync System to Stages</span>
-            </button>
+    <div className="coatingos-root w-full">
+      {/* 2. Authentic CoatingOS Hero Banner */}
+      <section className="hero">
+        <div className="hero-grid" />
+        <div className="hero-in">
+          <div>
+            <div className="hkick">
+              <span className="hdot" />Operator Qualification · Spray Painter · Paint Applicator
+            </div>
+            <h1 className="htit">
+              Spray Painter Qualification &amp;<br />
+              <em>Coating Application Report System</em>
+            </h1>
+            <p className="hsub">
+              Enterprise-grade digital qualification platform for paint applicators with real-time DFT/WFT compliance per SSPC PA-2 (80%-120% rule), dew-point monitoring, pot-life tracking, 3-coat system management, defect identification, adhesion &amp; holiday testing, multi-stage approval workflow, operator-photo certificates and MNC-grade printable reports for EPC, refinery, offshore &amp; petrochemical operations.
+            </p>
+            <div className="hstds">
+              <span className="hstd">ASTM D4228</span>
+              <span className="hstd">SSPC PA-2</span>
+              <span className="hstd">ASTM D4414 (WFT)</span>
+              <span className="hstd">ASTM D7091 (DFT)</span>
+              <span className="hstd">ISO 19840</span>
+              <span className="hstd">ISO 2808</span>
+              <span className="hstd">ASTM D3359 (Adh.)</span>
+              <span className="hstd">ASTM D4541 (Pull-Off)</span>
+              <span className="hstd">ASTM D5162 (Holiday)</span>
+              <span className="hstd">ASTM D3276</span>
+              <span className="hstd">NACE / AMPP</span>
+            </div>
           </div>
-
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              type="button"
-              onClick={() => setIsCompanyModalOpen(true)}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#4E5B6A] hover:text-[#9E1B1E] hover:bg-[#FFF4E3] border border-[#D8DEE5] transition cursor-pointer"
-            >
-              <Building2 className="w-3.5 h-3.5 text-[#E87B1E]" />
-              <span>Company Branding</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setIsWatermarkModalOpen(true)}
-              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-[#4E5B6A] hover:text-[#9E1B1E] hover:bg-[#FFF4E3] border border-[#D8DEE5] transition cursor-pointer"
-            >
-              <ShieldCheck className="w-3.5 h-3.5 text-[#E87B1E]" />
-              <span>Watermark</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleOpenGuideline}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold text-[#9E1B1E] bg-[#FFF4E3] hover:bg-[#FEE9C7] border border-[#F3D2A0] transition cursor-pointer"
-            >
-              <BookOpen className="w-3.5 h-3.5" />
-              <span>Standards &amp; Guideline</span>
-            </button>
+          <div className="hero-side">
+            <div className="hero-card">
+              <div className="hero-card-ic">📋</div>
+              <div>
+                <div className="hero-card-l">Report ID</div>
+                <div className="hero-card-v" id="hero-rep-id">
+                  {state['f-rep-no'] || 'Pending — Save / Validate'}
+                </div>
+              </div>
+            </div>
+            <div className="hero-card">
+              <div className="hero-card-ic">🎯</div>
+              <div>
+                <div className="hero-card-l">Status</div>
+                <div className="hero-card-v" id="hero-status">
+                  {evaluation?.verdict === 'PASS'
+                    ? 'Qualified'
+                    : evaluation?.verdict === 'FAIL'
+                    ? 'Rejected'
+                    : 'In Progress'}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      )}
+      </section>
 
-      {/* Render Active Sub-Tool Component */}
-      {renderSubTool()}
+      {/* 3. Wrap Container */}
+      <div className="wrap">
+        {/* Sticky Freeze Progress Bar (Shown during workflow sheets) */}
+        {isWorkflowStage && (
+          <PainterFreezeBar
+            currentSubTool={currentSubTool}
+            evaluation={evaluation}
+            formData={state}
+            onNavigate={handleNavigateSub}
+          />
+        )}
+
+        {/* Sub-Tool Active Sheet */}
+        {renderSubTool()}
+      </div>
 
       {/* Modals Suite */}
       <PainterTestCatalogModal
@@ -816,43 +798,27 @@ export default function PainterQualificationPage({
 
       <PainterCompanyModal
         isOpen={isCompanyModalOpen}
-        onClose={() => {
-          setIsCompanyModalOpen(false);
-          if (currentSubTool === 'company-details' || currentSubTool === 'company_details') {
-            if (onNavigate) onNavigate('painter-qualification', 'hub');
-          }
-        }}
+        onClose={() => setIsCompanyModalOpen(false)}
         company={company}
         onChange={handleCompanyChange}
       />
 
       <PainterWatermarkControl
         isOpen={isWatermarkModalOpen}
-        onClose={() => {
-          setIsWatermarkModalOpen(false);
-          if (currentSubTool === 'watermark') {
-            if (onNavigate) onNavigate('painter-qualification', 'hub');
-          }
-        }}
+        onClose={() => setIsWatermarkModalOpen(false)}
         watermark={watermark}
         onChange={handleWatermarkChange}
       />
 
       <PainterPreviewModal
         isOpen={isPreviewModalOpen}
-        onClose={() => {
-          setIsPreviewModalOpen(false);
-          if (currentSubTool === 'preview' || currentSubTool === 'report') {
-            if (onNavigate) onNavigate('painter-qualification', 'hub');
-          }
-        }}
+        onClose={() => setIsPreviewModalOpen(false)}
         formData={state}
         evaluation={evaluation}
         company={company}
         watermark={watermark}
         onPrint={handlePrint}
       />
-
     </div>
   );
 }

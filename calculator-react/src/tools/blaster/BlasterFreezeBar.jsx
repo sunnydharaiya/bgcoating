@@ -40,7 +40,7 @@ export default function BlasterFreezeBar({
   const strokeDashoffset = circumference - (totalProgress / 100) * circumference;
 
   return (
-    <div className="sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b-2 border-[#E8700A] shadow-lg transition-colors">
+    <div className="sticky top-14 md:top-15 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b-2 border-[#E8700A] shadow-lg transition-colors">
       <div className="w-full px-3 sm:px-6 py-2.5 flex flex-col md:flex-row items-center justify-between gap-3">
         
         {/* Left: Title, Progress Bar, & Section Chips */}

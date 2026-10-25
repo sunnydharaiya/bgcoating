@@ -38,7 +38,7 @@ export default function TsaFreezeBar({
   const strokeDashoffset = circumference - (completion / 100) * circumference;
 
   return (
-    <div className="sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl p-3.5 transition-all">
+    <div className="sticky top-14 md:top-15 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl p-3.5 transition-all">
       <div className="flex flex-col lg:flex-row items-center justify-between gap-4">
         
         {/* Left: Tool Title & Stage Indicator */}

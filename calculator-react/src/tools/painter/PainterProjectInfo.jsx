@@ -1,40 +1,50 @@
-// src/tools/painter/PainterProjectInfo.jsx
 import React, { useRef } from 'react';
-import { 
-  User, 
-  Upload, 
-  Trash2, 
-  Layers, 
-  Plus, 
-  RotateCcw, 
-  Sparkles, 
-  Building2, 
-  ShieldCheck, 
-  Info,
-  ArrowRight
-} from 'lucide-react';
 import { 
   PAINT_GENERIC_OPTIONS, 
   PAINT_MFR_OPTIONS, 
-  COATING_SYSTEM_DEFAULTS, 
-  COAT_SIDS 
+  COATING_SYSTEM_DEFAULTS 
 } from '../../data/painterDatabase';
 
 export default function PainterProjectInfo({
-  formData,
+  formData = {},
   onChange,
   onPhotoUpload,
   onPhotoRemove,
-  onSyncCoatingSystem
+  onSyncCoatingSystem,
+  onNavigate,
+  onSaveDraft,
+  onValidate,
+  onReset
 }) {
   const fileInputRef = useRef(null);
 
-  const handleInputChange = (field, value) => {
-    onChange(field, value);
+  const handleField = (field, val) => {
+    onChange(field, val);
   };
 
-  // Coating system table rows
-  const csRows = formData?._coatingSystem || COATING_SYSTEM_DEFAULTS;
+  const handlePastePhoto = async () => {
+    try {
+      const items = await navigator.clipboard.read();
+      for (const item of items) {
+        for (const type of item.types) {
+          if (type.startsWith('image/')) {
+            const blob = await item.getType(type);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              onChange('_opPhoto', reader.result);
+            };
+            reader.readAsDataURL(blob);
+            return;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Clipboard read failed or permission denied:', e);
+    }
+  };
+
+  // Coating system rows
+  const csRows = formData._coatingSystem || COATING_SYSTEM_DEFAULTS;
 
   const handleCSRowChange = (index, field, value) => {
     const updated = [...csRows];
@@ -88,548 +98,511 @@ export default function PainterProjectInfo({
   });
 
   return (
-    <div className="space-y-6">
-      
-      {/* Top Banner: Operator Passport Photo Upload + Guidelines */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-5 md:p-6 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
-        <div className="flex items-center gap-5 w-full md:w-auto">
-          {/* Photo Slot */}
-          <div className="relative w-28 h-32 rounded-xl border-2 border-dashed border-[#E87B1E]/50 bg-slate-50 flex items-center justify-center overflow-hidden flex-shrink-0 group shadow-xs">
-            {formData?._opPhoto ? (
-              <>
-                <img
-                  src={formData._opPhoto}
-                  alt="Operator Portrait"
-                  className="w-full h-full object-cover"
-                />
-                <button
-                  type="button"
-                  onClick={onPhotoRemove}
-                  className="absolute top-1 right-1 p-1 bg-rose-600/90 hover:bg-rose-700 text-white rounded-md text-xs opacity-0 group-hover:opacity-100 transition shadow-sm cursor-pointer"
-                  title="Remove photo"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </>
-            ) : (
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                className="flex flex-col items-center justify-center text-slate-400 p-2 text-center cursor-pointer hover:text-[#E87B1E] transition"
-              >
-                <User className="w-8 h-8 text-slate-300 mb-1" />
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600">
-                  Tap to Upload
-                </span>
-                <span className="text-[8px] text-slate-400 mt-0.5">Passport Photo</span>
-              </div>
-            )}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={onPhotoUpload}
-            />
-          </div>
-
-          <div className="space-y-1">
-            <h3 className="text-sm font-bold text-slate-800 font-rajdhani uppercase tracking-wider">
-              Operator Photographic Identification
-            </h3>
-            <p className="text-xs text-slate-500 max-w-md leading-relaxed">
-              Upload a clear, front-facing portrait photograph of the spray painter. Image will be embedded into the official 3-page A4 qualification dossier and qualification card.
-            </p>
-            <div className="flex items-center gap-2 pt-1">
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 transition cursor-pointer"
-              >
-                <Upload className="w-3.5 h-3.5" />
-                <span>{formData?._opPhoto ? 'Change Photo' : 'Upload Image'}</span>
-              </button>
-              {formData?._opPhoto && (
-                <button
-                  type="button"
-                  onClick={onPhotoRemove}
-                  className="px-2.5 py-1.5 rounded-lg text-xs font-medium text-rose-600 hover:bg-rose-50 transition cursor-pointer"
-                >
-                  Remove
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3.5 text-xs text-amber-900 max-w-sm space-y-1">
-          <div className="flex items-center gap-1.5 font-bold text-amber-800">
-            <Info className="w-4 h-4 text-amber-600" />
-            <span>ASTM D 4228 Qualification Standard</span>
-          </div>
-          <p className="text-[11px] text-amber-700 leading-snug">
-            Painter qualification is valid for the specific coating system, substrate configuration, and spray application equipment evaluated during this assessment.
-          </p>
+    <div className="sheet act" id="sh-info">
+      <div className="xl-corp">
+        <div className="xl-corp-inner">
+          <div className="xl-corp-l">BG Group of Paint &amp; Coating Consultant</div>
+          <div className="xl-corp-t">PROJECT &amp; OPERATOR INFORMATION</div>
+          <div className="xl-corp-s">Step 1 of 8 — Capture project context and operator identification</div>
         </div>
       </div>
 
-      {/* Section A: Project & Client Information */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-5 md:p-6 shadow-sm space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-          <div className="flex items-center gap-2">
-            <Building2 className="w-4 h-4 text-[#E87B1E]" />
-            <h3 className="text-sm font-black uppercase tracking-wider text-slate-800 font-rajdhani">
-              Section A: Project &amp; Client Details
-            </h3>
-          </div>
-          <span className="text-xs font-mono text-slate-400">Metadata</span>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-              Report Number *
-            </label>
-            <input
-              type="text"
-              value={formData?.['f-rep-no'] || ''}
-              onChange={(e) => handleInputChange('f-rep-no', e.target.value)}
-              className="w-full text-xs font-mono font-bold text-slate-800 bg-slate-50 border border-slate-300 rounded-lg p-2.5 focus:bg-white focus:border-[#E87B1E] outline-none"
-              placeholder="e.g. SP-QR-20260830-OP-001"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-              Report Date
-            </label>
-            <input
-              type="date"
-              value={formData?.['f-rep-date'] || ''}
-              onChange={(e) => handleInputChange('f-rep-date', e.target.value)}
-              className="w-full text-xs text-slate-800 bg-slate-50 border border-slate-300 rounded-lg p-2.5 focus:bg-white focus:border-[#E87B1E] outline-none"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-              Project Number
-            </label>
-            <input
-              type="text"
-              value={formData?.['f-proj-no'] || ''}
-              onChange={(e) => handleInputChange('f-proj-no', e.target.value)}
-              className="w-full text-xs text-slate-800 bg-slate-50 border border-slate-300 rounded-lg p-2.5 focus:bg-white focus:border-[#E87B1E] outline-none"
-              placeholder="e.g. PRJ-2026-FLARE-09"
-            />
-          </div>
-
-          <div className="md:col-span-2">
-            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-              Project Name *
-            </label>
-            <input
-              type="text"
-              value={formData?.['f-proj'] || ''}
-              onChange={(e) => handleInputChange('f-proj', e.target.value)}
-              className="w-full text-xs text-slate-800 bg-slate-50 border border-slate-300 rounded-lg p-2.5 focus:bg-white focus:border-[#E87B1E] outline-none font-medium"
-              placeholder="e.g. Offshore Topsides Gas Flare Platform Project"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-              Client / Asset Owner
-            </label>
-            <input
-              type="text"
-              value={formData?.['f-client'] || ''}
-              onChange={(e) => handleInputChange('f-client', e.target.value)}
-              className="w-full text-xs text-slate-800 bg-slate-50 border border-slate-300 rounded-lg p-2.5 focus:bg-white focus:border-[#E87B1E] outline-none"
-              placeholder="e.g. Aramco / Offshore Energy Corp"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-              Contractor Name
-            </label>
-            <input
-              type="text"
-              value={formData?.['f-contractor'] || ''}
-              onChange={(e) => handleInputChange('f-contractor', e.target.value)}
-              className="w-full text-xs text-slate-800 bg-slate-50 border border-slate-300 rounded-lg p-2.5 focus:bg-white focus:border-[#E87B1E] outline-none"
-              placeholder="e.g. BG Engineering & Contracting Ltd"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-              Applicator / Employer
-            </label>
-            <input
-              type="text"
-              value={formData?.['f-employer'] || ''}
-              onChange={(e) => handleInputChange('f-employer', e.target.value)}
-              className="w-full text-xs text-slate-800 bg-slate-50 border border-slate-300 rounded-lg p-2.5 focus:bg-white focus:border-[#E87B1E] outline-none"
-              placeholder="e.g. Industrial Coatings Marine Div"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-              Evaluation Location
-            </label>
-            <input
-              type="text"
-              value={formData?.['f-location'] || ''}
-              onChange={(e) => handleInputChange('f-location', e.target.value)}
-              className="w-full text-xs text-slate-800 bg-slate-50 border border-slate-300 rounded-lg p-2.5 focus:bg-white focus:border-[#E87B1E] outline-none"
-              placeholder="e.g. Fabrication Yard 4 · Paint Bay"
-            />
-          </div>
-
-          <div className="md:col-span-3">
-            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-              Reference Standards &amp; Codes
-            </label>
-            <input
-              type="text"
-              value={formData?.['f-ref'] || ''}
-              onChange={(e) => handleInputChange('f-ref', e.target.value)}
-              className="w-full text-xs text-slate-800 bg-slate-50 border border-slate-300 rounded-lg p-2.5 focus:bg-white focus:border-[#E87B1E] outline-none"
-              placeholder="e.g. ASTM D 4228, SSPC PA-2, ASTM D7091, ASTM D3359, ASTM D4541, NACE / AMPP"
-            />
-          </div>
-        </div>
+      {/* Operator Photograph */}
+      <div className="xl-sec-h" id="sec-info-0">
+        <span className="ic">📸</span>Operator Photograph
+        <span className="num">REQUIRED FOR ID CARD &amp; PRINT REPORT</span>
       </div>
-
-      {/* Section B: Operator Biographical Details */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-5 md:p-6 shadow-sm space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-          <div className="flex items-center gap-2">
-            <User className="w-4 h-4 text-[#E87B1E]" />
-            <h3 className="text-sm font-black uppercase tracking-wider text-slate-800 font-rajdhani">
-              Section B: Operator Identification &amp; Credentials
-            </h3>
-          </div>
-          <span className="text-xs font-mono text-slate-400">Personnel</span>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="md:col-span-2">
-            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-              Full Name of Operator *
-            </label>
-            <input
-              type="text"
-              value={formData?.['f-name'] || ''}
-              onChange={(e) => handleInputChange('f-name', e.target.value)}
-              className="w-full text-xs text-slate-800 bg-slate-50 border border-slate-300 rounded-lg p-2.5 focus:bg-white focus:border-[#E87B1E] outline-none font-bold"
-              placeholder="e.g. Mohammad Tariq"
+      <div className="op-photo-w">
+        <div 
+          className="op-photo-slot" 
+          id="op-photo-slot" 
+          tabIndex={0} 
+          onClick={() => fileInputRef.current?.click()}
+        >
+          {formData._opPhoto ? (
+            <img 
+              src={formData._opPhoto} 
+              alt="Operator" 
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
             />
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-              Operator Category *
-            </label>
-            <select
-              value={formData?.['f-category'] || 'Airless Spray Painter'}
-              onChange={(e) => handleInputChange('f-category', e.target.value)}
-              className="w-full text-xs text-slate-800 bg-slate-50 border border-slate-300 rounded-lg p-2.5 focus:bg-white focus:border-[#E87B1E] outline-none font-medium"
+          ) : (
+            <>
+              <div className="op-ph-ic">👤</div>
+              <div className="op-ph-l">Tap to Upload</div>
+              <div className="op-ph-s">Click here, or drop / paste an image. JPG / PNG · Portrait orientation recommended.</div>
+            </>
+          )}
+          {formData._opPhoto && (
+            <button 
+              className="op-ph-rm" 
+              type="button" 
+              onClick={(e) => { e.stopPropagation(); onPhotoRemove(); }} 
+              title="Remove photo"
             >
-              <option value="Airless Spray Painter">Airless Spray Painter</option>
-              <option value="Conventional Air Spray Painter">Conventional Air Spray Painter</option>
-              <option value="Plural Component Spray Painter">Plural Component Spray Painter</option>
-              <option value="Industrial Painter / Applicator">Industrial Painter / Applicator</option>
-              <option value="Coating Blaster & Painter">Coating Blaster & Painter</option>
+              ✕
+            </button>
+          )}
+        </div>
+        <input 
+          type="file" 
+          ref={fileInputRef} 
+          id="op-photo-input" 
+          accept="image/*" 
+          style={{ display: 'none' }} 
+          onChange={onPhotoUpload} 
+        />
+        <div className="op-photo-info">
+          <div className="op-photo-info-h">📌 Photo Guidelines</div>
+          <div className="op-photo-info-t">
+            Upload a recent passport-style photograph of the operator. This photograph will:
+            <ul>
+              <li>Appear in the printed report header</li>
+              <li>Be embedded in the qualification certificate</li>
+              <li>Used for site ID-card verification</li>
+            </ul>
+          </div>
+          <div className="op-photo-actions">
+            <button type="button" className="op-photo-btn" onClick={() => fileInputRef.current?.click()}>
+              📁 Choose File
+            </button>
+            <button type="button" className="op-photo-btn alt" onClick={handlePastePhoto}>
+              📋 Paste from Clipboard
+            </button>
+            <button type="button" className="op-photo-btn del" onClick={onPhotoRemove}>
+              🗑️ Remove
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Project Details */}
+      <div className="xl-sec-h" id="sec-info-1">
+        <span className="ic">🏗️</span>Project Details
+      </div>
+      <div className="xl-info">
+        <div className="xl-cell">
+          <div className="xl-cell-l">Report No.</div>
+          <div className="xl-cell-v">
+            <input 
+              type="text" 
+              id="f-rep-no" 
+              value={formData['f-rep-no'] || ''} 
+              placeholder="Auto-generated on Save / Validate" 
+              readOnly 
+              title="The Report No. is generated automatically when you Save Draft or Validate & Approve." 
+              style={{ background: 'var(--bg5)', color: 'var(--o1)', fontWeight: 700, cursor: 'not-allowed' }} 
+            />
+          </div>
+        </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">Report Date</div>
+          <div className="xl-cell-v">
+            <input 
+              type="date" 
+              id="f-rep-date" 
+              value={formData['f-rep-date'] || ''} 
+              onChange={(e) => handleField('f-rep-date', e.target.value)} 
+            />
+          </div>
+        </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">Project Name</div>
+          <div className="xl-cell-v">
+            <input 
+              type="text" 
+              id="f-proj" 
+              placeholder="e.g. NFS Qatar Gas" 
+              value={formData['f-proj'] || ''} 
+              onChange={(e) => handleField('f-proj', e.target.value)} 
+            />
+          </div>
+        </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">Project No.</div>
+          <div className="xl-cell-v">
+            <input 
+              type="text" 
+              id="f-proj-no" 
+              placeholder="e.g. NFS-Q-2025" 
+              value={formData['f-proj-no'] || ''} 
+              onChange={(e) => handleField('f-proj-no', e.target.value)} 
+            />
+          </div>
+        </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">Client</div>
+          <div className="xl-cell-v">
+            <input 
+              type="text" 
+              id="f-client" 
+              placeholder="e.g. QatarEnergy LNG" 
+              value={formData['f-client'] || ''} 
+              onChange={(e) => handleField('f-client', e.target.value)} 
+            />
+          </div>
+        </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">EPC Contractor</div>
+          <div className="xl-cell-v">
+            <input 
+              type="text" 
+              id="f-epc" 
+              placeholder="e.g. EPC Contractor Name" 
+              value={formData['f-epc'] || ''} 
+              onChange={(e) => handleField('f-epc', e.target.value)} 
+            />
+          </div>
+        </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">Coating Contractor</div>
+          <div className="xl-cell-v xl-cell-span-2">
+            <input 
+              type="text" 
+              id="f-contractor" 
+              placeholder="Coating Contractor" 
+              value={formData['f-contractor'] || ''} 
+              onChange={(e) => handleField('f-contractor', e.target.value)} 
+            />
+          </div>
+        </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">Work Location</div>
+          <div className="xl-cell-v">
+            <input 
+              type="text" 
+              id="f-location" 
+              placeholder="e.g. Qatar Site / Workshop" 
+              value={formData['f-location'] || ''} 
+              onChange={(e) => handleField('f-location', e.target.value)} 
+            />
+          </div>
+        </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">Reference Standard</div>
+          <div className="xl-cell-v">
+            <input 
+              type="text" 
+              id="f-ref" 
+              value={formData['f-ref'] || 'ASTM D 4228, SSPC PA-2, ASTM D7091, ASTM D3359, ASTM D4541, NACE / AMPP'} 
+              onChange={(e) => handleField('f-ref', e.target.value)} 
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Operator Identification */}
+      <div className="xl-sec-h" id="sec-info-2">
+        <span className="ic">🎨</span>Operator / Spray Painter Identification
+      </div>
+      <div className="xl-info">
+        <div className="xl-cell">
+          <div className="xl-cell-l">Full Name</div>
+          <div className="xl-cell-v">
+            <input 
+              type="text" 
+              id="f-name" 
+              placeholder="Operator full name" 
+              value={formData['f-name'] || ''} 
+              onChange={(e) => handleField('f-name', e.target.value)} 
+            />
+          </div>
+        </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">Category</div>
+          <div className="xl-cell-v">
+            <select 
+              id="f-category" 
+              value={formData['f-category'] || 'Spray Painter'} 
+              onChange={(e) => handleField('f-category', e.target.value)}
+            >
+              <option>Spray Painter</option>
+              <option>Paint Applicator</option>
+              <option>Airless Sprayer</option>
+              <option>Air-Spray Operator</option>
+              <option>Brush/Roller Painter</option>
+              <option>Coating Inspector</option>
             </select>
           </div>
-
-          <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-              Civil ID / Passport No. *
-            </label>
-            <input
-              type="text"
-              value={formData?.['f-civil'] || ''}
-              onChange={(e) => handleInputChange('f-civil', e.target.value)}
-              className="w-full text-xs font-mono font-bold text-slate-800 bg-slate-50 border border-slate-300 rounded-lg p-2.5 focus:bg-white focus:border-[#E87B1E] outline-none"
-              placeholder="e.g. CID-8829471"
+        </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">Civil ID / Passport No.</div>
+          <div className="xl-cell-v">
+            <input 
+              type="text" 
+              id="f-civil" 
+              placeholder="Civil ID / Passport No." 
+              value={formData['f-civil'] || ''} 
+              onChange={(e) => handleField('f-civil', e.target.value)} 
             />
           </div>
-
-          <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-              Nationality
-            </label>
-            <input
-              type="text"
-              value={formData?.['f-nationality'] || ''}
-              onChange={(e) => handleInputChange('f-nationality', e.target.value)}
-              className="w-full text-xs text-slate-800 bg-slate-50 border border-slate-300 rounded-lg p-2.5 focus:bg-white focus:border-[#E87B1E] outline-none"
-              placeholder="e.g. Indian"
+        </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">Nationality</div>
+          <div className="xl-cell-v">
+            <input 
+              type="text" 
+              id="f-nationality" 
+              placeholder="e.g. INDIAN / FILIPINO / NEPALI" 
+              value={formData['f-nationality'] || ''} 
+              onChange={(e) => handleField('f-nationality', e.target.value)} 
             />
           </div>
-
-          <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-              Date of Birth
-            </label>
-            <input
-              type="date"
-              value={formData?.['f-dob'] || ''}
-              onChange={(e) => handleInputChange('f-dob', e.target.value)}
-              className="w-full text-xs text-slate-800 bg-slate-50 border border-slate-300 rounded-lg p-2.5 focus:bg-white focus:border-[#E87B1E] outline-none"
+        </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">Date of Birth</div>
+          <div className="xl-cell-v">
+            <input 
+              type="date" 
+              id="f-dob" 
+              value={formData['f-dob'] || ''} 
+              onChange={(e) => handleField('f-dob', e.target.value)} 
             />
           </div>
-
-          <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-              Experience (Years)
-            </label>
-            <input
-              type="number"
-              value={formData?.['f-exp'] || ''}
-              onChange={(e) => handleInputChange('f-exp', e.target.value)}
-              className="w-full text-xs text-slate-800 bg-slate-50 border border-slate-300 rounded-lg p-2.5 focus:bg-white focus:border-[#E87B1E] outline-none font-mono"
-              placeholder="e.g. 6"
-              min="0"
+        </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">Experience (Years)</div>
+          <div className="xl-cell-v">
+            <input 
+              type="number" 
+              id="f-exp" 
+              min="0" 
+              step="0.5" 
+              placeholder="0" 
+              value={formData['f-exp'] || ''} 
+              onChange={(e) => handleField('f-exp', e.target.value)} 
             />
           </div>
-
-          <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-              Qualification Date
-            </label>
-            <input
-              type="date"
-              value={formData?.['f-qual-date'] || ''}
-              onChange={(e) => handleInputChange('f-qual-date', e.target.value)}
-              className="w-full text-xs text-slate-800 bg-slate-50 border border-slate-300 rounded-lg p-2.5 focus:bg-white focus:border-[#E87B1E] outline-none"
+        </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">Employer</div>
+          <div className="xl-cell-v xl-cell-span-2">
+            <input 
+              type="text" 
+              id="f-employer" 
+              placeholder="Operator employer" 
+              value={formData['f-employer'] || ''} 
+              onChange={(e) => handleField('f-employer', e.target.value)} 
             />
           </div>
-
-          <div className="md:col-span-4">
-            <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-              Next Assessment Due / Expiry Date
-            </label>
-            <input
-              type="date"
-              value={formData?.['f-next-date'] || ''}
-              onChange={(e) => handleInputChange('f-next-date', e.target.value)}
-              className="w-full text-xs text-slate-800 bg-slate-50 border border-slate-300 rounded-lg p-2.5 focus:bg-white focus:border-[#E87B1E] outline-none font-medium"
+        </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">Qualification Date</div>
+          <div className="xl-cell-v">
+            <input 
+              type="date" 
+              id="f-qual-date" 
+              value={formData['f-qual-date'] || ''} 
+              onChange={(e) => handleField('f-qual-date', e.target.value)} 
+            />
+          </div>
+        </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">Next Assessment Date</div>
+          <div className="xl-cell-v">
+            <input 
+              type="date" 
+              id="f-next-date" 
+              value={formData['f-next-date'] || ''} 
+              onChange={(e) => handleField('f-next-date', e.target.value)} 
             />
           </div>
         </div>
       </div>
 
-      {/* Section C: Coating System Specification Table */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-5 md:p-6 shadow-sm space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
-          <div className="flex items-center gap-2">
-            <Layers className="w-4 h-4 text-[#E87B1E]" />
-            <div>
-              <h3 className="text-sm font-black uppercase tracking-wider text-slate-800 font-rajdhani">
-                Section C: Coating System Specification (Scope of Qualification)
-              </h3>
-              <p className="text-xs text-slate-500">Defines the full multi-coat paint system for qualification stages (s1 to s4)</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={onSyncCoatingSystem}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-[#E87B1E] hover:bg-[#F39322] transition shadow-xs cursor-pointer"
-              title="Push generic name, manufacturer, brand, shade and cumulative DFT into s1..s4 coat sheets"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Auto-Sync to Coat Stages (s1–s4)</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleResetCS}
-              className="p-1.5 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 border border-slate-200 transition cursor-pointer"
-              title="Reset to default system"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-            </button>
+      {/* Coating System Specification */}
+      <div className="xl-sec-h" id="sec-info-3">
+        <span className="ic">⭐</span>Coating System <span className="num">DEFINES QUALIFICATION SCOPE · EDITABLE</span>
+      </div>
+      <div style={{ background: '#FFFBF5', border: '1.5px solid var(--o2)', borderRadius: '9px', padding: '12px', marginBottom: '14px' }}>
+        <div style={{ fontSize: '11px', color: 'var(--txt2)', lineHeight: 1.5, marginBottom: '10px' }}>
+          Define the complete coating system the painter is being qualified for. <b>The paint generic names, DFT ranges and manufacturer products entered here are the qualified scope</b> — only these paints/coats may be applied by the qualified spray painter. Add or remove activity rows for different project coating systems.
+        </div>
+        <div className="xl-cell" style={{ marginBottom: '10px' }}>
+          <div className="xl-cell-l">Surface Preparation Standard</div>
+          <div className="xl-cell-v xl-cell-span-2">
+            <input 
+              type="text" 
+              id="cs-surf-prep" 
+              placeholder="e.g. SSPC-SP10 / NACE No.2 · Near-White Blast · Profile 50-75 µm" 
+              value={formData['cs-surf-prep'] || 'SSPC-SP10 / NACE No.2 · Near-White Blast Cleaning · Profile: 50-75 µm'} 
+              onChange={(e) => handleField('cs-surf-prep', e.target.value)} 
+            />
           </div>
         </div>
 
-        {/* Substrate Preparation Spec */}
-        <div>
-          <label className="block text-xs font-bold text-slate-700 uppercase mb-1">
-            Substrate Surface Preparation Requirement
-          </label>
-          <input
-            type="text"
-            value={formData?.['cs-surf-prep'] || ''}
-            onChange={(e) => handleInputChange('cs-surf-prep', e.target.value)}
-            className="w-full text-xs text-slate-800 bg-slate-50 border border-slate-300 rounded-lg p-2.5 focus:bg-white focus:border-[#E87B1E] outline-none font-medium"
-            placeholder="e.g. Abrasive Blast Cleaning Sa 2.5 (Near White Metal Finish) · Surface Profile 50–75 µm"
-          />
-        </div>
-
-        {/* Responsive Table */}
-        <div className="overflow-x-auto border border-slate-200 rounded-xl">
-          <table className="w-full text-left text-xs border-collapse">
+        <div className="xl-tbl-w" style={{ overflowX: 'auto' }}>
+          <table className="xl-tbl" id="cs-table" style={{ minWidth: '1340px' }}>
             <thead>
-              <tr className="bg-gradient-to-r from-[#2A3340] to-[#1E2530] text-white font-rajdhani uppercase text-[11px] tracking-wider">
-                <th className="p-2.5">Activity</th>
-                <th className="p-2.5">Paint Generic Name</th>
-                <th className="p-2.5">Manufacturer</th>
-                <th className="p-2.5">Brand / Product</th>
-                <th className="p-2.5 text-center w-16">Coats</th>
-                <th className="p-2.5 text-center w-18">Min DFT (µm)</th>
-                <th className="p-2.5 text-center w-18">Max DFT (µm)</th>
-                <th className="p-2.5 text-center w-20 bg-[#9E1B1E]/40">Cum. Min</th>
-                <th className="p-2.5 text-center w-20 bg-[#9E1B1E]/40">Cum. Max</th>
-                <th className="p-2.5">Color Shade / RAL</th>
-                <th className="p-2.5 text-center w-12">Act</th>
+              <tr>
+                <th rowSpan={2} style={{ width: '160px', textAlign: 'left', paddingLeft: '10px' }}>Activity</th>
+                <th rowSpan={2} style={{ textAlign: 'left', paddingLeft: '10px' }}>Paint Generic Name</th>
+                <th rowSpan={2} style={{ textAlign: 'left', paddingLeft: '10px' }}>Paint Manufacturer</th>
+                <th rowSpan={2} style={{ textAlign: 'left', paddingLeft: '10px' }}>Paint Brand Name</th>
+                <th rowSpan={2} style={{ width: '60px' }}>No. of Coat</th>
+                <th colSpan={2}>Req. DFT (µ)</th>
+                <th colSpan={2}>Total (µ)</th>
+                <th rowSpan={2} style={{ width: '140px' }}>Final Coat Color Shade</th>
+                <th rowSpan={2} style={{ width: '36px' }}>×</th>
+              </tr>
+              <tr style={{ background: 'linear-gradient(180deg,var(--bg4),var(--bg5))' }}>
+                <th style={{ width: '64px' }}>Min</th>
+                <th style={{ width: '64px' }}>Max</th>
+                <th style={{ width: '64px' }}>Min</th>
+                <th style={{ width: '64px' }}>Max</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-200">
+            <tbody id="cs-tbody">
               {computedRows.map((row, idx) => (
-                <tr key={idx} className="hover:bg-amber-50/40 transition">
-                  <td className="p-2">
-                    <input
-                      type="text"
-                      value={row.act || ''}
-                      onChange={(e) => handleCSRowChange(idx, 'act', e.target.value)}
-                      className="w-full text-xs text-slate-800 bg-transparent border-b border-transparent focus:border-[#E87B1E] outline-none font-medium"
-                      placeholder="e.g. Primer Coat"
+                <tr key={idx}>
+                  <td className="txt-l">
+                    <input 
+                      type="text" 
+                      className="cs-act txt-l-i" 
+                      value={row.act} 
+                      placeholder="Activity" 
+                      onChange={(e) => handleCSRowChange(idx, 'act', e.target.value)} 
                     />
                   </td>
-                  <td className="p-2">
-                    <input
-                      type="text"
-                      list="paint-generic-options"
-                      value={row.generic || ''}
-                      onChange={(e) => handleCSRowChange(idx, 'generic', e.target.value)}
-                      className="w-full text-xs text-slate-800 bg-transparent border-b border-transparent focus:border-[#E87B1E] outline-none"
-                      placeholder="Select / Type Generic"
+                  <td className="txt-l">
+                    <input 
+                      type="text" 
+                      className="cs-generic txt-l-i" 
+                      list="dl-cs-generic" 
+                      value={row.generic} 
+                      placeholder="Paint generic name" 
+                      onChange={(e) => handleCSRowChange(idx, 'generic', e.target.value)} 
                     />
                   </td>
-                  <td className="p-2">
-                    <input
-                      type="text"
-                      list="paint-mfr-options"
-                      value={row.mfr || ''}
-                      onChange={(e) => handleCSRowChange(idx, 'mfr', e.target.value)}
-                      className="w-full text-xs text-slate-800 bg-transparent border-b border-transparent focus:border-[#E87B1E] outline-none"
-                      placeholder="e.g. Jotun"
+                  <td className="txt-l">
+                    <input 
+                      type="text" 
+                      className="cs-mfr txt-l-i" 
+                      list="dl-cs-mfr" 
+                      value={row.mfr} 
+                      placeholder="e.g. Jotun / Hempel" 
+                      onChange={(e) => handleCSRowChange(idx, 'mfr', e.target.value)} 
                     />
                   </td>
-                  <td className="p-2">
-                    <input
-                      type="text"
-                      value={row.brand || ''}
-                      onChange={(e) => handleCSRowChange(idx, 'brand', e.target.value)}
-                      className="w-full text-xs text-slate-800 bg-transparent border-b border-transparent focus:border-[#E87B1E] outline-none"
-                      placeholder="e.g. Resist 86"
+                  <td className="txt-l">
+                    <input 
+                      type="text" 
+                      className="cs-brand txt-l-i" 
+                      value={row.brand} 
+                      placeholder="e.g. Resist 86" 
+                      onChange={(e) => handleCSRowChange(idx, 'brand', e.target.value)} 
                     />
                   </td>
-                  <td className="p-2 text-center">
-                    <input
-                      type="number"
-                      value={row.coats || '1'}
-                      onChange={(e) => handleCSRowChange(idx, 'coats', e.target.value)}
-                      className="w-12 text-center text-xs font-mono font-bold text-slate-800 bg-slate-50 border border-slate-200 rounded p-1"
-                      min="1"
+                  <td>
+                    <input 
+                      type="number" 
+                      className="cs-coats" 
+                      value={row.coats} 
+                      placeholder="1" 
+                      onChange={(e) => handleCSRowChange(idx, 'coats', e.target.value)} 
+                      style={{ textAlign: 'center', width: '50px' }} 
                     />
                   </td>
-                  <td className="p-2 text-center">
-                    <input
-                      type="number"
-                      value={row.min || ''}
-                      onChange={(e) => handleCSRowChange(idx, 'min', e.target.value)}
-                      className="w-14 text-center text-xs font-mono font-bold text-slate-800 bg-slate-50 border border-slate-200 rounded p-1"
-                      placeholder="65"
+                  <td>
+                    <input 
+                      type="number" 
+                      className="cs-min" 
+                      value={row.min} 
+                      placeholder="min" 
+                      onChange={(e) => handleCSRowChange(idx, 'min', e.target.value)} 
+                      style={{ textAlign: 'center', width: '56px' }} 
                     />
                   </td>
-                  <td className="p-2 text-center">
-                    <input
-                      type="number"
-                      value={row.max || ''}
-                      onChange={(e) => handleCSRowChange(idx, 'max', e.target.value)}
-                      className="w-14 text-center text-xs font-mono font-bold text-slate-800 bg-slate-50 border border-slate-200 rounded p-1"
-                      placeholder="75"
+                  <td>
+                    <input 
+                      type="number" 
+                      className="cs-max" 
+                      value={row.max} 
+                      placeholder="max" 
+                      onChange={(e) => handleCSRowChange(idx, 'max', e.target.value)} 
+                      style={{ textAlign: 'center', width: '56px' }} 
                     />
                   </td>
-                  <td className="p-2 text-center font-mono font-bold text-[#9E1B1E] bg-[#9E1B1E]/5">
-                    {row.tmin} µm
-                  </td>
-                  <td className="p-2 text-center font-mono font-bold text-[#9E1B1E] bg-[#9E1B1E]/5">
-                    {row.tmax} µm
-                  </td>
-                  <td className="p-2">
-                    <input
-                      type="text"
-                      value={row.shade || ''}
-                      onChange={(e) => handleCSRowChange(idx, 'shade', e.target.value)}
-                      className="w-full text-xs text-slate-800 bg-transparent border-b border-transparent focus:border-[#E87B1E] outline-none"
-                      placeholder="e.g. RAL 9010"
+                  <td className="calc cs-tmin" style={{ fontWeight: 700 }}>{row.tmin}</td>
+                  <td className="calc cs-tmax" style={{ fontWeight: 700 }}>{row.tmax}</td>
+                  <td className="txt-l">
+                    <input 
+                      type="text" 
+                      className="cs-shade txt-l-i" 
+                      value={row.shade} 
+                      placeholder="Color shade / RAL" 
+                      onChange={(e) => handleCSRowChange(idx, 'shade', e.target.value)} 
                     />
                   </td>
-                  <td className="p-2 text-center">
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveCSRow(idx)}
-                      className="text-slate-400 hover:text-rose-600 transition p-1 cursor-pointer"
-                      title="Remove Row"
+                  <td>
+                    <button 
+                      type="button" 
+                      className="rep-act del" 
+                      title="Remove row" 
+                      onClick={() => handleRemoveCSRow(idx)} 
+                      style={{ width: '24px', height: '24px' }}
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
+                      ✕
                     </button>
                   </td>
                 </tr>
               ))}
             </tbody>
             <tfoot>
-              <tr className="bg-slate-100 font-bold text-slate-800 font-rajdhani text-xs">
-                <td colSpan="4" className="p-2.5 text-right uppercase">
-                  Total System DFT Range:
+              <tr style={{ background: 'linear-gradient(180deg,#F4E5C7,#E9D7B0)', fontWeight: 700 }}>
+                <td colSpan={4} style={{ textAlign: 'right', fontFamily: 'Rajdhani,sans-serif', color: 'var(--o1)', paddingRight: '10px' }}>
+                  TOTAL NOS OF COAT &amp; TOTAL DFT
                 </td>
-                <td className="p-2.5 text-center font-mono">{totalCoats}</td>
-                <td colSpan="2" className="p-2.5 text-center text-slate-500">—</td>
-                <td className="p-2.5 text-center font-mono text-[#9E1B1E] bg-[#9E1B1E]/10">
-                  {cumMin.toFixed(0)} µm
-                </td>
-                <td className="p-2.5 text-center font-mono text-[#9E1B1E] bg-[#9E1B1E]/10">
-                  {cumMax.toFixed(0)} µm
-                </td>
-                <td colSpan="2" className="p-2.5 text-slate-500 text-[11px] font-normal">
-                  (Cumulative Target Band)
-                </td>
+                <td className="calc" id="cs-total-coats">{totalCoats}</td>
+                <td colSpan={2}></td>
+                <td className="calc" id="cs-total-min">{cumMin.toFixed(0)}</td>
+                <td className="calc" id="cs-total-max">{cumMax.toFixed(0)}</td>
+                <td colSpan={2}></td>
               </tr>
             </tfoot>
           </table>
         </div>
 
-        {/* Action Button: Add Row */}
-        <button
-          type="button"
-          onClick={handleAddCSRow}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-300 transition cursor-pointer"
-        >
-          <Plus className="w-3.5 h-3.5 text-[#E87B1E]" />
-          <span>Add Coat Stage Row</span>
-        </button>
+        {/* Datalists for generic & manufacturers */}
+        <datalist id="dl-cs-generic">
+          {PAINT_GENERIC_OPTIONS.map((opt, i) => <option key={i} value={opt} />)}
+        </datalist>
+        <datalist id="dl-cs-mfr">
+          {PAINT_MFR_OPTIONS.map((opt, i) => <option key={i} value={opt} />)}
+        </datalist>
 
-        {/* HTML5 Datalists */}
-        <datalist id="paint-generic-options">
-          {PAINT_GENERIC_OPTIONS.map((opt, i) => (
-            <option key={i} value={opt} />
-          ))}
-        </datalist>
-        <datalist id="paint-mfr-options">
-          {PAINT_MFR_OPTIONS.map((opt, i) => (
-            <option key={i} value={opt} />
-          ))}
-        </datalist>
+        <div style={{ display: 'flex', gap: '8px', margin: '9px 0', flexWrap: 'wrap' }}>
+          <button type="button" className="btn btn-add" onClick={handleAddCSRow}>＋ Add Coat Row</button>
+          <button type="button" className="btn btn-reset" onClick={handleResetCS}>↺ Reset to Default System</button>
+        </div>
+        <div className="remark-box" style={{ marginTop: '6px' }}>
+          <div className="remark-l">💬 Coating System Remark</div>
+          <textarea 
+            className="remark-t" 
+            id="cs-remark" 
+            value={formData['cs-remark'] || ''} 
+            onChange={(e) => handleField('cs-remark', e.target.value)} 
+            placeholder="Comment on DFT, shade, or any specific note. For over-coating intervals, paint manufacturer data sheet to be followed strictly."
+          />
+        </div>
+
+        <div style={{ display: 'flex', gap: '8px', marginTop: '9px', flexWrap: 'wrap' }}>
+          <button 
+            type="button" 
+            className="btn btn-save" 
+            onClick={onSyncCoatingSystem} 
+            title="Push generic names, manufacturer brand & DFT ranges into the per-coat sheets"
+          >
+            ⟳ Sync to Coat Sheets
+          </button>
+        </div>
       </div>
 
+      <div className="btn-row btn-row-std">
+        <button type="button" className="btn sd" onClick={onSaveDraft}>💾 Save Draft</button>
+        <button type="button" className="btn va" onClick={onValidate}>✓ Validate &amp; Approve</button>
+        <button type="button" className="btn rs" onClick={onReset}>↺ Reset</button>
+        <button type="button" className="btn nx" onClick={() => onNavigate && onNavigate('train')}>Next: Training &amp; Test →</button>
+      </div>
     </div>
   );
 }

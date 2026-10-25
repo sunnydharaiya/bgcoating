@@ -1,7 +1,7 @@
 import React from 'react';
-import { RotateCcw } from 'lucide-react';
+import { RotateCcw, Save, Eye } from 'lucide-react';
 
-export default function ManpowerFreezeBar({ state, metrics, onReset }) {
+export default function ManpowerFreezeBar({ state, metrics, onReset, onSaveDraft, onPreview }) {
   const {
     completionPct = 0,
     grandTotal = 0,
@@ -71,6 +71,28 @@ export default function ManpowerFreezeBar({ state, metrics, onReset }) {
             <RotateCcw className="w-2.5 h-2.5 text-[#F5911F]" />
             <span>RESET</span>
           </button>
+
+          {onSaveDraft && (
+            <button
+              onClick={onSaveDraft}
+              title="Save estimation draft"
+              className="flex items-center gap-1 px-2.5 py-1 rounded-sm border border-[#F5911F]/70 bg-[#2D1409] hover:bg-[#3D1A0C] text-[10px] font-mono font-bold text-[#F5911F] hover:text-white transition cursor-pointer"
+            >
+              <Save className="w-2.5 h-2.5 text-[#F5911F]" />
+              <span className="hidden sm:inline">SAVE</span>
+            </button>
+          )}
+
+          {onPreview && (
+            <button
+              onClick={onPreview}
+              title="Preview estimation dossier"
+              className="flex items-center gap-1 px-2.5 py-1 rounded-sm bg-gradient-to-r from-[#F5911F] to-[#E8700A] text-white text-[10px] font-mono font-bold shadow-xs hover:opacity-95 transition cursor-pointer"
+            >
+              <Eye className="w-2.5 h-2.5" />
+              <span className="hidden sm:inline">PREVIEW</span>
+            </button>
+          )}
         </div>
       </div>
 

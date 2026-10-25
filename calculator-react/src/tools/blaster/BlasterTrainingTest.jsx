@@ -1,14 +1,4 @@
 import React from 'react';
-import {
-  BookOpen,
-  ArrowRight,
-  CheckCircle2,
-  TrendingUp,
-  Award,
-  AlertCircle,
-  FileText,
-  Sparkles
-} from 'lucide-react';
 import { TRAINING_TOPICS } from '../../data/blasterDatabase';
 
 export default function BlasterTrainingTest({
@@ -17,248 +7,186 @@ export default function BlasterTrainingTest({
   metrics,
   onNavigate
 }) {
-  const { preCorrect, postCorrect, prePct, postPct, improvement, isPostPass } = metrics;
+  const { preCorrect = 0, postCorrect = 0, prePct = 0, postPct = 0, improvement = 0 } = metrics;
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
-      
-      {/* Header */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <span className="text-[10.5px] font-mono uppercase tracking-widest text-[#E8700A] font-bold">
-            Section 02 · Step 2 of 8
-          </span>
-          <h2 className="text-xl font-black text-slate-900 dark:text-white mt-0.5">
-            Training Syllabus &amp; Assessment Test Results
-          </h2>
-          <p className="text-xs text-slate-500 mt-1">
-            15 Industrial Training Modules · Pre/Post Test Comparison · Auto-Calculated Improvement Index ($\Delta\%$).
-          </p>
-        </div>
-
-        <button
-          onClick={() => onNavigate('checklist')}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#E8700A] hover:bg-[#F5911F] text-white text-xs font-bold transition shadow-xs cursor-pointer"
-        >
-          <span>Next: Assessment Checklist</span>
-          <ArrowRight className="w-3.5 h-3.5" />
-        </button>
-      </div>
-
-      {/* 15 Training Topics Grid */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
-            <BookOpen className="w-4 h-4 text-[#E8700A]" />
-            <span>Training Topics Covered During Program</span>
-          </h3>
-          <span className="text-[10.5px] font-mono font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-            15 MODULES
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {TRAINING_TOPICS.map((topic, i) => (
-            <div
-              key={i}
-              className="p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30 flex items-start gap-3"
-            >
-              <span className="w-5 h-5 rounded-full bg-[#E8700A]/10 text-[#E8700A] font-mono text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">
-                {i + 1}
-              </span>
-              <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
-                {topic}
-              </p>
-            </div>
-          ))}
+    <div className="sheet act" id="sh-train">
+      <div className="xl-corp">
+        <div className="xl-corp-inner">
+          <div className="xl-corp-l">BG Group of Paint &amp; Coating Consultant</div>
+          <div className="xl-corp-t">TRAINING TOPICS COVERED &amp; ASSESSMENT TEST RESULTS</div>
+          <div className="xl-corp-s">15 Training Modules · Pre/Post Test Comparison · Auto-Calculated Improvement Index</div>
         </div>
       </div>
 
-      {/* Examination / Assessment Test Scoring Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        
-        {/* Card 1: Pre-Test */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-            <div className="flex items-center gap-2">
-              <span className="p-2 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-600">
-                📝
-              </span>
-              <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">
-                  Pre-Test Evaluation
-                </h4>
-                <span className="text-[10px] text-slate-400">Administered prior to training commencement</span>
-              </div>
-            </div>
-            <span className="text-sm font-black font-mono text-amber-600 dark:text-amber-400">
-              {prePct.toFixed(0)}%
-            </span>
+      <div className="xl-sec-h" id="sec-train-0">
+        <span className="ic">📚</span>Training Topics Covered During Program<span className="num">15 MODULES</span>
+      </div>
+      <div className="topic-grid" id="topic-grid">
+        {TRAINING_TOPICS.map((topic, i) => (
+          <div key={i} className="topic-card">
+            <div className="topic-num">{i + 1}</div>
+            <div className="topic-txt">{topic}</div>
           </div>
-
-          <div className="space-y-3">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-500 font-medium">Test Date:</span>
-              <input
-                type="date"
-                value={state.preTestDate}
-                onChange={(e) => onChange('preTestDate', e.target.value)}
-                className="px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-mono"
-              />
-            </div>
-
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-500 font-medium">Total Questions:</span>
-              <span className="font-mono font-bold text-slate-700 dark:text-slate-300">25</span>
-            </div>
-
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-700 dark:text-slate-300 font-bold">Correct Answers:</span>
-              <input
-                type="number"
-                min="0"
-                max="25"
-                value={state.preCorrect}
-                onChange={(e) => onChange('preCorrect', parseInt(e.target.value) || 0)}
-                className="w-20 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-mono font-bold text-right text-xs focus:ring-2 focus:ring-[#E8700A]"
-              />
-            </div>
-
-            <div className="pt-2">
-              <div className="flex justify-between text-[11px] font-semibold text-slate-500 mb-1">
-                <span>Pre-Training Achievement</span>
-                <span className="font-mono">{prePct.toFixed(0)}%</span>
-              </div>
-              <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
-                <div
-                  className="bg-amber-500 h-full transition-all duration-500"
-                  style={{ width: `${prePct}%` }}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Card 2: Post-Test */}
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-            <div className="flex items-center gap-2">
-              <span className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600">
-                🎓
-              </span>
-              <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">
-                  Post-Test Evaluation
-                </h4>
-                <span className="text-[10px] text-slate-400">Post-training examination · 80% Min Pass</span>
-              </div>
-            </div>
-            <span className={`text-sm font-black font-mono ${
-              isPostPass ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
-            }`}>
-              {postPct.toFixed(0)}% ({isPostPass ? 'PASS' : 'FAIL'})
-            </span>
-          </div>
-
-          <div className="space-y-3">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-500 font-medium">Test Date:</span>
-              <input
-                type="date"
-                value={state.postTestDate}
-                onChange={(e) => onChange('postTestDate', e.target.value)}
-                className="px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-mono"
-              />
-            </div>
-
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-500 font-medium">Total Questions:</span>
-              <span className="font-mono font-bold text-slate-700 dark:text-slate-300">25</span>
-            </div>
-
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-700 dark:text-slate-300 font-bold">Correct Answers:</span>
-              <input
-                type="number"
-                min="0"
-                max="25"
-                value={state.postCorrect}
-                onChange={(e) => onChange('postCorrect', parseInt(e.target.value) || 0)}
-                className="w-20 px-2.5 py-1 rounded border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-mono font-bold text-right text-xs focus:ring-2 focus:ring-[#E8700A]"
-              />
-            </div>
-
-            <div className="pt-2">
-              <div className="flex justify-between text-[11px] font-semibold text-slate-500 mb-1">
-                <span>Post-Training Achievement</span>
-                <span className="font-mono">{postPct.toFixed(0)}%</span>
-              </div>
-              <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
-                <div
-                  className={`h-full transition-all duration-500 ${isPostPass ? 'bg-emerald-500' : 'bg-red-500'}`}
-                  style={{ width: `${postPct}%` }}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
+        ))}
       </div>
 
-      {/* Improvement Index Banner */}
-      <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-gradient-to-r from-slate-50 to-slate-100 dark:from-slate-800/40 dark:to-slate-800/20 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-[#E8700A]/10 text-[#E8700A]">
-            <TrendingUp className="w-5 h-5" />
+      <div className="xl-sec-h" id="sec-train-1">
+        <span className="ic">🧠</span>Examination / Assessment Test Results<span className="num">25 QUESTIONS · 80% PASS</span>
+      </div>
+      <div className="test-result-w">
+        <div className="test-card pre">
+          <div className="test-card-h">
+            <div className="ic">📝</div>
+            <div className="test-card-t">
+              <div className="test-card-t1">Pre-Test</div>
+              <div className="test-card-t2">Before training program begins</div>
+            </div>
           </div>
-          <div>
-            <div className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">
-              Training Knowledge Improvement Index ($\Delta\%$)
+          <div className="test-card-row">
+            <div className="test-card-row-l">Test Date</div>
+            <div className="test-card-row-v">
+              <input 
+                type="date" 
+                id="f-pre-date" 
+                value={state.preTestDate || ''} 
+                onChange={(e) => onChange('preTestDate', e.target.value)} 
+              />
             </div>
-            <div className="text-[11px] text-slate-500">
-              Calculation: Post-Test Score ({postPct.toFixed(0)}%) − Pre-Test Score ({prePct.toFixed(0)}%)
+          </div>
+          <div className="test-card-row">
+            <div className="test-card-row-l">Total Questions</div>
+            <div className="test-card-row-v">25</div>
+          </div>
+          <div className="test-card-row">
+            <div className="test-card-row-l">Correct Answers</div>
+            <div className="test-card-row-v">
+              <input 
+                type="number" 
+                id="f-pre-correct" 
+                min="0" 
+                max="25" 
+                value={state.preTestCorrect ?? 0} 
+                onChange={(e) => onChange('preTestCorrect', parseInt(e.target.value) || 0)} 
+              />
             </div>
+          </div>
+          <div className="test-card-row">
+            <div className="test-card-row-l">Achievement</div>
+            <div className="test-card-row-v" id="f-pre-pct-row">{Math.round(prePct)}%</div>
+          </div>
+          <div className="test-pct-bar">
+            <div className="test-pct-fill" id="f-pre-bar" style={{ width: `${Math.min(100, Math.max(0, prePct))}%` }}></div>
+          </div>
+          <div className={`test-pct-out ${prePct >= 80 ? 'green' : 'red'}`} id="f-pre-out">
+            {Math.round(prePct)}%
           </div>
         </div>
 
-        <div className="text-right">
-          <span className={`text-2xl font-black font-mono ${
-            improvement >= 15 ? 'text-emerald-600 dark:text-emerald-400' : improvement >= 0 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'
-          }`}>
-            {improvement >= 0 ? `+${improvement.toFixed(0)}%` : `${improvement.toFixed(0)}%`}
-          </span>
-          <span className="text-[10px] uppercase font-bold text-slate-400 block">
-            {improvement >= 30 ? 'Excellent' : improvement >= 15 ? 'Good Progress' : 'Marginal'}
-          </span>
+        <div className="test-card post">
+          <div className="test-card-h">
+            <div className="ic">🎓</div>
+            <div className="test-card-t">
+              <div className="test-card-t1">Post-Test</div>
+              <div className="test-card-t2">After completion of training</div>
+            </div>
+          </div>
+          <div className="test-card-row">
+            <div className="test-card-row-l">Test Date</div>
+            <div className="test-card-row-v">
+              <input 
+                type="date" 
+                id="f-post-date" 
+                value={state.postTestDate || ''} 
+                onChange={(e) => onChange('postTestDate', e.target.value)} 
+              />
+            </div>
+          </div>
+          <div className="test-card-row">
+            <div className="test-card-row-l">Total Questions</div>
+            <div className="test-card-row-v">25</div>
+          </div>
+          <div className="test-card-row">
+            <div className="test-card-row-l">Correct Answers</div>
+            <div className="test-card-row-v">
+              <input 
+                type="number" 
+                id="f-post-correct" 
+                min="0" 
+                max="25" 
+                value={state.postTestCorrect ?? 0} 
+                onChange={(e) => onChange('postTestCorrect', parseInt(e.target.value) || 0)} 
+              />
+            </div>
+          </div>
+          <div className="test-card-row">
+            <div className="test-card-row-l">Achievement</div>
+            <div className="test-card-row-v" id="f-post-pct-row">{Math.round(postPct)}%</div>
+          </div>
+          <div className="test-pct-bar">
+            <div className="test-pct-fill" id="f-post-bar" style={{ width: `${Math.min(100, Math.max(0, postPct))}%` }}></div>
+          </div>
+          <div className={`test-pct-out ${postPct >= 80 ? 'green' : 'red'}`} id="f-post-out">
+            {Math.round(postPct)}%
+          </div>
         </div>
       </div>
 
-      {/* Examiner Remarks */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs space-y-2">
-        <label className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
-          <FileText className="w-4 h-4 text-[#E8700A]" />
-          <span>Examiner Remarks &amp; Theoretical Observations</span>
-        </label>
-        <textarea
-          rows={3}
-          value={state.remarkTrain}
-          onChange={(e) => onChange('remarkTrain', e.target.value)}
-          placeholder="Record feedback on operator test responses, safety knowledge, and theoretical comprehension..."
-          className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-[#E8700A] focus:outline-hidden"
+      <div className="improve-row">
+        <div className="improve-l">
+          <span className="improve-arrow" id="improve-arrow" style={{ color: improvement >= 15 ? 'var(--gr)' : 'var(--gs)' }}>
+            {improvement >= 0 ? '↑' : '↓'}
+          </span>
+          IMPROVEMENT INDEX
+        </div>
+        <div className="improve-v" id="improve-val" style={{ color: improvement >= 15 ? 'var(--gr)' : 'var(--gs)' }}>
+          {improvement >= 0 ? `+${Math.round(improvement)}%` : `${Math.round(improvement)}%`}
+        </div>
+      </div>
+
+      <div className="remark-box">
+        <div className="remark-l">💬 Examiner Remark</div>
+        <textarea 
+          className="remark-t" 
+          id="f-remark-train" 
+          placeholder="Enter remarks regarding training comprehension, engagement, and post-test assessment results..." 
+          value={state.remarkTrain || ''} 
+          onChange={(e) => onChange('remarkTrain', e.target.value)} 
         />
       </div>
 
-      {/* Footer Navigation */}
-      <div className="flex items-center justify-end gap-3 pt-2">
-        <button
-          onClick={() => onNavigate('checklist')}
-          className="flex items-center gap-1.5 px-5 py-2 rounded-lg bg-[#E8700A] hover:bg-[#F5911F] text-white text-xs font-bold transition shadow-md cursor-pointer"
+      <div className="btn-row">
+        <button 
+          type="button" 
+          className="btn btn-save" 
+          onClick={() => window.dispatchEvent(new CustomEvent('bg_header_action', { detail: { action: 'draft' } }))}
         >
-          <span>Proceed to 03. Assessment Checklist</span>
-          <ArrowRight className="w-3.5 h-3.5" />
+          💾 Save Draft
+        </button>
+        <button 
+          type="button" 
+          className="btn" 
+          style={{ background: 'linear-gradient(135deg,var(--o2),var(--o1))', color: '#fff' }} 
+          onClick={() => window.dispatchEvent(new CustomEvent('bg_header_action', { detail: { action: 'validate' } }))}
+        >
+          ✓ Validate &amp; Approve
+        </button>
+        <button 
+          type="button" 
+          className="btn btn-reset" 
+          onClick={() => window.dispatchEvent(new CustomEvent('bg_header_action', { detail: { action: 'reset' } }))}
+        >
+          ↺ Reset
+        </button>
+        <button 
+          type="button" 
+          className="btn" 
+          style={{ background: 'linear-gradient(135deg,var(--o3),var(--o2))', color: '#fff' }} 
+          onClick={() => onNavigate('checklist')}
+        >
+          Next: Assessment Checklist →
         </button>
       </div>
-
     </div>
   );
 }

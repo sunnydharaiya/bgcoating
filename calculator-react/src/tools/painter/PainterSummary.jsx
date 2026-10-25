@@ -1,23 +1,13 @@
 // src/tools/painter/PainterSummary.jsx
 import React from 'react';
-import { 
-  FileText, 
-  User, 
-  CheckCircle2, 
-  AlertCircle, 
-  Clock, 
-  Award, 
-  Layers, 
-  Calendar,
-  Sparkles,
-  ShieldCheck,
-  CheckCircle
-} from 'lucide-react';
 
 export default function PainterSummary({
   formData,
   evaluation,
-  onNavigate
+  onNavigate,
+  onSaveDraft,
+  onValidateApprove,
+  onChange
 }) {
   const {
     pre = 0,
@@ -27,11 +17,10 @@ export default function PainterSummary({
     imp = 0,
     chkPass = 0,
     chkFail = 0,
-    chkNa = 0,
     chkPct = 0,
+    inspPct = 0,
     totalInspPass = 0,
     totalInspFail = 0,
-    inspPct = 0,
     overallDFTAvg = NaN,
     totalEnvValid = 0,
     okEnvCount = 0,
@@ -40,228 +29,289 @@ export default function PainterSummary({
   } = evaluation || {};
 
   const name = formData?.['f-name'] || 'Operator';
-  const category = formData?.['f-category'] || 'Airless Spray Painter';
+  const category = formData?.['f-category'] || 'Spray Painter';
   const civil = formData?.['f-civil'] || '—';
-  const exp = formData?.['f-exp'] || '—';
+  const exp = formData?.['f-exp'] || '0';
   const project = formData?.['f-proj'] || 'Project';
-  const contractor = formData?.['f-contractor'] || '—';
   const employer = formData?.['f-employer'] || '—';
   const qualDate = formData?.['f-qual-date'] || '—';
   const nextDate = formData?.['f-next-date'] || '—';
   const opPhoto = formData?._opPhoto;
 
-  const verdictWord = verdict === 'PASS' ? 'successfully qualified' : verdict === 'FAIL' ? 'not qualified at this attempt' : 'currently under evaluation';
+  const verdictClass = verdict === 'PASS' ? 'approved' : verdict === 'FAIL' ? 'fail' : 'pending';
+  const stampText = verdict === 'PASS' ? 'PASS' : verdict === 'FAIL' ? 'FAIL' : 'PEND';
+  const stampSub = verdict === 'PASS' ? 'QUALIFIED' : verdict === 'FAIL' ? 'REJECTED' : 'IN PROGRESS';
+
+  const defaultExec = `This report documents the qualification assessment of ${name} as a ${category} on the ${project}. The operator (${exp} years of relevant experience, employer: ${employer}) was evaluated through a structured combination of written examination and on-site practical assessment. The post-training examination score was ${postPct.toFixed(0)}% (improvement of ${imp >= 0 ? '+' : ''}${imp.toFixed(0)}% from pre-test), the assessment checklist compliance reached ${chkPct.toFixed(0)}%, and the on-site inspection pass rate was ${inspPct.toFixed(0)}%. Based on the weighted-criteria evaluation (overall score ${overall.toFixed(1)}%), the operator is ${
+    verdict === 'PASS'
+      ? 'officially qualified and certified'
+      : verdict === 'FAIL'
+      ? 'not qualified at this attempt'
+      : 'currently under evaluation'
+  }.`;
 
   return (
-    <div className="space-y-6">
-      
-      {/* Hero Summary Header Card */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
-        <div className="flex items-center gap-5 w-full md:w-auto">
-          <div className="w-20 h-24 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-xs">
+    <div className="sheet" id="sh-summary">
+      {/* Corporate Header */}
+      <div className="xl-corp">
+        <div className="xl-corp-inner">
+          <div className="xl-corp-l">BG Group of Paint &amp; Coating Consultant</div>
+          <div className="xl-corp-t">OPERATOR QUALIFICATION REPORT — EXECUTIVE SUMMARY</div>
+          <div className="xl-corp-s">
+            Comprehensive narrative summary of the operator qualification activity
+          </div>
+        </div>
+      </div>
+
+      {/* Hero Summary Card */}
+      <div className="sum-hero" id="sum-hero">
+        <div className="sum-hero-grid">
+          <div className="sum-photo-w" id="sum-photo-w">
             {opPhoto ? (
-              <img src={opPhoto} alt={name} className="w-full h-full object-cover" />
+              <img
+                src={opPhoto}
+                alt={name}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
             ) : (
-              <User className="w-10 h-10 text-slate-300" />
+              <div className="sum-photo-w-empty">👤</div>
             )}
           </div>
-
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#E87B1E]/10 text-[#9E1B1E] border border-[#E87B1E]/30">
-                {category}
-              </span>
-              <span className="text-xs font-mono text-slate-500">Civil ID: {civil}</span>
+          <div className="sum-hero-c">
+            <div className="sum-hero-kick">
+              <span className="hdot" />Operator Qualification Activity
             </div>
-            
-            <h2 className="text-xl md:text-2xl font-black text-slate-800 font-rajdhani">
-              {name}
-            </h2>
-            
-            <p className="text-xs text-slate-500">
-              {exp} years experience · Employer: <span className="font-semibold text-slate-700">{employer}</span>
-            </p>
-            <p className="text-[11px] text-slate-400">
-              Project: <span className="text-slate-600 font-medium">{project}</span>
-            </p>
+            <div className="sum-hero-name" id="sum-name">{name}</div>
+            <div className="sum-hero-sub" id="sum-sub">
+              {category} · Civil ID {civil} · {exp} years experience · Project: {project}
+            </div>
+          </div>
+          <div className="sum-hero-r">
+            <div className={`sum-hero-badge ${verdictClass}`} id="sum-badge">
+              <div className="b1">QUALIFICATION</div>
+              <div className="b2" id="sum-badge-v">{stampText}</div>
+              <div className="b3" id="sum-badge-s">{stampSub}</div>
+            </div>
+            <div className="sum-hero-score">
+              <div className="sum-hero-score-v" id="sum-hero-score">
+                {overall.toFixed(1)}%
+              </div>
+              <div className="sum-hero-score-l">Overall Score</div>
+            </div>
           </div>
         </div>
+      </div>
 
-        {/* Big Verdict Pill */}
-        <div
-          className={`px-5 py-3 rounded-2xl border-2 flex items-center gap-3 shadow-xs ${
-            verdict === 'PASS'
-              ? 'bg-emerald-50 text-emerald-800 border-emerald-500'
-              : verdict === 'FAIL'
-              ? 'bg-rose-50 text-rose-800 border-rose-500'
-              : 'bg-amber-50 text-amber-900 border-amber-400'
-          }`}
+      {/* 1. Executive Summary */}
+      <div className="sum-section">
+        <div className="sum-section-h">
+          <span className="ic">📄</span>1. Executive Summary
+          <span className="num">AUTO-GENERATED</span>
+        </div>
+        <div className="sum-section-b">
+          <div
+            style={{ fontSize: '11.5px', color: 'var(--txt2)', lineHeight: 1.6, marginBottom: '8px' }}
+            id="sum-exec-auto"
+          >
+            {defaultExec}
+          </div>
+          <textarea
+            id="sum-exec"
+            placeholder="Manual additions to the executive summary..."
+            value={formData?.['sum-exec'] || ''}
+            onChange={(e) => onChange && onChange('sum-exec', e.target.value)}
+          />
+        </div>
+      </div>
+
+      {/* 2 & 3. Scope & Methodology */}
+      <div className="sum-grid-2">
+        <div className="sum-section">
+          <div className="sum-section-h"><span className="ic">🎯</span>2. Scope of Qualification</div>
+          <div className="sum-section-b">
+            <textarea
+              id="sum-scope"
+              rows={4}
+              placeholder="Qualification scope covering airless spraying, surface preparation inspection, pot-life monitoring, and DFT measurement on complex structural configurations..."
+              value={formData?.['sum-scope'] || ''}
+              onChange={(e) => onChange && onChange('sum-scope', e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="sum-section">
+          <div className="sum-section-h"><span className="ic">🔬</span>3. Methodology</div>
+          <div className="sum-section-b">
+            <textarea
+              id="sum-method"
+              rows={4}
+              placeholder="Structured theoretical assessment followed by hands-on practical trial on 5'-0 x 5'-0 test plate with simulated pipe, T-beam, and wide flange geometries per ASTM D4228..."
+              value={formData?.['sum-method'] || ''}
+              onChange={(e) => onChange && onChange('sum-method', e.target.value)}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* 4. Key Findings */}
+      <div className="sum-section">
+        <div className="sum-section-h"><span className="ic">📊</span>4. Key Findings &amp; Quantitative Results</div>
+        <div className="sum-section-b">
+          <div className="sum-grid-2">
+            <div className="sum-stat-list">
+              <div className="sum-stat-row">
+                <div>Pre-Test Score</div>
+                <div id="sf-pre">{prePct.toFixed(0)}% ({pre}/25)</div>
+              </div>
+              <div className="sum-stat-row">
+                <div>Post-Test Score</div>
+                <div id="sf-post">{postPct.toFixed(0)}% ({post}/25)</div>
+              </div>
+              <div className="sum-stat-row">
+                <div>Improvement Index</div>
+                <div id="sf-imp">{imp >= 0 ? '+' : ''}{imp.toFixed(0)}%</div>
+              </div>
+              <div className="sum-stat-row">
+                <div>Checklist Compliance</div>
+                <div id="sf-chk">{chkPct.toFixed(0)}% ({chkPass} Pass / {chkFail} Fail)</div>
+              </div>
+            </div>
+            <div className="sum-stat-list">
+              <div className="sum-stat-row">
+                <div>Inspection Pass Rate</div>
+                <div id="sf-insp">{inspPct.toFixed(0)}% ({totalInspPass} Pass / {totalInspFail} Fail)</div>
+              </div>
+              <div className="sum-stat-row">
+                <div>Environmental Status</div>
+                <div id="sf-env">
+                  {totalEnvValid === 0 ? '— No Data —' : `${okEnvCount}/${totalEnvValid} Readings In-Spec`}
+                </div>
+              </div>
+              <div className="sum-stat-row">
+                <div>Overall DFT (Avg)</div>
+                <div id="sf-prof">{!isNaN(overallDFTAvg) ? `${overallDFTAvg.toFixed(1)} µm` : '—'}</div>
+              </div>
+              <div className="sum-stat-row">
+                <div>Overall Weighted Score</div>
+                <div id="sf-overall">{overall.toFixed(1)}%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 5. Standards & References Applied */}
+      <div className="sum-section">
+        <div className="sum-section-h"><span className="ic">📚</span>5. Standards &amp; References Applied</div>
+        <div className="sum-section-b">
+          <ul className="sum-list">
+            <li><strong>ASTM D 4228</strong> — Standard Practice for Qualification of Coating Applicators for Application of Coatings to Steel Surfaces.</li>
+            <li><strong>ASTM D 4414</strong> — Standard Practice for Measurement of Wet Film Thickness by Notch Gages.</li>
+            <li><strong>ASTM D 7091 / SSPC PA-2</strong> — Measurement of Dry Coating Thickness of Nonmagnetic Coatings Applied to Ferrous Metals (80%–120% rule).</li>
+            <li><strong>ISO 8501-1 / SSPC-VIS 1</strong> — Preparation of steel substrates before application of paints — Visual assessment of surface cleanliness.</li>
+            <li><strong>ISO 19840</strong> — Paints and varnishes — Corrosion protection of steel structures — Measurement of dry-film thickness on rough surfaces.</li>
+            <li><strong>ASTM D 3359</strong> — Standard Test Methods for Rating Adhesion by Tape Test.</li>
+            <li><strong>ASTM D 4541</strong> — Pull-Off Strength of Coatings Using Portable Adhesion Testers.</li>
+            <li><strong>ISO 12944 Series</strong> — Paints and varnishes — Corrosion protection of steel structures by protective paint systems.</li>
+          </ul>
+        </div>
+      </div>
+
+      {/* 6 & 7. Strengths & Improvement Areas */}
+      <div className="sum-grid-2">
+        <div className="sum-section">
+          <div className="sum-section-h"><span className="ic">💪</span>6. Operator Strengths</div>
+          <div className="sum-section-b">
+            <textarea
+              id="sum-strengths"
+              rows={3}
+              placeholder="Exceptional gun distance consistency, uniform 50% overlap technique, thorough stripe coating on welds and bolt heads..."
+              value={formData?.['sum-strengths'] || ''}
+              onChange={(e) => onChange && onChange('sum-strengths', e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="sum-section">
+          <div className="sum-section-h"><span className="ic">📈</span>7. Areas for Continuous Improvement</div>
+          <div className="sum-section-b">
+            <textarea
+              id="sum-improve"
+              rows={3}
+              placeholder="Recommended to improve trigger pacing when transitioning between pipe contours and flat flange planes..."
+              value={formData?.['sum-improve'] || ''}
+              onChange={(e) => onChange && onChange('sum-improve', e.target.value)}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* 8. Conclusion */}
+      <div className="sum-section">
+        <div className="sum-section-h"><span className="ic">🏁</span>8. Conclusion &amp; Recommendation</div>
+        <div className="sum-section-b">
+          <div className={`sum-conclusion ${verdictClass}`} id="sum-conclusion">
+            <div className="sum-conclusion-t" id="sum-concl-t">
+              {verdict === 'PASS'
+                ? '✓ Qualification Approved'
+                : verdict === 'FAIL'
+                ? '✗ Qualification Rejected'
+                : '⚠ Qualification Pending'}
+            </div>
+            <div id="sum-concl-body">
+              {verdict === 'PASS'
+                ? `Operator ${name} has demonstrated full compliance with ASTM D4228 and SSPC PA-2 requirements and is recommended for qualification certificate issuance.`
+                : verdict === 'FAIL'
+                ? `Operator ${name} has not met the threshold criteria for qualification. Remedial training is recommended prior to re-assessment.`
+                : `The qualification of ${name} is currently in progress. The final verdict will be issued once all evaluation parameters are recorded.`}
+            </div>
+          </div>
+          <textarea
+            id="sum-recommend"
+            rows={2}
+            style={{ marginTop: '10px' }}
+            placeholder="Additional recommendations to the client / project management..."
+            value={formData?.['sum-recommend'] || ''}
+            onChange={(e) => onChange && onChange('sum-recommend', e.target.value)}
+          />
+        </div>
+      </div>
+
+      {/* 9. Validity */}
+      <div className="sum-section">
+        <div className="sum-section-h"><span className="ic">📅</span>9. Qualification Validity</div>
+        <div className="sum-section-b">
+          <div className="sum-grid-2">
+            <div className="sum-stat-list">
+              <div className="sum-stat-row">
+                <div>Qualification Date</div>
+                <div id="sv-date">{qualDate || '—'}</div>
+              </div>
+              <div className="sum-stat-row">
+                <div>Next Re-Assessment</div>
+                <div id="sv-next">{nextDate || '—'}</div>
+              </div>
+            </div>
+            <div className="sum-stat-list">
+              <div className="sum-stat-row">
+                <div>Valid For</div>
+                <div>12 Months</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Standard Button Row */}
+      <div className="btn-row btn-row-std">
+        <button type="button" className="btn btn-draft-std" onClick={onSaveDraft}>💾 Save as Draft</button>
+        <button type="button" className="btn btn-validate-std" onClick={onValidateApprove}>✓ Validate &amp; Approve</button>
+        <button
+          type="button"
+          className="btn btn-save"
+          onClick={() => onNavigate && onNavigate('painter', 'register')}
         >
-          {verdict === 'PASS' ? (
-            <CheckCircle2 className="w-8 h-8 text-emerald-600 flex-shrink-0" />
-          ) : verdict === 'FAIL' ? (
-            <AlertCircle className="w-8 h-8 text-rose-600 flex-shrink-0" />
-          ) : (
-            <Clock className="w-8 h-8 text-amber-600 animate-spin flex-shrink-0" />
-          )}
-          <div>
-            <div className="text-xl font-black font-rajdhani tracking-wider leading-none">
-              {verdict === 'PENDING' ? 'PENDING' : verdict}
-            </div>
-            <div className="text-[9.5px] font-bold uppercase tracking-wider mt-0.5">
-              {verdict === 'PASS' ? 'QUALIFIED ✓' : verdict === 'FAIL' ? 'NOT QUALIFIED' : 'IN PROGRESS'}
-            </div>
-          </div>
-        </div>
+          Next: Report Register →
+        </button>
       </div>
-
-      {/* Auto-Compiled Executive Narrative Summary */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-5 md:p-6 shadow-sm space-y-3">
-        <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-          <FileText className="w-4 h-4 text-[#E87B1E]" />
-          <h3 className="text-sm font-black uppercase tracking-wider text-slate-800 font-rajdhani">
-            Executive Qualification Narrative Summary
-          </h3>
-        </div>
-
-        <p className="text-xs text-slate-700 leading-relaxed bg-slate-50 p-4 rounded-xl border border-slate-200">
-          This report documents the qualification assessment of <b>{name}</b> as an <b>{category}</b> on the <b>{project}</b> (Contractor: {contractor}).
-          The operator with <b>{exp} years</b> of practical experience was evaluated through a combination of theoretical examination and rigorous on-site spray application assessment.
-          The post-training examination score reached <b>{postPct.toFixed(0)}%</b> (an improvement of <b>{imp >= 0 ? `+${imp.toFixed(0)}%` : `${imp.toFixed(0)}%`}</b> from baseline pre-test),
-          the assessment checklist compliance achieved <b>{chkPct.toFixed(0)}%</b> ({chkPass}/13 items passed with 0 critical failures),
-          and the on-site process inspection pass rate was <b>{inspPct.toFixed(0)}%</b> across all coating stages.
-          Dry Film Thickness (DFT) measurements averaged <b>{isNaN(overallDFTAvg) ? '—' : `${overallDFTAvg.toFixed(1)} µm`}</b> compliant with SSPC PA-2 (80%–120% rule).
-          Based on the 6-tier weighted composite evaluation (overall score <b>{overall.toFixed(1)}%</b>), the operator is <b>{verdictWord}</b>.
-        </p>
-      </div>
-
-      {/* Quantitative Findings Key Stats Grid */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-5 md:p-6 shadow-sm space-y-4">
-        <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-          <h3 className="text-sm font-black uppercase tracking-wider text-slate-800 font-rajdhani">
-            Quantitative Assessment Findings
-          </h3>
-          <span className="text-xs font-mono text-slate-400">Key Metrics</span>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-center">
-            <span className="text-[10px] font-bold text-slate-400 uppercase">Pre-Test</span>
-            <div className="text-base font-black font-mono text-slate-800 mt-0.5">{prePct.toFixed(0)}%</div>
-            <span className="text-[10px] text-slate-500 font-mono">({pre}/45 Qs)</span>
-          </div>
-
-          <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-center">
-            <span className="text-[10px] font-bold text-slate-400 uppercase">Post-Test</span>
-            <div className="text-base font-black font-mono text-slate-800 mt-0.5">{postPct.toFixed(0)}%</div>
-            <span className="text-[10px] text-slate-500 font-mono">({post}/45 Qs)</span>
-          </div>
-
-          <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-center">
-            <span className="text-[10px] font-bold text-slate-400 uppercase">Δ% Gain</span>
-            <div className={`text-base font-black font-mono mt-0.5 ${imp >= 15 ? 'text-emerald-600' : 'text-rose-600'}`}>
-              {imp >= 0 ? `+${imp.toFixed(0)}%` : `${imp.toFixed(0)}%`}
-            </div>
-            <span className="text-[10px] text-slate-500 font-mono">(Target ≥15%)</span>
-          </div>
-
-          <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-center">
-            <span className="text-[10px] font-bold text-slate-400 uppercase">Checklist</span>
-            <div className="text-base font-black font-mono text-emerald-600 mt-0.5">{chkPct.toFixed(0)}%</div>
-            <span className="text-[10px] text-slate-500 font-mono">({chkPass}/13 Pass)</span>
-          </div>
-
-          <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-center">
-            <span className="text-[10px] font-bold text-slate-400 uppercase">Inspection Pass</span>
-            <div className="text-base font-black font-mono text-blue-600 mt-0.5">{inspPct.toFixed(0)}%</div>
-            <span className="text-[10px] text-slate-500 font-mono">({totalInspPass} Passed)</span>
-          </div>
-
-          <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-center">
-            <span className="text-[10px] font-bold text-slate-400 uppercase">Environment</span>
-            <div className="text-base font-black font-mono text-slate-800 mt-0.5">
-              {totalEnvValid > 0 ? `${okEnvCount}/${totalEnvValid} OK` : '—'}
-            </div>
-            <span className="text-[10px] text-slate-500 font-mono">Psychrometric</span>
-          </div>
-
-          <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-center">
-            <span className="text-[10px] font-bold text-slate-400 uppercase">Average DFT</span>
-            <div className="text-base font-black font-mono text-[#9E1B1E] mt-0.5">
-              {isNaN(overallDFTAvg) ? '—' : `${overallDFTAvg.toFixed(1)} µm`}
-            </div>
-            <span className="text-[10px] text-slate-500 font-mono">SSPC PA-2</span>
-          </div>
-
-          <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-center">
-            <span className="text-[10px] font-bold text-slate-400 uppercase">Composite Score</span>
-            <div className="text-base font-black font-mono text-[#E87B1E] mt-0.5">{overall.toFixed(1)}%</div>
-            <span className="text-[10px] text-slate-500 font-mono">Weighted Total</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Scope, Methodology & Certificate Validity Dates */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        
-        {/* Certificate Validity Period */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3">
-          <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-            <Calendar className="w-4 h-4 text-[#E87B1E]" />
-            <h3 className="text-sm font-black uppercase tracking-wider text-slate-800 font-rajdhani">
-              Qualification Validity Period
-            </h3>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 text-xs">
-            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
-              <span className="text-[10px] font-bold uppercase text-slate-400 block mb-1">Assessment Date</span>
-              <span className="font-mono font-bold text-slate-800">{qualDate}</span>
-            </div>
-            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
-              <span className="text-[10px] font-bold uppercase text-slate-400 block mb-1">Next Assessment Due</span>
-              <span className="font-mono font-bold text-emerald-700">{nextDate}</span>
-            </div>
-          </div>
-          <p className="text-[11px] text-slate-400 italic">
-            Qualification is valid for 12 months from date of assessment subject to continuous satisfactory performance.
-          </p>
-        </div>
-
-        {/* Conclusion Recommendation */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3">
-          <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-            <ShieldCheck className="w-4 h-4 text-[#E87B1E]" />
-            <h3 className="text-sm font-black uppercase tracking-wider text-slate-800 font-rajdhani">
-              Formal Recommendation
-            </h3>
-          </div>
-
-          <div className={`p-3.5 rounded-xl border text-xs leading-relaxed ${
-            verdict === 'PASS'
-              ? 'bg-emerald-50 text-emerald-900 border-emerald-200'
-              : verdict === 'FAIL'
-              ? 'bg-rose-50 text-rose-900 border-rose-200'
-              : 'bg-amber-50 text-amber-900 border-amber-200'
-          }`}>
-            {verdict === 'PASS' ? (
-              <span>
-                Based on comprehensive evaluation comprising written examination, on-site practical assessment, multi-coat inspection and environmental verification, <b>{name}</b> has successfully met all qualification criteria for industrial spray painting activities. The operator is hereby <b>QUALIFIED</b> in accordance with ASTM D 4228 and SSPC PA-2.
-              </span>
-            ) : verdict === 'FAIL' ? (
-              <span>
-                Based on evaluation outcomes, <b>{name}</b> has not met one or more qualification criteria. The operator is <b>NOT QUALIFIED</b> at this time. Structured refresher training on deficient areas followed by re-assessment after a minimum 14-day waiting period is recommended.
-              </span>
-            ) : (
-              <span>
-                The qualification evaluation of <b>{name}</b> is currently in progress. Complete all remaining checklist ratings and inspection records to generate the final certified verdict.
-              </span>
-            )}
-          </div>
-        </div>
-
-      </div>
-
     </div>
   );
 }

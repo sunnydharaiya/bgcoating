@@ -122,7 +122,7 @@ export default function ManpowerDashboard({
   const rawAngle = (rawTotal / safeGrand) * 360;
 
   return (
-    <div className="space-y-4 max-w-7xl mx-auto pb-12 animate-in fade-in duration-200">
+    <div className="space-y-4">
       
       {/* 1. Header Banner: MODULE 10 · ANALYTICS */}
       <div className="bg-gradient-to-r from-[#85252B] via-[#6B1E23] to-[#85252B] text-white p-4 rounded-xl shadow-md border border-[#8C232A]">

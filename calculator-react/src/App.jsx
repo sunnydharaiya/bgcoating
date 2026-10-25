@@ -67,6 +67,17 @@ export default function App() {
   // Mobile Sidebar Drawer state
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
+  // Listen for global mobile sidebar toggle events
+  useEffect(() => {
+    const handleToggle = () => setMobileSidebarOpen(prev => !prev);
+    window.addEventListener('bg_toggle_sidebar', handleToggle);
+    window.addEventListener('bg_toggle_mobile_sidebar', handleToggle);
+    return () => {
+      window.removeEventListener('bg_toggle_sidebar', handleToggle);
+      window.removeEventListener('bg_toggle_mobile_sidebar', handleToggle);
+    };
+  }, []);
+
   // Global Modals State
   const [helpOpen, setHelpOpen] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
@@ -206,6 +217,8 @@ export default function App() {
         );
       case 'painter-qualification':
       case 'painter':
+      case 'spray-painter-qualification':
+      case 'spray-painter':
         return (
           <PainterQualificationPage 
             key={`painter-${activeSubTool}`}
@@ -233,7 +246,23 @@ export default function App() {
           />
         );
       case 'academy-lms':
-        return <AcademyLmsPage key="academy" />;
+        return (
+          <div className="max-w-md mx-auto py-20 px-4 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-slate-200 text-slate-500 flex items-center justify-center mx-auto mb-4">
+              <span className="text-2xl">🎓</span>
+            </div>
+            <h2 className="text-lg font-bold text-slate-800 mb-1">Training &amp; Certification</h2>
+            <p className="text-xs text-slate-500 mb-6">
+              This module is currently disabled.
+            </p>
+            <button
+              onClick={() => setActivePage('dashboard')}
+              className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs transition cursor-pointer"
+            >
+              Return to Dashboard
+            </button>
+          </div>
+        );
       case 'contractor-management':
       case 'contractor':
         return (
@@ -278,7 +307,7 @@ export default function App() {
   return (
     <ToastProvider>
       <GuidelineProvider>
-        <div className="flex min-h-screen bg-slate-100 text-slate-900 antialiased font-sans">
+        <div className="flex min-h-screen w-full bg-slate-100 text-slate-900 antialiased font-sans md:pl-[264px]">
           
           {/* Responsive Collapsible Sidebar Rail */}
           <Sidebar 
@@ -291,10 +320,11 @@ export default function App() {
             setMobileSidebarOpen={setMobileSidebarOpen}
             isLoggedIn={isLoggedIn}
             onOpenAuthModal={() => setAuthModalOpen(true)}
+            onOpenHelp={() => setHelpOpen(true)}
           />
 
           {/* Main Workspace Shell */}
-          <div className="flex-1 flex flex-col min-w-0 bg-[#F3F5F8]">
+          <div className="flex-1 flex flex-col min-w-0 bg-[#F3F5F8] w-full">
             <Header 
               activePage={activePage} 
               activeSubTool={activeSubTool} 
@@ -306,7 +336,7 @@ export default function App() {
               isLoggedIn={isLoggedIn}
               onOpenAuthModal={() => setAuthModalOpen(true)}
             />
-            <main className="flex-1 p-4 md:p-6 w-full min-w-0">
+            <main className="flex-1 w-full min-w-0 p-3 sm:p-4 md:p-6">
               <ErrorBoundary title="Page View">
                 {renderPage()}
               </ErrorBoundary>

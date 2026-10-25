@@ -407,6 +407,34 @@ export const TSA_URL_MAP = {
 
 export const INSPECTION_URL_MAP = {
   'hub': '/inspection-reporting',
+  'info': '/inspection-reporting/project-operator',
+  'project-operator': '/inspection-reporting/project-operator',
+  'project_operator': '/inspection-reporting/project-operator',
+  'train': '/inspection-reporting/training-test',
+  'training-test': '/inspection-reporting/training-test',
+  'training_test': '/inspection-reporting/training-test',
+  'checklist': '/inspection-reporting/checklist',
+  'blasting': '/inspection-reporting/blasting-process',
+  'blasting-process': '/inspection-reporting/blasting-process',
+  'blasting_process': '/inspection-reporting/blasting-process',
+  'photo': '/inspection-reporting/photo-report',
+  'photo-report': '/inspection-reporting/photo-report',
+  'photo_report': '/inspection-reporting/photo-report',
+  'verdict': '/inspection-reporting/verdict-approval',
+  'verdict-approval': '/inspection-reporting/verdict-approval',
+  'verdict_approval': '/inspection-reporting/verdict-approval',
+  'summary': '/inspection-reporting/summary',
+  'dashboard': '/inspection-reporting/dashboard',
+  'register': '/inspection-reporting/register',
+  'report_register': '/inspection-reporting/register',
+  'preview': '/inspection-reporting/preview',
+  'report': '/inspection-reporting/report',
+  'print': '/inspection-reporting/report',
+  'xlprint': '/inspection-reporting/report',
+  'watermark': '/inspection-reporting/watermark',
+  'company': '/inspection-reporting/company-details',
+  'company-details': '/inspection-reporting/company-details',
+  'company_details': '/inspection-reporting/company-details',
   's1': '/inspection-reporting/stage-s1',
   'stage-s1': '/inspection-reporting/stage-s1',
   'stage_s1': '/inspection-reporting/stage-s1',
@@ -419,9 +447,6 @@ export const INSPECTION_URL_MAP = {
   's4': '/inspection-reporting/stage-s4',
   'stage-s4': '/inspection-reporting/stage-s4',
   'stage_s4': '/inspection-reporting/stage-s4',
-  'photo': '/inspection-reporting/photo-report',
-  'photo-report': '/inspection-reporting/photo-report',
-  'photo_report': '/inspection-reporting/photo-report',
   'pull': '/inspection-reporting/pull-off-adhesion',
   'pull-off-adhesion': '/inspection-reporting/pull-off-adhesion',
   'pull_off_adhesion': '/inspection-reporting/pull-off-adhesion',
@@ -435,20 +460,9 @@ export const INSPECTION_URL_MAP = {
   'rwkreg': '/inspection-reporting/rework-register',
   'rework-register': '/inspection-reporting/rework-register',
   'rework_register': '/inspection-reporting/rework-register',
-  'dashboard': '/inspection-reporting/dashboard',
   'master': '/inspection-reporting/master-systems',
   'master-systems': '/inspection-reporting/master-systems',
   'master_systems': '/inspection-reporting/master-systems',
-  'report_register': '/inspection-reporting/register',
-  'register': '/inspection-reporting/register',
-  'preview': '/inspection-reporting/preview',
-  'report': '/inspection-reporting/report',
-  'print': '/inspection-reporting/report',
-  'xlprint': '/inspection-reporting/report',
-  'watermark': '/inspection-reporting/watermark',
-  'company': '/inspection-reporting/company-details',
-  'company-details': '/inspection-reporting/company-details',
-  'company_details': '/inspection-reporting/company-details',
 };
 
 export const PAGE_URL_MAP = {
@@ -464,6 +478,9 @@ export const PAGE_URL_MAP = {
   'blaster-qualification': '/blaster-qualification',
   'blaster': '/blaster-qualification',
   'painter-qualification': '/painter-qualification',
+  'spray-painter-qualification': '/painter-qualification',
+  'spray-painter': '/painter-qualification',
+  'painter': '/painter-qualification',
   'tsa-qualification': '/tsa-qualification',
   'tsa': '/tsa-qualification',
   'inspection-reporting': '/inspection-reporting',
@@ -556,16 +573,29 @@ export function parseCurrentUrl() {
   }
 
   // 7. Spray Painter Qualification Routes & Sub-Routes
-  if (path === '/painter-qualification' || path === '/painter') {
+  if (
+    path === '/painter-qualification' || 
+    path === '/painter' || 
+    path === '/spray-painter-qualification' || 
+    path === '/spray-painter'
+  ) {
     return { page: 'painter-qualification', subTool: 'hub' };
   }
-  if (path.startsWith('/painter-qualification/')) {
+  if (
+    path.startsWith('/painter-qualification/') || 
+    path.startsWith('/spray-painter-qualification/') || 
+    path.startsWith('/spray-painter/')
+  ) {
+    const cleanSub = path
+      .replace('/painter-qualification/', '')
+      .replace('/spray-painter-qualification/', '')
+      .replace('/spray-painter/', '');
     for (const [secId, url] of Object.entries(PAINTER_URL_MAP)) {
-      if (path === url.toLowerCase()) {
+      if (path === url.toLowerCase() || cleanSub === secId.toLowerCase() || url.toLowerCase().endsWith('/' + cleanSub)) {
         return { page: 'painter-qualification', subTool: secId };
       }
     }
-    return { page: 'painter-qualification', subTool: 'hub' };
+    return { page: 'painter-qualification', subTool: cleanSub || 'hub' };
   }
 
   // 8. TSA Operator Qualification Routes & Sub-Routes
@@ -699,7 +729,12 @@ export function getUrlFor(page, subTool = 'hub') {
     return '/blaster-qualification';
   }
 
-  if (page === 'painter-qualification' || page === 'painter') {
+  if (
+    page === 'painter-qualification' || 
+    page === 'painter' || 
+    page === 'spray-painter-qualification' || 
+    page === 'spray-painter'
+  ) {
     if (subTool && subTool !== 'hub' && PAINTER_URL_MAP[subTool]) {
       return PAINTER_URL_MAP[subTool];
     }

@@ -66,6 +66,15 @@ python "${BACKEND_DIR}/manage.py" migrate --noinput
 echo "🎨 Collecting static files..."
 python "${BACKEND_DIR}/manage.py" collectstatic --noinput
 
+# 5.1 Build calculator-react frontend (if node/npm is installed on VPS)
+if command -v npm &> /dev/null && [ -d "${PROJECT_DIR}/calculator-react" ]; then
+    echo "⚛️ Building calculator-react frontend..."
+    cd "${PROJECT_DIR}/calculator-react"
+    npm ci --prefer-offline --no-audit || npm install --no-audit
+    npm run build || true
+    cd "${PROJECT_DIR}"
+fi
+
 # 6. Ensure permissions for media, staticfiles, and SQLite database
 if [ -f "${BACKEND_DIR}/db.sqlite3" ]; then
     chmod 664 "${BACKEND_DIR}/db.sqlite3" || true

@@ -51,7 +51,7 @@ def home(request):
 
     context.update({
         'featured_services': all_services,
-        'home_gallery': ProjectGallery.objects.all().order_by('order', '-id')[:6],
+        'home_gallery': ProjectGallery.objects.all().order_by('-id')[:6],
         'testimonials': ClientTestimonial.objects.all().order_by('order', 'id')[:8],
         'latest_blogs': BlogPost.objects.all()[:3],
     })
@@ -110,12 +110,28 @@ def gallery(request):
         'Project Gallery | BG Group',
         'View our past surface preparation, industrial painting, inspection and technical audit projects.',
     )
-    gallery_qs = ProjectGallery.objects.all()
+    gallery_qs = ProjectGallery.objects.all().order_by('-id')
     serialized_gallery = ProjectGallerySerializer(gallery_qs, many=True).data
+
+    # Generate dynamic filter tags with counts from live database records
+    tag_counts = {}
+    tag_labels = {}
+    for item in gallery_qs:
+        tag = (item.filter_tag or 'general').strip().lower()
+        label = item.client_category or tag.replace('-', ' ').title()
+        tag_counts[tag] = tag_counts.get(tag, 0) + 1
+        if tag not in tag_labels:
+            tag_labels[tag] = label
+
+    filter_tags = [
+        {'tag': tag, 'label': tag_labels[tag], 'count': count}
+        for tag, count in tag_counts.items()
+    ]
 
     context.update({
         'gallery_items': gallery_qs,
         'gallery_json': json.dumps(serialized_gallery),
+        'filter_tags': filter_tags,
     })
     return render(request, 'pages/gallery.html', context)
 

@@ -21,10 +21,10 @@ export default function PainterPreviewModal({
   const handleZoomReset = () => setZoom(100);
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/90 backdrop-blur-md flex flex-col overflow-hidden animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[2000] bg-slate-900/90 backdrop-blur-md flex flex-col overflow-hidden animate-in fade-in duration-200">
       
       {/* Top Floating Control Toolbar */}
-      <div className="bg-slate-900 border-b border-slate-800 px-6 py-3 flex items-center justify-between z-20 flex-shrink-0 shadow-lg">
+      <div className="bg-slate-900 border-b border-slate-800 px-6 py-3 flex items-center justify-between z-[2001] flex-shrink-0 shadow-lg">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#E87B1E] to-[#9E1B1E] flex items-center justify-center text-white font-black font-rajdhani text-sm">
             BG

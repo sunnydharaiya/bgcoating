@@ -1,17 +1,4 @@
 import React from 'react';
-import {
-  Thermometer,
-  Flame,
-  Layers,
-  Sparkles,
-  Plus,
-  Trash2,
-  RotateCcw,
-  CheckCircle2,
-  ArrowRight,
-  TestTube,
-  FileText
-} from 'lucide-react';
 import { ABRASIVE_MAP, INSP_CATALOG, INSP_STANDARD_SET } from '../../data/blasterDatabase';
 
 export default function BlasterProcess({
@@ -19,33 +6,41 @@ export default function BlasterProcess({
   onChange,
   metrics,
   onNavigate,
-  onOpenCatalog
+  onOpenCatalog,
+  onSaveDraft,
+  onValidate,
+  onReset
 }) {
   const {
-    evaluatedEnvRows,
-    dbAvg,
-    wbAvg,
-    mtAvg,
-    rhAvg,
-    dpAvg,
-    diffAvg,
-    envFinalOK,
-    profAvg,
-    isProfPass,
-    profVerdictText,
-    inspPass,
-    inspFail,
-    inspNa,
-    inspPct
-  } = metrics;
+    evaluatedEnvRows = [],
+    dbAvg = '—',
+    wbAvg = '—',
+    mtAvg = '—',
+    rhAvg = '—',
+    dpAvg = '—',
+    diffAvg = '—',
+    envFinalOK = false,
+    profAvg = '—',
+    profVerdictText = '—',
+    inspPass = 0,
+    inspFail = 0,
+    inspNa = 0,
+    inspPct = 0
+  } = metrics || {};
 
   // Environmental Row Management
   const handleAddEnvRow = () => {
     const rows = state.envRows || [];
     const lastTime = rows[rows.length - 1]?.time || '1000';
-    const nextHour = (parseInt(lastTime.slice(0, 2)) || 10) + 1;
+    const nextHour = (parseInt(lastTime.slice(0, 2), 10) || 10) + 1;
     const newTime = `${nextHour.toString().padStart(2, '0')}00`;
     onChange('envRows', [...rows, { time: newTime, db: '', wb: '', mt: '' }]);
+  };
+
+  const handleClearEnvRows = () => {
+    if (window.confirm('Clear all environmental timing rows?')) {
+      onChange('envRows', []);
+    }
   };
 
   const handleRemoveEnvRow = (index) => {
@@ -91,6 +86,12 @@ export default function BlasterProcess({
     onChange('inspRows', rows.filter((_, i) => i !== index));
   };
 
+  const handleClearInspRows = () => {
+    if (window.confirm('Clear all inspection rows?')) {
+      onChange('inspRows', []);
+    }
+  };
+
   const handleAddStandard5Set = () => {
     const stdRows = INSP_STANDARD_SET.map(idx => {
       const cat = INSP_CATALOG[idx];
@@ -98,509 +99,620 @@ export default function BlasterProcess({
         p: cat.t,
         std: cat.std,
         req: cat.req,
-        obs: 'Conforms to standard',
+        obs: 'Conforms to specification',
         res: 'Pass'
       };
     });
     onChange('inspRows', stdRows);
   };
 
+  const handleAddBlankInspRow = () => {
+    const rows = state.inspRows || [];
+    onChange('inspRows', [
+      ...rows,
+      { p: '', std: '', req: '', obs: '', res: '' }
+    ]);
+  };
+
+  const profileSpots = state.profileSpots || [0, 0, 0, 0, 0];
+
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
-      
-      {/* Header */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <span className="text-[10.5px] font-mono uppercase tracking-widest text-[#E8700A] font-bold">
-            Section 04 · Step 4 of 8
-          </span>
-          <h2 className="text-xl font-black text-slate-900 dark:text-white mt-0.5">
-            Blasting Process &amp; Environmental Quality Verification
-          </h2>
-          <p className="text-xs text-slate-500 mt-1">
-            Psychrometric Dew-Point Monitoring · Surface Profile Averaging · Abrasive Selection · Process Inspection Tests.
-          </p>
-        </div>
-
-        <button
-          onClick={() => onNavigate('photo')}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[#E8700A] hover:bg-[#F5911F] text-white text-xs font-bold transition shadow-xs cursor-pointer"
-        >
-          <span>Next: Photo Report</span>
-          <ArrowRight className="w-3.5 h-3.5" />
-        </button>
-      </div>
-
-      {/* Part 1: Environmental Monitoring */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
-          <div>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
-              <Thermometer className="w-4 h-4 text-[#E8700A]" />
-              <span>Environmental Readings (Psychrometric Dew Point Analysis)</span>
-            </h3>
-            <span className="text-[11px] text-slate-500">
-              Pass Criteria: Relative Humidity $\le$ {state.envRhLimit || 85}% &nbsp;·&nbsp; Steel Temp − Dew Point $\ge$ 3°C
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 text-xs font-semibold">
-              <span className="text-slate-500">RH Limit:</span>
-              <input
-                type="number"
-                min="50"
-                max="95"
-                value={state.envRhLimit}
-                onChange={(e) => onChange('envRhLimit', parseFloat(e.target.value) || 85)}
-                className="w-16 px-2 py-1 rounded border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-mono text-right text-xs"
-              />
-              <span className="text-slate-400">%</span>
-            </div>
-
-            <button
-              onClick={handleAddEnvRow}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#E8700A] hover:bg-[#F5911F] text-white text-xs font-bold transition shadow-xs cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Add Timing Row</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Environmental Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-center text-xs border-collapse">
-            <thead>
-              <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-semibold uppercase text-[10px] tracking-wider">
-                <th className="py-2.5 px-2 w-10">#</th>
-                <th className="py-2.5 px-3">Time (HRS)</th>
-                <th className="py-2.5 px-3">Dry Bulb (°C)</th>
-                <th className="py-2.5 px-3">Wet Bulb (°C)</th>
-                <th className="py-2.5 px-3">Steel Temp (°C)</th>
-                <th className="py-2.5 px-3 bg-amber-50/50 dark:bg-amber-950/20 text-[#E8700A]">RH (%)</th>
-                <th className="py-2.5 px-3 bg-amber-50/50 dark:bg-amber-950/20 text-[#E8700A]">Dew Point (°C)</th>
-                <th className="py-2.5 px-3 bg-amber-50/50 dark:bg-amber-950/20 text-[#E8700A]">MT − DP (°C)</th>
-                <th className="py-2.5 px-3">Verdict</th>
-                <th className="py-2.5 px-2 w-10">×</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {evaluatedEnvRows.map((r, i) => (
-                <tr key={i} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition">
-                  <td className="py-2 px-2 font-mono font-bold text-slate-400">{i + 1}</td>
-                  <td className="py-2 px-2">
-                    <input
-                      type="text"
-                      value={r.time}
-                      onChange={(e) => handleEnvRowChange(i, 'time', e.target.value)}
-                      placeholder="HHMM"
-                      className="w-20 px-2 py-1 rounded border border-slate-200 dark:border-slate-700 bg-transparent font-mono text-center text-xs"
-                    />
-                  </td>
-                  <td className="py-2 px-2">
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={r.db}
-                      onChange={(e) => handleEnvRowChange(i, 'db', e.target.value)}
-                      placeholder="32.0"
-                      className="w-20 px-2 py-1 rounded border border-slate-200 dark:border-slate-700 bg-transparent font-mono text-center text-xs"
-                    />
-                  </td>
-                  <td className="py-2 px-2">
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={r.wb}
-                      onChange={(e) => handleEnvRowChange(i, 'wb', e.target.value)}
-                      placeholder="25.0"
-                      className="w-20 px-2 py-1 rounded border border-slate-200 dark:border-slate-700 bg-transparent font-mono text-center text-xs"
-                    />
-                  </td>
-                  <td className="py-2 px-2">
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={r.mt}
-                      onChange={(e) => handleEnvRowChange(i, 'mt', e.target.value)}
-                      placeholder="34.0"
-                      className="w-20 px-2 py-1 rounded border border-slate-200 dark:border-slate-700 bg-transparent font-mono text-center text-xs"
-                    />
-                  </td>
-                  <td className="py-2 px-3 font-mono font-bold text-slate-800 dark:text-slate-200 bg-amber-50/30 dark:bg-amber-950/10">
-                    {r.rh}
-                  </td>
-                  <td className="py-2 px-3 font-mono font-bold text-slate-800 dark:text-slate-200 bg-amber-50/30 dark:bg-amber-950/10">
-                    {r.dp}
-                  </td>
-                  <td className="py-2 px-3 font-mono font-bold text-slate-800 dark:text-slate-200 bg-amber-50/30 dark:bg-amber-950/10">
-                    {r.diff}
-                  </td>
-                  <td className="py-2 px-2">
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
-                      r.verdict === 'OK' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300' : r.verdict === 'NOK' ? 'bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300' : 'text-slate-400'
-                    }`}>
-                      {r.verdict}
-                    </span>
-                  </td>
-                  <td className="py-2 px-2">
-                    <button
-                      onClick={() => handleRemoveEnvRow(i)}
-                      className="p-1 rounded text-slate-400 hover:text-red-600 transition cursor-pointer"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-            <tfoot>
-              <tr className="bg-slate-100 dark:bg-slate-800 font-bold border-t-2 border-slate-200 dark:border-slate-700">
-                <td colSpan={2} className="py-2 px-3 text-right text-slate-500 uppercase text-[10px]">
-                  Average
-                </td>
-                <td className="py-2 px-3 font-mono">{dbAvg}</td>
-                <td className="py-2 px-3 font-mono">{wbAvg}</td>
-                <td className="py-2 px-3 font-mono">{mtAvg}</td>
-                <td className="py-2 px-3 font-mono text-[#E8700A]">{rhAvg}</td>
-                <td className="py-2 px-3 font-mono text-[#E8700A]">{dpAvg}</td>
-                <td className="py-2 px-3 font-mono text-[#E8700A]">{diffAvg}</td>
-                <td className="py-2 px-2">
-                  <span className={`px-2.5 py-0.5 rounded text-[10px] font-mono font-bold ${
-                    envFinalOK ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300' : 'bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300'
-                  }`}>
-                    {envFinalOK ? 'ACCEPTABLE' : 'REWORK'}
-                  </span>
-                </td>
-                <td />
-              </tr>
-            </tfoot>
-          </table>
+    <div className="sheet act" id="sh-blasting">
+      <div className="xl-corp">
+        <div className="xl-corp-inner">
+          <div className="xl-corp-l">BG Group of Paint &amp; Coating Consultant</div>
+          <div className="xl-corp-t">BLASTING PROCESS</div>
+          <div className="xl-corp-s">Environmental Monitoring · Surface Preparation &amp; Abrasive · Inspection Summary — combined process sheet</div>
         </div>
       </div>
 
-      {/* Part 2: Surface Preparation & 5-Spot Profile Readings */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs space-y-4">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-2">
-          <Flame className="w-4 h-4 text-[#E8700A]" />
-          <span>Surface Preparation Parameters &amp; Profile Readings</span>
-        </h3>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Method</label>
+      {/* SECTION 0: TEST PANEL INFORMATION */}
+      <div className="xl-sec-h" id="sec-blasting-0"><span className="ic">📍</span>Test Panel Information</div>
+      <div className="xl-info xl-info-4">
+        <div className="xl-cell">
+          <div className="xl-cell-l">Item No.</div>
+          <div className="xl-cell-v">
             <input
               type="text"
-              value={state.spMethod}
-              onChange={(e) => onChange('spMethod', e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Prep Reference</label>
-            <input
-              type="text"
-              value={state.spRef}
-              onChange={(e) => onChange('spRef', e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-mono"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Required Cleanliness</label>
-            <input
-              type="text"
-              value={state.spStdReq}
-              onChange={(e) => onChange('spStdReq', e.target.value)}
-              placeholder="e.g. SA 2.5"
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-[#E8700A]"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Profile Requirement</label>
-            <input
-              type="text"
-              value={state.spProfReq}
-              onChange={(e) => onChange('spProfReq', e.target.value)}
-              placeholder="e.g. 50-75 µm"
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-mono"
+              id="env-item-no"
+              value={state.envItemNo || '1'}
+              onChange={(e) => onChange('envItemNo', e.target.value)}
             />
           </div>
         </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">Item Prepared</div>
+          <div className="xl-cell-v">
+            <input
+              type="text"
+              id="env-item"
+              placeholder="e.g. Test panel as per ASTM D 4228"
+              value={state.envItem || ''}
+              onChange={(e) => onChange('envItem', e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">Cond. Ref.</div>
+          <div className="xl-cell-v">
+            <input
+              type="text"
+              id="env-cond"
+              placeholder="A"
+              value={state.envCond || 'A'}
+              onChange={(e) => onChange('envCond', e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">RH Limit</div>
+          <div className="xl-cell-v">
+            <input
+              type="number"
+              id="env-rh-limit"
+              value={state.envRhLimit ?? 85}
+              min="0"
+              max="100"
+              onChange={(e) => onChange('envRhLimit', parseFloat(e.target.value) || 85)}
+              title="RH must be ≤ this value"
+            />
+          </div>
+        </div>
+      </div>
 
-        {/* 5-Spot Profile Table */}
-        <div className="pt-2">
-          <span className="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-2">
-            Surface Profile Replica Tape / Stylus Gauge Readings (µm):
-          </span>
-          <div className="grid grid-cols-2 sm:grid-cols-7 gap-3 items-center">
-            {[0, 1, 2, 3, 4].map((idx) => (
-              <div key={idx} className="space-y-1">
-                <span className="text-[10px] font-mono text-slate-400 block text-center">Spot {idx + 1}</span>
-                <input
-                  type="number"
-                  value={state.profileSpots?.[idx] || ''}
-                  onChange={(e) => handleProfileSpotChange(idx, e.target.value)}
-                  placeholder="65"
-                  className="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-mono text-center font-bold text-xs"
-                />
-              </div>
+      {/* SECTION 1: ENVIRONMENTAL READINGS */}
+      <div className="xl-sec-h" id="sec-blasting-1">
+        <span className="ic">🌡️</span>Environmental Readings
+        <span className="num">AUTO-CALC: RH, DP, MT−DP, VERDICT</span>
+      </div>
+
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '9px', flexWrap: 'wrap', alignItems: 'center' }}>
+        <button type="button" className="btn btn-add" onClick={handleAddEnvRow}>＋ Add Timing Row</button>
+        <button type="button" className="btn btn-reset" onClick={handleClearEnvRows}>↺ Clear Rows</button>
+        <span style={{ fontSize: '11px', color: 'var(--txt2)', marginLeft: 'auto' }}>
+          Pass criteria: RH ≤ <b id="env-rh-disp">{state.envRhLimit ?? 85}</b>% &nbsp;·&nbsp; Steel − DP ≥ <b>3°C</b>
+        </span>
+      </div>
+
+      <div className="xl-tbl-w">
+        <table className="xl-tbl env-tbl">
+          <thead>
+            <tr>
+              <th style={{ width: '36px' }}>#</th>
+              <th style={{ width: '90px' }}>Time (HRS)</th>
+              <th>Dry Bulb (°C)</th>
+              <th>Wet Bulb (°C)</th>
+              <th>Steel Temp (°C)</th>
+              <th>RH (%)</th>
+              <th>Dew Pt (°C)</th>
+              <th>MT − DP (°C)</th>
+              <th>Verdict</th>
+              <th style={{ width: '42px' }}>×</th>
+            </tr>
+          </thead>
+          <tbody id="env-tbody">
+            {evaluatedEnvRows.map((r, i) => (
+              <tr key={i} data-id={i + 1}>
+                <td><b>{i + 1}</b></td>
+                <td>
+                  <input
+                    type="text"
+                    className="env-time"
+                    placeholder="HHMM"
+                    value={r.time || ''}
+                    onChange={(e) => handleEnvRowChange(i, 'time', e.target.value)}
+                    style={{ textAlign: 'center', fontFamily: "'JetBrains Mono',monospace", fontSize: '11px' }}
+                  />
+                </td>
+                <td>
+                  <input
+                    type="number"
+                    step="0.1"
+                    className="env-db"
+                    value={r.db ?? ''}
+                    onChange={(e) => handleEnvRowChange(i, 'db', e.target.value)}
+                  />
+                </td>
+                <td>
+                  <input
+                    type="number"
+                    step="0.1"
+                    className="env-wb"
+                    value={r.wb ?? ''}
+                    onChange={(e) => handleEnvRowChange(i, 'wb', e.target.value)}
+                  />
+                </td>
+                <td>
+                  <input
+                    type="number"
+                    step="0.1"
+                    className="env-mt"
+                    value={r.mt ?? ''}
+                    onChange={(e) => handleEnvRowChange(i, 'mt', e.target.value)}
+                  />
+                </td>
+                <td className="calc env-rh">{r.rh ?? '—'}</td>
+                <td className="calc env-dp">{r.dp ?? '—'}</td>
+                <td className="calc env-diff">{r.diff ?? '—'}</td>
+                <td className={`env-v ${r.ok ? 'ok-cell' : r.rh !== '—' ? 'nok-cell' : ''}`}>
+                  {r.rh === '—' ? '—' : r.ok ? 'OK' : 'FAIL'}
+                </td>
+                <td>
+                  <button
+                    type="button"
+                    className="rep-act del"
+                    title="Remove this row"
+                    onClick={() => handleRemoveEnvRow(i)}
+                    style={{ width: '24px', height: '24px' }}
+                  >
+                    ✕
+                  </button>
+                </td>
+              </tr>
             ))}
+          </tbody>
+          <tfoot>
+            <tr style={{ background: 'linear-gradient(180deg,#F4E5C7,#E9D7B0)', fontWeight: 700 }}>
+              <td colSpan="2" style={{ textAlign: 'right', fontFamily: 'Rajdhani,sans-serif', color: 'var(--o1)', fontSize: '12px', paddingRight: '10px' }}>AVERAGE</td>
+              <td className="calc" id="env-db-avg">{dbAvg}</td>
+              <td className="calc" id="env-wb-avg">{wbAvg}</td>
+              <td className="calc" id="env-mt-avg">{mtAvg}</td>
+              <td className="calc" id="env-rh-avg">{rhAvg}</td>
+              <td className="calc" id="env-dp-avg">{dpAvg}</td>
+              <td className="calc" id="env-diff-avg">{diffAvg}</td>
+              <td id="env-v-final" className={envFinalOK ? 'ok-cell' : 'nok-cell'}>
+                {envFinalOK ? 'ACCEPTABLE' : 'UNACCEPTABLE'}
+              </td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
 
-            <div className="space-y-1 text-center bg-slate-100 dark:bg-slate-800/60 p-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
-              <span className="text-[10px] font-bold text-slate-500 uppercase block">Average</span>
-              <span className="text-sm font-black font-mono text-[#E8700A] block">{profAvg} µm</span>
-            </div>
+      {/* SECTION 2: SURFACE PREPARATION */}
+      <div className="xl-sec-h" id="sec-blasting-2"><span className="ic">⚙️</span>Surface Preparation</div>
+      <div className="xl-info xl-info-4">
+        <div className="xl-cell">
+          <div className="xl-cell-l">Method</div>
+          <div className="xl-cell-v">
+            <input
+              type="text"
+              id="sp-method"
+              list="dl-sp-method"
+              placeholder="e.g. Abrasive Blasting"
+              value={state.spMethod || ''}
+              onChange={(e) => onChange('spMethod', e.target.value)}
+            />
+            <datalist id="dl-sp-method">
+              <option value="Abrasive Blasting"></option>
+              <option value="Power Tool Cleaning"></option>
+              <option value="Hand Tool Cleaning"></option>
+              <option value="Wet Abrasive Blasting"></option>
+              <option value="UHP Water Jetting"></option>
+              <option value="Vacuum Blasting"></option>
+            </datalist>
+          </div>
+        </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">Prep. Ref.</div>
+          <div className="xl-cell-v">
+            <input
+              type="text"
+              id="sp-ref"
+              placeholder="e.g. ITEM 01"
+              value={state.spRef || ''}
+              onChange={(e) => onChange('spRef', e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">Cond. Ref.</div>
+          <div className="xl-cell-v">
+            <input
+              type="text"
+              id="sp-cond"
+              placeholder="A"
+              value={state.spCond || 'A'}
+              onChange={(e) => onChange('spCond', e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">Start Time</div>
+          <div className="xl-cell-v">
+            <input
+              type="text"
+              id="sp-start"
+              placeholder="e.g. 1145 HRS"
+              value={state.spStart || ''}
+              onChange={(e) => onChange('spStart', e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">Required Std.</div>
+          <div className="xl-cell-v">
+            <input
+              type="text"
+              id="sp-std-req"
+              list="dl-sp-std"
+              placeholder="e.g. SA 2.5"
+              value={state.spStdReq || ''}
+              onChange={(e) => onChange('spStdReq', e.target.value)}
+            />
+            <datalist id="dl-sp-std">
+              <option value="SA 1"></option>
+              <option value="SA 2"></option>
+              <option value="SA 2.5"></option>
+              <option value="SA 3"></option>
+              <option value="St 2"></option>
+              <option value="St 3"></option>
+            </datalist>
+          </div>
+        </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">Actual Std.</div>
+          <div className="xl-cell-v">
+            <input
+              type="text"
+              id="sp-std-act"
+              list="dl-sp-std"
+              placeholder="e.g. SA 2.5"
+              value={state.spStdAct || ''}
+              onChange={(e) => onChange('spStdAct', e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">Profile Req. (µm)</div>
+          <div className="xl-cell-v">
+            <input
+              type="text"
+              id="sp-prof-req"
+              placeholder="e.g. 50-75 µm"
+              value={state.spProfReq || ''}
+              onChange={(e) => onChange('spProfReq', e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">End Time</div>
+          <div className="xl-cell-v">
+            <input
+              type="text"
+              id="sp-end"
+              placeholder="e.g. 1215 HRS"
+              value={state.spEnd || ''}
+              onChange={(e) => onChange('spEnd', e.target.value)}
+            />
+          </div>
+        </div>
+      </div>
 
-            <div className="space-y-1 text-center bg-slate-100 dark:bg-slate-800/60 p-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
-              <span className="text-[10px] font-bold text-slate-500 uppercase block">Verdict</span>
-              <span className={`text-xs font-black font-mono block ${
-                isProfPass ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'
-              }`}>
+      {/* SECTION 3: SURFACE PROFILE READINGS */}
+      <div className="xl-sec-h" id="sec-blasting-3">
+        <span className="ic">📏</span>Surface Profile Readings (Replica Tape / Stylus)
+      </div>
+      <div className="xl-tbl-w">
+        <table className="xl-tbl">
+          <thead>
+            <tr>
+              <th>Reading 1 (µm)</th>
+              <th>Reading 2 (µm)</th>
+              <th>Reading 3 (µm)</th>
+              <th>Reading 4 (µm)</th>
+              <th>Reading 5 (µm)</th>
+              <th>Average (µm)</th>
+              <th>Verdict</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              {[0, 1, 2, 3, 4].map((idx) => (
+                <td key={idx}>
+                  <input
+                    type="number"
+                    id={`prof-${idx}`}
+                    value={profileSpots[idx] || ''}
+                    placeholder=""
+                    onChange={(e) => handleProfileSpotChange(idx, e.target.value)}
+                  />
+                </td>
+              ))}
+              <td id="prof-avg" style={{ background: 'var(--bg4)', fontWeight: 700, color: 'var(--o1)', fontFamily: 'Rajdhani,sans-serif', fontSize: '14px' }}>
+                {profAvg}
+              </td>
+              <td id="prof-verdict" className={profVerdictText === 'Pass' ? 'ok-cell' : profVerdictText === 'Fail' ? 'nok-cell' : ''}>
                 {profVerdictText}
-              </span>
-            </div>
-          </div>
-        </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
-      {/* Part 3: Abrasive Media Information */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs space-y-4">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-2">
-          <Layers className="w-4 h-4 text-[#E8700A]" />
-          <span>Abrasive Media Selection &amp; Traceability Standards</span>
-        </h3>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-          
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Abrasive Type</label>
-            <select
-              value={state.abType}
+      {/* SECTION 4: ABRASIVE INFORMATION */}
+      <div className="xl-sec-h" id="sec-blasting-4"><span className="ic">🪨</span>Abrasive Information</div>
+      <div className="xl-info">
+        <div className="xl-cell">
+          <div className="xl-cell-l">Abrasive Type</div>
+          <div className="xl-cell-v">
+            <input
+              type="text"
+              id="ab-type"
+              list="dl-ab-type"
+              placeholder="e.g. Copper Slag / Garnet"
+              value={state.abType || ''}
               onChange={(e) => handleAbrasiveTypeChange(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-[#E8700A]"
-            >
-              {Object.keys(ABRASIVE_MAP).map((type) => (
-                <option key={type} value={type}>{type}</option>
-              ))}
-            </select>
+            />
+            <datalist id="dl-ab-type">
+              <option value="Copper Slag"></option>
+              <option value="Steel Grit / Shot"></option>
+              <option value="Garnet"></option>
+              <option value="Aluminum Oxide"></option>
+              <option value="Silica Sand"></option>
+              <option value="Other"></option>
+            </datalist>
           </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Material Class</label>
+        </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">Material Class</div>
+          <div className="xl-cell-v">
             <input
               type="text"
-              value={state.abClass}
+              id="ab-class"
+              list="dl-ab-class"
+              placeholder="e.g. Mineral / Slag"
+              value={state.abClass || ''}
               onChange={(e) => onChange('abClass', e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs"
             />
+            <datalist id="dl-ab-class">
+              <option value="Mineral / Slag"></option>
+              <option value="Mineral Abrasive"></option>
+              <option value="Metallic Abrasive"></option>
+              <option value="Synthetic Abrasive"></option>
+            </datalist>
           </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">SSPC Standard</label>
+        </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">SSPC Standard</div>
+          <div className="xl-cell-v">
             <input
               type="text"
-              value={state.abSspc}
+              id="ab-sspc"
+              list="dl-ab-sspc"
+              placeholder="e.g. SSPC-AB 1"
+              value={state.abSspc || ''}
               onChange={(e) => onChange('abSspc', e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-mono font-bold text-[#E8700A]"
             />
+            <datalist id="dl-ab-sspc">
+              <option value="SSPC-AB 1"></option>
+              <option value="SSPC-AB 2"></option>
+              <option value="SSPC-AB 3"></option>
+              <option value="SSPC-AB 4"></option>
+            </datalist>
           </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">ISO Standard</label>
+        </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">ISO Standard</div>
+          <div className="xl-cell-v">
             <input
               type="text"
-              value={state.abIso}
+              id="ab-iso"
+              list="dl-ab-iso"
+              placeholder="e.g. ISO 11126-3"
+              value={state.abIso || ''}
               onChange={(e) => onChange('abIso', e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-mono font-bold"
             />
+            <datalist id="dl-ab-iso">
+              <option value="ISO 11126-3"></option>
+              <option value="ISO 11126-4"></option>
+              <option value="ISO 11126-7"></option>
+              <option value="ISO 11126-10"></option>
+              <option value="ISO 11124-1"></option>
+              <option value="ISO 11124-2"></option>
+              <option value="ISO 11124-3"></option>
+              <option value="ISO 11124-4"></option>
+            </datalist>
           </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Mesh Size / Grade</label>
+        </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">Mesh Size</div>
+          <div className="xl-cell-v">
             <input
               type="text"
-              value={state.abMesh}
+              id="ab-mesh"
+              placeholder="e.g. G14 / G18"
+              value={state.abMesh || ''}
               onChange={(e) => onChange('abMesh', e.target.value)}
-              placeholder="e.g. GMA 30/60 Mesh"
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-mono"
             />
           </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Manufacturer</label>
+        </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">Manufacturer</div>
+          <div className="xl-cell-v xl-cell-span-2">
             <input
               type="text"
-              value={state.abMfr}
+              id="ab-mfr"
+              placeholder="Abrasive manufacturer"
+              value={state.abMfr || ''}
               onChange={(e) => onChange('abMfr', e.target.value)}
-              placeholder="e.g. GMA Garnet"
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs"
             />
           </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Batch / Lot No.</label>
+        </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">Batch / Lot No.</div>
+          <div className="xl-cell-v">
             <input
               type="text"
-              value={state.abBatch}
+              id="ab-batch"
+              placeholder="Batch / lot reference"
+              value={state.abBatch || ''}
               onChange={(e) => onChange('abBatch', e.target.value)}
-              placeholder="e.g. GMA-2026-B849"
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-mono"
             />
           </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">MTC / Test Cert Ref</label>
+        </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">TC / MTC Ref.</div>
+          <div className="xl-cell-v">
             <input
               type="text"
-              value={state.abTc}
+              id="ab-tc"
+              placeholder="Test Certificate Ref."
+              value={state.abTc || ''}
               onChange={(e) => onChange('abTc', e.target.value)}
-              placeholder="e.g. MTC-GMA-99214"
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-mono"
             />
           </div>
-
+        </div>
+        <div className="xl-cell">
+          <div className="xl-cell-l">Date Received</div>
+          <div className="xl-cell-v">
+            <input
+              type="date"
+              id="ab-date"
+              value={state.abDate || ''}
+              onChange={(e) => onChange('abDate', e.target.value)}
+            />
+          </div>
         </div>
       </div>
 
-      {/* Part 4: Surface Preparation Process Inspection Tests */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
-          <div>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
-              <TestTube className="w-4 h-4 text-[#E8700A]" />
-              <span>Inspection Summary · Process Test Results</span>
-            </h3>
-            <span className="text-[11px] text-slate-500">
-              Pass Rate: <b className="text-emerald-600 dark:text-emerald-400 font-mono">{inspPct.toFixed(0)}%</b> ({inspPass} Pass / {inspFail} Fail)
-            </span>
-          </div>
+      {/* SECTION 5: INSPECTION SUMMARY · PROCESS TEST RESULTS */}
+      <div className="xl-sec-h" style={{ marginTop: '18px' }} id="sec-blasting-5">
+        <span className="ic">🧪</span>Inspection Summary · Process Test Results
+      </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={onOpenCatalog}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#E8700A] hover:bg-[#F5911F] text-white text-xs font-bold transition shadow-xs cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Catalog Picker</span>
-            </button>
+      <div className="compl-bar">
+        <div className="compl-item"><div className="compl-dot g"></div><span className="compl-lbl">Pass:</span><span className="compl-val" id="insp-pass">{inspPass}</span></div>
+        <div className="compl-item"><div className="compl-dot r"></div><span className="compl-lbl">Fail:</span><span className="compl-val" id="insp-fail">{inspFail}</span></div>
+        <div className="compl-item"><div className="compl-dot y"></div><span className="compl-lbl">N.A.:</span><span className="compl-val" id="insp-na">{inspNa}</span></div>
+        <div className="compl-pct" id="insp-pct" style={{ color: 'var(--gr)' }}>{inspPct}% PASS RATE</div>
+      </div>
 
-            <button
-              onClick={handleAddStandard5Set}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold hover:bg-slate-100 transition cursor-pointer"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-[#E8700A]" />
-              <span>Reset 5-Test Set</span>
-            </button>
-          </div>
-        </div>
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '9px', flexWrap: 'wrap', alignItems: 'center' }}>
+        <button type="button" className="btn btn-add" onClick={onOpenCatalog || handleAddBlankInspRow}>＋ Add Surface Prep Test Row</button>
+        <button type="button" className="btn btn-reset" onClick={handleClearInspRows}>↺ Clear All Rows</button>
+        <button type="button" className="btn btn-save" onClick={handleAddStandard5Set}>⊞ Add Standard 5-Test Set</button>
+      </div>
 
-        {/* Inspection Tests Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead>
-              <tr className="bg-slate-50 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-semibold uppercase text-[10px] tracking-wider">
-                <th className="py-2.5 px-3 text-center w-10">#</th>
-                <th className="py-2.5 px-4">Test Parameter</th>
-                <th className="py-2.5 px-3 w-40">Standard Ref</th>
-                <th className="py-2.5 px-4">Requirement</th>
-                <th className="py-2.5 px-4">Observed / Actual</th>
-                <th className="py-2.5 px-3 text-center w-28">Result</th>
-                <th className="py-2.5 px-2 text-center w-10">×</th>
+      <div className="xl-tbl-w">
+        <table className="xl-tbl">
+          <thead>
+            <tr>
+              <th style={{ width: '40px' }}>Sr.</th>
+              <th style={{ textAlign: 'left', paddingLeft: '12px' }}>Test Parameter</th>
+              <th style={{ width: '130px' }}>Standard Ref.</th>
+              <th style={{ textAlign: 'left', paddingLeft: '12px' }}>Requirement</th>
+              <th style={{ textAlign: 'left', paddingLeft: '12px' }}>Actual / Observed</th>
+              <th style={{ width: '110px' }}>Result</th>
+              <th style={{ width: '36px' }}>×</th>
+            </tr>
+          </thead>
+          <tbody id="insp-tbody">
+            {(state.inspRows || []).map((row, i) => (
+              <tr key={i} data-id={i + 1}>
+                <td><b>{i + 1}</b></td>
+                <td className="txt-l">
+                  <input
+                    type="text"
+                    className="ins-p txt-l-i"
+                    value={row.p || ''}
+                    placeholder="Test parameter"
+                    onChange={(e) => handleInspRowChange(i, 'p', e.target.value)}
+                  />
+                </td>
+                <td>
+                  <input
+                    type="text"
+                    className="ins-std"
+                    value={row.std || ''}
+                    placeholder="Standard ref."
+                    onChange={(e) => handleInspRowChange(i, 'std', e.target.value)}
+                  />
+                </td>
+                <td className="txt-l">
+                  <input
+                    type="text"
+                    className="ins-req txt-l-i"
+                    value={row.req || ''}
+                    placeholder="Requirement"
+                    onChange={(e) => handleInspRowChange(i, 'req', e.target.value)}
+                  />
+                </td>
+                <td className="txt-l">
+                  <input
+                    type="text"
+                    className="ins-obs txt-l-i"
+                    value={row.obs || ''}
+                    placeholder="Actual / observed value"
+                    onChange={(e) => handleInspRowChange(i, 'obs', e.target.value)}
+                  />
+                </td>
+                <td>
+                  <select
+                    className="ins-res"
+                    value={row.res || ''}
+                    onChange={(e) => handleInspRowChange(i, 'res', e.target.value)}
+                  >
+                    <option value="">— Select —</option>
+                    <option value="Pass">Pass</option>
+                    <option value="Fail">Fail</option>
+                    <option value="NA">N.A.</option>
+                  </select>
+                </td>
+                <td>
+                  <button
+                    type="button"
+                    className="rep-act del"
+                    title="Remove this row"
+                    onClick={() => handleRemoveInspRow(i)}
+                    style={{ width: '24px', height: '24px' }}
+                  >
+                    ✕
+                  </button>
+                </td>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {(state.inspRows || []).map((row, i) => (
-                <tr key={i} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition">
-                  <td className="py-2 px-3 text-center font-mono font-bold text-slate-400">{i + 1}</td>
-                  <td className="py-2 px-4">
-                    <input
-                      type="text"
-                      value={row.p}
-                      onChange={(e) => handleInspRowChange(i, 'p', e.target.value)}
-                      className="w-full px-2 py-1 rounded border border-slate-200 dark:border-slate-700 bg-transparent text-xs font-medium"
-                    />
-                  </td>
-                  <td className="py-2 px-3">
-                    <input
-                      type="text"
-                      value={row.std}
-                      onChange={(e) => handleInspRowChange(i, 'std', e.target.value)}
-                      className="w-full px-2 py-1 rounded border border-slate-200 dark:border-slate-700 bg-transparent text-xs font-mono"
-                    />
-                  </td>
-                  <td className="py-2 px-4">
-                    <input
-                      type="text"
-                      value={row.req}
-                      onChange={(e) => handleInspRowChange(i, 'req', e.target.value)}
-                      className="w-full px-2 py-1 rounded border border-slate-200 dark:border-slate-700 bg-transparent text-xs"
-                    />
-                  </td>
-                  <td className="py-2 px-4">
-                    <input
-                      type="text"
-                      value={row.obs}
-                      onChange={(e) => handleInspRowChange(i, 'obs', e.target.value)}
-                      className="w-full px-2 py-1 rounded border border-slate-200 dark:border-slate-700 bg-transparent text-xs font-semibold"
-                    />
-                  </td>
-                  <td className="py-2 px-3 text-center">
-                    <select
-                      value={row.res}
-                      onChange={(e) => handleInspRowChange(i, 'res', e.target.value)}
-                      className={`w-full px-2 py-1 rounded border text-xs font-bold ${
-                        row.res === 'Pass' ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300' : row.res === 'Fail' ? 'bg-red-50 dark:bg-red-950/60 border-red-300 dark:border-red-800 text-red-700 dark:text-red-300' : 'bg-slate-50 dark:bg-slate-800 text-slate-500'
-                      }`}
-                    >
-                      <option value="">—</option>
-                      <option value="Pass">Pass</option>
-                      <option value="Fail">Fail</option>
-                      <option value="NA">N.A.</option>
-                    </select>
-                  </td>
-                  <td className="py-2 px-2 text-center">
-                    <button
-                      onClick={() => handleRemoveInspRow(i)}
-                      className="p-1 rounded text-slate-400 hover:text-red-600 transition cursor-pointer"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Remark */}
-        <div className="pt-2 space-y-1.5">
-          <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-            Inspection Process Observations / Remarks
-          </label>
-          <textarea
-            rows={2}
-            value={state.remarkInsp}
-            onChange={(e) => onChange('remarkInsp', e.target.value)}
-            className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:ring-2 focus:ring-[#E8700A]"
-          />
-        </div>
+            ))}
+          </tbody>
+        </table>
       </div>
 
-      {/* Footer Navigation */}
-      <div className="flex items-center justify-end gap-3 pt-2">
-        <button
-          onClick={() => onNavigate('photo')}
-          className="flex items-center gap-1.5 px-5 py-2 rounded-lg bg-[#E8700A] hover:bg-[#F5911F] text-white text-xs font-bold transition shadow-md cursor-pointer"
-        >
-          <span>Proceed to 05. Photo Report</span>
-          <ArrowRight className="w-3.5 h-3.5" />
-        </button>
+      <div className="remark-box">
+        <div className="remark-l">🔎 Inspection Result Remark</div>
+        <textarea
+          className="remark-t"
+          id="f-remark-insp"
+          value={state.remarkInsp || ''}
+          onChange={(e) => onChange('remarkInsp', e.target.value)}
+          placeholder="Enter surface preparation and process inspection remarks..."
+        ></textarea>
       </div>
 
+      <div className="btn-row">
+        <button type="button" className="btn sd" onClick={onSaveDraft}>💾 Save Draft</button>
+        <button type="button" className="btn va" onClick={onValidate}>✓ Validate &amp; Approve</button>
+        <button type="button" className="btn rs" onClick={onReset}>↺ Reset</button>
+        <button type="button" className="btn nx" onClick={() => onNavigate('photo')}>Next: Photographic Report →</button>
+      </div>
     </div>
   );
 }

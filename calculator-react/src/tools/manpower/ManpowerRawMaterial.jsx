@@ -1,300 +1,441 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Layers,
   Plus,
   Trash2,
-  Sparkles,
-  ArrowRight,
-  HelpCircle,
-  TrendingUp,
-  BookmarkPlus
+  ChevronDown,
+  ChevronUp,
+  Save,
+  Check,
+  RotateCcw,
+  BookOpen
 } from 'lucide-react';
 import { QREF_PAINTS } from '../../data/manpowerDatabase';
 
-export default function ManpowerRawMaterial({ state, onChange, metrics, onNavigate }) {
+export default function ManpowerRawMaterial({
+  state,
+  onChange,
+  metrics,
+  onNavigate,
+  onSaveDraft,
+  onValidate,
+  onReset
+}) {
   const {
-    rawCalculatedRows,
-    rawTotal,
-    rawPM2,
-    rawCoats,
-    area,
-    formatCur,
-    formatNum
-  } = metrics;
+    rawCalculatedRows = [],
+    rawTotal = 0,
+    rawPM2 = 0,
+    rawCoats = 0,
+    area = 0,
+    formatCur = (v) => Number(v || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 }),
+    formatNum = (v, d = 0) => Number(v || 0).toLocaleString('en-IN', { minimumFractionDigits: d, maximumFractionDigits: d })
+  } = (metrics || {});
+
+  const [openA, setOpenA] = useState(true);
+  const [openB, setOpenB] = useState(true);
+
+  const rawRows = state.rawRows && state.rawRows.length > 0
+    ? state.rawRows
+    : [
+        { name: 'Coat 1 Paint', dft: 0, vs: 0, thinner: 0, loss: 0, paintPrice: 0, thinnerPrice: 0 },
+        { name: 'Coat 2 Paint', dft: 0, vs: 0, thinner: 0, loss: 0, paintPrice: 0, thinnerPrice: 0 },
+        { name: 'Coat 3 Paint', dft: 0, vs: 0, thinner: 0, loss: 0, paintPrice: 0, thinnerPrice: 0 },
+        { name: 'Coat 4 Paint', dft: 0, vs: 0, thinner: 0, loss: 0, paintPrice: 0, thinnerPrice: 0 }
+      ];
 
   const handleRowChange = (index, field, value) => {
-    const updated = [...(state.rawRows || [])];
+    const updated = [...rawRows];
     updated[index] = { ...updated[index], [field]: value };
     onChange('rawRows', updated);
   };
 
-  const handleAddRow = (preset = null) => {
-    const defaultRow = preset || {
-      name: `Coat ${(state.rawRows?.length || 0) + 1} Paint`,
-      dft: 100,
-      vs: 75,
-      thinner: 5,
-      loss: 25,
-      paintPrice: 450,
-      thinnerPrice: 150
+  const handleAddRow = () => {
+    const nextCoatNo = rawRows.length + 1;
+    const newRow = {
+      name: `Coat ${nextCoatNo} Paint`,
+      dft: 0,
+      vs: 0,
+      thinner: 0,
+      loss: 0,
+      paintPrice: 0,
+      thinnerPrice: 0
     };
-    onChange('rawRows', [...(state.rawRows || []), defaultRow]);
+    onChange('rawRows', [...rawRows, newRow]);
   };
 
   const handleDeleteRow = (index) => {
-    const updated = (state.rawRows || []).filter((_, idx) => idx !== index);
+    if (rawRows.length <= 1) return;
+    const updated = rawRows.filter((_, idx) => idx !== index);
     onChange('rawRows', updated);
   };
 
-  const handleApplyQRef = (qref) => {
-    // Fill first empty row or append new row
-    const rows = [...(state.rawRows || [])];
-    const emptyIndex = rows.findIndex(r => !r.dft || !r.name || r.name.startsWith('Coat '));
-    const newEntry = {
-      name: qref.name,
-      dft: qref.dft,
-      vs: qref.vs,
-      thinner: qref.thinner ?? 5,
-      loss: qref.loss,
-      paintPrice: qref.paintPrice ?? 450,
-      thinnerPrice: qref.thinnerPrice ?? 150
+  const handleAutoFill = (preset) => {
+    // Look for first unconfigured row, or append
+    const updated = [...rawRows];
+    const emptyIdx = updated.findIndex(r => !r.dft || r.dft === 0);
+    const targetIdx = emptyIdx >= 0 ? emptyIdx : updated.length;
+    
+    const filledRow = {
+      name: preset.name,
+      dft: preset.dft,
+      vs: preset.vs,
+      thinner: preset.thinner || 5,
+      loss: preset.loss || 20,
+      paintPrice: preset.paintPrice || 450,
+      thinnerPrice: preset.thinnerPrice || 150
     };
 
-    if (emptyIndex >= 0) {
-      rows[emptyIndex] = newEntry;
-      onChange('rawRows', rows);
+    if (emptyIdx >= 0) {
+      updated[emptyIdx] = filledRow;
     } else {
-      onChange('rawRows', [...rows, newEntry]);
+      updated.push(filledRow);
     }
+    onChange('rawRows', updated);
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       
-      {/* Intro Header & Subtotal Banner */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 text-xs font-mono font-bold uppercase text-[#E8700A]">
-              <span>Module 04 · Material Formulation Engine</span>
-            </div>
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white mt-1">
-              Paint Raw Material &amp; Spreading Dynamics
-            </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Coat-by-coat calculation of theoretical &amp; practical spreading rate, volume solids percentage, dead volume thinner allowance, and application losses.
-            </p>
-          </div>
-
-          <div className="bg-gradient-to-br from-[#E8700A] to-[#F5911F] text-white p-3.5 rounded-xl shadow-md min-w-[200px] shrink-0">
-            <div className="text-[10px] uppercase font-bold text-orange-950">Raw Material Subtotal</div>
-            <div className="text-xl font-mono font-black">{formatCur(rawTotal)}</div>
-            <div className="text-[11px] font-mono text-orange-950/80 font-bold mt-0.5">
-              {formatCur(rawPM2)} / m² ({rawCoats} Active Coats)
-            </div>
-          </div>
+      {/* MODULE 4 BANNER (Matches 3.png) */}
+      <div className="bg-gradient-to-r from-[#C23A1B] via-[#B83216] to-[#A82B12] text-white p-4 rounded-xl shadow-md border border-[#D94F26]/60">
+        <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-300">
+          MODULE 4 · PAINT RAW MATERIAL COST
         </div>
+        <h2 className="text-lg sm:text-xl font-black text-white mt-0.5 tracking-tight">
+          Per-Coat Paint &amp; Thinner Raw Material Cost
+        </h2>
+        <p className="text-xs text-rose-100/90 mt-1">
+          For each coat: enter Paint Name, DFT, Volume Solids%, Thinner%, Loss%, Paint &amp; Thinner Price. System calculates Theoretical Coverage (TC), Practical Spread (PS), Paint Qty, Thinner Qty and total cost per coat. Default 4 coats — add/remove as required.
+        </p>
       </div>
 
-      {/* Coat-by-Coat Calculator Table */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-          <div className="flex items-center gap-2">
-            <Layers className="w-4 h-4 text-[#E8700A]" />
-            <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wide">
-              Coat-by-Coat Paint &amp; Thinner Calculator
-            </h3>
+      {/* SECTION 1: Coat-by-Coat Paint Cost Calculator */}
+      <div id="section-coat-by-coat" className="rounded-xl overflow-hidden border border-[#F5C296] shadow-2xs">
+        <button
+          type="button"
+          onClick={() => setOpenA(!openA)}
+          className="w-full bg-[#FFEAD5] hover:bg-[#FFE3C8] transition px-4 py-3 flex items-center justify-between text-left cursor-pointer"
+        >
+          <div className="flex items-center gap-2.5">
+            <div className="p-1.5 rounded-lg bg-[#E8700A]/15 text-[#D94F26]">
+              <Layers className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="text-sm font-bold text-[#351907]">
+                Coat-by-Coat Paint Cost Calculator
+              </div>
+              <div className="text-[11px] text-[#7A5B46]">
+                BG Group Formulas: TC = VS×10÷DFT | PS = TC-(TC×Loss÷100)
+              </div>
+            </div>
           </div>
+
+          <div className="flex items-center gap-2.5">
+            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber-100 border border-amber-300 text-amber-900">
+              COATS
+            </span>
+            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-red-100 border border-red-300 text-red-900">
+              SECTION COST ₹{formatCur(rawTotal)}
+            </span>
+            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-blue-100 border border-blue-300 text-blue-900">
+              PER SQ.M. COST ₹{formatCur(rawPM2)}
+            </span>
+            {openA ? (
+              <ChevronUp className="w-4 h-4 text-orange-800" />
+            ) : (
+              <ChevronDown className="w-4 h-4 text-orange-800" />
+            )}
+          </div>
+        </button>
+
+        {openA && (
+          <div className="bg-[#FFFDFB] p-4 sm:p-5 space-y-4">
+            
+            <div className="overflow-x-auto rounded-lg border border-orange-200 shadow-2xs bg-white">
+              <table className="w-full text-xs text-left">
+                <thead className="bg-[#FFEAD5] text-[#5A240A] text-[10px] font-mono font-bold uppercase tracking-wider border-b border-orange-200">
+                  <tr>
+                    <th className="py-2 px-2 text-center">#</th>
+                    <th className="py-2 px-3 min-w-[130px]">PAINT NAME</th>
+                    <th className="py-2 px-2 text-center">DFT µM</th>
+                    <th className="py-2 px-2 text-center">VS %</th>
+                    <th className="py-2 px-2 text-center">THINNER %</th>
+                    <th className="py-2 px-2 text-center">LOSS %</th>
+                    <th className="py-2 px-2 text-center">PAINT PRICE /L</th>
+                    <th className="py-2 px-2 text-center">THINNER PRICE /L</th>
+                    <th className="py-2 px-2 text-right">TC (M²/L)</th>
+                    <th className="py-2 px-2 text-right">PS (M²/L)</th>
+                    <th className="py-2 px-2 text-right">PAINT QTY (L)</th>
+                    <th className="py-2 px-2 text-right">THINNER QTY (L)</th>
+                    <th className="py-2 px-2 text-right min-w-[100px]">COAT TOTAL COST</th>
+                    <th className="py-2 px-2 text-right min-w-[70px]">COST / M²</th>
+                    <th className="py-2 px-1 text-center"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-orange-100 font-medium text-slate-800">
+                  {rawRows.map((row, idx) => {
+                    const calc = rawCalculatedRows[idx] || {};
+                    const hasData = row.dft > 0 && row.vs > 0;
+                    
+                    return (
+                      <tr key={idx} className="hover:bg-orange-50/50">
+                        <td className="py-2 px-2 text-center font-mono font-bold text-slate-500">
+                          {idx + 1}
+                        </td>
+                        <td className="py-2 px-2">
+                          <input
+                            type="text"
+                            value={row.name || ''}
+                            onChange={(e) => handleRowChange(idx, 'name', e.target.value)}
+                            placeholder={`Coat ${idx + 1} Paint`}
+                            className="w-full px-2 py-1 text-xs font-semibold rounded border border-orange-200 bg-white focus:outline-none focus:ring-1 focus:ring-[#F5911F]"
+                          />
+                        </td>
+                        <td className="py-2 px-1 text-center">
+                          <input
+                            type="number"
+                            value={row.dft ?? 0}
+                            onChange={(e) => handleRowChange(idx, 'dft', parseFloat(e.target.value) || 0)}
+                            className="w-14 px-1.5 py-1 text-center font-mono rounded border border-orange-200 bg-white focus:outline-none focus:ring-1 focus:ring-[#F5911F]"
+                          />
+                        </td>
+                        <td className="py-2 px-1 text-center">
+                          <input
+                            type="number"
+                            value={row.vs ?? 0}
+                            onChange={(e) => handleRowChange(idx, 'vs', parseFloat(e.target.value) || 0)}
+                            className="w-14 px-1.5 py-1 text-center font-mono rounded border border-orange-200 bg-white focus:outline-none focus:ring-1 focus:ring-[#F5911F]"
+                          />
+                        </td>
+                        <td className="py-2 px-1 text-center">
+                          <input
+                            type="number"
+                            value={row.thinner ?? 0}
+                            onChange={(e) => handleRowChange(idx, 'thinner', parseFloat(e.target.value) || 0)}
+                            className="w-14 px-1.5 py-1 text-center font-mono rounded border border-orange-200 bg-white focus:outline-none focus:ring-1 focus:ring-[#F5911F]"
+                          />
+                        </td>
+                        <td className="py-2 px-1 text-center">
+                          <input
+                            type="number"
+                            value={row.loss ?? 0}
+                            onChange={(e) => handleRowChange(idx, 'loss', parseFloat(e.target.value) || 0)}
+                            className="w-14 px-1.5 py-1 text-center font-mono rounded border border-orange-200 bg-white focus:outline-none focus:ring-1 focus:ring-[#F5911F]"
+                          />
+                        </td>
+                        <td className="py-2 px-1 text-center">
+                          <input
+                            type="number"
+                            value={row.paintPrice ?? 0}
+                            onChange={(e) => handleRowChange(idx, 'paintPrice', parseFloat(e.target.value) || 0)}
+                            className="w-16 px-1.5 py-1 text-center font-mono rounded border border-orange-200 bg-white focus:outline-none focus:ring-1 focus:ring-[#F5911F]"
+                          />
+                        </td>
+                        <td className="py-2 px-1 text-center">
+                          <input
+                            type="number"
+                            value={row.thinnerPrice ?? 0}
+                            onChange={(e) => handleRowChange(idx, 'thinnerPrice', parseFloat(e.target.value) || 0)}
+                            className="w-16 px-1.5 py-1 text-center font-mono rounded border border-orange-200 bg-white focus:outline-none focus:ring-1 focus:ring-[#F5911F]"
+                          />
+                        </td>
+
+                        {/* Calculated fields */}
+                        <td className="py-2 px-2 text-right font-mono text-slate-700">
+                          {hasData ? formatNum(calc.tc, 2) : '—'}
+                        </td>
+                        <td className="py-2 px-2 text-right font-mono text-slate-700">
+                          {hasData ? formatNum(calc.ps, 2) : '—'}
+                        </td>
+                        <td className="py-2 px-2 text-right font-mono text-slate-700">
+                          {hasData ? formatNum(calc.paintQty, 1) : '—'}
+                        </td>
+                        <td className="py-2 px-2 text-right font-mono text-slate-700">
+                          {hasData ? formatNum(calc.thinnerQty, 1) : '—'}
+                        </td>
+                        <td className="py-2 px-2 text-right font-mono font-bold text-slate-900">
+                          ₹{formatCur(calc.coatCost || 0)}
+                        </td>
+                        <td className="py-2 px-2 text-right font-mono font-semibold text-slate-700">
+                          ₹{formatCur(calc.costPerM2 || 0)}
+                        </td>
+                        <td className="py-2 px-1 text-center">
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteRow(idx)}
+                            className="p-1 rounded hover:bg-rose-100 text-rose-500 transition cursor-pointer"
+                            title="Remove coat"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+
+                  {/* Summary Totals Row */}
+                  <tr className="bg-[#FFEAD5]/80 font-bold text-slate-900 border-t-2 border-orange-200">
+                    <td colSpan={12} className="py-2.5 px-4 text-right font-mono uppercase tracking-wider text-xs">
+                      RAW MATERIAL TOTAL:
+                    </td>
+                    <td className="py-2.5 px-2 text-right font-mono font-black text-emerald-700 text-sm">
+                      ₹{formatCur(rawTotal)}
+                    </td>
+                    <td className="py-2.5 px-2 text-right font-mono font-bold text-emerald-700">
+                      ₹{formatCur(rawPM2)}
+                    </td>
+                    <td></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleAddRow}
+              className="px-3 py-1.5 rounded-lg border border-orange-300 bg-orange-50 hover:bg-orange-100 text-[#C23A1B] text-xs font-bold font-mono flex items-center gap-1.5 transition cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>+ Add Coat Row</span>
+            </button>
+
+          </div>
+        )}
+      </div>
+
+      {/* SECTION 2: Quick Reference — Common Paint Systems */}
+      <div id="section-quick-reference" className="rounded-xl overflow-hidden border border-[#F5C296] shadow-2xs">
+        <button
+          type="button"
+          onClick={() => setOpenB(!openB)}
+          className="w-full bg-[#FFEAD5] hover:bg-[#FFE3C8] transition px-4 py-3 flex items-center justify-between text-left cursor-pointer"
+        >
+          <div className="flex items-center gap-2.5">
+            <div className="p-1.5 rounded-lg bg-[#E8700A]/15 text-[#D94F26]">
+              <BookOpen className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="text-sm font-bold text-[#351907]">
+                Quick Reference — Common Paint Systems
+              </div>
+              <div className="text-[11px] text-[#7A5B46]">
+                Click any row to auto-fill a coat in the calculator above (values stay editable)
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2.5">
+            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-white/80 border border-orange-300/80 text-orange-900">
+              REFERENCE
+            </span>
+            {openB ? (
+              <ChevronUp className="w-4 h-4 text-orange-800" />
+            ) : (
+              <ChevronDown className="w-4 h-4 text-orange-800" />
+            )}
+          </div>
+        </button>
+
+        {openB && (
+          <div className="bg-[#FFFDFB] p-4 sm:p-5">
+            <div className="overflow-x-auto rounded-lg border border-orange-200 shadow-2xs bg-white">
+              <table className="w-full text-xs text-left">
+                <thead className="bg-[#FFEAD5] text-[#5A240A] text-[10px] font-mono font-bold uppercase tracking-wider border-b border-orange-200">
+                  <tr>
+                    <th className="py-2.5 px-3">PAINT TYPE</th>
+                    <th className="py-2.5 px-3 text-center">VS %</th>
+                    <th className="py-2.5 px-3 text-center">DFT µM</th>
+                    <th className="py-2.5 px-3 text-center">LOSS %</th>
+                    <th className="py-2.5 px-3 text-center">ACTION</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-orange-100 font-medium text-slate-800">
+                  {QREF_PAINTS.map((item, idx) => (
+                    <tr key={idx} className="hover:bg-orange-50/50">
+                      <td className="py-2 px-3 font-semibold text-slate-900">{item.name}</td>
+                      <td className="py-2 px-3 text-center font-mono">{item.vs}%</td>
+                      <td className="py-2 px-3 text-center font-mono">{item.dft}</td>
+                      <td className="py-2 px-3 text-center font-mono">{item.loss}%</td>
+                      <td className="py-2 px-3 text-center">
+                        <button
+                          type="button"
+                          onClick={() => handleAutoFill(item)}
+                          className="px-2.5 py-1 rounded border border-orange-200 bg-orange-50 hover:bg-orange-100 text-[#C23A1B] text-[10px] font-mono font-bold transition cursor-pointer"
+                        >
+                          + Auto-fill
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* FOOTER ACTIONS ROW */}
+      <div className="flex flex-wrap items-center justify-between gap-3 pt-3">
+        <div className="flex items-center gap-2">
           <button
-            onClick={() => handleAddRow()}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#E8700A]/10 hover:bg-[#E8700A]/20 text-[#E8700A] text-xs font-bold transition cursor-pointer"
+            type="button"
+            onClick={onSaveDraft}
+            className="px-4 py-2 rounded-lg bg-[#3F2B68] hover:bg-[#342356] text-white text-xs font-bold flex items-center gap-1.5 shadow-2xs transition cursor-pointer"
           >
-            <Plus className="w-4 h-4" />
-            <span>Add Coat</span>
+            <Save className="w-3.5 h-3.5" />
+            <span>SAVE DRAFT</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={onValidate}
+            className="px-4 py-2 rounded-lg bg-[#15803D] hover:bg-[#166534] text-white text-xs font-bold flex items-center gap-1.5 shadow-2xs transition cursor-pointer"
+          >
+            <Check className="w-3.5 h-3.5" />
+            <span>VALIDATE / APPROVAL</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={onReset}
+            className="px-3.5 py-2 rounded-lg bg-[#FFF5F5] hover:bg-[#FEECEC] border border-rose-300 text-rose-600 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>Clear All</span>
           </button>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs text-left border-collapse min-w-[950px]">
-            <thead>
-              <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-300 font-bold">
-                <th className="py-2.5 px-2 text-center w-10">#</th>
-                <th className="py-2.5 px-3 min-w-[180px]">Paint Product Name</th>
-                <th className="py-2.5 px-2 text-center">DFT (µm)</th>
-                <th className="py-2.5 px-2 text-center">VS %</th>
-                <th className="py-2.5 px-2 text-center">Thinner %</th>
-                <th className="py-2.5 px-2 text-center">Loss %</th>
-                <th className="py-2.5 px-2 text-right">Paint Price/L</th>
-                <th className="py-2.5 px-2 text-right">Thinner/L</th>
-                <th className="py-2.5 px-2 text-right font-mono text-slate-500">TC (m²/L)</th>
-                <th className="py-2.5 px-2 text-right font-mono text-slate-500">PS (m²/L)</th>
-                <th className="py-2.5 px-2 text-right font-mono text-slate-500">Paint (L)</th>
-                <th className="py-2.5 px-2 text-right font-mono text-slate-500">Thinner (L)</th>
-                <th className="py-2.5 px-3 text-right font-bold text-orange-600 dark:text-orange-400">Coat Total</th>
-                <th className="py-2.5 px-2 text-right font-mono text-slate-600 dark:text-slate-400">/ m²</th>
-                <th className="py-2.5 px-2 text-center w-10">Del</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {rawCalculatedRows.map((r, idx) => (
-                <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/30">
-                  <td className="py-2.5 px-2 text-center font-bold text-[#E8700A]">{idx + 1}</td>
-                  
-                  <td className="py-2.5 px-3">
-                    <input
-                      type="text"
-                      value={r.name || ''}
-                      onChange={(e) => handleRowChange(idx, 'name', e.target.value)}
-                      placeholder="Paint Name"
-                      className="w-full px-2 py-1 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold"
-                    />
-                  </td>
-
-                  <td className="py-2.5 px-2 text-center">
-                    <input
-                      type="number"
-                      min="0"
-                      value={r.dft ?? ''}
-                      onChange={(e) => handleRowChange(idx, 'dft', parseFloat(e.target.value) || 0)}
-                      className="w-16 px-1.5 py-1 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-center font-mono text-xs"
-                    />
-                  </td>
-
-                  <td className="py-2.5 px-2 text-center">
-                    <input
-                      type="number"
-                      min="1"
-                      max="100"
-                      value={r.vs ?? ''}
-                      onChange={(e) => handleRowChange(idx, 'vs', parseFloat(e.target.value) || 0)}
-                      className="w-14 px-1.5 py-1 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-center font-mono text-xs"
-                    />
-                  </td>
-
-                  <td className="py-2.5 px-2 text-center">
-                    <input
-                      type="number"
-                      min="0"
-                      max="50"
-                      value={r.thinner ?? ''}
-                      onChange={(e) => handleRowChange(idx, 'thinner', parseFloat(e.target.value) || 0)}
-                      className="w-14 px-1.5 py-1 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-center font-mono text-xs"
-                    />
-                  </td>
-
-                  <td className="py-2.5 px-2 text-center">
-                    <input
-                      type="number"
-                      min="0"
-                      max="90"
-                      value={r.loss ?? ''}
-                      onChange={(e) => handleRowChange(idx, 'loss', parseFloat(e.target.value) || 0)}
-                      className="w-14 px-1.5 py-1 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-center font-mono text-xs"
-                    />
-                  </td>
-
-                  <td className="py-2.5 px-2 text-right">
-                    <input
-                      type="number"
-                      min="0"
-                      value={r.paintPrice ?? ''}
-                      onChange={(e) => handleRowChange(idx, 'paintPrice', parseFloat(e.target.value) || 0)}
-                      className="w-20 px-1.5 py-1 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-right font-mono text-xs"
-                    />
-                  </td>
-
-                  <td className="py-2.5 px-2 text-right">
-                    <input
-                      type="number"
-                      min="0"
-                      value={r.thinnerPrice ?? ''}
-                      onChange={(e) => handleRowChange(idx, 'thinnerPrice', parseFloat(e.target.value) || 0)}
-                      className="w-16 px-1.5 py-1 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-right font-mono text-xs"
-                    />
-                  </td>
-
-                  {/* Calculated metrics */}
-                  <td className="py-2.5 px-2 text-right font-mono text-slate-500">{formatNum(r.tc, 2)}</td>
-                  <td className="py-2.5 px-2 text-right font-mono text-slate-500">{formatNum(r.ps, 2)}</td>
-                  <td className="py-2.5 px-2 text-right font-mono font-semibold text-blue-600 dark:text-blue-400">{formatNum(r.pq, 1)} L</td>
-                  <td className="py-2.5 px-2 text-right font-mono text-slate-500">{formatNum(r.tq, 1)} L</td>
-                  <td className="py-2.5 px-3 text-right font-mono font-bold text-orange-600 dark:text-orange-400">{formatCur(r.cost)}</td>
-                  <td className="py-2.5 px-2 text-right font-mono text-slate-600 dark:text-slate-400">{formatCur(r.pm2)}</td>
-
-                  <td className="py-2.5 px-2 text-center">
-                    <button
-                      onClick={() => handleDeleteRow(idx)}
-                      className="p-1 rounded text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 transition cursor-pointer"
-                      title="Delete Coat"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Quick Reference Common Paint Systems */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-xs space-y-4">
-        <div className="flex items-center gap-2 pb-3 border-b border-slate-100 dark:border-slate-800">
-          <BookmarkPlus className="w-4 h-4 text-[#E8700A]" />
-          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wide">
-            18 Standard Industrial Coating Systems (1-Click Auto-Fill)
-          </h3>
-        </div>
-
-        <div className="overflow-x-auto max-h-80 overflow-y-auto">
-          <table className="w-full text-xs text-left border-collapse">
-            <thead className="sticky top-0 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-bold z-10">
-              <tr>
-                <th className="py-2 px-3">System Name</th>
-                <th className="py-2 px-3 text-center">Typical VS %</th>
-                <th className="py-2 px-3 text-center">Typical DFT (µm)</th>
-                <th className="py-2 px-3 text-center">Loss Allowance %</th>
-                <th className="py-2 px-3 text-right">Reference Paint Price</th>
-                <th className="py-2 px-3 text-center">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-              {QREF_PAINTS.map((p, i) => (
-                <tr key={i} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                  <td className="py-2 px-3 font-semibold text-slate-900 dark:text-white">{p.name}</td>
-                  <td className="py-2 px-3 text-center font-mono">{p.vs}%</td>
-                  <td className="py-2 px-3 text-center font-mono">{p.dft} µm</td>
-                  <td className="py-2 px-3 text-center font-mono">{p.loss}%</td>
-                  <td className="py-2 px-3 text-right font-mono font-semibold text-slate-700 dark:text-slate-300">
-                    {formatCur(p.paintPrice)} / L
-                  </td>
-                  <td className="py-2 px-3 text-center">
-                    <button
-                      onClick={() => handleApplyQRef(p)}
-                      className="px-2.5 py-1 rounded bg-[#E8700A] hover:bg-[#F5911F] text-white font-bold text-[10px] transition cursor-pointer"
-                    >
-                      + Auto-fill
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Navigation Action Bar */}
-      <div className="flex items-center justify-between p-4 bg-slate-900 text-white rounded-xl shadow-lg border border-slate-800">
-        <div className="text-xs text-slate-300">
-          Step 4 of 7 Completed · Total Raw Material: <span className="font-mono font-bold text-[#F5911F]">{formatCur(rawTotal)}</span>
-        </div>
         <button
-          onClick={() => onNavigate('worker-ctc')}
-          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-[#F5911F] to-[#E8700A] hover:brightness-110 text-white font-bold text-xs shadow-md transition cursor-pointer"
+          type="button"
+          onClick={() => onNavigate('summary')}
+          className="px-5 py-2.5 rounded-lg bg-gradient-to-r from-[#E85D22] to-[#CB3A14] hover:brightness-110 text-white text-xs font-black tracking-wider flex items-center gap-2 transition shadow-sm cursor-pointer uppercase font-mono"
         >
-          <span>Next: Individual Worker CTC</span>
-          <ArrowRight className="w-4 h-4" />
+          <span>NEXT : FRONT PAGE SUMMARY →</span>
         </button>
+      </div>
+
+      {/* BRANDED FOOTER */}
+      <div className="bg-[#2B0E10] text-[#D8BDBE] rounded-xl p-4 sm:p-5 border-t-2 border-[#5C1E23] flex flex-col items-center justify-center text-center space-y-1.5 mt-6">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded bg-white p-0.5 flex items-center justify-center shrink-0">
+            <img src="/logo-2.png" alt="BG Logo" className="w-full h-full object-contain" />
+          </div>
+          <span className="font-extrabold text-sm text-white tracking-wide font-mono">
+            BG GROUP <span className="text-xs font-normal text-rose-200">of Paint and Coating Consultant</span>
+          </span>
+        </div>
+        <div className="text-[11px] text-rose-200/90 font-medium">
+          Industrial Cost Estimation · Surface Protection · Coating Engineering
+        </div>
+        <div className="text-[10px] text-rose-300/60 font-mono flex flex-wrap justify-center gap-x-2">
+          <span>E 103, Akash Echo Point, Bhimrad, Surat - 395007, Gujarat, India</span>
+          <span>|</span>
+          <span>+91 98258 10408</span>
+          <span>|</span>
+          <span>support@bgcoating.com</span>
+          <span>|</span>
+          <span>www.bgcoating.com</span>
+        </div>
       </div>
 
     </div>

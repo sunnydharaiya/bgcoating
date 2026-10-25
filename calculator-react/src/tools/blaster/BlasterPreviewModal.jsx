@@ -31,10 +31,10 @@ export default function BlasterPreviewModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex flex-col justify-between overflow-hidden print:p-0">
+    <div className="fixed inset-0 z-[2000] bg-black/85 backdrop-blur-md flex flex-col justify-between overflow-hidden print:p-0">
       
       {/* Top Floating Control Bar */}
-      <div className="bg-slate-900 border-b border-slate-800 px-4 py-3 flex items-center justify-between gap-4 print:hidden shadow-lg z-50">
+      <div className="bg-slate-900 border-b border-slate-800 px-4 py-3 flex items-center justify-between gap-4 print:hidden shadow-xl z-[2001]">
         
         {/* Left: Title & Page Count */}
         <div className="flex items-center gap-3 text-white">

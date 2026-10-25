@@ -6,7 +6,8 @@ on:
       - main
     paths:
       - 'backend/**'
-      - '.github/workflows/deploy-backend.yml'
+      - 'calculator-react/**'
+      - '.github/workflows/**'
   workflow_dispatch: # Allows manual trigger anytime from GitHub Actions tab
 
 concurrency:

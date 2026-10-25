@@ -1,557 +1,765 @@
 // src/pages/InspectionReportingPage.jsx
 import React, { useState, useEffect } from 'react';
-import { 
-  FileCheck2, 
-  Layers, 
-  Thermometer, 
-  Camera, 
-  ShieldCheck, 
-  SlidersHorizontal, 
-  AlertTriangle, 
-  BarChart3, 
-  History, 
-  FileSpreadsheet, 
-  Printer, 
-  Building2, 
-  Stamp, 
-  Sparkles, 
-  BookOpen, 
-  RotateCcw, 
-  Save, 
-  Eye, 
-  CheckCircle2, 
-  Sliders,
-  ChevronDown,
-  Hammer
-} from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { useGuideline } from '../context/GuidelineContext';
+import {
+  INITIAL_BLASTER_STATE,
+  calculateBlasterQualification
+} from '../data/blasterDatabase';
 
-// Import Master Database & Initial State
-import { 
-  createInitialInspectionState, 
-  INDUSTRY_PRESETS 
-} from '../data/inspectionDatabase';
+// Sub-Tool Components (Matches Screenshots 1-9 in sc/inspection-reporting)
+import BlasterFreezeBar from '../tools/blaster/BlasterFreezeBar';
+import BlasterHub from '../tools/blaster/BlasterHub';
+import BlasterDashboard from '../tools/blaster/BlasterDashboard';
+import BlasterProjectInfo from '../tools/blaster/BlasterProjectInfo';
+import BlasterTrainingTest from '../tools/blaster/BlasterTrainingTest';
+import BlasterChecklist from '../tools/blaster/BlasterChecklist';
+import BlasterProcess from '../tools/blaster/BlasterProcess';
+import BlasterPhotoReport from '../tools/blaster/BlasterPhotoReport';
+import BlasterVerdictApproval from '../tools/blaster/BlasterVerdictApproval';
+import BlasterSummary from '../tools/blaster/BlasterSummary';
+import BlasterRegister from '../tools/blaster/BlasterRegister';
+import BlasterPrintDossier from '../tools/blaster/BlasterPrintDossier';
+import BlasterCompanySheet from '../tools/blaster/BlasterCompanySheet';
+import BlasterWatermarkSheet from '../tools/blaster/BlasterWatermarkSheet';
 
-// Import Modular Sub-Tools
-import InspectionHub from '../tools/inspection/InspectionHub';
-import InspectionStage from '../tools/inspection/InspectionStage';
-import InspectionPhotoReport from '../tools/inspection/InspectionPhotoReport';
-import InspectionPullOffAdhesion from '../tools/inspection/InspectionPullOffAdhesion';
-import InspectionCrossCutAdhesion from '../tools/inspection/InspectionCrossCutAdhesion';
-import InspectionStandardsReference from '../tools/inspection/InspectionStandardsReference';
-import InspectionReworkRegister from '../tools/inspection/InspectionReworkRegister';
-import InspectionDashboard from '../tools/inspection/InspectionDashboard';
-import InspectionReportRegister from '../tools/inspection/InspectionReportRegister';
-import InspectionMasterList from '../tools/inspection/InspectionMasterList';
-import InspectionCompanyDetailsModal, { DEFAULT_BG_COMPANY } from '../tools/inspection/InspectionCompanyDetailsModal';
-import InspectionWatermarkControl, { DEFAULT_WATERMARK } from '../tools/inspection/InspectionWatermarkControl';
-import InspectionPreviewModal from '../tools/inspection/InspectionPreviewModal';
-import InspectionReportView from '../tools/inspection/InspectionReportView';
+// Modals
+import BlasterTestCatalogModal from '../tools/blaster/BlasterTestCatalogModal';
+import BlasterApprovalModal from '../tools/blaster/BlasterApprovalModal';
+import BlasterCompanyModal from '../tools/blaster/BlasterCompanyModal';
+import BlasterWatermarkControl from '../tools/blaster/BlasterWatermarkControl';
+import BlasterPreviewModal from '../tools/blaster/BlasterPreviewModal';
 import ErrorBoundary from '../components/ErrorBoundary';
 
-const STORAGE_DRAFT_KEY = 'bg_os_inspection_draft';
-const COMPANY_STORAGE_KEY = 'bg_company_profile';
-const WATERMARK_STORAGE_KEY = 'bg_watermark_settings';
+const DRAFT_KEY = 'bg_inspection_blaster_draft';
+const REGISTER_KEY = 'bgcoating.inspection.reports.v1';
+const COMPANY_KEY = 'bg_inspection_company';
+const WATERMARK_KEY = 'bg_inspection_watermark';
 
-export default function InspectionReportingPage({ 
-  currentSubTool = 'hub', 
+// Fallback legacy draft keys to preserve previously entered data
+const LEGACY_DRAFT_KEY = 'bg_blaster_draft';
+const LEGACY_REGISTER_KEY = 'bgcoating.blaster.reports.v1';
+
+const WORKFLOW_STEPS = [
+  'info', 'project-operator', 'project_operator',
+  'train', 'training-test', 'training_test',
+  'checklist',
+  'blasting', 'blasting-process', 'blasting_process',
+  'photo', 'photo-report', 'photo_report',
+  'verdict', 'verdict-approval', 'verdict_approval'
+];
+
+export default function InspectionReportingPage({
+  currentSubTool = 'hub',
   activeSubTool = 'hub',
-  onNavigate 
+  onNavigate
 }) {
   const { addToast } = useToast();
   const { openGuideline } = useGuideline();
 
   const activeSub = currentSubTool || activeSubTool || 'hub';
-  const [currentSection, setCurrentSection] = useState(activeSub);
 
-  // Modals state
-  const [companyModalOpen, setCompanyModalOpen] = useState(false);
-  const [previewModalOpen, setPreviewModalOpen] = useState(false);
-
-  // Master Inspection State with localStorage draft caching
+  // Master State with multi-key caching
   const [state, setState] = useState(() => {
     try {
-      const cached = localStorage.getItem(STORAGE_DRAFT_KEY);
-      if (cached) {
-        return JSON.parse(cached);
-      }
-    } catch (err) {
-      console.error('Error loading cached inspection draft:', err);
+      const saved = localStorage.getItem(DRAFT_KEY) || localStorage.getItem(LEGACY_DRAFT_KEY);
+      return saved ? JSON.parse(saved) : INITIAL_BLASTER_STATE;
+    } catch {
+      return INITIAL_BLASTER_STATE;
     }
-    return createInitialInspectionState();
   });
 
-  // Company Profile State
-  const [companyProfile, setCompanyProfile] = useState(() => {
+  // Saved reports master register
+  const [reports, setReports] = useState(() => {
     try {
-      const cached = localStorage.getItem(COMPANY_STORAGE_KEY);
-      if (cached) return JSON.parse(cached);
-    } catch (e) {}
-    return DEFAULT_BG_COMPANY;
+      const saved = localStorage.getItem(REGISTER_KEY) || localStorage.getItem(LEGACY_REGISTER_KEY);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
   });
 
-  // Watermark Settings State
-  const [watermarkSettings, setWatermarkSettings] = useState(() => {
+  // Company Branding settings
+  const [company, setCompany] = useState(() => {
     try {
-      const cached = localStorage.getItem(WATERMARK_STORAGE_KEY);
-      if (cached) return JSON.parse(cached);
-    } catch (e) {}
-    return DEFAULT_WATERMARK;
+      const saved = localStorage.getItem(COMPANY_KEY) || localStorage.getItem('bg_company_profile');
+      return saved
+        ? JSON.parse(saved)
+        : {
+            name: 'BG INDUSTRIAL COATINGS W.L.L.',
+            division: 'Quality Assurance & Technical Services',
+            contact: 'ISO 9001:2015 · ISO 14001:2015 · ISO 45001:2018 Certified',
+            logo: ''
+          };
+    } catch {
+      return {
+        name: 'BG INDUSTRIAL COATINGS W.L.L.',
+        division: 'Quality Assurance & Technical Services',
+        contact: 'ISO 9001:2015 · ISO 14001:2015 · ISO 45001:2018 Certified',
+        logo: ''
+      };
+    }
   });
 
-  // Sync external routing
+  // Watermark settings
+  const [watermark, setWatermark] = useState(() => {
+    try {
+      const saved = localStorage.getItem(WATERMARK_KEY) || localStorage.getItem('bg_watermark_settings');
+      return saved
+        ? JSON.parse(saved)
+        : {
+            enabled: true,
+            text: 'OFFICIAL QUALIFICATION DOSSIER',
+            opacity: 0.08,
+            angle: -30
+          };
+    } catch {
+      return {
+        enabled: true,
+        text: 'OFFICIAL QUALIFICATION DOSSIER',
+        opacity: 0.08,
+        angle: -30
+      };
+    }
+  });
+
+  // Modal visibility states
+  const [isCatalogOpen, setIsCatalogOpen] = useState(false);
+  const [isApprovalOpen, setIsApprovalOpen] = useState(false);
+  const [isCompanyOpen, setIsCompanyOpen] = useState(false);
+  const [isWatermarkOpen, setIsWatermarkOpen] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+
+  // Sync modal routing when navigated from sidebar or direct URL
   useEffect(() => {
-    if (activeSub) {
-      if (activeSub === 'company_details' || activeSub === 'company-details' || activeSub === 'company') {
-        setCompanyModalOpen(true);
-        setPreviewModalOpen(false);
-      } else if (activeSub === 'preview') {
-        setPreviewModalOpen(true);
-        setCompanyModalOpen(false);
-      } else {
-        setCompanyModalOpen(false);
-        setPreviewModalOpen(false);
-        setCurrentSection(activeSub);
-      }
+    if (activeSub === 'company-details' || activeSub === 'company_details' || activeSub === 'company') {
+      setIsCompanyOpen(true);
+      setIsWatermarkOpen(false);
+      setIsPreviewOpen(false);
+    } else if (activeSub === 'watermark') {
+      setIsWatermarkOpen(true);
+      setIsCompanyOpen(false);
+      setIsPreviewOpen(false);
+    } else if (activeSub === 'preview') {
+      setIsPreviewOpen(true);
+      setIsCompanyOpen(false);
+      setIsWatermarkOpen(false);
+    } else {
+      setIsCompanyOpen(false);
+      setIsWatermarkOpen(false);
+      setIsPreviewOpen(false);
     }
   }, [activeSub]);
 
-  // Autosave draft to localStorage
+  // Auto-save draft to localStorage
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_DRAFT_KEY, JSON.stringify(state));
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(state));
     } catch (e) {
-      console.warn('Failed to autosave inspection draft:', e);
+      console.error('Failed to save inspection draft:', e);
     }
   }, [state]);
 
-  const handleSectionChange = (secId) => {
-    if (secId === 'company_details' || secId === 'company-details' || secId === 'company') {
-      setCompanyModalOpen(true);
-      if (onNavigate) onNavigate('inspection-reporting', 'company');
-      return;
+  // Save register to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem(REGISTER_KEY, JSON.stringify(reports));
+    } catch (e) {
+      console.error('Failed to save inspection register:', e);
     }
-    if (secId === 'preview') {
-      setPreviewModalOpen(true);
-      if (onNavigate) onNavigate('inspection-reporting', 'preview');
-      return;
-    }
+  }, [reports]);
 
-    setCurrentSection(secId);
-    if (onNavigate) {
-      onNavigate('inspection-reporting', secId);
+  // Save company settings
+  useEffect(() => {
+    try {
+      localStorage.setItem(COMPANY_KEY, JSON.stringify(company));
+    } catch (e) {
+      console.error('Failed to save company profile:', e);
     }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  }, [company]);
 
-  // State Updaters
-  const handleUpdateStage = (stageId, updatedStage) => {
-    setState(prev => ({
+  // Save watermark settings
+  useEffect(() => {
+    try {
+      localStorage.setItem(WATERMARK_KEY, JSON.stringify(watermark));
+    } catch (e) {
+      console.error('Failed to save watermark settings:', e);
+    }
+  }, [watermark]);
+
+  // Core Math & Metrics Evaluator
+  const metrics = calculateBlasterQualification(state);
+
+  // State update handler
+  const handleStateChange = (field, value) => {
+    setState((prev) => ({
       ...prev,
-      stages: {
-        ...(prev.stages || {}),
-        [stageId]: updatedStage
-      }
+      [field]: value
     }));
   };
 
-  const handleUpdatePhotoReport = (nextPhotos) => {
-    setState(prev => ({ ...prev, photoReport: nextPhotos }));
-  };
-
-  const handleUpdatePullOff = (nextPullOff) => {
-    setState(prev => ({ ...prev, pullOffAdhesion: nextPullOff }));
-  };
-
-  const handleUpdateCrossCut = (nextCrossCut) => {
-    setState(prev => ({ ...prev, crossCutAdhesion: nextCrossCut }));
-  };
-
-  const handleUpdateReworkLog = (nextRework) => {
-    setState(prev => ({ ...prev, reworkLog: nextRework }));
-  };
-
-  const handleSaveCompanyProfile = (newProfile) => {
-    setCompanyProfile(newProfile);
-    localStorage.setItem(COMPANY_STORAGE_KEY, JSON.stringify(newProfile));
-  };
-
-  const handleSaveWatermark = (newWatermark) => {
-    setWatermarkSettings(newWatermark);
-    localStorage.setItem(WATERMARK_STORAGE_KEY, JSON.stringify(newWatermark));
-  };
-
-  // Apply 1-Click Industry Preset
+  // Preset Applicator
   const handleApplyPreset = (preset) => {
-    setState(prev => {
-      const nextStages = { ...(prev.stages || {}) };
-      
-      // Update stage 1
-      if (preset.stages.s1) {
-        nextStages.s1 = {
-          ...nextStages.s1,
-          surfacePrep: {
-            ...nextStages.s1.surfacePrep,
-            abrasiveType: preset.stages.s1.abrasive || nextStages.s1.surfacePrep?.abrasiveType,
-            meshSize: preset.stages.s1.mesh || nextStages.s1.surfacePrep?.meshSize
-          },
-          paintDetails: {
-            ...nextStages.s1.paintDetails,
-            manufacturer: preset.stages.s1.paintMfr || nextStages.s1.paintDetails?.manufacturer,
-            productName: preset.stages.s1.paintName || nextStages.s1.paintDetails?.productName,
-            shadeRal: preset.stages.s1.ral || nextStages.s1.paintDetails?.shadeRal,
-            batchA: preset.stages.s1.batchA || nextStages.s1.paintDetails?.batchA,
-            batchB: preset.stages.s1.batchB || nextStages.s1.paintDetails?.batchB
-          },
-          dftRecord: {
-            ...nextStages.s1.dftRecord,
-            minDft: preset.stages.s1.dftMin || nextStages.s1.dftRecord?.minDft,
-            maxDft: preset.stages.s1.dftMax || nextStages.s1.dftRecord?.maxDft
-          }
-        };
-      }
-
-      // Update stage 2
-      if (preset.stages.s2) {
-        nextStages.s2 = {
-          ...nextStages.s2,
-          paintDetails: {
-            ...nextStages.s2.paintDetails,
-            manufacturer: preset.stages.s2.paintMfr || nextStages.s2.paintDetails?.manufacturer,
-            productName: preset.stages.s2.paintName || nextStages.s2.paintDetails?.productName,
-            shadeRal: preset.stages.s2.ral || nextStages.s2.paintDetails?.shadeRal,
-            batchA: preset.stages.s2.batchA || nextStages.s2.paintDetails?.batchA,
-            batchB: preset.stages.s2.batchB || nextStages.s2.paintDetails?.batchB
-          },
-          dftRecord: {
-            ...nextStages.s2.dftRecord,
-            minDft: preset.stages.s2.dftMin || nextStages.s2.dftRecord?.minDft,
-            maxDft: preset.stages.s2.dftMax || nextStages.s2.dftRecord?.maxDft
-          }
-        };
-      }
-
-      // Update stage 3
-      if (preset.stages.s3) {
-        nextStages.s3 = {
-          ...nextStages.s3,
-          paintDetails: {
-            ...nextStages.s3.paintDetails,
-            manufacturer: preset.stages.s3.paintMfr || nextStages.s3.paintDetails?.manufacturer,
-            productName: preset.stages.s3.paintName || nextStages.s3.paintDetails?.productName,
-            shadeRal: preset.stages.s3.ral || nextStages.s3.paintDetails?.shadeRal,
-            batchA: preset.stages.s3.batchA || nextStages.s3.paintDetails?.batchA,
-            batchB: preset.stages.s3.batchB || nextStages.s3.paintDetails?.batchB
-          },
-          dftRecord: {
-            ...nextStages.s3.dftRecord,
-            minDft: preset.stages.s3.dftMin || nextStages.s3.dftRecord?.minDft,
-            maxDft: preset.stages.s3.dftMax || nextStages.s3.dftRecord?.maxDft
-          }
-        };
-      }
-
-      return {
-        ...prev,
-        stages: nextStages
-      };
-    });
-
-    addToast('Preset Specs Applied', `Loaded "${preset.title}" into all inspection stages.`, 'success');
+    setState((prev) => ({
+      ...prev,
+      category: preset.category || prev.category,
+      referenceStandard: preset.refStd || prev.referenceStandard,
+      spMethod: preset.spMethod || prev.spMethod,
+      abType: preset.abType || prev.abType,
+      abMesh: preset.abMesh || prev.abMesh,
+      spProfReq: preset.spProfReq || prev.spProfReq,
+      spStdReq: preset.spStdReq || prev.spStdReq,
+      coatingSystem: preset.coatingSystem || prev.coatingSystem
+    }));
+    addToast(`Loaded ${preset.title} preset template!`, 'success');
   };
 
-  const handleResetWorkspace = () => {
-    if (window.confirm('Reset all inspection sheets and return to clean default values?')) {
-      const fresh = createInitialInspectionState();
-      setState(fresh);
-      localStorage.setItem(STORAGE_DRAFT_KEY, JSON.stringify(fresh));
-      addToast('Workspace Reset', 'Inspection sheets restored to default state.', 'info');
+  // Reset Qualification
+  const handleReset = () => {
+    if (window.confirm('Reset all qualification fields back to clean initial state?')) {
+      setState(INITIAL_BLASTER_STATE);
+      addToast('Reset qualification record to default template.', 'info');
     }
   };
 
-  const handleOpenGuideline = () => {
-    openGuideline({
-      title: 'Daily Coating Inspection Report (CIR) Standards',
-      standards: [
-        'ISO 8501-1 Visual Cleanliness',
-        'ISO 8502-4 Climatic Condition Monitoring',
-        'SSPC-PA 2 Dry Film Thickness Protocol',
-        'ASTM D4541 Hydraulic Pull-off Adhesion',
-        'ASTM D3359 Cross-Cut Tape Adhesion',
-        'ISO 19840 Rough Surface DFT Measurement'
-      ],
-      overview: 'Module 09 digitizes daily QA/QC inspection records, 24-hour ambient psychrometric logs, multi-coat DFT spot distributions, ASTM D4541 hydraulic pull-off adhesion, and photo reporting.',
-      formula: 'Dew Point Margin: ΔT = T_steel - T_dewpoint ≥ 3.0°C\nSSPC-PA 2 Spot Rule: 5 spots (≤ 10 m²), 10 spots (10–30 m²), 15 spots (30–100 m²)\nLower Bound: 0.80 × Min NDFT | Upper Bound: 1.20 × Max Allowable',
-      rules: [
-        'Steel temperature must be at least 3.0°C above the dew point at all times during abrasive blasting and coating application.',
-        'SSPC-PA 2 Level 3 requires spot readings to average within specified NDFT range with no spot below 80% or above 120%.',
-        'Hydraulic pull-off dollies must be allowed to cure for at least 24 hours before tensile pull.',
-        'If glue failure exceeds 50% on ASTM D4541 pull-off dolly, the test is invalid and must be re-tested.'
-      ],
-      advice: 'Ensure all gauge serial numbers and probe calibration expiry dates are recorded before sign-off.'
-    });
+  // Generate Report Number
+  const generateReportNo = () => {
+    const op = (state.operatorName || 'OPERATOR').replace(/\s+/g, '-').toUpperCase().slice(0, 8);
+    const dateStr = (state.repDate || new Date().toISOString().split('T')[0]).replace(/-/g, '');
+    const seq = (reports.length + 1).toString().padStart(3, '0');
+    return `BL-QR-${dateStr}-${op}-${seq}`;
   };
 
-  // Listen for Top Header Actions (preview, save-draft, register, reset)
+  // Save Draft to Register
+  const handleSaveDraft = () => {
+    const repNo = state.repNo || generateReportNo();
+    const newRecord = {
+      ...state,
+      id: state.id || `rep_${Date.now()}`,
+      repNo,
+      status: 'Draft',
+      verdict: metrics.verdict,
+      overallScore: metrics.overallScore,
+      prePct: metrics.prePct,
+      postPct: metrics.postPct,
+      chkPct: metrics.chkPct,
+      inspPct: metrics.inspPct,
+      savedAt: new Date().toISOString()
+    };
+
+    setState((prev) => ({ ...prev, id: newRecord.id, repNo }));
+
+    setReports((prev) => {
+      const idx = prev.findIndex((r) => r.id === newRecord.id);
+      if (idx >= 0) {
+        const updated = [...prev];
+        updated[idx] = newRecord;
+        return updated;
+      }
+      return [newRecord, ...prev];
+    });
+
+    addToast(`Saved draft qualification report (${repNo})!`, 'success');
+  };
+
+  // Approve and Lock Qualification Record
+  const handleConfirmApprove = () => {
+    const repNo = state.repNo || generateReportNo();
+    const approvedRecord = {
+      ...state,
+      id: state.id || `rep_${Date.now()}`,
+      repNo,
+      status: 'Approved',
+      verdict: metrics.verdict,
+      overallScore: metrics.overallScore,
+      prePct: metrics.prePct,
+      postPct: metrics.postPct,
+      chkPct: metrics.chkPct,
+      inspPct: metrics.inspPct,
+      savedAt: new Date().toISOString()
+    };
+
+    setState((prev) => ({ ...prev, id: approvedRecord.id, repNo }));
+
+    setReports((prev) => {
+      const idx = prev.findIndex((r) => r.id === approvedRecord.id);
+      if (idx >= 0) {
+        const updated = [...prev];
+        updated[idx] = approvedRecord;
+        return updated;
+      }
+      return [approvedRecord, ...prev];
+    });
+
+    addToast(`Validated and approved qualification dossier (${repNo})!`, 'success');
+  };
+
+  // Load report from register
+  const handleLoadReport = (rep) => {
+    setState(rep);
+    addToast(`Loaded qualification report ${rep.repNo}!`, 'info');
+    if (onNavigate) onNavigate('inspection-reporting', 'info');
+  };
+
+  // Duplicate report
+  const handleDuplicateReport = (rep) => {
+    const dup = {
+      ...rep,
+      id: `rep_${Date.now()}`,
+      repNo: '',
+      status: 'Draft',
+      savedAt: new Date().toISOString()
+    };
+    setReports((prev) => [dup, ...prev]);
+    addToast(`Duplicated report ${rep.repNo} as new draft.`, 'success');
+  };
+
+  // Delete report
+  const handleDeleteReport = (id) => {
+    if (window.confirm('Delete this qualification report from master register?')) {
+      setReports((prev) => prev.filter((r) => r.id !== id));
+      addToast('Report deleted from register.', 'info');
+    }
+  };
+
+  // Test catalog selection handler
+  const handleSelectCatalogTest = (testItem) => {
+    const currentRows = state.inspRows || [];
+    const newRow = {
+      p: testItem.t,
+      std: testItem.std,
+      req: testItem.req,
+      obs: 'Inspection completed - conforms to specification',
+      res: 'Pass'
+    };
+    setState((prev) => ({
+      ...prev,
+      inspRows: [...currentRows, newRow]
+    }));
+    addToast(`Added inspection test: ${testItem.t}`, 'success');
+  };
+
+  // Intercept Global Header Actions
   useEffect(() => {
     const handleHeaderAction = (e) => {
       const action = e.detail?.action;
-      if (action === 'save-draft') {
-        try {
-          localStorage.setItem(STORAGE_DRAFT_KEY, JSON.stringify(state));
-          addToast('Draft Saved', 'Daily Coating Inspection draft saved to storage.', 'success');
-        } catch (err) {
-          console.error(err);
-        }
-      } else if (action === 'preview') {
-        setPreviewModalOpen(true);
-      } else if (action === 'register') {
-        handleSectionChange('report_register');
-      } else if (action === 'reset') {
-        handleResetWorkspace();
+      if (action === 'save' || action === 'save-draft') handleSaveDraft();
+      if (action === 'validate') setIsApprovalOpen(true);
+      if (action === 'preview') setIsPreviewOpen(true);
+      if (action === 'register') {
+        if (onNavigate) onNavigate('inspection-reporting', 'register');
+      }
+      if (action === 'reset') handleReset();
+      if (action === 'guideline') {
+        openGuideline({
+          title: 'Blaster / Operator Qualification Management System',
+          category: 'Digital Quality Control & Personnel Qualification',
+          standard: 'ISO 8501-1 · SSPC-SP 10 · SSPC-AB 1/2/3 · ASTM D4417 · ASTM D4228',
+          description:
+            'A standardized digital qualification workflow for surface preparation blasters and abrasive operators. Ensures full traceability and compliance with international oil & gas / infrastructure coating specifications.',
+          tips: [
+            'Record dry bulb, wet bulb, and steel temperature to verify Delta-T >= 3°C before blasting.',
+            'Maintain abrasive cleanliness (conductivity <= 150 µS/cm and no oil contamination).',
+            'Take 5 surface profile spot readings across the test plate and verify the average conforms to specification.',
+            'Ensure all 12 critical elements of the practical assessment checklist are evaluated.'
+          ]
+        });
       }
     };
 
     window.addEventListener('bg_header_action', handleHeaderAction);
     return () => window.removeEventListener('bg_header_action', handleHeaderAction);
-  }, [state]);
+  }, [state, metrics]);
 
-  // Sub-Navigation Rail Items
-  const railItems = [
-    { id: 'hub', label: 'Hub Overview', icon: Sparkles },
-    { id: 's1', label: 's1 · Blasting & Primer', icon: Hammer, badge: 'Stage 1' },
-    { id: 's2', label: 's2 · 1st Intermediate', icon: Layers, badge: 'Stage 2' },
-    { id: 's3', label: 's3 · 2nd Intermediate', icon: Layers, badge: 'Stage 3' },
-    { id: 's4', label: 's4 · 3rd Topcoat', icon: Layers, badge: 'Stage 4' },
-    { id: 'photo', label: 'Photo Evidence Grid', icon: Camera, badge: '5-Col' },
-    { id: 'pull', label: 'Pull-Off Adhesion', icon: ShieldCheck, badge: 'D4541' },
-    { id: 'cross', label: 'Cross-Cut Adhesion', icon: SlidersHorizontal, badge: 'D3359' },
-    { id: 'std', label: 'Standards Matrix', icon: BookOpen },
-    { id: 'refp', label: 'Pull-Off Guide', icon: ShieldCheck, badge: 'Ref' },
-    { id: 'refc', label: 'Cross-Cut Guide', icon: SlidersHorizontal, badge: 'Ref' },
-    { id: 'rwkreg', label: 'Rework Register', icon: AlertTriangle, badge: 'NCR PRO' },
-    { id: 'dashboard', label: 'Analytics Dashboard', icon: BarChart3, badge: 'BI PRO' },
-    { id: 'master', label: 'Master Systems', icon: Layers, badge: 'PRO' },
-    { id: 'report_register', label: 'Reports Register', icon: History },
-    { id: 'report', label: 'Print Dossier', icon: Printer, isPro: true }
-  ];
+  const nav = (sub) => {
+    if (onNavigate) {
+      onNavigate('inspection-reporting', sub);
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Render standalone printable view if in print mode
+  if (activeSub === 'print' || activeSub === 'report' || activeSub === 'xlprint') {
+    return (
+      <div className="bg-slate-100 dark:bg-slate-950 min-h-screen py-6 px-2 sm:px-4">
+        <div className="max-w-4xl mx-auto space-y-4">
+          <div className="flex items-center justify-between bg-white dark:bg-slate-900 p-4 rounded-xl shadow-xs border border-slate-200 dark:border-slate-800 print:hidden">
+            <button
+              onClick={() => nav('hub')}
+              className="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 transition"
+            >
+              ← Back to Hub
+            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => window.print()}
+                className="px-4 py-2 rounded-lg bg-[#E8700A] text-white text-xs font-bold shadow-xs hover:bg-[#F5911F] transition"
+              >
+                🖨 Print / Export PDF
+              </button>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl shadow-md border border-slate-200 overflow-hidden">
+            <BlasterPrintDossier
+              state={state}
+              metrics={metrics}
+              company={company}
+              watermark={watermark}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6 w-full pb-16 animate-in fade-in duration-200">
-      
-      {/* 1. Master Header Action Bar (Hidden on Hub view) */}
-      {currentSection !== 'hub' && (
-        <div className="bg-white border border-slate-200 rounded-3xl p-5 md:p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="bg-amber-50 text-[#D97706] border border-amber-200 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase font-mono tracking-wider">
-                QA/QC Module 09 · Coating Inspection &amp; Reporting
-              </span>
-              <h1 className="text-lg md:text-xl font-extrabold text-slate-900">
-                Coating Inspection, Adhesion Test &amp; Photo Reporting
-              </h1>
-            </div>
-            <p className="text-xs text-slate-500 mt-1">
-              Standardized inspection suite for surface prep, 24-hr psychrometrics, multi-coat DFT, ASTM D4541 pull-off adhesion, and photo reporting.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              onClick={handleOpenGuideline}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer"
-            >
-              <BookOpen className="w-3.5 h-3.5" />
-              Standards Guide
-            </button>
-
-            <button
-              onClick={() => setCompanyModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#F7F8FA] hover:bg-[#FFF4E3] text-[#4E5B6A] hover:text-[#9E1B1E] border border-[#D8DEE5] text-xs font-bold transition cursor-pointer"
-            >
-              <Building2 className="w-3.5 h-3.5 text-[#E87B1E]" />
-              Company Details
-            </button>
-
-            <button
-              onClick={() => setPreviewModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-[#E87B1E] to-[#9E1B1E] hover:opacity-90 text-white text-xs font-bold font-rajdhani uppercase tracking-wider shadow-xs transition cursor-pointer"
-            >
-              <Eye className="w-3.5 h-3.5" />
-              Preview Dossier
-            </button>
-
-            <button
-              onClick={handleResetWorkspace}
-              className="p-2 rounded-xl border border-[#D8DEE5] text-[#7E8B99] hover:text-[#C62828] hover:bg-red-50 transition cursor-pointer"
-              title="Reset Workspace"
-            >
-              <RotateCcw className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* 2. Horizontal Scrollable Sub-Navigation Rail (Hidden on Hub view) */}
-      {currentSection !== 'hub' && (
-        <div className="bg-white border border-[#D8DEE5] rounded-2xl p-1.5 shadow-[0_2px_8px_rgba(20,24,32,0.06)] overflow-x-auto select-none flex items-center gap-1">
-          {railItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = currentSection === item.id || (item.id === 'report_register' && currentSection === 'register');
-
-            return (
-              <button
-                key={item.id}
-                onClick={() => handleSectionChange(item.id)}
-                className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition whitespace-nowrap cursor-pointer ${
-                  isActive
-                    ? 'bg-gradient-to-r from-[#E87B1E] to-[#9E1B1E] text-white shadow-xs font-rajdhani uppercase tracking-wider'
-                    : 'text-[#4E5B6A] hover:text-[#1B222C] hover:bg-[#F7F8FA]'
-                }`}
-              >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-[#7E8B99]'}`} />
-                <span>{item.label}</span>
-                {item.badge && (
-                  <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded-full ${
-                    isActive ? 'bg-white/20 text-white' : 'bg-[#F7F8FA] border border-[#CBD5E1] text-[#4E5B6A]'
-                  }`}>
-                    {item.badge}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      )}
-
-      {/* 3. Sub-Component Router Switcher with Error Boundary */}
-      <ErrorBoundary title="Inspection Section">
-        <div className="min-h-[500px]">
-          {currentSection === 'hub' && (
-            <InspectionHub
-              state={state}
-              onNavigate={handleSectionChange}
-              onApplyPreset={handleApplyPreset}
-              onOpenCompany={() => setCompanyModalOpen(true)}
-              onOpenPreview={() => setPreviewModalOpen(true)}
-              onOpenPrint={() => window.print()}
-              onNewGeneration={() => {
-                handleResetWorkspace();
-                handleSectionChange('s1');
-              }}
-            />
-          )}
-
-          {(currentSection === 's1' || currentSection === 's2' || currentSection === 's3' || currentSection === 's4') && (
-            <InspectionStage
-              stageId={currentSection}
-              state={state}
-              onChangeStageState={handleUpdateStage}
-              onNavigateStage={handleSectionChange}
-            />
-          )}
-
-          {currentSection === 'photo' && (
-            <InspectionPhotoReport
-              photoReport={state.photoReport}
-              onUpdatePhotoReport={handleUpdatePhotoReport}
-            />
-          )}
-
-          {currentSection === 'pull' && (
-            <InspectionPullOffAdhesion
-              pullOffData={state.pullOffAdhesion}
-              onUpdatePullOff={handleUpdatePullOff}
-            />
-          )}
-
-          {currentSection === 'cross' && (
-            <InspectionCrossCutAdhesion
-              crossCutData={state.crossCutAdhesion}
-              onUpdateCrossCut={handleUpdateCrossCut}
-            />
-          )}
-
-          {currentSection === 'rwkreg' && (
-            <InspectionReworkRegister
-              reworkLog={state.reworkLog}
-              onUpdateReworkLog={handleUpdateReworkLog}
-            />
-          )}
-
-          {currentSection === 'dashboard' && (
-            <InspectionDashboard state={state} />
-          )}
-
-          {(currentSection === 'std' || currentSection === 'refp' || currentSection === 'refc') && (
-            <InspectionStandardsReference 
-              key={currentSection}
-              initialTab={currentSection} 
-              onTabChange={handleSectionChange}
-            />
-          )}
-
-          {currentSection === 'master' && (
-            <InspectionMasterList onApplyPreset={handleApplyPreset} />
-          )}
-
-          {(currentSection === 'report_register' || currentSection === 'register') && (
-            <InspectionReportRegister
-              currentState={state}
-              onLoadReport={(loaded) => setState(loaded)}
-              onOpenPreview={() => setPreviewModalOpen(true)}
-            />
-          )}
-
-          {(currentSection === 'report' || currentSection === 'xlprint' || currentSection === 'print') && (
-            <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs">
-              <div className="flex items-center justify-between pb-4 mb-4 border-b border-slate-100">
-                <div>
-                  <h3 className="text-base font-bold text-slate-900">Technical Print Dossier Preview</h3>
-                  <p className="text-xs text-slate-500">Official ISO format ready for client submission &amp; PDF generation.</p>
+    <ErrorBoundary>
+      <div 
+        className="min-h-screen bg-[#F2F4F6] text-[#1B222C] flex flex-col transition-colors duration-200"
+        style={{
+          fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+          background: 'radial-gradient(circle at 12% 10%, rgba(232,123,30,0.05) 0%, transparent 36%), radial-gradient(circle at 88% 88%, rgba(184,52,0,0.04) 0%, transparent 40%), #F2F4F6'
+        }}
+      >
+        
+        {/* HERO SECTION (Shown across workflow sheets) */}
+        {WORKFLOW_STEPS.includes(activeSub) && (
+          <section className="hero">
+            <div className="hero-grid"></div>
+            <div className="hero-in">
+              <div>
+                <div className="hkick"><span className="hdot"></span>Operator Qualification · Blaster · Coating Inspector</div>
+                <h1 className="htit">Operator Qualification &amp;<br /><em>Assessment Report System</em></h1>
+                <p className="hsub">Enterprise-grade digital qualification platform with real-time auto-calculations, ISO 8501 / SSPC / NACE / AMPP compliance logic, dew-point analysis, surface profile verification, Pre/Post training assessment, multi-stage approval workflow, operator-photo certificates and MNC-grade printable reports for EPC, refinery, offshore &amp; petrochemical operations.</p>
+                <div className="hstds">
+                  <span className="hstd">ISO 8501-1</span>
+                  <span className="hstd">ISO 8502-3</span>
+                  <span className="hstd">SSPC-AB 1/3</span>
+                  <span className="hstd">SSPC VIS 1</span>
+                  <span className="hstd">ASTM D4285</span>
+                  <span className="hstd">ASTM D4417</span>
+                  <span className="hstd">NACE / AMPP</span>
+                  <span className="hstd">ASTM D4228</span>
                 </div>
-                <button
-                  onClick={() => window.print()}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-xs transition cursor-pointer"
-                >
-                  <Printer className="w-4 h-4" />
-                  Print / Save PDF
-                </button>
               </div>
-              <InspectionReportView
-                state={state}
-                companyProfile={companyProfile}
-                watermarkSettings={watermarkSettings}
-              />
+              <div className="hero-side">
+                <div className="hero-card">
+                  <div className="hero-card-ic">📋</div>
+                  <div>
+                    <div className="hero-card-l">Report ID</div>
+                    <div className="hero-card-v">{state.reportNo || 'BG/Blast/01'}</div>
+                  </div>
+                </div>
+                <div className="hero-card">
+                  <div className="hero-card-ic">🛡️</div>
+                  <div>
+                    <div className="hero-card-l">Status</div>
+                    <div className="hero-card-v">{metrics.verdict === 'PASS' ? 'Approved' : 'In Progress'}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* WRAP CONTAINER */}
+        <div className="wrap">
+          
+          {/* Sticky Progress Panel (Visible only on active workflow sheets when modal is not open) */}
+          {WORKFLOW_STEPS.includes(activeSub) && !isPreviewOpen && (
+            <div className="frozen-top">
+              <div className="prog-panel">
+                <div className="prog-panel-l">
+                  <div className="prog-panel-title">
+                    <span className="ic">⚙️</span>QUALIFICATION WORKFLOW PROGRESS
+                    <span className="stage">
+                      {activeSub === 'info' ? 'STAGE 1 OF 6' :
+                       activeSub === 'train' ? 'STAGE 2 OF 6' :
+                       activeSub === 'checklist' ? 'STAGE 3 OF 6' :
+                       activeSub === 'blasting' ? 'STAGE 4 OF 6' :
+                       activeSub === 'photo' ? 'STAGE 5 OF 6' :
+                       activeSub === 'verdict' ? 'STAGE 6 OF 6' :
+                       'STAGE ' + (activeSub?.toUpperCase() || 'WORKFLOW')}
+                    </span>
+                  </div>
+                  <div className="prog-bar-wrap">
+                    <div className="prog-bar-fill" style={{ width: `${metrics.totalProgress || 0}%` }}></div>
+                  </div>
+                  <div className="prog-chips">
+                    <span 
+                      className={`prog-chip cursor-pointer ${activeSub === 'info' ? 'act' : ''}`}
+                      onClick={() => nav('info')}
+                    >
+                      Project &amp; Operator
+                      <span className="num">{metrics.stepCompletions?.info || 0}%</span>
+                    </span>
+                    <span 
+                      className={`prog-chip cursor-pointer ${activeSub === 'train' ? 'act' : ''}`}
+                      onClick={() => nav('train')}
+                    >
+                      Training &amp; Test
+                      <span className="num">{metrics.stepCompletions?.train || 0}%</span>
+                    </span>
+                    <span 
+                      className={`prog-chip cursor-pointer ${activeSub === 'checklist' ? 'act' : ''}`}
+                      onClick={() => nav('checklist')}
+                    >
+                      Assessment Checklist
+                      <span className="num">{metrics.stepCompletions?.checklist || 0}%</span>
+                    </span>
+                    <span 
+                      className={`prog-chip cursor-pointer ${activeSub === 'blasting' ? 'act' : ''}`}
+                      onClick={() => nav('blasting')}
+                    >
+                      Blasting Process
+                      <span className="num">{metrics.stepCompletions?.blasting || 0}%</span>
+                    </span>
+                    <span 
+                      className={`prog-chip cursor-pointer ${activeSub === 'photo' ? 'act' : ''}`}
+                      onClick={() => nav('photo')}
+                    >
+                      Photographic Report
+                      <span className="num">{metrics.stepCompletions?.photo || 0}%</span>
+                    </span>
+                    <span 
+                      className={`prog-chip cursor-pointer ${activeSub === 'verdict' ? 'act' : ''}`}
+                      onClick={() => nav('verdict')}
+                    >
+                      Verdict &amp; Approval
+                      <span className="num">{metrics.stepCompletions?.verdict || 0}%</span>
+                    </span>
+                  </div>
+                </div>
+                <div className="prog-donut">
+                  <svg width="70" height="70" viewBox="0 0 70 70">
+                    <defs>
+                      <linearGradient id="donut-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#F5911F"></stop>
+                        <stop offset="50%" stopColor="#E8700A"></stop>
+                        <stop offset="100%" stopColor="#B83400"></stop>
+                      </linearGradient>
+                    </defs>
+                    <circle cx="35" cy="35" r="28" fill="none" stroke="rgba(232,112,10,.14)" strokeWidth="7"></circle>
+                    <circle 
+                      cx="35" cy="35" r="28" fill="none" stroke="url(#donut-grad)" strokeWidth="7"
+                      strokeDasharray={`${(metrics.totalProgress / 100) * 175.9} 175.9`}
+                      strokeLinecap="round" transform="rotate(-90 35 35)"
+                    ></circle>
+                  </svg>
+                  <div className="prog-donut-text">
+                    <div className="prog-donut-pct">{Math.round(metrics.totalProgress || 0)}%</div>
+                    <div className="prog-donut-lbl">Complete</div>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
-          {currentSection === 'watermark' && (
-            <InspectionWatermarkControl
-              watermarkSettings={watermarkSettings}
-              onUpdateWatermark={handleSaveWatermark}
-            />
-          )}
+          {/* Dynamic Tool Content Routing */}
+          <main className="transition-all pt-4">
+            {(activeSub === 'hub' || activeSub === 'home') && (
+              <BlasterHub
+                state={state}
+                metrics={metrics}
+                reports={reports}
+                onNavigate={nav}
+                onApplyPreset={handleApplyPreset}
+                onNewGeneration={() => {
+                  setState(INITIAL_BLASTER_STATE);
+                  nav('info');
+                }}
+                onOpenPreview={() => setIsPreviewOpen(true)}
+                onOpenPrint={() => nav('print')}
+              />
+            )}
+
+            {activeSub === 'dashboard' && (
+              <BlasterDashboard
+                state={state}
+                metrics={metrics}
+                onNavigate={nav}
+              />
+            )}
+
+            {(activeSub === 'info' || activeSub === 'project-operator' || activeSub === 'project_operator') && (
+              <BlasterProjectInfo
+                state={state}
+                onChange={handleStateChange}
+                metrics={metrics}
+                onNavigate={nav}
+                onSaveDraft={handleSaveDraft}
+                onValidate={() => setIsApprovalOpen(true)}
+                onReset={handleReset}
+              />
+            )}
+
+            {(activeSub === 'train' || activeSub === 'training-test' || activeSub === 'training_test') && (
+              <BlasterTrainingTest
+                state={state}
+                onChange={handleStateChange}
+                metrics={metrics}
+                onNavigate={nav}
+                onSaveDraft={handleSaveDraft}
+                onValidate={() => setIsApprovalOpen(true)}
+                onReset={handleReset}
+              />
+            )}
+
+            {activeSub === 'checklist' && (
+              <BlasterChecklist
+                state={state}
+                onChange={handleStateChange}
+                metrics={metrics}
+                onNavigate={nav}
+                onSaveDraft={handleSaveDraft}
+                onValidate={() => setIsApprovalOpen(true)}
+                onReset={handleReset}
+              />
+            )}
+
+            {(activeSub === 'blasting' || activeSub === 'blasting-process' || activeSub === 'blasting_process') && (
+              <BlasterProcess
+                state={state}
+                onChange={handleStateChange}
+                metrics={metrics}
+                onNavigate={nav}
+                onOpenCatalog={() => setIsCatalogOpen(true)}
+                onSaveDraft={handleSaveDraft}
+                onValidate={() => setIsApprovalOpen(true)}
+                onReset={handleReset}
+              />
+            )}
+
+            {(activeSub === 'photo' || activeSub === 'photo-report' || activeSub === 'photo_report') && (
+              <BlasterPhotoReport
+                state={state}
+                onChange={handleStateChange}
+                metrics={metrics}
+                onNavigate={nav}
+                onSaveDraft={handleSaveDraft}
+                onValidate={() => setIsApprovalOpen(true)}
+                onReset={handleReset}
+              />
+            )}
+
+            {(activeSub === 'verdict' || activeSub === 'verdict-approval' || activeSub === 'verdict_approval') && (
+              <BlasterVerdictApproval
+                state={state}
+                onChange={handleStateChange}
+                metrics={metrics}
+                onNavigate={nav}
+                onSaveDraft={handleSaveDraft}
+                onApprove={() => setIsApprovalOpen(true)}
+                onReset={handleReset}
+              />
+            )}
+
+            {activeSub === 'summary' && (
+              <BlasterSummary
+                state={state}
+                onChange={handleStateChange}
+                metrics={metrics}
+                onNavigate={nav}
+                onOpenPreview={() => setIsPreviewOpen(true)}
+              />
+            )}
+
+            {(activeSub === 'register' || activeSub === 'reports' || activeSub === 'report_register') && (
+              <BlasterRegister
+                reports={reports}
+                onLoadReport={handleLoadReport}
+                onDuplicateReport={handleDuplicateReport}
+                onDeleteReport={handleDeleteReport}
+                onNewReport={() => {
+                  setState(INITIAL_BLASTER_STATE);
+                  nav('info');
+                }}
+                onOpenPreview={() => setIsPreviewOpen(true)}
+                onOpenPrint={() => nav('print')}
+              />
+            )}
+
+            {(activeSub === 'company' || activeSub === 'company-details' || activeSub === 'company_details') && (
+              <BlasterCompanySheet
+                company={company}
+                onChange={(field, val) => setCompany((prev) => ({ ...prev, [field]: val }))}
+                onNavigate={nav}
+                onSaveDraft={handleSaveDraft}
+                onValidate={() => setIsApprovalOpen(true)}
+              />
+            )}
+
+            {activeSub === 'watermark' && (
+              <BlasterWatermarkSheet
+                watermark={watermark}
+                onChange={(field, val) => setWatermark((prev) => ({ ...prev, [field]: val }))}
+                onNavigate={nav}
+                onSaveDraft={handleSaveDraft}
+                onValidate={() => setIsApprovalOpen(true)}
+              />
+            )}
+          </main>
         </div>
-      </ErrorBoundary>
 
-      {/* Global Modals */}
-      <InspectionCompanyDetailsModal
-        isOpen={companyModalOpen}
-        onClose={() => setCompanyModalOpen(false)}
-        companyProfile={companyProfile}
-        onSaveProfile={handleSaveCompanyProfile}
-      />
+        {/* Modal Dialogs Suite */}
+        <BlasterTestCatalogModal
+          isOpen={isCatalogOpen}
+          onClose={() => setIsCatalogOpen(false)}
+          onSelectTest={handleSelectCatalogTest}
+        />
 
-      <InspectionPreviewModal
-        isOpen={previewModalOpen}
-        onClose={() => setPreviewModalOpen(false)}
-        state={state}
-        companyProfile={companyProfile}
-        watermarkSettings={watermarkSettings}
-      />
+        <BlasterApprovalModal
+          isOpen={isApprovalOpen}
+          onClose={() => setIsApprovalOpen(false)}
+          state={state}
+          metrics={metrics}
+          onConfirmApprove={handleConfirmApprove}
+        />
 
-    </div>
+        <BlasterCompanyModal
+          isOpen={isCompanyOpen}
+          onClose={() => {
+            setIsCompanyOpen(false);
+            if (activeSub === 'company-details' || activeSub === 'company_details' || activeSub === 'company') {
+              nav('hub');
+            }
+          }}
+          company={company}
+          onChange={(field, val) => setCompany((prev) => ({ ...prev, [field]: val }))}
+        />
+
+        <BlasterWatermarkControl
+          isOpen={isWatermarkOpen}
+          onClose={() => {
+            setIsWatermarkOpen(false);
+            if (activeSub === 'watermark') {
+              nav('hub');
+            }
+          }}
+          watermark={watermark}
+          onChange={(field, val) => setWatermark((prev) => ({ ...prev, [field]: val }))}
+        />
+
+        <BlasterPreviewModal
+          isOpen={isPreviewOpen}
+          onClose={() => {
+            setIsPreviewOpen(false);
+            if (activeSub === 'preview' || activeSub === 'report') {
+              nav('hub');
+            }
+          }}
+          state={state}
+          metrics={metrics}
+          company={company}
+          watermark={watermark}
+          onApprove={() => {
+            setIsPreviewOpen(false);
+            setIsApprovalOpen(true);
+          }}
+        />
+
+      </div>
+    </ErrorBoundary>
   );
 }
