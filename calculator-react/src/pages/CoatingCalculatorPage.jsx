@@ -79,10 +79,13 @@ import ProcurementSuite from '../tools/specialized/ProcurementSuite';
 // Shared PRO Reference & Classification Component
 import ProReferenceCard from '../components/ProReferenceCard';
 import { fetchUserProfile } from '../utils/api';
+import CalculationLogDrawer from '../components/CalculationLogDrawer';
+import { calculatorService } from '../services/calculatorService';
 
 export default function CoatingCalculatorPage({ activeSubTool, setActiveSubTool }) {
   // Read authenticated user state
   const [currentUser, setCurrentUser] = React.useState(() => {
+    if (localStorage.getItem('bg_auth_logged_in') !== 'true') return null;
     try {
       const stored = localStorage.getItem('bg_user');
       return stored ? JSON.parse(stored) : null;
@@ -92,13 +95,44 @@ export default function CoatingCalculatorPage({ activeSubTool, setActiveSubTool 
   });
 
   const [checkingPro, setCheckingPro] = React.useState(false);
+  const [isLogDrawerOpen, setIsLogDrawerOpen] = React.useState(false);
+  const [logCount, setLogCount] = React.useState(0);
+
+  const refreshLogCount = React.useCallback(async () => {
+    try {
+      const logs = await calculatorService.getLogs();
+      setLogCount(logs?.length || 0);
+    } catch (e) {}
+  }, []);
+
+  React.useEffect(() => {
+    refreshLogCount();
+    const handleLogSaved = () => refreshLogCount();
+    window.addEventListener('bg_log_saved', handleLogSaved);
+    return () => window.removeEventListener('bg_log_saved', handleLogSaved);
+  }, [refreshLogCount]);
+
+  const handleRestoreTool = (log) => {
+    if (log?.tool_id) {
+      setActiveSubTool(log.tool_id);
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('bg_restore_calculation', { detail: log }));
+      }, 120);
+    }
+  };
 
   const refreshUserStatus = React.useCallback(async () => {
+    if (localStorage.getItem('bg_auth_logged_in') !== 'true') {
+      setCurrentUser(null);
+      return;
+    }
     setCheckingPro(true);
     try {
       const refreshed = await fetchUserProfile();
-      if (refreshed) {
+      if (refreshed && localStorage.getItem('bg_auth_logged_in') === 'true') {
         setCurrentUser(refreshed);
+      } else {
+        setCurrentUser(null);
       }
     } catch (e) {
       console.warn('Failed to refresh user profile:', e);
@@ -107,10 +141,14 @@ export default function CoatingCalculatorPage({ activeSubTool, setActiveSubTool 
     }
   }, []);
 
-  // 1. Listen for background user updates within window
+  // 1. Listen for background user updates and logout within window
   React.useEffect(() => {
     const handleUserUpdate = (e) => {
       try {
+        if (localStorage.getItem('bg_auth_logged_in') !== 'true') {
+          setCurrentUser(null);
+          return;
+        }
         if (e?.detail) {
           setCurrentUser(e.detail);
         } else {
@@ -118,10 +156,21 @@ export default function CoatingCalculatorPage({ activeSubTool, setActiveSubTool 
           if (stored) setCurrentUser(JSON.parse(stored));
           else setCurrentUser(null);
         }
-      } catch (e) {}
+      } catch (e) {
+        setCurrentUser(null);
+      }
     };
+
+    const handleLogout = () => {
+      setCurrentUser(null);
+    };
+
     window.addEventListener('bg_user_updated', handleUserUpdate);
-    return () => window.removeEventListener('bg_user_updated', handleUserUpdate);
+    window.addEventListener('bg_logout', handleLogout);
+    return () => {
+      window.removeEventListener('bg_user_updated', handleUserUpdate);
+      window.removeEventListener('bg_logout', handleLogout);
+    };
   }, []);
 
   // 2. Refresh on mount to get live status from Django backend
@@ -156,6 +205,68 @@ export default function CoatingCalculatorPage({ activeSubTool, setActiveSubTool 
       refreshUserStatus();
     }
   }, [activeSubTool, isUserPro, refreshUserStatus]);
+
+  // 5. 1-Minute Guest Preview Timer: If user is not logged in after 1 minute on Coating Calculator,
+  // trigger static backdrop login modal to preserve their calculation audit logs.
+  React.useEffect(() => {
+    const isLogged = Boolean(
+      localStorage.getItem('bg_auth_logged_in') === 'true' && currentUser
+    );
+    if (isLogged) {
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.removeItem('bg_guest_calc_start');
+        sessionStorage.removeItem('bg_guest_timer_done');
+      }
+      return;
+    }
+
+    // If 1-minute limit was already triggered for this guest session, keep compulsory modal open
+    if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('bg_guest_timer_done') === 'true') {
+      console.log('[CoatingCalculator] Guest preview already reached limit. Opening compulsory modal.');
+      window.dispatchEvent(new CustomEvent('bg_open_auth_modal', { 
+        detail: { isCompulsory: true } 
+      }));
+      return;
+    }
+
+    // Read or set session start time
+    let startTime = 0;
+    if (typeof sessionStorage !== 'undefined') {
+      const storedStart = sessionStorage.getItem('bg_guest_calc_start');
+      if (storedStart) {
+        startTime = parseInt(storedStart, 10);
+      }
+      if (!startTime || isNaN(startTime)) {
+        startTime = Date.now();
+        sessionStorage.setItem('bg_guest_calc_start', startTime.toString());
+      }
+    } else {
+      startTime = Date.now();
+    }
+
+    const ONE_MINUTE_MS = 60 * 1000;
+    const elapsed = Date.now() - startTime;
+    const remainingMs = Math.max(0, ONE_MINUTE_MS - elapsed);
+
+    console.log(`[CoatingCalculator] Guest session detected. 1-minute preview timer running: ${Math.round(remainingMs / 1000)}s remaining.`);
+
+    const timer = setTimeout(() => {
+      const stillLogged = Boolean(
+        localStorage.getItem('bg_auth_logged_in') === 'true'
+      );
+      if (!stillLogged) {
+        if (typeof sessionStorage !== 'undefined') {
+          sessionStorage.setItem('bg_guest_timer_done', 'true');
+        }
+        console.log('[CoatingCalculator] 1-minute guest preview limit reached. Triggering compulsory login modal.');
+        window.dispatchEvent(new CustomEvent('bg_open_auth_modal', { 
+          detail: { isCompulsory: true } 
+        }));
+      }
+    }, remainingMs);
+
+    return () => clearTimeout(timer);
+  }, [currentUser]);
   
   // Tool Mapping
   const toolComponents = {
@@ -437,17 +548,33 @@ export default function CoatingCalculatorPage({ activeSubTool, setActiveSubTool 
         
         {/* Navigation Breadcrumb Bar */}
         <div className="flex items-center justify-between bg-white px-4 py-2.5 rounded-xl border border-[#D8DEE5] shadow-[0_2px_8px_rgba(20,24,32,0.06)]">
-          <button
-            onClick={() => setActiveSubTool('hub')}
-            className="text-xs font-bold font-rajdhani uppercase tracking-wider text-[#E87B1E] hover:text-[#9E1B1E] flex items-center gap-1.5 transition cursor-pointer"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Back to Calculator Hub</span>
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setActiveSubTool('hub')}
+              className="text-xs font-bold font-rajdhani uppercase tracking-wider text-[#E87B1E] hover:text-[#9E1B1E] flex items-center gap-1.5 transition cursor-pointer"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Back to Calculator Hub</span>
+            </button>
 
-          <span className="text-xs font-mono font-bold text-[#4E5B6A] bg-[#F7F8FA] border border-[#D8DEE5] px-2.5 py-0.5 rounded-md hidden sm:inline">
-            Active: {toolTitle}
-          </span>
+            <span className="text-xs font-mono font-bold text-[#4E5B6A] bg-[#F7F8FA] border border-[#D8DEE5] px-2.5 py-0.5 rounded-md hidden sm:inline">
+              Active: {toolTitle}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setIsLogDrawerOpen(true)}
+            className="px-3 py-1.5 rounded-lg text-xs font-bold font-rajdhani uppercase tracking-wider bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5 text-[#E87B1E]" />
+            <span>Audit Logs</span>
+            {logCount > 0 && (
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-[#E87B1E] text-white font-mono font-bold">
+                {logCount}
+              </span>
+            )}
+          </button>
         </div>
 
         {/* PRO Executive Banner (Rendered when in PRO group) */}
@@ -626,6 +753,13 @@ export default function CoatingCalculatorPage({ activeSubTool, setActiveSubTool 
             )}
           </>
         )}
+
+        {/* Calculation Audit Log Drawer */}
+        <CalculationLogDrawer
+          isOpen={isLogDrawerOpen}
+          onClose={() => setIsLogDrawerOpen(false)}
+          onRestoreTool={handleRestoreTool}
+        />
       </div>
     );
   }
@@ -728,8 +862,8 @@ export default function CoatingCalculatorPage({ activeSubTool, setActiveSubTool 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
       
-      {/* 1. Top KPI Summary Card */}
-      <div className="flex items-center gap-4">
+      {/* 1. Top KPI Summary Card & Calculation Logs */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div 
           onClick={() => setActiveSubTool('vs-tds')}
           className="kpi max-w-xs cursor-pointer"
@@ -742,6 +876,30 @@ export default function CoatingCalculatorPage({ activeSubTool, setActiveSubTool 
           <div className="kpi-lbl">Executive Coating — PRO</div>
           <div className="kpi-sub">44 Engineering Calculation Engines Active</div>
         </div>
+
+        <button
+          type="button"
+          onClick={() => setIsLogDrawerOpen(true)}
+          className="px-4 py-3 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 hover:from-slate-800 hover:to-slate-700 text-white border border-amber-400/30 flex items-center gap-3.5 transition cursor-pointer shadow-md group"
+        >
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#F7941D] to-[#E87B1E] flex items-center justify-center text-white shadow-xs">
+            <FileSpreadsheet className="w-5 h-5" />
+          </div>
+          <div className="text-left">
+            <div className="flex items-center gap-2">
+              <span className="font-extrabold font-rajdhani text-sm uppercase tracking-wide">
+                Calculation Audit Logs
+              </span>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#F7941D]/20 text-[#F7941D] border border-[#F7941D]/40">
+                {logCount} Records
+              </span>
+            </div>
+            <div className="text-[11px] text-slate-300">
+              Review persistent audit history &amp; reload calculations
+            </div>
+          </div>
+          <span className="text-amber-400 group-hover:translate-x-1 transition ml-1 font-bold">→</span>
+        </button>
       </div>
 
       {/* 2. Quick Access */}
@@ -972,6 +1130,13 @@ export default function CoatingCalculatorPage({ activeSubTool, setActiveSubTool 
           </table>
         </div>
       </div>
+
+      {/* Calculation Audit Log Drawer */}
+      <CalculationLogDrawer
+        isOpen={isLogDrawerOpen}
+        onClose={() => setIsLogDrawerOpen(false)}
+        onRestoreTool={handleRestoreTool}
+      />
 
       {/* 6. Dark Enterprise Footer matching Screenshot 1 & 2 */}
       <footer className="app-footer-dark">

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useToast } from '../../context/ToastContext';
 import { formatNum } from '../../utils/calculations';
+import { autoLogCalculation } from '../../services/calculatorService';
 
 const SALT_TEMP = {
   0: 5.6, 5: 18.7, 10: 29.1, 15: 37.4, 20: 44.3, 25: 50,
@@ -66,6 +67,27 @@ export default function SaltContaminationTool() {
     });
     setCalculated(true);
     addToast('Calculation Complete', 'Salt contamination test evaluated.', 'success');
+
+    autoLogCalculation({
+      tool_id: 'salt-main',
+      tool_name: 'Bresle Salt Contamination (ISO 8502-9)',
+      category: 'salt',
+      project_name: projectName,
+      inputs: {
+        instrument,
+        blankConductivity: `${blankVal} µS/cm`,
+        surfaceConductivity: `${surfVal} µS/cm`,
+        waterVolume: `${wqVal} mL`,
+        limit: `${limVal} mg/m²`,
+        temperature: `${tempVal} °C`,
+      },
+      results: {
+        saltDensity25C: `${salt25.toFixed(2)} mg/m²`,
+        status: isPass ? 'PASS' : 'FAIL',
+        netConductivity: `${net} µS/cm`,
+      },
+      notes: isPass ? 'Passes ISO 8502-9 specification' : 'Fails ISO 8502-9 threshold'
+    });
   };
 
   const handleReset = () => {

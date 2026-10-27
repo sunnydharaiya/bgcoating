@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useToast } from '../../context/ToastContext';
 import { calcDFT, formatNum } from '../../utils/calculations';
+import { autoLogCalculation } from '../../services/calculatorService';
 
 export default function DFTTool() {
   const { addToast } = useToast();
@@ -8,17 +9,56 @@ export default function DFTTool() {
   const [wft, setWft] = useState('');
   const [vs, setVs] = useState('');
   const [thinner, setThinner] = useState('0');
+  const [res, setRes] = useState(null);
   const [hasCalculated, setHasCalculated] = useState(false);
 
-  const res = (wft && vs) ? calcDFT(wft, vs, thinner || 0) : null;
+  useEffect(() => {
+    const handleRestore = (e) => {
+      if (e?.detail?.tool_id === 'sp-dft' && e.detail.inputs) {
+        const inp = e.detail.inputs;
+        const w = inp.wft ? String(inp.wft).replace(/[^\d.]/g, '') : '';
+        const v = inp.vsPercent ? String(inp.vsPercent).replace(/[^\d.]/g, '') : '';
+        const th = inp.thinnerPercent ? String(inp.thinnerPercent).replace(/[^\d.]/g, '') : '0';
+        if (w) setWft(w);
+        if (v) setVs(v);
+        if (th) setThinner(th);
+        if (inp.paintName && inp.paintName !== 'Unspecified') setPaintName(inp.paintName);
+        if (w && v) {
+          const computed = calcDFT(w, v, th || 0);
+          setRes(computed);
+          setHasCalculated(true);
+        }
+      }
+    };
+    window.addEventListener('bg_restore_calculation', handleRestore);
+    return () => window.removeEventListener('bg_restore_calculation', handleRestore);
+  }, []);
 
   const handleCalculate = () => {
     if (!wft || !vs) {
       addToast('Missing Required Inputs', 'Please enter Applied WFT and Volume Solids.', 'warning');
       return;
     }
+    const computed = calcDFT(wft, vs, thinner || 0);
+    setRes(computed);
     setHasCalculated(true);
     addToast('Calculated DFT', 'Dry film thickness computed successfully.', 'success');
+
+    autoLogCalculation({
+      tool_id: 'sp-dft',
+      tool_name: 'DFT Calculation',
+      category: 'paint',
+      inputs: {
+        paintName: paintName || 'Unspecified',
+        wft: `${wft} µm`,
+        vsPercent: `${vs}%`,
+        thinnerPercent: `${thinner || 0}%`,
+      },
+      results: {
+        dft: `${formatNum(computed.dft, 1)} µm`,
+      },
+      notes: 'Auto-logged on calculation'
+    });
   };
 
   const handleReset = () => {
@@ -26,6 +66,7 @@ export default function DFTTool() {
     setWft('');
     setVs('');
     setThinner('0');
+    setRes(null);
     setHasCalculated(false);
     addToast('Form Reset', 'All input parameters cleared.', 'info');
   };
@@ -64,7 +105,20 @@ Calculated DFT: ${formatNum(res.dft, 1)} µm`;
       <div className="cb">
         {/* User Inputs Section (Orange Border & Top Badge) */}
         <div className="input-section">
-          <div className="g2">
+          <div className="field">
+            <label>Paint Name <span className="lh">optional</span></label>
+            <div className="iw">
+              <input 
+                type="text" 
+                id="dft-nm" 
+                value={paintName} 
+                onChange={e => { setPaintName(e.target.value); }} 
+                placeholder="e.g. High-Build Epoxy Intermediate" 
+              />
+            </div>
+          </div>
+
+          <div className="g3">
             <div className="field">
               <label>Applied WFT <span className="lh">µm</span></label>
               <div className="iw">
@@ -72,12 +126,14 @@ Calculated DFT: ${formatNum(res.dft, 1)} µm`;
                   type="number" 
                   id="dft-wft" 
                   value={wft} 
-                  onChange={e => setWft(e.target.value)} 
+                  onChange={e => { setWft(e.target.value); setHasCalculated(false); }} 
                   placeholder="e.g. 200" 
+                  min="1" 
                 />
                 <span className="uu">µm</span>
               </div>
             </div>
+
             <div className="field">
               <label>Volume Solids <span className="lh">%</span></label>
               <div className="iw">
@@ -85,38 +141,27 @@ Calculated DFT: ${formatNum(res.dft, 1)} µm`;
                   type="number" 
                   id="dft-vs" 
                   value={vs} 
-                  onChange={e => setVs(e.target.value)} 
-                  placeholder="e.g. 60" 
+                  onChange={e => { setVs(e.target.value); setHasCalculated(false); }} 
+                  placeholder="e.g. 65" 
                   min="1" 
                   max="100" 
                 />
                 <span className="uu">%</span>
               </div>
             </div>
+
             <div className="field">
-              <label>Thinner <span className="lh">%</span></label>
+              <label>Thinner Added <span className="lh">%</span></label>
               <div className="iw">
                 <input 
                   type="number" 
                   id="dft-th" 
                   value={thinner} 
-                  onChange={e => setThinner(e.target.value)} 
+                  onChange={e => { setThinner(e.target.value); setHasCalculated(false); }} 
                   placeholder="0" 
                   min="0" 
                 />
                 <span className="uu">%</span>
-              </div>
-            </div>
-            <div className="field">
-              <label>Paint Name <span className="lh">optional</span></label>
-              <div className="iw">
-                <input 
-                  type="text" 
-                  id="dft-nm" 
-                  value={paintName} 
-                  onChange={e => setPaintName(e.target.value)} 
-                  placeholder="e.g. Epoxy Intermediate" 
-                />
               </div>
             </div>
           </div>
@@ -133,7 +178,7 @@ Calculated DFT: ${formatNum(res.dft, 1)} µm`;
         </div>
 
         {/* Calculated Results Section */}
-        {(hasCalculated || res) && (
+        {hasCalculated && res && (
           <div className="res" id="r-dft" style={{ display: 'block' }}>
             <div className="output-section">
               <div className="rh">
@@ -145,7 +190,7 @@ Calculated DFT: ${formatNum(res.dft, 1)} µm`;
                 <div className="tile tp">
                   <div className="tl">Calculated DFT</div>
                   <div>
-                    <span className="tv" id="dft-rdft">{res ? formatNum(res.dft, 1) : '—'}</span>
+                    <span className="tv" id="dft-rdft">{formatNum(res.dft, 1)}</span>
                     <span className="tu">µm</span>
                   </div>
                   <div className="tn">From {wft} µm Applied WFT</div>

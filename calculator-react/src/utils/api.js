@@ -78,8 +78,13 @@ export function clearAuth() {
   localStorage.removeItem('bg_auth_token');
   localStorage.removeItem('bg_auth_logged_in');
   localStorage.removeItem('bg_user');
+  if (typeof sessionStorage !== 'undefined') {
+    sessionStorage.removeItem('bg_guest_timer_done');
+    sessionStorage.removeItem('bg_guest_calc_start');
+  }
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent('bg_user_updated', { detail: null }));
+    window.dispatchEvent(new CustomEvent('bg_logout'));
   }
 }
 
@@ -283,6 +288,13 @@ export async function loginWithGoogle({ credential, token, email, name, picture,
  * 4. Get Current User Profile
  */
 export async function fetchUserProfile() {
+  if (typeof window !== 'undefined' && localStorage.getItem('bg_auth_logged_in') !== 'true') {
+    return null;
+  }
+  const token = getAuthToken();
+  if (!token) {
+    return null;
+  }
   const current = getStoredUser() || {};
   const params = [];
   if (current.id) params.push(`user_id=${current.id}`);
@@ -320,7 +332,7 @@ export async function fetchUserProfile() {
   } catch (err) {
     console.warn('fetchUserProfile error:', err);
   }
-  return current;
+  return localStorage.getItem('bg_auth_logged_in') === 'true' ? current : null;
 }
 
 /**

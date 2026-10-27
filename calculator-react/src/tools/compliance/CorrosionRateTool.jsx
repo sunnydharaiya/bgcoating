@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useToast } from '../../context/ToastContext';
 import { useGuideline } from '../../context/GuidelineContext';
 import { formatNum } from '../../utils/calculations';
+import { autoLogCalculation } from '../../services/calculatorService';
 
 function crrCls(cr) {
   if (cr < 0.05) return { t: 'Excellent', iv: 5, bg: '#E8F5E9', bd: 'rgba(46,125,50,.35)', c1: '#1B5E20', c2: '#2E7D32', ic: '🏆' };
@@ -35,7 +36,7 @@ export default function CorrosionRateTool() {
   const [curThk, setCurThk] = useState('11.0');
   const [tmin, setTmin] = useState('8.5');
 
-  const [hasCalculated, setHasCalculated] = useState(true);
+  const [hasCalculated, setHasCalculated] = useState(false);
 
   // Calculations
   let cr = 0;
@@ -139,7 +140,49 @@ export default function CorrosionRateTool() {
     }
     setHasCalculated(true);
     addToast('Corrosion Rate Calculated', `${formatNum(cr, 3)} mm/yr (${g.t})`, 'success');
+
+    // Auto-save to calculation audit log
+    autoLogCalculation({
+      tool_id: 'ce-rate',
+      tool_name: 'Corrosion Rate & Remaining Asset Life',
+      category: 'compliance',
+      inputs: {
+        project: proj,
+        evaluation_method: method === 'W' ? 'Weight Loss (ASTM G1)' : 'Thickness Loss / UT Gauging',
+        initial_thickness_mm: method === 'T' ? parseFloat(ti) : null,
+        current_thickness_mm: method === 'T' ? parseFloat(tc) : null,
+        exposure_duration: method === 'W' ? `${t} ${tu}` : `${ty} years`,
+        minimum_required_thickness_mm: tminVal
+      },
+      results: {
+        corrosion_rate_mm_yr: cr,
+        corrosion_rate_mpy: mpy,
+        classification: g.t,
+        remaining_life_years: rem,
+        half_life_inspection_interval_yrs: inv
+      }
+    });
   };
+
+  useEffect(() => {
+    const handleRestore = (e) => {
+      const log = e?.detail;
+      if (log && (log.tool_id === 'ce-rate' || log.tool_id === 'ce_rate' || log.tool_id === 'corrosion_rate' || log.tool_id === 'corrosion-rate')) {
+        if (log.inputs) {
+          if (log.inputs.project !== undefined) setProj(log.inputs.project);
+          if (log.inputs.initial_thickness_mm !== undefined && log.inputs.initial_thickness_mm !== null) {
+            setMethod('T');
+            setTi(String(log.inputs.initial_thickness_mm));
+          }
+          if (log.inputs.current_thickness_mm !== undefined && log.inputs.current_thickness_mm !== null) setTc(String(log.inputs.current_thickness_mm));
+          if (log.inputs.minimum_required_thickness_mm !== undefined) setTmin(String(log.inputs.minimum_required_thickness_mm));
+        }
+        setHasCalculated(true);
+      }
+    };
+    window.addEventListener('bg_restore_calculation', handleRestore);
+    return () => window.removeEventListener('bg_restore_calculation', handleRestore);
+  }, []);
 
   const handleReset = () => {
     setProj('');

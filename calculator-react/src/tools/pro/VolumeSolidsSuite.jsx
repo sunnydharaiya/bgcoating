@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useToast } from '../../context/ToastContext';
 import { useGuideline } from '../../context/GuidelineContext';
 import { formatNum } from '../../utils/calculations';
+import { autoLogCalculation } from '../../services/calculatorService';
 
 function vsSanity(vsCalc) {
   if (vsCalc > 100) return 'Calculated Volume Solids exceeds 100% — please re-check the input values.';
@@ -117,7 +118,7 @@ export default function VolumeSolidsSuite({ activeSubTool, onSubToolChange }) {
     }
 
     const st = vsStatus(vsC, pub);
-    setVstRes({
+    const resultObj = {
       vsC,
       cls: vsClass(vsC),
       rec: vsRec(vsC),
@@ -128,8 +129,28 @@ export default function VolumeSolidsSuite({ activeSubTool, onSubToolChange }) {
       dft,
       cov,
       name: vstNm || '—'
-    });
+    };
+    setVstRes(resultObj);
     addToast('Verified Volume Solids', 'Method 1 (TDS) verification calculated.', 'success');
+
+    // Auto-save to calculation audit log
+    autoLogCalculation({
+      tool_id: 'vs-tds',
+      tool_name: 'Volume Solids — TDS Verification',
+      category: 'pro',
+      inputs: {
+        dft,
+        coverage_m2_l: cov,
+        published_vs_pct: pub,
+        product_name: vstNm
+      },
+      results: {
+        calculated_vs_pct: vsC,
+        classification: vsClass(vsC),
+        status: st ? st.status : 'N/A',
+        difference_pct: st ? st.diff : null
+      }
+    });
   };
 
   const rstVST = () => {
@@ -161,7 +182,7 @@ export default function VolumeSolidsSuite({ activeSubTool, onSubToolChange }) {
     }
 
     const st = vsStatus(vsC, pub);
-    setVsdRes({
+    const resultObj = {
       vsC,
       cls: vsClass(vsC),
       rec: vsRec(vsC),
@@ -173,8 +194,29 @@ export default function VolumeSolidsSuite({ activeSubTool, onSubToolChange }) {
       wd,
       dd,
       name: vsdNm || '—'
-    });
+    };
+    setVsdRes(resultObj);
     addToast('Calculated Volume Solids', 'Method 2 (Density) verification calculated.', 'success');
+
+    // Auto-save to calculation audit log
+    autoLogCalculation({
+      tool_id: 'vs-den',
+      tool_name: 'Volume Solids — Density Verification',
+      category: 'pro',
+      inputs: {
+        weight_solids_pct: ws,
+        wet_density_kg_l: wd,
+        dry_film_density_kg_l: dd,
+        published_vs_pct: pub,
+        product_name: vsdNm
+      },
+      results: {
+        calculated_vs_pct: vsC,
+        classification: vsClass(vsC),
+        status: st ? st.status : 'N/A',
+        difference_pct: st ? st.diff : null
+      }
+    });
   };
 
   const rstVSD = () => {
@@ -230,7 +272,7 @@ export default function VolumeSolidsSuite({ activeSubTool, onSubToolChange }) {
     const dryDen = dv > 0 ? dryW / dv : 0;
     const st = vsStatus(vsC, pub);
 
-    setVslRes({
+    const resultObj = {
       vsC,
       cls: vsClass(vsC),
       rec: vsRec(vsC),
@@ -249,9 +291,124 @@ export default function VolumeSolidsSuite({ activeSubTool, onSubToolChange }) {
       den,
       dv,
       name: vslNm || '—'
-    });
+    };
+    setVslRes(resultObj);
     addToast('Calculated Laboratory VS', 'Method 3 (ASTM D2697 / ISO 3233) calculated.', 'success');
+
+    // Auto-save to calculation audit log
+    autoLogCalculation({
+      tool_id: 'vs-lab',
+      tool_name: 'Volume Solids — Lab ASTM D2697 / ISO 3233',
+      category: 'pro',
+      inputs: {
+        empty_dish_g: we,
+        dish_wet_g: ww,
+        dish_dry_g: wd,
+        wet_density_kg_l: den,
+        dry_film_vol_ml: dv,
+        published_vs_pct: pub,
+        product_name: vslNm
+      },
+      results: {
+        calculated_vs_pct: vsC,
+        classification: vsClass(vsC),
+        non_volatile_pct: nv,
+        dry_film_density_kg_l: dryDen,
+        status: st ? st.status : 'N/A'
+      }
+    });
   };
+
+  useEffect(() => {
+    const handleRestore = (e) => {
+      const log = e?.detail;
+      if (!log) return;
+      if (['vs-tds', 'vs_tds', 'volume_solids_verify', 'volume_solids'].includes(log.tool_id)) {
+        setMode('tds');
+        if (log.inputs) {
+          if (log.inputs.dft !== undefined) setVstDft(String(log.inputs.dft));
+          if (log.inputs.coverage_m2_l !== undefined) setVstCov(String(log.inputs.coverage_m2_l));
+          if (log.inputs.published_vs_pct !== undefined) setVstPub(String(log.inputs.published_vs_pct));
+          if (log.inputs.product_name !== undefined) setVstNm(log.inputs.product_name);
+        }
+        if (log.results) {
+          const vsC = log.results.calculated_vs_pct;
+          const pub = log.inputs?.published_vs_pct || 0;
+          const st = vsStatus(vsC, pub);
+          setVstRes({
+            vsC,
+            cls: log.results.classification || vsClass(vsC),
+            rec: vsRec(vsC),
+            pub,
+            diff: st ? st.diff : null,
+            dev: st ? st.dev : null,
+            status: st,
+            dft: log.inputs?.dft,
+            cov: log.inputs?.coverage_m2_l,
+            name: log.inputs?.product_name || '—'
+          });
+        }
+      } else if (['vs-den', 'vs_den', 'volume_solids_density'].includes(log.tool_id)) {
+        setMode('den');
+        if (log.inputs) {
+          if (log.inputs.weight_solids_pct !== undefined) setVsdWs(String(log.inputs.weight_solids_pct));
+          if (log.inputs.wet_density_kg_l !== undefined) setVsdWd(String(log.inputs.wet_density_kg_l));
+          if (log.inputs.dry_film_density_kg_l !== undefined) setVsdDd(String(log.inputs.dry_film_density_kg_l));
+          if (log.inputs.published_vs_pct !== undefined) setVsdPub(String(log.inputs.published_vs_pct));
+          if (log.inputs.product_name !== undefined) setVsdNm(log.inputs.product_name);
+        }
+        if (log.results) {
+          const vsC = log.results.calculated_vs_pct;
+          const pub = log.inputs?.published_vs_pct || 0;
+          const st = vsStatus(vsC, pub);
+          setVsdRes({
+            vsC,
+            cls: log.results.classification || vsClass(vsC),
+            rec: vsRec(vsC),
+            pub,
+            diff: st ? st.diff : null,
+            dev: st ? st.dev : null,
+            status: st,
+            ws: log.inputs?.weight_solids_pct,
+            wd: log.inputs?.wet_density_kg_l,
+            dd: log.inputs?.dry_film_density_kg_l,
+            name: log.inputs?.product_name || '—'
+          });
+        }
+      } else if (['vs-lab', 'vs_lab', 'volume_solids_lab'].includes(log.tool_id)) {
+        setMode('lab');
+        if (log.inputs) {
+          if (log.inputs.empty_dish_g !== undefined) setVslWe(String(log.inputs.empty_dish_g));
+          if (log.inputs.dish_wet_g !== undefined) setVslWw(String(log.inputs.dish_wet_g));
+          if (log.inputs.dish_dry_g !== undefined) setVslWd(String(log.inputs.dish_dry_g));
+          if (log.inputs.wet_density_kg_l !== undefined) setVslDen(String(log.inputs.wet_density_kg_l));
+          if (log.inputs.dry_film_vol_ml !== undefined) setVslDv(String(log.inputs.dry_film_vol_ml));
+          if (log.inputs.published_vs_pct !== undefined) setVslPub(String(log.inputs.published_vs_pct));
+          if (log.inputs.product_name !== undefined) setVslNm(log.inputs.product_name);
+        }
+        if (log.results) {
+          const vsC = log.results.calculated_vs_pct;
+          const pub = log.inputs?.published_vs_pct || 0;
+          const st = vsStatus(vsC, pub);
+          setVslRes({
+            vsC,
+            cls: log.results.classification || vsClass(vsC),
+            rec: vsRec(vsC),
+            nv: log.results.non_volatile_pct,
+            wetVol: 0,
+            dryDen: log.results.dry_film_density_kg_l,
+            pub,
+            diff: st ? st.diff : null,
+            dev: st ? st.dev : null,
+            status: st,
+            name: log.inputs?.product_name || '—'
+          });
+        }
+      }
+    };
+    window.addEventListener('bg_restore_calculation', handleRestore);
+    return () => window.removeEventListener('bg_restore_calculation', handleRestore);
+  }, []);
 
   const rstVSL = () => {
     setVslWe('');

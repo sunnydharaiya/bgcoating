@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useToast } from '../../context/ToastContext';
 import { useGuideline } from '../../context/GuidelineContext';
 import { SAW_SECTIONS_DB } from '../../utils/standardsDatabase';
 import { formatNum, formatCur } from '../../utils/calculations';
+import { autoLogCalculation } from '../../services/calculatorService';
 
 export default function StructureBOQTool() {
   const { addToast } = useToast();
@@ -147,7 +148,78 @@ export default function StructureBOQTool() {
       recs
     });
     addToast('Calculation Complete', 'Member surface area and steel weight calculated.', 'success');
+
+    // Auto-save to calculation audit log
+    autoLogCalculation({
+      tool_id: 'pro-saw',
+      tool_name: 'Surface Area & Steel Weight BOQ Builder',
+      category: 'pro',
+      inputs: {
+        project: proj,
+        client: cli,
+        structure: str,
+        drawing_no: dwg,
+        section_type: secType,
+        section_size: secSize,
+        length_m: lenVal,
+        quantity: qtyVal,
+        paint_system: sysName,
+        paint_coverage_m2_l: covVal,
+        abrasive_consumption_kg_m2: abrVal
+      },
+      results: {
+        total_surface_area_m2: sa,
+        total_steel_weight_kg: wt,
+        total_steel_weight_mt: mt,
+        weight_to_area_ratio_kg_m2: wa,
+        paint_required_liters: paintL,
+        abrasive_required_kg: abrKg,
+        total_coating_cost_inr: totalCost,
+        section_description: desc
+      }
+    });
   };
+
+  useEffect(() => {
+    const handleRestore = (e) => {
+      const log = e?.detail;
+      if (log && (log.tool_id === 'pro-saw' || log.tool_id === 'structure_boq' || log.tool_id === 'pro_saw' || log.tool_id === 'surface_area_weight')) {
+        if (log.inputs) {
+          if (log.inputs.project !== undefined) setProj(log.inputs.project);
+          if (log.inputs.client !== undefined) setCli(log.inputs.client);
+          if (log.inputs.structure !== undefined) setStr(log.inputs.structure);
+          if (log.inputs.drawing_no !== undefined) setDwg(log.inputs.drawing_no);
+          if (log.inputs.section_type !== undefined) setSecType(log.inputs.section_type);
+          if (log.inputs.section_size !== undefined) setSecSize(log.inputs.section_size);
+          if (log.inputs.length_m !== undefined) setLen(String(log.inputs.length_m));
+          if (log.inputs.quantity !== undefined) setQty(String(log.inputs.quantity));
+          if (log.inputs.paint_system !== undefined) setSysName(log.inputs.paint_system);
+          if (log.inputs.paint_coverage_m2_l !== undefined) setCov(String(log.inputs.paint_coverage_m2_l));
+          if (log.inputs.abrasive_consumption_kg_m2 !== undefined) setAbr(String(log.inputs.abrasive_consumption_kg_m2));
+        }
+        if (log.results) {
+          setRes({
+            sa: log.results.total_surface_area_m2,
+            wt: log.results.total_steel_weight_kg,
+            mt: log.results.total_steel_weight_mt,
+            wa: log.results.weight_to_area_ratio_kg_m2,
+            paintL: log.results.paint_required_liters,
+            abrKg: log.results.abrasive_required_kg,
+            paintCost: 0,
+            blastCost: 0,
+            paintingCost: 0,
+            totalCost: log.results.total_coating_cost_inr,
+            desc: log.results.section_description,
+            lenVal: log.inputs?.length_m || 0,
+            qtyVal: log.inputs?.quantity || 1,
+            recs: []
+          });
+        }
+      }
+    };
+    window.addEventListener('bg_restore_calculation', handleRestore);
+    return () => window.removeEventListener('bg_restore_calculation', handleRestore);
+  }, []);
 
   const handleAddToBOQ = () => {
     if (!res) {

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useToast } from '../../context/ToastContext';
 import { calcWFTRange, formatNum } from '../../utils/calculations';
+import { autoLogCalculation } from '../../services/calculatorService';
 
 export default function WFTRangeTool() {
   const { addToast } = useToast();
@@ -9,17 +10,61 @@ export default function WFTRangeTool() {
   const [maxDft, setMaxDft] = useState('');
   const [vs, setVs] = useState('');
   const [thinner, setThinner] = useState('0');
+  const [res, setRes] = useState(null);
   const [hasCalculated, setHasCalculated] = useState(false);
 
-  const res = (minDft && maxDft && vs) ? calcWFTRange(minDft, maxDft, vs, thinner || 0) : null;
+  useEffect(() => {
+    const handleRestore = (e) => {
+      if (e?.detail?.tool_id === 'sp-pc' && e.detail.inputs) {
+        const inp = e.detail.inputs;
+        const dMin = inp.minDft ? String(inp.minDft).replace(/[^\d.]/g, '') : '';
+        const dMax = inp.maxDft ? String(inp.maxDft).replace(/[^\d.]/g, '') : '';
+        const v = inp.vsPercent ? String(inp.vsPercent).replace(/[^\d.]/g, '') : '';
+        const th = inp.thinnerPercent ? String(inp.thinnerPercent).replace(/[^\d.]/g, '') : '0';
+        if (dMin) setMinDft(dMin);
+        if (dMax) setMaxDft(dMax);
+        if (v) setVs(v);
+        if (th) setThinner(th);
+        if (inp.paintName && inp.paintName !== 'Unspecified') setPaintName(inp.paintName);
+        if (dMin && dMax && v) {
+          const computed = calcWFTRange(dMin, dMax, v, th || 0);
+          setRes(computed);
+          setHasCalculated(true);
+        }
+      }
+    };
+    window.addEventListener('bg_restore_calculation', handleRestore);
+    return () => window.removeEventListener('bg_restore_calculation', handleRestore);
+  }, []);
 
   const handleCalculate = () => {
     if (!minDft || !maxDft || !vs) {
       addToast('Missing Required Inputs', 'Please enter Min DFT, Max DFT, and Volume Solids.', 'warning');
       return;
     }
+    const computed = calcWFTRange(minDft, maxDft, vs, thinner || 0);
+    setRes(computed);
     setHasCalculated(true);
     addToast('Calculated WFT Range', 'WFT targets computed successfully.', 'success');
+
+    // Auto-log to history & database
+    autoLogCalculation({
+      tool_id: 'sp-pc',
+      tool_name: 'WFT Range Calculation',
+      category: 'paint',
+      inputs: {
+        paintName: paintName || 'Unspecified',
+        minDft: `${minDft} µm`,
+        maxDft: `${maxDft} µm`,
+        vsPercent: `${vs}%`,
+        thinnerPercent: `${thinner || 0}%`,
+      },
+      results: {
+        minWft: `${formatNum(computed.minWft, 0)} µm`,
+        maxWft: `${formatNum(computed.maxWft, 0)} µm`,
+      },
+      notes: 'Auto-logged on calculation'
+    });
   };
 
   const handleReset = () => {
@@ -28,6 +73,7 @@ export default function WFTRangeTool() {
     setMaxDft('');
     setVs('');
     setThinner('0');
+    setRes(null);
     setHasCalculated(false);
     addToast('Form Reset', 'All input parameters cleared.', 'info');
   };
@@ -75,7 +121,7 @@ Target WFT Range: ${formatNum(res.minWft, 0)} - ${formatNum(res.maxWft, 0)} µm`
                   type="number" 
                   id="pc-dmin" 
                   value={minDft} 
-                  onChange={e => setMinDft(e.target.value)} 
+                  onChange={e => { setMinDft(e.target.value); setHasCalculated(false); }} 
                   placeholder="e.g. 100" 
                 />
                 <span className="uu">µm</span>
@@ -88,7 +134,7 @@ Target WFT Range: ${formatNum(res.minWft, 0)} - ${formatNum(res.maxWft, 0)} µm`
                   type="number" 
                   id="pc-dmax" 
                   value={maxDft} 
-                  onChange={e => setMaxDft(e.target.value)} 
+                  onChange={e => { setMaxDft(e.target.value); setHasCalculated(false); }} 
                   placeholder="e.g. 150" 
                 />
                 <span className="uu">µm</span>
@@ -101,7 +147,7 @@ Target WFT Range: ${formatNum(res.minWft, 0)} - ${formatNum(res.maxWft, 0)} µm`
                   type="number" 
                   id="pc-vs" 
                   value={vs} 
-                  onChange={e => setVs(e.target.value)} 
+                  onChange={e => { setVs(e.target.value); setHasCalculated(false); }} 
                   placeholder="e.g. 75" 
                   min="1" 
                   max="100" 
@@ -116,7 +162,7 @@ Target WFT Range: ${formatNum(res.minWft, 0)} - ${formatNum(res.maxWft, 0)} µm`
                   type="number" 
                   id="pc-th" 
                   value={thinner} 
-                  onChange={e => setThinner(e.target.value)} 
+                  onChange={e => { setThinner(e.target.value); setHasCalculated(false); }} 
                   placeholder="0" 
                   min="0" 
                 />
@@ -150,7 +196,7 @@ Target WFT Range: ${formatNum(res.minWft, 0)} - ${formatNum(res.maxWft, 0)} µm`
         </div>
 
         {/* Calculated Results Section */}
-        {(hasCalculated || res) && (
+        {hasCalculated && res && (
           <div className="res" id="r-pc" style={{ display: 'block' }}>
             <div className="output-section">
               <div className="rh">
@@ -162,7 +208,7 @@ Target WFT Range: ${formatNum(res.minWft, 0)} - ${formatNum(res.maxWft, 0)} µm`
                 <div className="tile tp">
                   <div className="tl">WFT Minimum</div>
                   <div>
-                    <span className="tv" id="pc-rmin">{res ? formatNum(res.minWft, 0) : '—'}</span>
+                    <span className="tv" id="pc-rmin">{formatNum(res.minWft, 0)}</span>
                     <span className="tu">µm</span>
                   </div>
                   <div className="tn">From Min DFT</div>
@@ -171,7 +217,7 @@ Target WFT Range: ${formatNum(res.minWft, 0)} - ${formatNum(res.maxWft, 0)} µm`
                 <div className="tile ts">
                   <div className="tl">WFT Maximum</div>
                   <div>
-                    <span className="tv" id="pc-rmax">{res ? formatNum(res.maxWft, 0) : '—'}</span>
+                    <span className="tv" id="pc-rmax">{formatNum(res.maxWft, 0)}</span>
                     <span className="tu">µm</span>
                   </div>
                   <div className="tn">From Max DFT</div>

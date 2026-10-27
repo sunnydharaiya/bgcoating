@@ -72,6 +72,10 @@ if command -v npm &> /dev/null && [ -d "${PROJECT_DIR}/calculator-react" ]; then
     cd "${PROJECT_DIR}/calculator-react"
     npm ci --prefer-offline --no-audit || npm install --no-audit
     npm run build || true
+    if [ -d "${PROJECT_DIR}/calculator-react/dist" ]; then
+        mkdir -p "${PROJECT_DIR}/dist"
+        cp -a "${PROJECT_DIR}/calculator-react/dist/." "${PROJECT_DIR}/dist/" || true
+    fi
     cd "${PROJECT_DIR}"
 fi
 

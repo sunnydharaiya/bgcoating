@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useToast } from '../../context/ToastContext';
 import { useGuideline } from '../../context/GuidelineContext';
 import { ABRASIVE_DB } from '../../utils/standardsDatabase';
 import { formatNum } from '../../utils/calculations';
+import { autoLogCalculation } from '../../services/calculatorService';
 
 export default function BlastProfileTool() {
   const { addToast } = useToast();
@@ -159,7 +160,86 @@ export default function BlastProfileTool() {
       ]
     });
     addToast('Profile Predicted', 'Blast profile anchor pattern computed.', 'success');
+
+    // Auto-save to calculation audit log
+    autoLogCalculation({
+      tool_id: 'pro-abp',
+      tool_name: 'Abrasive Size & Blast Profile Prediction',
+      category: 'pro',
+      inputs: {
+        project: proj,
+        client: cli,
+        structure: str,
+        abrasive_type: type,
+        abrasive_grade: grade,
+        mix_grit_pct: isMix ? mixGrit : null,
+        blast_pressure_bar: prVal,
+        nozzle_dia_mm: nozVal,
+        nozzle_type: ntype,
+        standoff_distance_mm: soVal,
+        blast_angle_deg: angVal,
+        substrate_condition: surface,
+        substrate_hardness: hardness,
+        target_profile_min_um: parseFloat(targetMin) || 0,
+        target_profile_max_um: parseFloat(targetMax) || 0
+      },
+      results: {
+        predicted_profile_um: expectedProfile,
+        profile_range_min_um: minProf,
+        profile_range_max_um: maxProf,
+        iso_comparator: isoComp,
+        dead_volume_loss_l_m2: deadVol,
+        target_verdict: targetVerdict ? targetVerdict.label : 'N/A'
+      }
+    });
   };
+
+  useEffect(() => {
+    const handleRestore = (e) => {
+      const log = e?.detail;
+      if (log && (log.tool_id === 'pro-abp' || log.tool_id === 'blast_profile' || log.tool_id === 'pro_abp' || log.tool_id === 'blasting_media_pro')) {
+        if (log.inputs) {
+          if (log.inputs.project !== undefined) setProj(log.inputs.project);
+          if (log.inputs.client !== undefined) setCli(log.inputs.client);
+          if (log.inputs.structure !== undefined) setStr(log.inputs.structure);
+          if (log.inputs.abrasive_type !== undefined) setType(log.inputs.abrasive_type);
+          if (log.inputs.abrasive_grade !== undefined) setGrade(log.inputs.abrasive_grade);
+          if (log.inputs.mix_grit_pct !== undefined && log.inputs.mix_grit_pct !== null) setMixGrit(String(log.inputs.mix_grit_pct));
+          if (log.inputs.blast_pressure_bar !== undefined) setPressure(String(log.inputs.blast_pressure_bar));
+          if (log.inputs.nozzle_dia_mm !== undefined) setNozzle(String(log.inputs.nozzle_dia_mm));
+          if (log.inputs.nozzle_type !== undefined) setNtype(log.inputs.nozzle_type);
+          if (log.inputs.standoff_distance_mm !== undefined) setStandoff(String(log.inputs.standoff_distance_mm));
+          if (log.inputs.blast_angle_deg !== undefined) setAngle(String(log.inputs.blast_angle_deg));
+          if (log.inputs.substrate_condition !== undefined) setSurface(log.inputs.substrate_condition);
+          if (log.inputs.substrate_hardness !== undefined) setHardness(log.inputs.substrate_hardness);
+          if (log.inputs.target_profile_min_um !== undefined) setTargetMin(String(log.inputs.target_profile_min_um));
+          if (log.inputs.target_profile_max_um !== undefined) setTargetMax(String(log.inputs.target_profile_max_um));
+        }
+        if (log.results) {
+          setRes({
+            expectedProfile: log.results.predicted_profile_um,
+            minProf: log.results.profile_range_min_um,
+            maxProf: log.results.profile_range_max_um,
+            isoComp: log.results.iso_comparator,
+            deadVol: log.results.dead_volume_loss_l_m2,
+            cv: 0,
+            minDft: 0,
+            maxDft: 0,
+            avgCons: 0,
+            avgProd: 0,
+            targetVerdict: { pass: true, label: log.results.target_verdict || 'Target Achieved', color: '#1B5E20', bg: '#E8F5E9' },
+            gradeLbl: log.inputs?.abrasive_grade || '',
+            saStd: 'Sa 2.5',
+            coatDb: null,
+            recy: 'Recyclable',
+            factors: []
+          });
+        }
+      }
+    };
+    window.addEventListener('bg_restore_calculation', handleRestore);
+    return () => window.removeEventListener('bg_restore_calculation', handleRestore);
+  }, []);
 
   const handleReset = () => {
     setProj('');

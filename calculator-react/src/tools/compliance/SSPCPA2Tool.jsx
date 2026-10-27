@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useToast } from '../../context/ToastContext';
 import { useGuideline } from '../../context/GuidelineContext';
 import { formatNum } from '../../utils/calculations';
+import { autoLogCalculation } from '../../services/calculatorService';
 
 export default function SSPCPA2Tool() {
   const { addToast } = useToast();
@@ -19,7 +20,7 @@ export default function SSPCPA2Tool() {
   // Multi-area project state
   const [projectAreas, setProjectAreas] = useState([]);
   const [lastEvaluated, setLastEvaluated] = useState(null);
-  const [hasEvaluated, setHasEvaluated] = useState(true);
+  const [hasEvaluated, setHasEvaluated] = useState(false);
 
   // Parse spots
   const spots = spotsText
@@ -70,7 +71,51 @@ export default function SSPCPA2Tool() {
       isPass ? `Area conforms to SSPC-PA 2 (${formatNum(avg, 1)} µm avg).` : `Area non-conforming: ${why.join(' · ')}`,
       isPass ? 'success' : 'warning'
     );
+
+    // Auto-save to calculation audit log
+    autoLogCalculation({
+      tool_id: 'qa-pa2',
+      tool_name: 'DFT Acceptance Compliance — SSPC-PA 2',
+      category: 'compliance',
+      inputs: {
+        project: proj,
+        client: cli,
+        structure: str,
+        area_name: area,
+        specified_dft_um: specVal,
+        max_allowed_pct: maxpVal,
+        spot_readings: spotsText
+      },
+      results: {
+        average_dft_um: avg,
+        minimum_spot_um: lo,
+        maximum_spot_um: hi,
+        spots_count: spots.length,
+        conformance: isPass ? 'PASS' : 'FAIL',
+        reasons: why
+      }
+    });
   };
+
+  useEffect(() => {
+    const handleRestore = (e) => {
+      const log = e?.detail;
+      if (log && (log.tool_id === 'qa-pa2' || log.tool_id === 'sspc_pa2' || log.tool_id === 'qa_pa2' || log.tool_id === 'dft_sspc_pa2')) {
+        if (log.inputs) {
+          if (log.inputs.project !== undefined) setProj(log.inputs.project);
+          if (log.inputs.client !== undefined) setCli(log.inputs.client);
+          if (log.inputs.structure !== undefined) setStr(log.inputs.structure);
+          if (log.inputs.area_name !== undefined) setArea(log.inputs.area_name);
+          if (log.inputs.specified_dft_um !== undefined) setSpec(String(log.inputs.specified_dft_um));
+          if (log.inputs.max_allowed_pct !== undefined) setMaxp(String(log.inputs.max_allowed_pct));
+          if (log.inputs.spot_readings !== undefined) setSpotsText(String(log.inputs.spot_readings));
+        }
+        setHasEvaluated(true);
+      }
+    };
+    window.addEventListener('bg_restore_calculation', handleRestore);
+    return () => window.removeEventListener('bg_restore_calculation', handleRestore);
+  }, []);
 
   const handleReset = () => {
     setProj('');

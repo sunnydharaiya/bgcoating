@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useToast } from '../../context/ToastContext';
 import { useGuideline } from '../../context/GuidelineContext';
 import { formatNum, formatCur } from '../../utils/calculations';
+import { autoLogCalculation } from '../../services/calculatorService';
 
 export default function TSASuite({ activeSubTool, onSubToolChange }) {
   const { addToast } = useToast();
@@ -34,7 +35,7 @@ export default function TSASuite({ activeSubTool, onSubToolChange }) {
   const [tswDen, setTswDen] = useState('2.70');
   const [tswDe, setTswDe] = useState('65');
   const [tswLoss, setTswLoss] = useState('0');
-  const [hasTswCalculated, setHasTswCalculated] = useState(true);
+  const [hasTswCalculated, setHasTswCalculated] = useState(false);
 
   const tswAVal = parseFloat(tswArea) || 0;
   const tswTVal = parseFloat(tswT) || 0;
@@ -59,7 +60,7 @@ export default function TSASuite({ activeSubTool, onSubToolChange }) {
   const [tscDe, setTscDe] = useState('65');
   const [tscDen, setTscDen] = useState('2.70');
   const [tscReq, setTscReq] = useState('300');
-  const [hasTscCalculated, setHasTscCalculated] = useState(true);
+  const [hasTscCalculated, setHasTscCalculated] = useState(false);
 
   const tscWVal = parseFloat(tscW) || 0;
   const tscTVal = parseFloat(tscT) || 0;
@@ -82,7 +83,7 @@ export default function TSASuite({ activeSubTool, onSubToolChange }) {
   // ----------------------------------------------------
   const [tseW, setTseW] = useState('120');
   const [tseD, setTseD] = useState('78');
-  const [hasTseCalculated, setHasTseCalculated] = useState(true);
+  const [hasTseCalculated, setHasTseCalculated] = useState(false);
 
   const tseWVal = parseFloat(tseW) || 0;
   const tseDVal = parseFloat(tseD) || 0;
@@ -97,7 +98,7 @@ export default function TSASuite({ activeSubTool, onSubToolChange }) {
   const [tstW, setTstW] = useState('33.75');
   const [tstDen, setTstDen] = useState('2.70');
   const [tstSpec, setTstSpec] = useState('250');
-  const [hasTstCalculated, setHasTstCalculated] = useState(true);
+  const [hasTstCalculated, setHasTstCalculated] = useState(false);
 
   const tstAVal = parseFloat(tstA) || 0;
   const tstWVal = parseFloat(tstW) || 0;
@@ -120,7 +121,7 @@ export default function TSASuite({ activeSubTool, onSubToolChange }) {
   const [tspN, setTspN] = useState('1');
   const [tspW, setTspW] = useState('130');
   const [tspSh, setTspSh] = useState('8');
-  const [hasTspCalculated, setHasTspCalculated] = useState(true);
+  const [hasTspCalculated, setHasTspCalculated] = useState(false);
 
   const tspAVal = parseFloat(tspA) || 0;
   const tspHVal = parseFloat(tspH) || 0;
@@ -144,7 +145,7 @@ export default function TSASuite({ activeSubTool, onSubToolChange }) {
   const [tskC, setTskC] = useState('10000');
   const [tskS, setTskS] = useState('15000');
   const [tskOh, setTskOh] = useState('0');
-  const [hasTskCalculated, setHasTskCalculated] = useState(true);
+  const [hasTskCalculated, setHasTskCalculated] = useState(false);
 
   const tskAVal = parseFloat(tskA) || 0;
   const tskWVal = parseFloat(tskW) || 0;
@@ -178,6 +179,237 @@ export default function TSASuite({ activeSubTool, onSubToolChange }) {
     tskAcc += x[1];
     tskStops.push(`${x[2]} ${p0}% ${(tskAcc / tskPtot) * 100}%`);
   });
+
+  const handleCalcTsw = () => {
+    if (!tswAVal || !tswTVal) {
+      addToast('Missing Required Inputs', 'Please fill Surface Area and Specified TSA Thickness.', 'warning');
+      return;
+    }
+    setHasTswCalculated(true);
+    addToast('Wire Calculated', `${formatNum(tswActual, 1)} kg wire required.`, 'success');
+    autoLogCalculation({
+      tool_id: 'tsa-wire',
+      tool_name: 'TSA Wire Consumption',
+      category: 'specialized',
+      inputs: {
+        project: tswProj,
+        surface_area_m2: tswAVal,
+        specified_thickness_um: tswTVal,
+        wire_diameter_mm: tswWd,
+        metal_density_g_cm3: tswDenVal,
+        deposition_efficiency_pct: tswDeVal,
+        contingency_loss_pct: tswLossVal
+      },
+      results: {
+        theoretical_wire_kg: tswTheo,
+        actual_wire_required_kg: tswActual,
+        procurement_wire_kg: tswProc,
+        consumption_per_m2_kg: tswPerM2,
+        wire_length_meters: tswLenM
+      }
+    });
+  };
+
+  const handleCalcTsc = () => {
+    if (!tscWVal || !tscTVal) {
+      addToast('Missing Required Inputs', 'Please fill Wire Stock and Specified Thickness.', 'warning');
+      return;
+    }
+    setHasTscCalculated(true);
+    addToast('Coverage Calculated', `Coverage: ${formatNum(tscCov, 0)} m²`, 'success');
+    autoLogCalculation({
+      tool_id: 'tsa-cov',
+      tool_name: 'TSA Area Coverage',
+      category: 'specialized',
+      inputs: {
+        wire_stock_kg: tscWVal,
+        specified_thickness_um: tscTVal,
+        deposition_efficiency_pct: tscDeVal,
+        metal_density_g_cm3: tscDenVal,
+        required_surface_area_m2: tscReqVal
+      },
+      results: {
+        total_achievable_coverage_m2: tscCov,
+        consumption_rate_kg_m2: tscPerM2,
+        surplus_or_shortfall_kg: tscRem,
+        stock_utilization_pct: tscUt
+      }
+    });
+  };
+
+  const handleCalcTse = () => {
+    if (!tseWVal || !tseDVal) {
+      addToast('Missing Required Inputs', 'Please fill Wire Consumed and Coating Deposited.', 'warning');
+      return;
+    }
+    setHasTseCalculated(true);
+    addToast('Efficiency Calculated', `DE: ${formatNum(tseEff, 1)}% (${tseRating[0]})`, 'success');
+    autoLogCalculation({
+      tool_id: 'tsa-eff',
+      tool_name: 'TSA Deposition Efficiency',
+      category: 'specialized',
+      inputs: {
+        wire_consumed_kg: tseWVal,
+        coating_deposited_kg: tseDVal
+      },
+      results: {
+        deposition_efficiency_pct: tseEff,
+        overspray_loss_kg: tseLoss,
+        efficiency_rating: tseRating[0]
+      }
+    });
+  };
+
+  const handleCalcTst = () => {
+    if (!tstAVal || !tstWVal) {
+      addToast('Missing Required Inputs', 'Please fill Surface Area and Deposited Metal Weight.', 'warning');
+      return;
+    }
+    setHasTstCalculated(true);
+    addToast('Thickness Calculated', `Thickness: ${formatNum(tstThk, 0)} µm`, 'success');
+    autoLogCalculation({
+      tool_id: 'tsa-thk',
+      tool_name: 'TSA Thickness Verification',
+      category: 'specialized',
+      inputs: {
+        surface_area_m2: tstAVal,
+        deposited_metal_weight_kg: tstWVal,
+        metal_density_g_cm3: tstDenVal,
+        specified_thickness_um: tstSpecVal
+      },
+      results: {
+        calculated_thickness_um: tstThk,
+        thickness_deviation_pct: tstDev,
+        specification_status: tstOk ? 'PASS' : 'FAIL'
+      }
+    });
+  };
+
+  const handleCalcTsp = () => {
+    if (!tspAVal || !tspHVal) {
+      addToast('Missing Required Inputs', 'Please fill Surface Area and Arc-on Hours.', 'warning');
+      return;
+    }
+    setHasTspCalculated(true);
+    addToast('Productivity Calculated', `${formatNum(tspProd, 1)} m²/hr`, 'success');
+    autoLogCalculation({
+      tool_id: 'tsa-prod',
+      tool_name: 'TSA Productivity',
+      category: 'specialized',
+      inputs: {
+        surface_area_sprayed_m2: tspAVal,
+        actual_spray_hours: tspHVal,
+        number_of_spray_guns: tspNVal,
+        wire_consumed_kg: tspWVal,
+        shift_duration_hours: tspShVal
+      },
+      results: {
+        productivity_m2_hr: tspProd,
+        deposition_rate_kg_hr: tspWr,
+        operator_productivity_m2_gun_hr: tspOp,
+        daily_shift_output_m2: tspDaily
+      }
+    });
+  };
+
+  const handleCalcTsk = () => {
+    if (!tskAVal || !tskWVal || !tskWcVal) {
+      addToast('Missing Required Inputs', 'Please fill Surface Area, Wire Required and Wire Unit Rate.', 'warning');
+      return;
+    }
+    setHasTskCalculated(true);
+    addToast('Cost Calculated', `Total: ${formatCur(tskTot)}`, 'success');
+    autoLogCalculation({
+      tool_id: 'tsa-cost',
+      tool_name: 'TSA Cost Estimation',
+      category: 'specialized',
+      inputs: {
+        surface_area_m2: tskAVal,
+        wire_quantity_kg: tskWVal,
+        wire_rate_per_kg: tskWcVal,
+        labor_cost: tskLVal,
+        equipment_cost: tskEVal,
+        consumables_cost: tskCVal,
+        surface_prep_cost: tskSVal,
+        overhead_margin_pct: tskOhVal
+      },
+      results: {
+        total_project_cost: tskTot,
+        unit_rate_per_m2: tskPerM2
+      }
+    });
+  };
+
+  useEffect(() => {
+    const handleRestore = (e) => {
+      const log = e?.detail;
+      if (!log) return;
+      if (['tsa-wire', 'tsa_wire', 'tsa_wire_consumption', 'tsa-wire-consumption'].includes(log.tool_id)) {
+        setCurrentTab('wire');
+        if (log.inputs) {
+          if (log.inputs.project !== undefined) setTswProj(log.inputs.project);
+          if (log.inputs.surface_area_m2 !== undefined) setTswArea(String(log.inputs.surface_area_m2));
+          if (log.inputs.specified_thickness_um !== undefined) setTswT(String(log.inputs.specified_thickness_um));
+          if (log.inputs.wire_diameter_mm !== undefined) setTswD(String(log.inputs.wire_diameter_mm));
+          if (log.inputs.metal_density_g_cm3 !== undefined) setTswDen(String(log.inputs.metal_density_g_cm3));
+          if (log.inputs.deposition_efficiency_pct !== undefined) setTswDe(String(log.inputs.deposition_efficiency_pct));
+          if (log.inputs.contingency_loss_pct !== undefined) setTswLoss(String(log.inputs.contingency_loss_pct));
+        }
+        setHasTswCalculated(true);
+      } else if (['tsa-cov', 'tsa_cov', 'tsa_area_coverage', 'tsa-area-coverage'].includes(log.tool_id)) {
+        setCurrentTab('cov');
+        if (log.inputs) {
+          if (log.inputs.wire_stock_kg !== undefined) setTscW(String(log.inputs.wire_stock_kg));
+          if (log.inputs.specified_thickness_um !== undefined) setTscT(String(log.inputs.specified_thickness_um));
+          if (log.inputs.deposition_efficiency_pct !== undefined) setTscDe(String(log.inputs.deposition_efficiency_pct));
+          if (log.inputs.metal_density_g_cm3 !== undefined) setTscDen(String(log.inputs.metal_density_g_cm3));
+          if (log.inputs.required_surface_area_m2 !== undefined) setTscReq(String(log.inputs.required_surface_area_m2));
+        }
+        setHasTscCalculated(true);
+      } else if (['tsa-eff', 'tsa_eff', 'tsa_deposition', 'tsa-deposition-efficiency'].includes(log.tool_id)) {
+        setCurrentTab('eff');
+        if (log.inputs) {
+          if (log.inputs.wire_consumed_kg !== undefined) setTseW(String(log.inputs.wire_consumed_kg));
+          if (log.inputs.coating_deposited_kg !== undefined) setTseD(String(log.inputs.coating_deposited_kg));
+        }
+        setHasTseCalculated(true);
+      } else if (['tsa-thk', 'tsa_thk', 'tsa_thickness', 'tsa_thickness_verify', 'tsa-thickness-verification'].includes(log.tool_id)) {
+        setCurrentTab('thk');
+        if (log.inputs) {
+          if (log.inputs.surface_area_m2 !== undefined) setTstA(String(log.inputs.surface_area_m2));
+          if (log.inputs.deposited_metal_weight_kg !== undefined) setTstW(String(log.inputs.deposited_metal_weight_kg));
+          if (log.inputs.metal_density_g_cm3 !== undefined) setTstDen(String(log.inputs.metal_density_g_cm3));
+          if (log.inputs.specified_thickness_um !== undefined) setTstSpec(String(log.inputs.specified_thickness_um));
+        }
+        setHasTstCalculated(true);
+      } else if (['tsa-prod', 'tsa_prod', 'tsa_productivity', 'tsa-productivity'].includes(log.tool_id)) {
+        setCurrentTab('prod');
+        if (log.inputs) {
+          if (log.inputs.surface_area_sprayed_m2 !== undefined) setTspA(String(log.inputs.surface_area_sprayed_m2));
+          if (log.inputs.actual_spray_hours !== undefined) setTspH(String(log.inputs.actual_spray_hours));
+          if (log.inputs.number_of_spray_guns !== undefined) setTspN(String(log.inputs.number_of_spray_guns));
+          if (log.inputs.wire_consumed_kg !== undefined) setTspW(String(log.inputs.wire_consumed_kg));
+          if (log.inputs.shift_duration_hours !== undefined) setTspSh(String(log.inputs.shift_duration_hours));
+        }
+        setHasTspCalculated(true);
+      } else if (['tsa-cost', 'tsa_cost'].includes(log.tool_id)) {
+        setCurrentTab('cost');
+        if (log.inputs) {
+          if (log.inputs.surface_area_m2 !== undefined) setTskA(String(log.inputs.surface_area_m2));
+          if (log.inputs.wire_quantity_kg !== undefined) setTskW(String(log.inputs.wire_quantity_kg));
+          if (log.inputs.wire_rate_per_kg !== undefined) setTskWc(String(log.inputs.wire_rate_per_kg));
+          if (log.inputs.labor_cost !== undefined) setTskL(String(log.inputs.labor_cost));
+          if (log.inputs.equipment_cost !== undefined) setTskE(String(log.inputs.equipment_cost));
+          if (log.inputs.consumables_cost !== undefined) setTskC(String(log.inputs.consumables_cost));
+          if (log.inputs.surface_prep_cost !== undefined) setTskS(String(log.inputs.surface_prep_cost));
+          if (log.inputs.overhead_margin_pct !== undefined) setTskOh(String(log.inputs.overhead_margin_pct));
+        }
+        setHasTskCalculated(true);
+      }
+    };
+    window.addEventListener('bg_restore_calculation', handleRestore);
+    return () => window.removeEventListener('bg_restore_calculation', handleRestore);
+  }, []);
 
   return (
     <div className="space-y-4">
@@ -336,7 +568,7 @@ export default function TSASuite({ activeSubTool, onSubToolChange }) {
             </div>
 
             <div className="btn-row">
-              <button className="btn" onClick={() => { setHasTswCalculated(true); addToast('Wire Calculated', `${formatNum(tswActual, 1)} kg wire required.`, 'success'); }}>
+              <button className="btn" onClick={handleCalcTsw}>
                 ▶ Calculate Wire Consumption
               </button>
               <button className="btn-reset" onClick={() => {
@@ -513,7 +745,7 @@ export default function TSASuite({ activeSubTool, onSubToolChange }) {
             </div>
 
             <div className="btn-row">
-              <button className="btn" onClick={() => { setHasTscCalculated(true); addToast('Coverage Calculated', `Coverage: ${formatNum(tscCov, 0)} m²`, 'success'); }}>
+              <button className="btn" onClick={handleCalcTsc}>
                 ▶ Calculate Coverage
               </button>
               <button className="btn-reset" onClick={() => {
@@ -641,7 +873,7 @@ export default function TSASuite({ activeSubTool, onSubToolChange }) {
             </div>
 
             <div className="btn-row">
-              <button className="btn" onClick={() => { setHasTseCalculated(true); addToast('Efficiency Calculated', `DE: ${formatNum(tseEff, 1)}% (${tseRating[0]})`, 'success'); }}>
+              <button className="btn" onClick={handleCalcTse}>
                 ▶ Calculate Efficiency
               </button>
               <button className="btn-reset" onClick={() => { setTseW(''); setTseD(''); setHasTseCalculated(false); }}>↺ Reset</button>
@@ -803,7 +1035,7 @@ export default function TSASuite({ activeSubTool, onSubToolChange }) {
             </div>
 
             <div className="btn-row">
-              <button className="btn" onClick={() => { setHasTstCalculated(true); addToast('Thickness Calculated', `Thickness: ${formatNum(tstThk, 0)} µm`, 'success'); }}>
+              <button className="btn" onClick={handleCalcTst}>
                 ▶ Calculate Thickness
               </button>
               <button className="btn-reset" onClick={() => { setTstA(''); setTstW(''); setTstDen('2.70'); setTstSpec(''); setHasTstCalculated(false); }}>↺ Reset</button>
@@ -968,7 +1200,7 @@ export default function TSASuite({ activeSubTool, onSubToolChange }) {
             </div>
 
             <div className="btn-row">
-              <button className="btn" onClick={() => { setHasTspCalculated(true); addToast('Productivity Calculated', `${formatNum(tspProd, 1)} m²/hr`, 'success'); }}>
+              <button className="btn" onClick={handleCalcTsp}>
                 ▶ Calculate Productivity
               </button>
               <button className="btn-reset" onClick={() => { setTspA(''); setTspH(''); setTspN('1'); setTspW(''); setTspSh('8'); setHasTspCalculated(false); }}>↺ Reset</button>
@@ -1168,7 +1400,7 @@ export default function TSASuite({ activeSubTool, onSubToolChange }) {
             </div>
 
             <div className="btn-row">
-              <button className="btn" onClick={() => { setHasTskCalculated(true); addToast('Cost Calculated', `Total: ${formatCur(tskTot)}`, 'success'); }}>
+              <button className="btn" onClick={handleCalcTsk}>
                 ▶ Calculate TSA Cost
               </button>
               <button className="btn-reset" onClick={() => {

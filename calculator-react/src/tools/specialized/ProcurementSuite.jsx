@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useToast } from '../../context/ToastContext';
 import { useGuideline } from '../../context/GuidelineContext';
 import { formatNum, formatCur } from '../../utils/calculations';
+import { autoLogCalculation } from '../../services/calculatorService';
 
 export default function ProcurementSuite({ activeSubTool, onSubToolChange }) {
   const { addToast } = useToast();
@@ -61,7 +62,7 @@ export default function ProcurementSuite({ activeSubTool, onSubToolChange }) {
   const [c4Pk, setC4Pk] = useState('20');
   const [c4Sa, setC4Sa] = useState('15');
 
-  const [hasPpqCalculated, setHasPpqCalculated] = useState(true);
+  const [hasPpqCalculated, setHasPpqCalculated] = useState(false);
 
   const areaVal = parseFloat(ppqArea) || 0;
   const teVal = parseFloat(ppqTe) || 100;
@@ -301,7 +302,126 @@ export default function ProcurementSuite({ activeSubTool, onSubToolChange }) {
 
     setBids(prev => [...prev, newBid]);
     addToast('Bid Added', `Added bid from ${mfrName}. Total: ${bids.length + 1}`, 'success');
+
+    // Auto-save to calculation audit log
+    autoLogCalculation({
+      tool_id: 'bid-comp',
+      tool_name: 'Multi-Manufacturer Bid Comparison (QCBS Scoring)',
+      category: 'specialized',
+      inputs: {
+        surface_area_m2: bAreaVal,
+        application_loss_pct: bLossVal,
+        technical_weightage_pct: wT,
+        commercial_weightage_pct: wC,
+        manufacturer: mfrName,
+        product: bidProd,
+        dft_um: dft,
+        volume_solids_pct: vs,
+        price_per_liter_inr: pr,
+        service_life_yrs: life
+      },
+      results: {
+        total_quantity_l: qty,
+        total_cost_inr: cost,
+        cost_per_m2_inr: costM2,
+        annualized_lifecycle_cost_inr: lcYr
+      }
+    });
   };
+
+  const handleCalcPpq = () => {
+    if (!areaVal || validCoats.length === 0) {
+      addToast('Missing Required Inputs', 'Please enter Project Area and at least one coat with DFT and VS%.', 'warning');
+      return;
+    }
+    setHasPpqCalculated(true);
+    addToast('Procurement Calculated', `${formatNum(totP, 0)} L total procurement.`, 'success');
+    autoLogCalculation({
+      tool_id: 'bid-proc',
+      tool_name: 'Paint Procurement Quantity (Multi-Coat Matrix)',
+      category: 'specialized',
+      inputs: {
+        project: ppqProj,
+        client: ppqCli,
+        surface_area_m2: areaVal,
+        transfer_efficiency_pct: teVal,
+        application_loss_pct: lossVal,
+        reserve_margin_pct: resVal,
+        coats: validCoats.map(c => ({
+          coat: c.coat,
+          name: c.nm,
+          dft_um: c.dft,
+          volume_solids_pct: c.vs,
+          unit_rate_inr_l: c.pr,
+          pack_size_l: c.pk
+        }))
+      },
+      results: {
+        total_paint_required_l: totQ,
+        total_procurement_quantity_l: totP,
+        total_packs_required: totPk,
+        total_paint_cost_inr: totCost,
+        total_system_dft_um: totDft
+      }
+    });
+  };
+
+  useEffect(() => {
+    const handleRestore = (e) => {
+      const log = e?.detail;
+      if (!log) return;
+      if (['bid-proc', 'bid_proc', 'paint_procurement', 'paint-procurement', 'procurement_suite'].includes(log.tool_id)) {
+        setCurrentTab('proc');
+        if (log.inputs) {
+          if (log.inputs.project !== undefined) setPpqProj(log.inputs.project);
+          if (log.inputs.client !== undefined) setPpqCli(log.inputs.client);
+          if (log.inputs.surface_area_m2 !== undefined) setPpqArea(String(log.inputs.surface_area_m2));
+          if (log.inputs.transfer_efficiency_pct !== undefined) setPpqTe(String(log.inputs.transfer_efficiency_pct));
+          if (log.inputs.application_loss_pct !== undefined) setPpqLoss(String(log.inputs.application_loss_pct));
+          if (log.inputs.reserve_margin_pct !== undefined) setPpqRes(String(log.inputs.reserve_margin_pct));
+          if (Array.isArray(log.inputs.coats)) {
+            log.inputs.coats.forEach(c => {
+              if (c.coat === 'Primer') {
+                if (c.name !== undefined) setC1Nm(c.name);
+                if (c.dft_um !== undefined) setC1Dft(String(c.dft_um));
+                if (c.volume_solids_pct !== undefined) setC1Vs(String(c.volume_solids_pct));
+                if (c.unit_rate_inr_l !== undefined) setC1Pr(String(c.unit_rate_inr_l));
+                if (c.pack_size_l !== undefined) setC1Pk(String(c.pack_size_l));
+              } else if (c.coat === 'Intermediate') {
+                if (c.name !== undefined) setC2Nm(c.name);
+                if (c.dft_um !== undefined) setC2Dft(String(c.dft_um));
+                if (c.volume_solids_pct !== undefined) setC2Vs(String(c.volume_solids_pct));
+                if (c.unit_rate_inr_l !== undefined) setC2Pr(String(c.unit_rate_inr_l));
+                if (c.pack_size_l !== undefined) setC2Pk(String(c.pack_size_l));
+              } else if (c.coat === 'Finish') {
+                if (c.name !== undefined) setC3Nm(c.name);
+                if (c.dft_um !== undefined) setC3Dft(String(c.dft_um));
+                if (c.volume_solids_pct !== undefined) setC3Vs(String(c.volume_solids_pct));
+                if (c.unit_rate_inr_l !== undefined) setC3Pr(String(c.unit_rate_inr_l));
+                if (c.pack_size_l !== undefined) setC3Pk(String(c.pack_size_l));
+              } else if (c.coat === 'Stripe Coat') {
+                if (c.name !== undefined) setC4Nm(c.name);
+                if (c.dft_um !== undefined) setC4Dft(String(c.dft_um));
+                if (c.volume_solids_pct !== undefined) setC4Vs(String(c.volume_solids_pct));
+                if (c.unit_rate_inr_l !== undefined) setC4Pr(String(c.unit_rate_inr_l));
+                if (c.pack_size_l !== undefined) setC4Pk(String(c.pack_size_l));
+              }
+            });
+          }
+        }
+        setHasPpqCalculated(true);
+      } else if (['bid-comp', 'bid_comp', 'bid_comparison'].includes(log.tool_id)) {
+        setCurrentTab('comp');
+        if (log.inputs) {
+          if (log.inputs.surface_area_m2 !== undefined) setBidArea(String(log.inputs.surface_area_m2));
+          if (log.inputs.application_loss_pct !== undefined) setBidLoss(String(log.inputs.application_loss_pct));
+          if (log.inputs.technical_weightage_pct !== undefined) setBidWt(String(log.inputs.technical_weightage_pct));
+        }
+      }
+    };
+    window.addEventListener('bg_restore_calculation', handleRestore);
+    return () => window.removeEventListener('bg_restore_calculation', handleRestore);
+  }, []);
 
   const handleClearBids = () => {
     setBids([]);
@@ -763,7 +883,7 @@ export default function ProcurementSuite({ activeSubTool, onSubToolChange }) {
             </div>
 
             <div className="btn-row">
-              <button className="btn" onClick={() => { setHasPpqCalculated(true); addToast('Procurement Calculated', `${formatNum(totP, 0)} L total procurement.`, 'success'); }}>
+              <button className="btn" onClick={handleCalcPpq}>
                 ▶ Calculate Procurement Quantity
               </button>
               <button className="btn-reset" onClick={() => {

@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useToast } from '../../context/ToastContext';
 import { useGuideline } from '../../context/GuidelineContext';
 import { formatNum, formatCur } from '../../utils/calculations';
+import { autoLogCalculation } from '../../services/calculatorService';
 
 function lccClass(cl) {
   if (cl >= 25) return 'Very High Durability (VH · >25 yrs)';
@@ -170,7 +171,92 @@ export default function LifeCycleCostTool() {
       asset
     });
     addToast('Life Cycle Cost Evaluated', 'Total ownership cost and NPV calculated.', 'success');
+
+    // Auto-save to calculation audit log
+    autoLogCalculation({
+      tool_id: 'pro-lcc',
+      tool_name: 'Coating Life Cycle Cost (Total Cost of Ownership)',
+      category: 'pro',
+      inputs: {
+        project: proj,
+        asset,
+        client,
+        location: loc,
+        environment: env,
+        coating_system: sys,
+        surface_area_m2: areaVal,
+        design_life_yrs: dlVal,
+        expected_coating_life_yrs: clVal,
+        recoating_cycles: rcyc,
+        paint_material_cost: parseFloat(cPaint) || 0,
+        surface_prep_cost: parseFloat(cPrep) || 0,
+        application_labor_cost: parseFloat(cLab) || 0,
+        discount_rate_pct: parseFloat(dis) || 0
+      },
+      results: {
+        initial_cost_inr: ini,
+        total_lifecycle_cost_inr: lcc,
+        annualized_cost_inr_yr: ann,
+        cost_per_sqm_inr_m2: perM2,
+        npv_inr: npv,
+        durability_classification: cls
+      }
+    });
   };
+
+  useEffect(() => {
+    const handleRestore = (e) => {
+      const log = e?.detail;
+      if (log && (log.tool_id === 'pro-lcc' || log.tool_id === 'pro_lcc' || log.tool_id === 'lifecycle_cost')) {
+        if (log.inputs) {
+          if (log.inputs.project !== undefined) setProj(log.inputs.project);
+          if (log.inputs.asset !== undefined) setAsset(log.inputs.asset);
+          if (log.inputs.client !== undefined) setClient(log.inputs.client);
+          if (log.inputs.location !== undefined) setLoc(log.inputs.location);
+          if (log.inputs.environment !== undefined) setEnv(log.inputs.environment);
+          if (log.inputs.coating_system !== undefined) setSys(log.inputs.coating_system);
+          if (log.inputs.surface_area_m2 !== undefined) setArea(String(log.inputs.surface_area_m2));
+          if (log.inputs.design_life_yrs !== undefined) setDl(String(log.inputs.design_life_yrs));
+          if (log.inputs.expected_coating_life_yrs !== undefined) setCl(String(log.inputs.expected_coating_life_yrs));
+          if (log.inputs.recoating_cycles !== undefined) setRcyc(String(log.inputs.recoating_cycles));
+          if (log.inputs.paint_material_cost !== undefined) setCPaint(String(log.inputs.paint_material_cost));
+          if (log.inputs.surface_prep_cost !== undefined) setCPrep(String(log.inputs.surface_prep_cost));
+          if (log.inputs.application_labor_cost !== undefined) setCLab(String(log.inputs.application_labor_cost));
+          if (log.inputs.discount_rate_pct !== undefined) setDis(String(log.inputs.discount_rate_pct));
+        }
+        if (log.results) {
+          setRes({
+            areaVal: log.inputs?.surface_area_m2,
+            dlVal: log.inputs?.design_life_yrs,
+            clVal: log.inputs?.expected_coating_life_yrs,
+            ini: log.results.initial_cost_inr,
+            nIns: 0,
+            nRm: 0,
+            nRp: 0,
+            nRec: 0,
+            cInsTot: 0,
+            cRmTot: 0,
+            cRpTot: 0,
+            cRecTot: 0,
+            shutTot: 0,
+            dispTot: 0,
+            otherTot: 0,
+            lcc: log.results.total_lifecycle_cost_inr,
+            ann: log.results.annualized_cost_inr_yr,
+            perM2: log.results.cost_per_sqm_inr_m2,
+            npv: log.results.npv_inr,
+            cls: log.results.durability_classification,
+            g: { bg: '#E8F5E9', bd: 'rgba(46,125,50,.35)', c1: '#1B5E20', c2: '#2E7D32', ic: '🏆' },
+            sys: log.inputs?.coating_system || 'Coating System',
+            proj: log.inputs?.project,
+            asset: log.inputs?.asset
+          });
+        }
+      }
+    };
+    window.addEventListener('bg_restore_calculation', handleRestore);
+    return () => window.removeEventListener('bg_restore_calculation', handleRestore);
+  }, []);
 
   const handleReset = () => {
     setProj('');

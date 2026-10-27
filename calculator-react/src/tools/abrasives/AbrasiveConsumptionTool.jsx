@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useToast } from '../../context/ToastContext';
+import { autoLogCalculation } from '../../services/calculatorService';
 
 const G_BASE = [10, 15, 20, 25]; // Sweep, Commercial, SA 2.5, SA 3.0
 const CS_BASE = [15, 20, 30, 35];
@@ -136,6 +137,21 @@ export default function AbrasiveConsumptionTool({ activeSubTool, onSubToolChange
       setCsRes(resultData);
     }
     addToast('Calculated Demand', `Total ${isGarnet ? 'Garnet' : 'Copper Slag'} consumption calculated.`, 'success');
+
+    autoLogCalculation({
+      tool_id: isGarnet ? 'ab-garnet' : 'ab-cslag',
+      tool_name: isGarnet ? 'Garnet Blasting Consumption' : 'Copper Slag Consumption',
+      category: 'abrasive',
+      inputs: {
+        totalArea: `${totalArea} m²`,
+        activeCells: inputRows.map(r => `${r.name}: ${r.area} m²`).join(', ')
+      },
+      results: {
+        totalAbrasiveKg: `${grand.toFixed(1)} kg`,
+        totalAbrasiveTons: `${(grand / 1000).toFixed(2)} MT`,
+      },
+      notes: 'Auto-logged on calculation'
+    });
   };
 
   const handleReset = (pfx) => {

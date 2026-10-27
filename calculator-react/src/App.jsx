@@ -19,6 +19,7 @@ import SettingsPage from './pages/SettingsPage';
 import LoginPage from './pages/LoginPage';
 import AuthModal from './components/AuthModal';
 import ErrorBoundary from './components/ErrorBoundary';
+import { calculatorService } from './services/calculatorService';
 
 // Context Providers
 import { ToastProvider } from './context/ToastContext';
@@ -32,7 +33,7 @@ import PlanUpgradeModal from './components/PlanUpgradeModal';
 
 // Router Utilities
 import { parseCurrentUrl, getUrlFor } from './utils/router';
-import { fetchUserProfile } from './utils/api';
+import { fetchUserProfile, clearAuth } from './utils/api';
 import { useVisitorTracker } from './utils/visitorTracker';
 
 export default function App() {
@@ -56,10 +57,14 @@ export default function App() {
   const [authModalOpen, setAuthModalOpen] = useState(() => {
     return initialRoute.page === 'login';
   });
+  const [isAuthCompulsory, setIsAuthCompulsory] = useState(false);
 
   // Listen for global auth modal open event
   useEffect(() => {
-    const handleOpenAuth = () => setAuthModalOpen(true);
+    const handleOpenAuth = (e) => {
+      setIsAuthCompulsory(Boolean(e?.detail?.isCompulsory));
+      setAuthModalOpen(true);
+    };
     window.addEventListener('bg_open_auth_modal', handleOpenAuth);
     return () => window.removeEventListener('bg_open_auth_modal', handleOpenAuth);
   }, []);
@@ -113,15 +118,22 @@ export default function App() {
   const handleLoginSuccess = useCallback((userData) => {
     setIsLoggedIn(true);
     setAuthModalOpen(false);
+    setIsAuthCompulsory(false);
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.removeItem('bg_guest_calc_start');
+      sessionStorage.removeItem('bg_guest_timer_done');
+    }
+    calculatorService.syncGuestLogsAfterLogin().catch(() => {});
     if (activePage === 'login') {
       navigate('dashboard', 'hub');
     }
   }, [activePage, navigate]);
 
   const handleLogout = useCallback(() => {
-    localStorage.removeItem('bg_auth_logged_in');
+    clearAuth();
     setIsLoggedIn(false);
-    setAuthModalOpen(true);
+    setIsAuthCompulsory(false);
+    setAuthModalOpen(false);
   }, []);
 
   // Listen for global logout events
@@ -165,7 +177,7 @@ export default function App() {
       case 'calc':
         return (
           <CoatingCalculatorPage 
-            key={`calc-${activeSubTool}`}
+            key="coating-calculator-main"
             activeSubTool={activeSubTool} 
             setActiveSubTool={setActiveSubTool} 
           />
@@ -296,7 +308,7 @@ export default function App() {
       default:
         return (
           <CoatingCalculatorPage 
-            key={`calc-def-${activeSubTool}`}
+            key="coating-calculator-default"
             activeSubTool={activeSubTool} 
             setActiveSubTool={setActiveSubTool} 
           />
@@ -346,7 +358,12 @@ export default function App() {
           {/* Global Modals & Notifications */}
           <AuthModal 
             isOpen={authModalOpen} 
-            onClose={() => setAuthModalOpen(false)} 
+            isCompulsory={isAuthCompulsory}
+            onClose={() => {
+              if (!isAuthCompulsory) {
+                setAuthModalOpen(false);
+              }
+            }} 
             onLoginSuccess={handleLoginSuccess} 
           />
           <GuidelineDrawer />

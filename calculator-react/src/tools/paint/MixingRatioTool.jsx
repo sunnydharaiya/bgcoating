@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useToast } from '../../context/ToastContext';
 import { calcMixingRatio, formatNum } from '../../utils/calculations';
+import { autoLogCalculation } from '../../services/calculatorService';
 
 export default function MixingRatioTool() {
   const { addToast } = useToast();
@@ -8,17 +9,58 @@ export default function MixingRatioTool() {
   const [ratioA, setRatioA] = useState('4');
   const [ratioB, setRatioB] = useState('1');
   const [totalVol, setTotalVol] = useState('');
+  const [res, setRes] = useState(null);
   const [hasCalculated, setHasCalculated] = useState(false);
 
-  const res = (ratioA && ratioB && totalVol) ? calcMixingRatio(ratioA, ratioB, totalVol) : null;
+  useEffect(() => {
+    const handleRestore = (e) => {
+      if (e?.detail?.tool_id === 'sp-mx' && e.detail.inputs) {
+        const inp = e.detail.inputs;
+        const rA = inp.ratioA ? String(inp.ratioA).replace(/[^\d.]/g, '') : '4';
+        const rB = inp.ratioB ? String(inp.ratioB).replace(/[^\d.]/g, '') : '1';
+        const v = inp.totalVolume ? String(inp.totalVolume).replace(/[^\d.]/g, '') : '';
+        if (rA) setRatioA(rA);
+        if (rB) setRatioB(rB);
+        if (v) setTotalVol(v);
+        if (inp.paintName && inp.paintName !== 'Unspecified') setPaintName(inp.paintName);
+        if (rA && rB && v) {
+          const computed = calcMixingRatio(rA, rB, v);
+          setRes(computed);
+          setHasCalculated(true);
+        }
+      }
+    };
+    window.addEventListener('bg_restore_calculation', handleRestore);
+    return () => window.removeEventListener('bg_restore_calculation', handleRestore);
+  }, []);
 
   const handleCalculate = () => {
     if (!ratioA || !ratioB || !totalVol) {
       addToast('Missing Required Inputs', 'Please enter Ratio A, Ratio B, and Total Volume.', 'warning');
       return;
     }
+    const computed = calcMixingRatio(ratioA, ratioB, totalVol);
+    setRes(computed);
     setHasCalculated(true);
     addToast('Calculated Mixing Ratio', 'Volumes of Part A and B computed successfully.', 'success');
+
+    autoLogCalculation({
+      tool_id: 'sp-mx',
+      tool_name: '2-Component Mixing Ratio',
+      category: 'paint',
+      inputs: {
+        paintName: paintName || 'Unspecified',
+        ratioA,
+        ratioB,
+        totalVolume: `${totalVol} L`,
+      },
+      results: {
+        volumePartA: `${formatNum(computed.volA, 2)} L`,
+        volumePartB: `${formatNum(computed.volB, 2)} L`,
+        percentPartA: `${Math.round((parseFloat(ratioA) / (parseFloat(ratioA) + parseFloat(ratioB))) * 100)}%`,
+      },
+      notes: 'Auto-logged on calculation'
+    });
   };
 
   const handleReset = () => {
@@ -26,6 +68,7 @@ export default function MixingRatioTool() {
     setRatioA('4');
     setRatioB('1');
     setTotalVol('');
+    setRes(null);
     setHasCalculated(false);
     addToast('Form Reset', 'All input parameters cleared.', 'info');
   };
@@ -50,9 +93,7 @@ Volume Part B: ${formatNum(res.volB, 2)} L`;
     addToast('Copied to Clipboard', 'Calculation summary copied.', 'success');
   };
 
-  const pctA = (res && (parseFloat(ratioA) + parseFloat(ratioB)) > 0)
-    ? Math.round((parseFloat(ratioA) / (parseFloat(ratioA) + parseFloat(ratioB))) * 100)
-    : 80;
+  const pctA = (ratioA && ratioB) ? Math.round((parseFloat(ratioA) / (parseFloat(ratioA) + parseFloat(ratioB))) * 100) : 80;
 
   return (
     <div className="sub-sec card active" id="sp-mx">
@@ -60,8 +101,8 @@ Volume Part B: ${formatNum(res.volB, 2)} L`;
       <div className="ch">
         <div className="ci">⚗️</div>
         <div>
-          <div className="ct">Paint Mixing Ratio</div>
-          <div className="cs">Exact Part A &amp; B volumes from any ratio</div>
+          <div className="ct">2-Component Mixing Ratio</div>
+          <div className="cs">Calculate Part A (Base) &amp; Part B (Hardener) volumes</div>
         </div>
         <div className="ctag">P-6</div>
       </div>
@@ -69,48 +110,54 @@ Volume Part B: ${formatNum(res.volB, 2)} L`;
       <div className="cb">
         {/* User Inputs Section (Orange Border & Top Badge) */}
         <div className="input-section">
-          <div className="g2">
+          <div className="g3">
             <div className="field">
-              <label>Ratio A <span className="lh">parts</span></label>
+              <label>Part A (Base) <span className="lh">ratio</span></label>
               <div className="iw">
                 <input 
                   type="number" 
-                  id="mx-a" 
+                  id="mx-ra-in" 
                   value={ratioA} 
-                  onChange={e => setRatioA(e.target.value)} 
+                  onChange={e => { setRatioA(e.target.value); setHasCalculated(false); }} 
                   placeholder="e.g. 4" 
-                  min="0.01" 
-                  step="any" 
+                  min="0.1" 
+                  step="0.1" 
                 />
               </div>
             </div>
+
             <div className="field">
-              <label>Ratio B <span className="lh">parts</span></label>
+              <label>Part B (Hardener) <span className="lh">ratio</span></label>
               <div className="iw">
                 <input 
                   type="number" 
-                  id="mx-b" 
+                  id="mx-rb-in" 
                   value={ratioB} 
-                  onChange={e => setRatioB(e.target.value)} 
+                  onChange={e => { setRatioB(e.target.value); setHasCalculated(false); }} 
                   placeholder="e.g. 1" 
-                  min="0.01" 
-                  step="any" 
+                  min="0.1" 
+                  step="0.1" 
                 />
               </div>
             </div>
+
             <div className="field">
-              <label>Total Volume <span className="lh">L</span></label>
+              <label>Total Volume Needed <span className="lh">Litres</span></label>
               <div className="iw">
                 <input 
                   type="number" 
                   id="mx-tot" 
                   value={totalVol} 
-                  onChange={e => setTotalVol(e.target.value)} 
+                  onChange={e => { setTotalVol(e.target.value); setHasCalculated(false); }} 
                   placeholder="e.g. 20" 
+                  min="0.1" 
                 />
                 <span className="uu">L</span>
               </div>
             </div>
+          </div>
+
+          <div className="g1">
             <div className="field">
               <label>Paint Name <span className="lh">optional</span></label>
               <div className="iw">
@@ -118,7 +165,7 @@ Volume Part B: ${formatNum(res.volB, 2)} L`;
                   type="text" 
                   id="mx-nm" 
                   value={paintName} 
-                  onChange={e => setPaintName(e.target.value)} 
+                  onChange={e => { setPaintName(e.target.value); }} 
                   placeholder="e.g. Polyurethane Topcoat" 
                 />
               </div>
@@ -137,7 +184,7 @@ Volume Part B: ${formatNum(res.volB, 2)} L`;
         </div>
 
         {/* Calculated Results Section */}
-        {(hasCalculated || res) && (
+        {hasCalculated && res && (
           <div className="res" id="r-mx" style={{ display: 'block' }}>
             <div className="output-section">
               <div className="rh">
@@ -149,14 +196,14 @@ Volume Part B: ${formatNum(res.volB, 2)} L`;
                 <div className="tile tp">
                   <div className="tl">Volume Part A</div>
                   <div>
-                    <span className="tv" id="mx-ra">{res ? formatNum(res.volA, 2) : '—'}</span>
+                    <span className="tv" id="mx-ra">{formatNum(res.volA, 2)}</span>
                     <span className="tu">L</span>
                   </div>
                 </div>
                 <div className="tile ts">
                   <div className="tl">Volume Part B</div>
                   <div>
-                    <span className="tv" id="mx-rb">{res ? formatNum(res.volB, 2) : '—'}</span>
+                    <span className="tv" id="mx-rb">{formatNum(res.volB, 2)}</span>
                     <span className="tu">L</span>
                   </div>
                 </div>
@@ -177,15 +224,15 @@ Volume Part B: ${formatNum(res.volB, 2)} L`;
                 <div className="input-summary-label">📝 Input Data (Provided by User)</div>
                 <div className="dr">
                   <span className="dk">Paint Name</span>
-                  <span className="dv">{paintName || '—'}</span>
+                  <span className="dv" id="mx-rnm">{paintName || '—'}</span>
                 </div>
                 <div className="dr">
-                  <span className="dk">Ratio A : B</span>
-                  <span className="dv">{ratioA} : {ratioB}</span>
+                  <span className="dk">Mixing Ratio</span>
+                  <span className="dv" id="mx-rr">{ratioA} : {ratioB}</span>
                 </div>
                 <div className="dr">
                   <span className="dk">Total Volume</span>
-                  <span className="dv">{totalVol ? `${totalVol} L` : '—'}</span>
+                  <span className="dv" id="mx-rt">{totalVol} L</span>
                 </div>
               </div>
 

@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useToast } from '../../context/ToastContext';
 import { useGuideline } from '../../context/GuidelineContext';
 import { formatNum, formatCur } from '../../utils/calculations';
+import { autoLogCalculation } from '../../services/calculatorService';
 
 const RECYCLE_DB = {
   'Steel Grit': { life: '150–200+', rec: 95, brk: 1.0, cons: '0.5–2', den: '~4.3 (bulk)', hard: '55–65 HRC', rating: '★★★★★ Excellent' },
@@ -111,7 +112,89 @@ export default function AbrasiveRecyclingTool() {
       type
     });
     addToast('Calculation Complete', 'Abrasive recycling efficiency and mass balance computed.', 'success');
+
+    // Auto-save to calculation audit log
+    autoLogCalculation({
+      tool_id: 'pro-arc',
+      tool_name: 'Abrasive Recycling & Recovery Efficiency',
+      category: 'pro',
+      inputs: {
+        project: proj,
+        client: cli,
+        structure: str,
+        abrasive_type: type,
+        recycle_cycles: cycVal,
+        fresh_abrasive_loaded_kg: freshVal,
+        abrasive_recovered_kg: recovVal,
+        waste_fines_kg: wasteVal,
+        dust_collector_fines_kg: dustVal,
+        screen_reject_pct: rejVal,
+        abrasive_cost_inr_kg: costVal,
+        blasted_surface_area_m2: areaVal
+      },
+      results: {
+        recovery_rate_pct: recovRate,
+        reusable_abrasive_kg: reusable,
+        recycling_efficiency_pct: eff,
+        makeup_abrasive_needed_kg: makeup,
+        makeup_consumption_kg_m2: cons,
+        cost_savings_inr: saving,
+        classification: g.t
+      }
+    });
   };
+
+  useEffect(() => {
+    const handleRestore = (e) => {
+      const log = e?.detail;
+      if (log && (log.tool_id === 'pro-arc' || log.tool_id === 'abrasive_recycling' || log.tool_id === 'pro_arc')) {
+        if (log.inputs) {
+          if (log.inputs.project !== undefined) setProj(log.inputs.project);
+          if (log.inputs.client !== undefined) setCli(log.inputs.client);
+          if (log.inputs.structure !== undefined) setStr(log.inputs.structure);
+          if (log.inputs.abrasive_type !== undefined) setType(log.inputs.abrasive_type);
+          if (log.inputs.recycle_cycles !== undefined) setCycles(String(log.inputs.recycle_cycles));
+          if (log.inputs.fresh_abrasive_loaded_kg !== undefined) setFresh(String(log.inputs.fresh_abrasive_loaded_kg));
+          if (log.inputs.abrasive_recovered_kg !== undefined) setRecov(String(log.inputs.abrasive_recovered_kg));
+          if (log.inputs.waste_fines_kg !== undefined) setWaste(String(log.inputs.waste_fines_kg));
+          if (log.inputs.dust_collector_fines_kg !== undefined) setDust(String(log.inputs.dust_collector_fines_kg));
+          if (log.inputs.screen_reject_pct !== undefined) setRej(String(log.inputs.screen_reject_pct));
+          if (log.inputs.abrasive_cost_inr_kg !== undefined) setCost(String(log.inputs.abrasive_cost_inr_kg));
+          if (log.inputs.blasted_surface_area_m2 !== undefined) setArea(String(log.inputs.blasted_surface_area_m2));
+        }
+        if (log.results) {
+          const eff = log.results.recycling_efficiency_pct || 0;
+          const g = arcCls(eff);
+          setRes({
+            freshVal: log.inputs?.fresh_abrasive_loaded_kg,
+            recovVal: log.inputs?.abrasive_recovered_kg,
+            wasteVal: log.inputs?.waste_fines_kg,
+            dustVal: log.inputs?.dust_collector_fines_kg,
+            rejVal: log.inputs?.screen_reject_pct,
+            costVal: log.inputs?.abrasive_cost_inr_kg,
+            areaVal: log.inputs?.blasted_surface_area_m2,
+            cycVal: log.inputs?.recycle_cycles,
+            recovRate: log.results.recovery_rate_pct,
+            rejected: 0,
+            reusable: log.results.reusable_abrasive_kg,
+            eff,
+            makeup: log.results.makeup_abrasive_needed_kg,
+            wasteKg: 0,
+            wastePct: 0,
+            cons: log.results.makeup_consumption_kg_m2,
+            freshCost: 0,
+            saving: log.results.cost_savings_inr,
+            unacc: 0,
+            db: RECYCLE_DB[log.inputs?.abrasive_type] || RECYCLE_DB['Other'],
+            g,
+            type: log.inputs?.abrasive_type || 'Steel Grit'
+          });
+        }
+      }
+    };
+    window.addEventListener('bg_restore_calculation', handleRestore);
+    return () => window.removeEventListener('bg_restore_calculation', handleRestore);
+  }, []);
 
   const handleReset = () => {
     setProj('');

@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useToast } from '../../context/ToastContext';
 import { calcBlastingLoss, formatNum } from '../../utils/calculations';
+import { autoLogCalculation } from '../../services/calculatorService';
 
 export default function BlastingLossTool() {
   const { addToast } = useToast();
@@ -8,17 +9,58 @@ export default function BlastingLossTool() {
   const [area, setArea] = useState('');
   const [rz, setRz] = useState('');
   const [vs, setVs] = useState('');
+  const [res, setRes] = useState(null);
   const [hasCalculated, setHasCalculated] = useState(false);
 
-  const res = (area && rz && vs) ? calcBlastingLoss(area, rz, vs) : null;
+  useEffect(() => {
+    const handleRestore = (e) => {
+      if (e?.detail?.tool_id === 'sp-bl' && e.detail.inputs) {
+        const inp = e.detail.inputs;
+        const a = inp.area ? String(inp.area).replace(/[^\d.]/g, '') : '';
+        const r = inp.roughnessRz ? String(inp.roughnessRz).replace(/[^\d.]/g, '') : '';
+        const v = inp.vsPercent ? String(inp.vsPercent).replace(/[^\d.]/g, '') : '';
+        if (a) setArea(a);
+        if (r) setRz(r);
+        if (v) setVs(v);
+        if (inp.paintName && inp.paintName !== 'Unspecified') setPaintName(inp.paintName);
+        if (a && r && v) {
+          const computed = calcBlastingLoss(a, r, v);
+          setRes(computed);
+          setHasCalculated(true);
+        }
+      }
+    };
+    window.addEventListener('bg_restore_calculation', handleRestore);
+    return () => window.removeEventListener('bg_restore_calculation', handleRestore);
+  }, []);
 
   const handleCalculate = () => {
     if (!area || !rz || !vs) {
       addToast('Missing Required Inputs', 'Please enter Surface Area, Roughness Rz, and Volume Solids.', 'warning');
       return;
     }
+    const computed = calcBlastingLoss(area, rz, vs);
+    setRes(computed);
     setHasCalculated(true);
     addToast('Calculated Blast Loss', 'Dead volume loss computed successfully.', 'success');
+
+    autoLogCalculation({
+      tool_id: 'sp-bl',
+      tool_name: 'Blasting Dead Volume Loss',
+      category: 'paint',
+      inputs: {
+        paintName: paintName || 'Unspecified',
+        area: `${area} m²`,
+        roughnessRz: `${rz} µm`,
+        vsPercent: `${vs}%`,
+      },
+      results: {
+        deadVolumeLiters: `${formatNum(computed.deadVolumeLiters, 1)} L`,
+        dvc: `${formatNum(computed.dvc || 0.5, 2)}`,
+        per100m2: `${formatNum((computed.deadVolumeLiters / (parseFloat(area) || 1)) * 100, 1)} L`,
+      },
+      notes: 'Auto-logged on calculation'
+    });
   };
 
   const handleReset = () => {
@@ -26,6 +68,7 @@ export default function BlastingLossTool() {
     setArea('');
     setRz('');
     setVs('');
+    setRes(null);
     setHasCalculated(false);
     addToast('Form Reset', 'All input parameters cleared.', 'info');
   };
@@ -45,7 +88,7 @@ Surface Area: ${area} m² | Roughness Rz: ${rz} µm | Volume Solids: ${vs}%
 --------------------------------------------------
 Dead Volume Paint Loss: ${formatNum(res.deadVolumeLiters, 1)} Litres
 Dead Volume Coefficient: ${formatNum(res.dvc || 0.5, 2)}
-Loss Per 100 m²: ${formatNum((res.deadVolumeLiters / (area || 1)) * 100, 1)} L`;
+Loss Per 100 m²: ${formatNum((res.deadVolumeLiters / (parseFloat(area) || 1)) * 100, 1)} L`;
 
     navigator.clipboard.writeText(text);
     addToast('Copied to Clipboard', 'Calculation summary copied.', 'success');
@@ -57,8 +100,8 @@ Loss Per 100 m²: ${formatNum((res.deadVolumeLiters / (area || 1)) * 100, 1)} L`
       <div className="ch">
         <div className="ci">💥</div>
         <div>
-          <div className="ct">Paint Loss Due to Blasting Roughness</div>
-          <div className="cs">Dead Volume paint loss from abrasive blasting</div>
+          <div className="ct">Dead Volume Blasting Loss</div>
+          <div className="cs">Paint needed to fill surface profile before forming film</div>
         </div>
         <div className="ctag">P-5</div>
       </div>
@@ -66,7 +109,7 @@ Loss Per 100 m²: ${formatNum((res.deadVolumeLiters / (area || 1)) * 100, 1)} L`
       <div className="cb">
         {/* User Inputs Section (Orange Border & Top Badge) */}
         <div className="input-section">
-          <div className="g2">
+          <div className="g3">
             <div className="field">
               <label>Surface Area <span className="lh">m²</span></label>
               <div className="iw">
@@ -74,51 +117,56 @@ Loss Per 100 m²: ${formatNum((res.deadVolumeLiters / (area || 1)) * 100, 1)} L`
                   type="number" 
                   id="bl-a" 
                   value={area} 
-                  onChange={e => setArea(e.target.value)} 
-                  placeholder="e.g. 1000" 
+                  onChange={e => { setArea(e.target.value); setHasCalculated(false); }} 
+                  placeholder="e.g. 500" 
+                  min="0.1" 
                 />
                 <span className="uu">m²</span>
               </div>
             </div>
+
             <div className="field">
-              <label>Blasting Roughness Rz <span className="lh">µm</span></label>
+              <label>Surface Roughness (Rz) <span className="lh">µm</span></label>
               <div className="iw">
                 <input 
                   type="number" 
                   id="bl-rz" 
                   value={rz} 
-                  onChange={e => setRz(e.target.value)} 
+                  onChange={e => { setRz(e.target.value); setHasCalculated(false); }} 
                   placeholder="e.g. 75" 
+                  min="1" 
                 />
                 <span className="uu">µm</span>
               </div>
             </div>
+
             <div className="field">
               <label>Volume Solids <span className="lh">%</span></label>
               <div className="iw">
                 <input 
                   type="number" 
-                  id="bl-v" 
+                  id="bl-vs" 
                   value={vs} 
-                  onChange={e => setVs(e.target.value)} 
-                  placeholder="e.g. 64" 
+                  onChange={e => { setVs(e.target.value); setHasCalculated(false); }} 
+                  placeholder="e.g. 60" 
                   min="1" 
                   max="100" 
                 />
                 <span className="uu">%</span>
               </div>
             </div>
-            <div className="field">
-              <label>Paint Name <span className="lh">optional</span></label>
-              <div className="iw">
-                <input 
-                  type="text" 
-                  id="bl-nm" 
-                  value={paintName} 
-                  onChange={e => setPaintName(e.target.value)} 
-                  placeholder="e.g. Zinc Silicate" 
-                />
-              </div>
+          </div>
+
+          <div className="field">
+            <label>Paint Name <span className="lh">optional</span></label>
+            <div className="iw">
+              <input 
+                type="text" 
+                id="bl-nm" 
+                value={paintName} 
+                onChange={e => { setPaintName(e.target.value); }} 
+                placeholder="e.g. Zinc Silicate Primer" 
+              />
             </div>
           </div>
         </div>
@@ -126,7 +174,7 @@ Loss Per 100 m²: ${formatNum((res.deadVolumeLiters / (area || 1)) * 100, 1)} L`
         {/* Buttons Row */}
         <div className="btn-row">
           <button type="button" className="btn" onClick={handleCalculate}>
-            ▶ Calculate Loss
+            ▶ Calculate Dead Volume Loss
           </button>
           <button type="button" className="btn-reset" onClick={handleReset}>
             ↺ Reset
@@ -134,7 +182,7 @@ Loss Per 100 m²: ${formatNum((res.deadVolumeLiters / (area || 1)) * 100, 1)} L`
         </div>
 
         {/* Calculated Results Section */}
-        {(hasCalculated || res) && (
+        {hasCalculated && res && (
           <div className="res" id="r-bl" style={{ display: 'block' }}>
             <div className="output-section">
               <div className="rh">
@@ -146,7 +194,7 @@ Loss Per 100 m²: ${formatNum((res.deadVolumeLiters / (area || 1)) * 100, 1)} L`
                 <div className="tile tp">
                   <div className="tl">Paint Loss (Dead Volume)</div>
                   <div>
-                    <span className="tv" id="bl-r">{res ? formatNum(res.deadVolumeLiters, 1) : '—'}</span>
+                    <span className="tv" id="bl-r">{formatNum(res.deadVolumeLiters, 1)}</span>
                     <span className="tu">Litres</span>
                   </div>
                 </div>
@@ -156,14 +204,14 @@ Loss Per 100 m²: ${formatNum((res.deadVolumeLiters / (area || 1)) * 100, 1)} L`
                 <div className="tile ts">
                   <div className="tl">DVC Coefficient</div>
                   <div>
-                    <span className="tv" id="bl-dvc">{res ? formatNum(res.dvc || 0.5, 2) : '0.50'}</span>
+                    <span className="tv" id="bl-dvc">{formatNum(res.dvc || 0.5, 2)}</span>
                   </div>
                 </div>
                 <div className="tile ti">
                   <div className="tl">Per 100 m²</div>
                   <div>
                     <span className="tv" id="bl-p100">
-                      {res && area ? formatNum((res.deadVolumeLiters / parseFloat(area)) * 100, 1) : '—'}
+                      {area ? formatNum((res.deadVolumeLiters / parseFloat(area)) * 100, 1) : '—'}
                     </span>
                     <span className="tu">L</span>
                   </div>

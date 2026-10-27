@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useToast } from '../../context/ToastContext';
 import { formatNum } from '../../utils/calculations';
+import { autoLogCalculation } from '../../services/calculatorService';
 
 export default function DishedEndTool() {
   const { addToast } = useToast();
@@ -44,7 +45,7 @@ export default function DishedEndTool() {
 
     const tName = { hemi: 'Hemispherical', semi: 'Semi-Ellipsoidal', tori: 'Torispherical' }[headType];
 
-    setRes({
+    const resultObj = {
       inA: inA * Q,
       outA: outA * Q,
       typeLabel: tName,
@@ -52,10 +53,62 @@ export default function DishedEndTool() {
       tmm: Tmm,
       q: Q,
       name: itemName || '—'
-    });
+    };
+
+    setRes(resultObj);
     setCalculated(true);
     addToast('Calculation Complete', 'Dished end surface area calculated.', 'success');
+
+    // Auto-save to calculation audit log
+    autoLogCalculation({
+      tool_id: 'sa-de',
+      tool_name: 'Dished End Surface Area',
+      category: 'surface',
+      inputs: {
+        head_type: headType,
+        inside_diameter_m: D,
+        depth_m: H,
+        thickness_mm: Tmm,
+        quantity: Q,
+        item_name: itemName
+      },
+      results: {
+        inside_surface_area_m2: inA * Q,
+        outside_surface_area_m2: outA * Q,
+        head_type_label: tName
+      }
+    });
   };
+
+  useEffect(() => {
+    const handleRestore = (e) => {
+      const log = e?.detail;
+      if (log && (log.tool_id === 'sa-de' || log.tool_id === 'dished_end')) {
+        if (log.inputs) {
+          if (log.inputs.head_type !== undefined) setHeadType(log.inputs.head_type);
+          if (log.inputs.inside_diameter_m !== undefined) setDiameter(String(log.inputs.inside_diameter_m));
+          if (log.inputs.depth_m !== undefined) setDepth(String(log.inputs.depth_m));
+          if (log.inputs.thickness_mm !== undefined) setThickness(String(log.inputs.thickness_mm));
+          if (log.inputs.quantity !== undefined) setQty(String(log.inputs.quantity));
+          if (log.inputs.item_name !== undefined) setItemName(log.inputs.item_name);
+        }
+        if (log.results) {
+          setRes({
+            inA: log.results.inside_surface_area_m2,
+            outA: log.results.outside_surface_area_m2,
+            typeLabel: log.results.head_type_label,
+            d: log.inputs?.inside_diameter_m,
+            tmm: log.inputs?.thickness_mm,
+            q: log.inputs?.quantity || 1,
+            name: log.inputs?.item_name || '—'
+          });
+          setCalculated(true);
+        }
+      }
+    };
+    window.addEventListener('bg_restore_calculation', handleRestore);
+    return () => window.removeEventListener('bg_restore_calculation', handleRestore);
+  }, []);
 
   const handleReset = () => {
     setHeadType('semi');

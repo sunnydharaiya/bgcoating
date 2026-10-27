@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useToast } from '../../context/ToastContext';
 import { useGuideline } from '../../context/GuidelineContext';
 import { formatNum } from '../../utils/calculations';
+import { autoLogCalculation } from '../../services/calculatorService';
 
 function clpHealth(hi) {
   if (hi >= 90) return { t: 'Excellent', fac: 1.00, col: '#2E7D32', rec: 'The coating system is performing as expected. Continue routine inspection in accordance with the maintenance plan.', insp: 3 };
@@ -39,7 +40,7 @@ export default function CoatingLifePredictionTool() {
   const [tch, setTch] = useState('0');
   const [mrc, setMrc] = useState('No');
 
-  const [hasCalculated, setHasCalculated] = useState(true);
+  const [hasCalculated, setHasCalculated] = useState(false);
 
   const nowY = new Date().getFullYear();
   const dlVal = parseFloat(dl) || 0;
@@ -100,7 +101,63 @@ export default function CoatingLifePredictionTool() {
     }
     setHasCalculated(true);
     addToast('Life Prediction Calculated', `Health Index: ${formatNum(hi, 0)}% (${h.t})`, 'success');
+
+    // Auto-save to calculation audit log
+    autoLogCalculation({
+      tool_id: 'ce-life',
+      tool_name: 'Coating Life Prediction & Health Index',
+      category: 'compliance',
+      inputs: {
+        project: proj,
+        structure: str,
+        environment: env,
+        coating_system: sys,
+        total_dft_um: parseFloat(dft) || 0,
+        year_applied: yr,
+        design_life_yrs: dlVal,
+        current_age_yrs: currentAge,
+        rust_grade_ri: rust,
+        blistering_density: bli,
+        cracking_quantity: crk,
+        flaking_quantity: flk,
+        chalking_rating: chk,
+        adhesion_rating: adh
+      },
+      results: {
+        health_index_pct: hi,
+        health_condition: h.t,
+        remaining_effective_life_yrs: adjRem,
+        predicted_recoat_year: recoatY,
+        recommended_inspection_interval_yrs: h.insp
+      }
+    });
   };
+
+  useEffect(() => {
+    const handleRestore = (e) => {
+      const log = e?.detail;
+      if (log && (log.tool_id === 'ce-life' || log.tool_id === 'ce_life' || log.tool_id === 'coating_life' || log.tool_id === 'coating-life' || log.tool_id === 'coating_life_durability')) {
+        if (log.inputs) {
+          if (log.inputs.project !== undefined) setProj(log.inputs.project);
+          if (log.inputs.structure !== undefined) setStr(log.inputs.structure);
+          if (log.inputs.environment !== undefined) setEnv(log.inputs.environment);
+          if (log.inputs.coating_system !== undefined) setSys(log.inputs.coating_system);
+          if (log.inputs.total_dft_um !== undefined) setDft(String(log.inputs.total_dft_um));
+          if (log.inputs.year_applied !== undefined) setYr(String(log.inputs.year_applied));
+          if (log.inputs.design_life_yrs !== undefined) setDl(String(log.inputs.design_life_yrs));
+          if (log.inputs.rust_grade_ri !== undefined) setRust(String(log.inputs.rust_grade_ri));
+          if (log.inputs.blistering_density !== undefined) setBli(String(log.inputs.blistering_density));
+          if (log.inputs.cracking_quantity !== undefined) setCrk(String(log.inputs.cracking_quantity));
+          if (log.inputs.flaking_quantity !== undefined) setFlk(String(log.inputs.flaking_quantity));
+          if (log.inputs.chalking_rating !== undefined) setChk(String(log.inputs.chalking_rating));
+          if (log.inputs.adhesion_rating !== undefined) setAdh(log.inputs.adhesion_rating);
+        }
+        setHasCalculated(true);
+      }
+    };
+    window.addEventListener('bg_restore_calculation', handleRestore);
+    return () => window.removeEventListener('bg_restore_calculation', handleRestore);
+  }, []);
 
   const handleReset = () => {
     setProj('');

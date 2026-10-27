@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useToast } from '../../context/ToastContext';
 import { useGuideline } from '../../context/GuidelineContext';
 import { formatNum, formatCur } from '../../utils/calculations';
+import { autoLogCalculation } from '../../services/calculatorService';
 
 function recClass(ap) {
   if (ap <= 5) return { cls: 'Excellent Control', st: 'PASS', ic: '✅', bg: '#E8F5E9', bd: 'rgba(46,125,50,.35)', c1: '#1B5E20', c2: '#2E7D32', bar: '#2E7D32' };
@@ -147,7 +148,123 @@ export default function PaintReconciliationTool() {
       reportDate
     });
     addToast('Reconciliation Complete', 'Material variance and KPIs computed.', 'success');
+
+    // Auto-save to calculation audit log
+    autoLogCalculation({
+      tool_id: 'pro-recon',
+      tool_name: 'Paint Reconciliation',
+      category: 'pro',
+      inputs: {
+        project: proj,
+        client,
+        contractor,
+        paint_manufacturer: mfr,
+        paint_product: prod,
+        coat_number: coatNo,
+        surface_area_m2: areaVal,
+        specified_dft_um: dftVal,
+        volume_solids_pct: vsVal,
+        loss_factor_pct: lossVal,
+        number_of_coats: coatsVal,
+        opening_stock_l: parseFloat(openStock) || 0,
+        received_l: parseFloat(received) || 0,
+        issued_l: issVal,
+        returned_l: retVal,
+        unused_l: unuVal,
+        rejected_l: rejVal,
+        spillage_l: splVal,
+        thinner_l: thnVal,
+        density_kg_l: denVal,
+        unit_cost_inr: costVal
+      },
+      results: {
+        theoretical_required_l: theoReq,
+        practical_required_l: pracReq,
+        total_actual_consumed_l: totalActual,
+        variance_l: variance,
+        variance_pct: varp,
+        financial_impact_inr: fin,
+        efficiency_pct: eff,
+        status: g.st,
+        classification: g.cls
+      }
+    });
   };
+
+  useEffect(() => {
+    const handleRestore = (e) => {
+      const log = e?.detail;
+      if (log && (log.tool_id === 'pro-recon' || log.tool_id === 'pro_recon' || log.tool_id === 'paint_reconciliation')) {
+        if (log.inputs) {
+          if (log.inputs.project !== undefined) setProj(log.inputs.project);
+          if (log.inputs.client !== undefined) setClient(log.inputs.client);
+          if (log.inputs.contractor !== undefined) setContractor(log.inputs.contractor);
+          if (log.inputs.paint_manufacturer !== undefined) setMfr(log.inputs.paint_manufacturer);
+          if (log.inputs.paint_product !== undefined) setProd(log.inputs.paint_product);
+          if (log.inputs.coat_number !== undefined) setCoatNo(log.inputs.coat_number);
+          if (log.inputs.surface_area_m2 !== undefined) setArea(String(log.inputs.surface_area_m2));
+          if (log.inputs.specified_dft_um !== undefined) setDft(String(log.inputs.specified_dft_um));
+          if (log.inputs.volume_solids_pct !== undefined) setVs(String(log.inputs.volume_solids_pct));
+          if (log.inputs.loss_factor_pct !== undefined) setLoss(String(log.inputs.loss_factor_pct));
+          if (log.inputs.number_of_coats !== undefined) setCoats(String(log.inputs.number_of_coats));
+          if (log.inputs.opening_stock_l !== undefined) setOpenStock(String(log.inputs.opening_stock_l));
+          if (log.inputs.received_l !== undefined) setReceived(String(log.inputs.received_l));
+          if (log.inputs.issued_l !== undefined) setIssued(String(log.inputs.issued_l));
+          if (log.inputs.returned_l !== undefined) setReturned(String(log.inputs.returned_l));
+          if (log.inputs.unused_l !== undefined) setUnused(String(log.inputs.unused_l));
+          if (log.inputs.rejected_l !== undefined) setRejected(String(log.inputs.rejected_l));
+          if (log.inputs.spillage_l !== undefined) setSpillage(String(log.inputs.spillage_l));
+          if (log.inputs.thinner_l !== undefined) setThinner(String(log.inputs.thinner_l));
+          if (log.inputs.density_kg_l !== undefined) setDensity(String(log.inputs.density_kg_l));
+          if (log.inputs.unit_cost_inr !== undefined) setCost(String(log.inputs.unit_cost_inr));
+        }
+        if (log.results) {
+          const varp = log.results.variance_pct || 0;
+          const g = recClass(Math.abs(varp));
+          setRes({
+            tc: 0,
+            pc: 0,
+            theoReq: log.results.theoretical_required_l,
+            pracReq: log.results.practical_required_l,
+            consumed: log.results.total_actual_consumed_l,
+            wasted: 0,
+            totalActual: log.results.total_actual_consumed_l,
+            variance: log.results.variance_l,
+            varp,
+            fin: log.results.financial_impact_inr,
+            eff: log.results.efficiency_pct,
+            util: 0,
+            closing: 0,
+            kg: null,
+            g,
+            saving: (log.results.variance_l || 0) < 0,
+            areaVal: log.inputs?.surface_area_m2,
+            dftVal: log.inputs?.specified_dft_um,
+            vsVal: log.inputs?.volume_solids_pct,
+            lossVal: log.inputs?.loss_factor_pct,
+            coatsVal: log.inputs?.number_of_coats,
+            issVal: log.inputs?.issued_l,
+            retVal: log.inputs?.returned_l,
+            unuVal: log.inputs?.unused_l,
+            rejVal: log.inputs?.rejected_l,
+            splVal: log.inputs?.spillage_l,
+            thnVal: log.inputs?.thinner_l,
+            denVal: log.inputs?.density_kg_l,
+            costVal: log.inputs?.unit_cost_inr,
+            proj: log.inputs?.project,
+            client: log.inputs?.client,
+            contractor: log.inputs?.contractor,
+            mfr: log.inputs?.paint_manufacturer,
+            prod: log.inputs?.paint_product,
+            coatNo: log.inputs?.coat_number,
+            reportDate: new Date().toISOString().split('T')[0]
+          });
+        }
+      }
+    };
+    window.addEventListener('bg_restore_calculation', handleRestore);
+    return () => window.removeEventListener('bg_restore_calculation', handleRestore);
+  }, []);
 
   const handleReset = () => {
     setProj('');

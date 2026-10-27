@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useToast } from '../../context/ToastContext';
 import { formatNum } from '../../utils/calculations';
+import { autoLogCalculation } from '../../services/calculatorService';
 
 export default function VesselAreaTool() {
   const { addToast } = useToast();
@@ -48,7 +49,7 @@ export default function VesselAreaTool() {
     const skO = (SKL && SKD) ? Math.PI * (SKD + 2 * SKT) * SKL * Q * (1 + ESK) : 0;
     const total = pbI + pbO + skI + skO;
 
-    setRes({
+    const resultObj = {
       total,
       pbI,
       pbO,
@@ -57,10 +58,75 @@ export default function VesselAreaTool() {
       name: itemName || '—',
       dim: `${SL} m × ${SD} m × ${STmm} mm`,
       q: Q
-    });
+    };
+
+    setRes(resultObj);
     setCalculated(true);
     addToast('Calculation Complete', 'Vessel surface area calculated.', 'success');
+
+    // Auto-save to calculation audit log
+    autoLogCalculation({
+      tool_id: 'sa-vessel',
+      tool_name: 'Vessel / Equipment Surface Area',
+      category: 'surface',
+      inputs: {
+        shell_length_m: SL,
+        shell_diameter_m: SD,
+        shell_thickness_mm: STmm,
+        quantity: Q,
+        skirt_length_m: SKL,
+        skirt_diameter_m: SKD,
+        skirt_thickness_mm: parseFloat(skirtThk) || 0,
+        extra_ext_pct: parseFloat(extraExt) || 0,
+        extra_int_pct: parseFloat(extraInt) || 0,
+        extra_skirt_pct: parseFloat(extraSkirt) || 0,
+        item_name: itemName
+      },
+      results: {
+        total_surface_area_m2: total,
+        pressure_boundary_in_m2: pbI,
+        pressure_boundary_out_m2: pbO,
+        skirt_in_m2: skI,
+        skirt_out_m2: skO
+      }
+    });
   };
+
+  useEffect(() => {
+    const handleRestore = (e) => {
+      const log = e?.detail;
+      if (log && (log.tool_id === 'sa-vessel' || log.tool_id === 'vessel_area')) {
+        if (log.inputs) {
+          if (log.inputs.shell_length_m !== undefined) setShellLen(String(log.inputs.shell_length_m));
+          if (log.inputs.shell_diameter_m !== undefined) setShellDia(String(log.inputs.shell_diameter_m));
+          if (log.inputs.shell_thickness_mm !== undefined) setShellThk(String(log.inputs.shell_thickness_mm));
+          if (log.inputs.quantity !== undefined) setQty(String(log.inputs.quantity));
+          if (log.inputs.skirt_length_m !== undefined) setSkirtLen(String(log.inputs.skirt_length_m));
+          if (log.inputs.skirt_diameter_m !== undefined) setSkirtDia(String(log.inputs.skirt_diameter_m));
+          if (log.inputs.skirt_thickness_mm !== undefined) setSkirtThk(String(log.inputs.skirt_thickness_mm));
+          if (log.inputs.extra_ext_pct !== undefined) setExtraExt(String(log.inputs.extra_ext_pct));
+          if (log.inputs.extra_int_pct !== undefined) setExtraInt(String(log.inputs.extra_int_pct));
+          if (log.inputs.extra_skirt_pct !== undefined) setExtraSkirt(String(log.inputs.extra_skirt_pct));
+          if (log.inputs.item_name !== undefined) setItemName(log.inputs.item_name);
+        }
+        if (log.results) {
+          setRes({
+            total: log.results.total_surface_area_m2,
+            pbI: log.results.pressure_boundary_in_m2,
+            pbO: log.results.pressure_boundary_out_m2,
+            skI: log.results.skirt_in_m2,
+            skO: log.results.skirt_out_m2,
+            name: log.inputs?.item_name || '—',
+            dim: `${log.inputs?.shell_length_m || ''} m × ${log.inputs?.shell_diameter_m || ''} m × ${log.inputs?.shell_thickness_mm || ''} mm`,
+            q: log.inputs?.quantity || 1
+          });
+          setCalculated(true);
+        }
+      }
+    };
+    window.addEventListener('bg_restore_calculation', handleRestore);
+    return () => window.removeEventListener('bg_restore_calculation', handleRestore);
+  }, []);
 
   const handleReset = () => {
     setShellLen('');

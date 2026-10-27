@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useToast } from '../../context/ToastContext';
 import { calcPaintConsumption, formatNum } from '../../utils/calculations';
+import { autoLogCalculation } from '../../services/calculatorService';
 
 export default function PaintConsumptionTool() {
   const { addToast } = useToast();
@@ -9,17 +10,62 @@ export default function PaintConsumptionTool() {
   const [dft, setDft] = useState('');
   const [vs, setVs] = useState('');
   const [loss, setLoss] = useState('20');
+  const [res, setRes] = useState(null);
   const [hasCalculated, setHasCalculated] = useState(false);
 
-  const res = (area && dft && vs) ? calcPaintConsumption(area, dft, vs, loss, 1) : null;
+  useEffect(() => {
+    const handleRestore = (e) => {
+      if (e?.detail?.tool_id === 'sp-cons' && e.detail.inputs) {
+        const inp = e.detail.inputs;
+        const a = inp.area ? String(inp.area).replace(/[^\d.]/g, '') : '';
+        const d = inp.dft ? String(inp.dft).replace(/[^\d.]/g, '') : '';
+        const v = inp.vsPercent ? String(inp.vsPercent).replace(/[^\d.]/g, '') : '';
+        const l = inp.lossPercent ? String(inp.lossPercent).replace(/[^\d.]/g, '') : '20';
+
+        if (a) setArea(a);
+        if (d) setDft(d);
+        if (v) setVs(v);
+        if (l) setLoss(l);
+        if (inp.paintName && inp.paintName !== 'Unspecified') setPaintName(inp.paintName);
+
+        if (a && d && v) {
+          const computed = calcPaintConsumption(a, d, v, l, 1);
+          setRes(computed);
+          setHasCalculated(true);
+        }
+      }
+    };
+    window.addEventListener('bg_restore_calculation', handleRestore);
+    return () => window.removeEventListener('bg_restore_calculation', handleRestore);
+  }, []);
 
   const handleCalculate = () => {
     if (!area || !dft || !vs) {
       addToast('Missing Required Inputs', 'Please enter Surface Area, Specified DFT, and Volume Solids.', 'warning');
       return;
     }
+    const computed = calcPaintConsumption(area, dft, vs, loss, 1);
+    setRes(computed);
     setHasCalculated(true);
     addToast('Calculated Consumption', 'Paint volume required computed successfully.', 'success');
+
+    autoLogCalculation({
+      tool_id: 'sp-cons',
+      tool_name: 'Paint Consumption Calculation',
+      category: 'paint',
+      inputs: {
+        paintName: paintName || 'Unspecified',
+        area: `${area} m²`,
+        dft: `${dft} µm`,
+        vsPercent: `${vs}%`,
+        lossPercent: `${loss}%`,
+      },
+      results: {
+        totalPractLiters: `${formatNum(computed.totalPractLiters, 1)} L`,
+        totalTheoLiters: `${formatNum(computed.totalTheoLiters, 1)} L`,
+      },
+      notes: 'Auto-logged on calculation'
+    });
   };
 
   const handleReset = () => {
@@ -28,6 +74,7 @@ export default function PaintConsumptionTool() {
     setDft('');
     setVs('');
     setLoss('20');
+    setRes(null);
     setHasCalculated(false);
     addToast('Form Reset', 'All input parameters cleared.', 'info');
   };
@@ -59,7 +106,7 @@ Theoretical Paint Required: ${formatNum(res.totalTheoLiters, 1)} Litres`;
         <div className="ci">🧪</div>
         <div>
           <div className="ct">Paint Consumption</div>
-          <div className="cs">Total litres for surface area at given DFT</div>
+          <div className="cs">Total paint liters required for given area</div>
         </div>
         <div className="ctag">P-4</div>
       </div>
@@ -75,33 +122,37 @@ Theoretical Paint Required: ${formatNum(res.totalTheoLiters, 1)} Litres`;
                   type="number" 
                   id="cons-a" 
                   value={area} 
-                  onChange={e => setArea(e.target.value)} 
-                  placeholder="e.g. 1000" 
+                  onChange={e => { setArea(e.target.value); setHasCalculated(false); }} 
+                  placeholder="e.g. 500" 
+                  min="0.1" 
                 />
                 <span className="uu">m²</span>
               </div>
             </div>
+
             <div className="field">
-              <label>DFT <span className="lh">µm</span></label>
+              <label>Specified DFT <span className="lh">µm</span></label>
               <div className="iw">
                 <input 
                   type="number" 
-                  id="cons-d" 
+                  id="cons-dft" 
                   value={dft} 
-                  onChange={e => setDft(e.target.value)} 
+                  onChange={e => { setDft(e.target.value); setHasCalculated(false); }} 
                   placeholder="e.g. 125" 
+                  min="1" 
                 />
                 <span className="uu">µm</span>
               </div>
             </div>
+
             <div className="field">
               <label>Volume Solids <span className="lh">%</span></label>
               <div className="iw">
                 <input 
                   type="number" 
-                  id="cons-v" 
+                  id="cons-vs" 
                   value={vs} 
-                  onChange={e => setVs(e.target.value)} 
+                  onChange={e => { setVs(e.target.value); setHasCalculated(false); }} 
                   placeholder="e.g. 65" 
                   min="1" 
                   max="100" 
@@ -109,22 +160,21 @@ Theoretical Paint Required: ${formatNum(res.totalTheoLiters, 1)} Litres`;
                 <span className="uu">%</span>
               </div>
             </div>
-          </div>
 
-          <div className="field">
-            <label>Application Loss <span className="lh">%</span></label>
-            <div className="sr">
-              <input 
-                type="range" 
-                id="cons-sld" 
-                min="0" 
-                max="60" 
-                step="1" 
-                value={loss} 
-                onChange={e => setLoss(e.target.value)} 
-                style={{ '--pct': `${(loss / 60) * 100}%` }}
-              />
-              <span className="sv" id="cons-sv">{loss}%</span>
+            <div className="field">
+              <label>Loss Factor <span className="lh">%</span></label>
+              <div className="iw">
+                <input 
+                  type="number" 
+                  id="cons-loss" 
+                  value={loss} 
+                  onChange={e => { setLoss(e.target.value); setHasCalculated(false); }} 
+                  placeholder="20" 
+                  min="0" 
+                  max="80" 
+                />
+                <span className="uu">%</span>
+              </div>
             </div>
           </div>
 
@@ -135,8 +185,8 @@ Theoretical Paint Required: ${formatNum(res.totalTheoLiters, 1)} Litres`;
                 type="text" 
                 id="cons-nm" 
                 value={paintName} 
-                onChange={e => setPaintName(e.target.value)} 
-                placeholder="e.g. High Build Epoxy" 
+                onChange={e => { setPaintName(e.target.value); }} 
+                placeholder="e.g. Polyurethane Topcoat" 
               />
             </div>
           </div>
@@ -153,7 +203,7 @@ Theoretical Paint Required: ${formatNum(res.totalTheoLiters, 1)} Litres`;
         </div>
 
         {/* Calculated Results Section */}
-        {(hasCalculated || res) && (
+        {hasCalculated && res && (
           <div className="res" id="r-cons" style={{ display: 'block' }}>
             <div className="output-section">
               <div className="rh">
@@ -165,7 +215,7 @@ Theoretical Paint Required: ${formatNum(res.totalTheoLiters, 1)} Litres`;
                 <div className="tile tp">
                   <div className="tl">Paint Required (Practical)</div>
                   <div>
-                    <span className="tv" id="cons-r">{res ? formatNum(res.totalPractLiters, 1) : '—'}</span>
+                    <span className="tv" id="cons-r">{formatNum(res.totalPractLiters, 1)}</span>
                     <span className="tu">Litres</span>
                   </div>
                   <div className="tn">With {loss}% Loss Applied</div>
@@ -174,7 +224,7 @@ Theoretical Paint Required: ${formatNum(res.totalTheoLiters, 1)} Litres`;
                 <div className="tile ts">
                   <div className="tl">Theoretical Paint Required</div>
                   <div>
-                    <span className="tv" id="cons-rt">{res ? formatNum(res.totalTheoLiters, 1) : '—'}</span>
+                    <span className="tv" id="cons-rt">{formatNum(res.totalTheoLiters, 1)}</span>
                     <span className="tu">Litres</span>
                   </div>
                   <div className="tn">At 100% Transfer Efficiency</div>
@@ -193,7 +243,7 @@ Theoretical Paint Required: ${formatNum(res.totalTheoLiters, 1)} Litres`;
                   <span className="dv">{area ? `${area} m²` : '—'}</span>
                 </div>
                 <div className="dr">
-                  <span className="dk">DFT</span>
+                  <span className="dk">Specified DFT</span>
                   <span className="dv">{dft ? `${dft} µm` : '—'}</span>
                 </div>
                 <div className="dr">

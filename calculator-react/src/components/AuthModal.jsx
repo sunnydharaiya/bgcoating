@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { loginWithEmail, registerWithEmail, loginWithGoogle } from '../utils/api';
+import { calculatorService } from '../services/calculatorService';
 
 export default function AuthModal({ 
   isOpen, 
@@ -69,13 +70,13 @@ export default function AuthModal({
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && onClose) {
+      if (e.key === 'Escape' && onClose && !isCompulsory) {
         onClose();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, isCompulsory]);
 
   // Initialize official Google Identity Services SDK for Real Google Account Sign-In
   useEffect(() => {
@@ -95,6 +96,9 @@ export default function AuthModal({
               try {
                 const res = await loginWithGoogle({ credential: response.credential });
                 addToast('Google Sign-In Successful', `Welcome back, ${res.formattedUser.name}!`, 'success');
+                // Sync any guest calculations created prior to sign in
+                await calculatorService.syncGuestLogsAfterLogin();
+                window.dispatchEvent(new CustomEvent('bg_user_updated', { detail: res.formattedUser }));
                 if (onLoginSuccess) {
                   onLoginSuccess(res.formattedUser);
                 }
@@ -155,6 +159,9 @@ export default function AuthModal({
     try {
       const res = await loginWithEmail(loginEmail.trim(), loginPassword);
       addToast('Signed In', `Welcome back, ${res.formattedUser.name}!`, 'success');
+      // Sync any guest calculations created prior to sign in
+      await calculatorService.syncGuestLogsAfterLogin();
+      window.dispatchEvent(new CustomEvent('bg_user_updated', { detail: res.formattedUser }));
       if (onLoginSuccess) {
         onLoginSuccess(res.formattedUser);
       }
@@ -184,6 +191,9 @@ export default function AuthModal({
         company: 'BG Coating & Inspection Services',
       });
       addToast('Account Created', `Welcome to BG CoatingOS, ${res.formattedUser.name}!`, 'success');
+      // Sync any guest calculations created prior to registration
+      await calculatorService.syncGuestLogsAfterLogin();
+      window.dispatchEvent(new CustomEvent('bg_user_updated', { detail: res.formattedUser }));
       if (onLoginSuccess) {
         onLoginSuccess(res.formattedUser);
       }
@@ -205,7 +215,7 @@ export default function AuthModal({
   return (
     <div 
       className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 bg-slate-950/75 backdrop-blur-sm animate-in fade-in duration-200"
-      onClick={onClose}
+      onClick={isCompulsory ? undefined : onClose}
     >
       
       {/* Centered Clean Auth Modal */}
@@ -217,8 +227,8 @@ export default function AuthModal({
         onClick={(e) => e.stopPropagation()}
       >
         
-        {/* Close Button */}
-        {onClose && (
+        {/* Close Button - hidden in static backdrop / compulsory mode */}
+        {!isCompulsory && onClose && (
           <button
             type="button"
             onClick={onClose}
@@ -230,7 +240,7 @@ export default function AuthModal({
         )}
 
         {/* Brand Header */}
-        <div className="flex flex-col items-center text-center mb-5">
+        <div className="flex flex-col items-center text-center mb-4">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#F7941D] to-[#8B0E16] p-0.5 shadow-md flex items-center justify-center mb-2.5">
             <div className="w-full h-full bg-[#181E29] rounded-[14px] flex items-center justify-center p-2 overflow-hidden">
               <img
@@ -250,6 +260,18 @@ export default function AuthModal({
             Sign in or create an account to unlock all calculations &amp; reports
           </p>
         </div>
+
+        {/* Compulsory 1-Minute Preview Notice */}
+        {isCompulsory && (
+          <div className="mb-5 p-3.5 bg-amber-50/90 border border-amber-200/80 rounded-2xl text-center shadow-sm">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 text-[11px] font-bold font-rajdhani uppercase tracking-wider mb-1">
+              <span>⏱️</span> 1-Minute Preview Limit Reached
+            </div>
+            <p className="text-xs text-slate-700 leading-snug font-medium">
+              Please sign in or create an account to preserve your calculation audit logs and continue using CoatingOS™ tools without losing any data.
+            </p>
+          </div>
+        )}
 
         {/* Tab Switcher: Sign In vs Register */}
         <div 

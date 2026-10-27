@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useToast } from '../../context/ToastContext';
 import { useGuideline } from '../../context/GuidelineContext';
 import { formatNum, formatCur } from '../../utils/calculations';
+import { autoLogCalculation } from '../../services/calculatorService';
 
 const PFP_THK_DB = { '30': 8, '60': 16, '90': 24, '120': 32, '180': 45, '240': 60 };
 
@@ -44,7 +45,7 @@ export default function PFPSuite({ activeSubTool, onSubToolChange }) {
   const [pfmYld, setPfmYld] = useState('');
   const [pfmWst, setPfmWst] = useState('10');
   const [pfmCost, setPfmCost] = useState('350');
-  const [hasPfmCalculated, setHasPfmCalculated] = useState(true);
+  const [hasPfmCalculated, setHasPfmCalculated] = useState(false);
 
   const pfmAVal = parseFloat(pfmArea) || 0;
   const pfmTVal = parseFloat(pfmT) || 0;
@@ -72,7 +73,7 @@ export default function PFPSuite({ activeSubTool, onSubToolChange }) {
   const [pftTc, setPftTc] = useState('538');
   const [pftMt, setPftMt] = useState('0.5'); // Epoxy Intumescent default
   const [pftApp, setPftApp] = useState('34');
-  const [hasPftCalculated, setHasPftCalculated] = useState(true);
+  const [hasPftCalculated, setHasPftCalculated] = useState(false);
 
   const pftFrVal = parseInt(pftFr) || 120;
   const pftHpaVal = parseFloat(pftHpa) || 180;
@@ -95,7 +96,7 @@ export default function PFPSuite({ activeSubTool, onSubToolChange }) {
   const [pfdW, setPfdW] = useState('285');
   const [pfdV, setPfdV] = useState('300');
   const [pfdSpec, setPfdSpec] = useState('900');
-  const [hasPfdCalculated, setHasPfdCalculated] = useState(true);
+  const [hasPfdCalculated, setHasPfdCalculated] = useState(false);
 
   const pfdWVal = parseFloat(pfdW) || 0;
   const pfdVVal = parseFloat(pfdV) || 0;
@@ -116,7 +117,7 @@ export default function PFPSuite({ activeSubTool, onSubToolChange }) {
   const [mshOv, setMshOv] = useState('10');
   const [mshWst, setMshWst] = useState('10');
   const [mshCost, setMshCost] = useState('2500');
-  const [hasMshCalculated, setHasMshCalculated] = useState(true);
+  const [hasMshCalculated, setHasMshCalculated] = useState(false);
 
   const mshAVal = parseFloat(mshArea) || 0;
   const mshWVal = parseFloat(mshW) || 1.0;
@@ -146,7 +147,7 @@ export default function PFPSuite({ activeSubTool, onSubToolChange }) {
   const [pfcTop, setPfcTop] = useState('150000');
   const [pfcIns, setPfcIns] = useState('80000');
   const [pfcOh, setPfcOh] = useState('10');
-  const [hasPfcCalculated, setHasPfcCalculated] = useState(true);
+  const [hasPfcCalculated, setHasPfcCalculated] = useState(false);
 
   const pfcAVal = parseFloat(pfcArea) || 0;
   const pfcHeads = [
@@ -188,7 +189,7 @@ export default function PFPSuite({ activeSubTool, onSubToolChange }) {
   const [pfrYld, setPfrYld] = useState('');
   const [pfrWst, setPfrWst] = useState('15');
   const [pfrCost, setPfrCost] = useState('350');
-  const [hasPfrCalculated, setHasPfrCalculated] = useState(true);
+  const [hasPfrCalculated, setHasPfrCalculated] = useState(false);
 
   const pfrTotVal = parseFloat(pfrTot) || 0;
   const pfrDmgVal = parseFloat(pfrDmg) || 0;
@@ -204,6 +205,253 @@ export default function PFPSuite({ activeSubTool, onSubToolChange }) {
   const pfrRemain = pfrTotVal > 0 ? Math.max(0, pfrTotVal - pfrDmgVal) : null;
   const pfrTotCost = pfrCostVal > 0 ? pfrProc * pfrCostVal : null;
   const pfrSev = pfrRepPct === null ? null : (pfrRepPct < 5 ? ['Minor', 'ok', '✅'] : (pfrRepPct <= 15 ? ['Moderate — plan campaign repair', 'warn', '⚠️'] : ['Major — investigate root cause', 'fail', '❌']));
+
+  const handleCalcPfm = () => {
+    if (!pfmAVal || !pfmTVal) {
+      addToast('Missing Required Inputs', 'Please fill Surface Area and Specified PFP Thickness.', 'warning');
+      return;
+    }
+    setHasPfmCalculated(true);
+    addToast('PFP Material Calculated', `${formatNum(pfmProc, 0)} kg required.`, 'success');
+    autoLogCalculation({
+      tool_id: 'pfp-mat',
+      tool_name: 'PFP Material Consumption',
+      category: 'specialized',
+      inputs: {
+        project: pfmProj,
+        structure: pfmStr,
+        material_type: pfmMat,
+        surface_area_m2: pfmAVal,
+        pfp_thickness_mm: pfmTVal,
+        cured_density_kg_m3: pfmDenVal,
+        coverage_yield_kg_m2_mm: pfmYldVal,
+        application_loss_pct: pfmWstVal,
+        material_cost_per_kg: pfmCostVal
+      },
+      results: {
+        net_material_kg: pfmNet,
+        wastage_quantity_kg: pfmWaste,
+        procurement_material_kg: pfmProc,
+        total_material_cost: pfmTotCost,
+        cost_per_m2: pfmPerM2c
+      }
+    });
+  };
+
+  const handleCalcPft = () => {
+    setHasPftCalculated(true);
+    addToast('Thickness Calculated', `Required: ${formatNum(pftReq, 1)} mm`, 'success');
+    autoLogCalculation({
+      tool_id: 'pfp-thk',
+      tool_name: 'PFP Thickness (Fire Rating & Hp/A)',
+      category: 'specialized',
+      inputs: {
+        fire_rating_mins: pftFrVal,
+        section_factor_hpa: pftHpaVal,
+        critical_temperature_c: pftTcVal,
+        material_type_constant: pftMfVal,
+        applied_thickness_mm: pftAppVal
+      },
+      results: {
+        required_thickness_mm: pftReq,
+        conformance: pftOk !== null ? (pftOk ? 'PASS' : 'FAIL') : 'EVALUATED'
+      }
+    });
+  };
+
+  const handleCalcPfd = () => {
+    if (!pfdWVal || !pfdVVal) {
+      addToast('Missing Required Inputs', 'Please fill Sample Weight and Sample Volume.', 'warning');
+      return;
+    }
+    setHasPfdCalculated(true);
+    addToast('Density Verified', `Density: ${formatNum(pfdAct, 0)} kg/m³ (${pfdOk})`, 'success');
+    autoLogCalculation({
+      tool_id: 'pfp-den',
+      tool_name: 'PFP Density Verification (ASTM E605)',
+      category: 'specialized',
+      inputs: {
+        sample_location_id: pfdId,
+        sample_weight_g: pfdWVal,
+        sample_volume_ml: pfdVVal,
+        specified_min_density_kg_m3: pfdSpecVal
+      },
+      results: {
+        measured_density_kg_m3: pfdAct,
+        percentage_of_specified: pfdPct,
+        conformance: pfdOk
+      }
+    });
+  };
+
+  const handleCalcMsh = () => {
+    if (!mshAVal) {
+      addToast('Missing Required Inputs', 'Please fill Net Surface Area to be Meshed.', 'warning');
+      return;
+    }
+    setHasMshCalculated(true);
+    addToast('Mesh Calculated', `${mshRolls} rolls required.`, 'success');
+    autoLogCalculation({
+      tool_id: 'pfp-mesh',
+      tool_name: 'PFP Reinforcement Mesh Quantity',
+      category: 'specialized',
+      inputs: {
+        net_surface_area_m2: mshAVal,
+        roll_width_m: mshWVal,
+        roll_length_m: mshLVal,
+        lap_overlap_pct: mshOvVal,
+        wastage_pct: mshWstVal,
+        rate_per_roll_inr: mshCostVal
+      },
+      results: {
+        gross_mesh_area_m2: mshProc,
+        total_rolls_required: mshRolls,
+        total_mesh_cost: mshTotCost
+      }
+    });
+  };
+
+  const handleCalcPfc = () => {
+    if (!pfcAVal || pfcTot <= 0) {
+      addToast('Missing Required Inputs', 'Please fill Surface Area and at least one Cost head.', 'warning');
+      return;
+    }
+    setHasPfcCalculated(true);
+    addToast('Cost Calculated', `Total: ${formatCur(pfcTot)}`, 'success');
+    autoLogCalculation({
+      tool_id: 'pfp-cost',
+      tool_name: 'PFP Cost Breakdown Across 9 Heads',
+      category: 'specialized',
+      inputs: {
+        surface_area_m2: pfcAVal,
+        material_cost: parseFloat(pfcMat) || 0,
+        labor_cost: parseFloat(pfcLab) || 0,
+        equipment_cost: parseFloat(pfcEqp) || 0,
+        scaffolding_cost: parseFloat(pfcScf) || 0,
+        mesh_cost: parseFloat(pfcMsh) || 0,
+        primer_cost: parseFloat(pfcPri) || 0,
+        topcoat_cost: parseFloat(pfcTop) || 0,
+        inspection_cost: parseFloat(pfcIns) || 0,
+        overhead_pct: pfcOhVal
+      },
+      results: {
+        subtotal_inr: pfcSub,
+        total_cost_inr: pfcTot,
+        cost_per_m2_inr: pfcPerM2,
+        material_share_pct: pfcMatShare
+      }
+    });
+  };
+
+  const handleCalcPfr = () => {
+    if (!pfrDmgVal || !pfrTVal) {
+      addToast('Missing Required Inputs', 'Please fill Damaged Area and Repair Thickness.', 'warning');
+      return;
+    }
+    setHasPfrCalculated(true);
+    addToast('Repair Calculated', `${formatNum(pfrProc, 0)} kg required.`, 'success');
+    autoLogCalculation({
+      tool_id: 'pfp-rep',
+      tool_name: 'PFP Repair Quantity & CUF Check',
+      category: 'specialized',
+      inputs: {
+        location: pfrLoc,
+        total_member_area_m2: pfrTotVal,
+        damaged_area_m2: pfrDmgVal,
+        repair_thickness_mm: pfrTVal,
+        material_density_kg_m3: parseFloat(pfrDen) || 0,
+        application_wastage_pct: parseFloat(pfrWst) || 15,
+        repair_cost_per_kg: parseFloat(pfrCost) || 0
+      },
+      results: {
+        damaged_ratio_pct: pfrRepPct,
+        repair_material_kg: pfrProc,
+        repair_material_cost: pfrTotCost,
+        severity_classification: pfrSev ? pfrSev[0] : 'N/A'
+      }
+    });
+  };
+
+  useEffect(() => {
+    const handleRestore = (e) => {
+      const log = e?.detail;
+      if (!log) return;
+      if (['pfp-mat', 'pfp_mat', 'pfp_material', 'pfp-material'].includes(log.tool_id)) {
+        setCurrentTab('mat');
+        if (log.inputs) {
+          if (log.inputs.project !== undefined) setPfmProj(log.inputs.project);
+          if (log.inputs.structure !== undefined) setPfmStr(log.inputs.structure);
+          if (log.inputs.material_type !== undefined) setPfmMat(log.inputs.material_type);
+          if (log.inputs.surface_area_m2 !== undefined) setPfmArea(String(log.inputs.surface_area_m2));
+          if (log.inputs.pfp_thickness_mm !== undefined) setPfmT(String(log.inputs.pfp_thickness_mm));
+          if (log.inputs.cured_density_kg_m3 !== undefined) setPfmDen(String(log.inputs.cured_density_kg_m3));
+          if (log.inputs.coverage_yield_kg_m2_mm !== undefined) setPfmYld(String(log.inputs.coverage_yield_kg_m2_mm));
+          if (log.inputs.application_loss_pct !== undefined) setPfmWst(String(log.inputs.application_loss_pct));
+          if (log.inputs.material_cost_per_kg !== undefined) setPfmCost(String(log.inputs.material_cost_per_kg));
+        }
+        setHasPfmCalculated(true);
+      } else if (['pfp-thk', 'pfp_thk', 'pfp_thickness', 'pfp-thickness', 'pfp_dft_matrix', 'pfp_hp_a_calc'].includes(log.tool_id)) {
+        setCurrentTab('thk');
+        if (log.inputs) {
+          if (log.inputs.fire_rating_mins !== undefined) setPftFr(String(log.inputs.fire_rating_mins));
+          if (log.inputs.section_factor_hpa !== undefined) setPftHpa(String(log.inputs.section_factor_hpa));
+          if (log.inputs.critical_temperature_c !== undefined) setPftTc(String(log.inputs.critical_temperature_c));
+          if (log.inputs.material_type_constant !== undefined) setPftMt(String(log.inputs.material_type_constant));
+          if (log.inputs.applied_thickness_mm !== undefined) setPftApp(String(log.inputs.applied_thickness_mm));
+        }
+        setHasPftCalculated(true);
+      } else if (['pfp-den', 'pfp_den', 'pfp_density', 'pfp-density'].includes(log.tool_id)) {
+        setCurrentTab('den');
+        if (log.inputs) {
+          if (log.inputs.sample_location_id !== undefined) setPfdId(log.inputs.sample_location_id);
+          if (log.inputs.sample_weight_g !== undefined) setPfdW(String(log.inputs.sample_weight_g));
+          if (log.inputs.sample_volume_ml !== undefined) setPfdV(String(log.inputs.sample_volume_ml));
+          if (log.inputs.specified_min_density_kg_m3 !== undefined) setPfdSpec(String(log.inputs.specified_min_density_kg_m3));
+        }
+        setHasPfdCalculated(true);
+      } else if (['pfp-mesh', 'pfp_mesh', 'pfp_mesh_qty', 'pfp-mesh-quantity', 'pfp_reinforce_mesh'].includes(log.tool_id)) {
+        setCurrentTab('mesh');
+        if (log.inputs) {
+          if (log.inputs.net_surface_area_m2 !== undefined) setMshArea(String(log.inputs.net_surface_area_m2));
+          if (log.inputs.roll_width_m !== undefined) setMshW(String(log.inputs.roll_width_m));
+          if (log.inputs.roll_length_m !== undefined) setMshL(String(log.inputs.roll_length_m));
+          if (log.inputs.lap_overlap_pct !== undefined) setMshOv(String(log.inputs.lap_overlap_pct));
+          if (log.inputs.wastage_pct !== undefined) setMshWst(String(log.inputs.wastage_pct));
+          if (log.inputs.rate_per_roll_inr !== undefined) setMshCost(String(log.inputs.rate_per_roll_inr));
+        }
+        setHasMshCalculated(true);
+      } else if (['pfp-cost', 'pfp_cost'].includes(log.tool_id)) {
+        setCurrentTab('cost');
+        if (log.inputs) {
+          if (log.inputs.surface_area_m2 !== undefined) setPfcArea(String(log.inputs.surface_area_m2));
+          if (log.inputs.material_cost !== undefined) setPfcMat(String(log.inputs.material_cost));
+          if (log.inputs.labor_cost !== undefined) setPfcLab(String(log.inputs.labor_cost));
+          if (log.inputs.equipment_cost !== undefined) setPfcEqp(String(log.inputs.equipment_cost));
+          if (log.inputs.scaffolding_cost !== undefined) setPfcScf(String(log.inputs.scaffolding_cost));
+          if (log.inputs.mesh_cost !== undefined) setPfcMsh(String(log.inputs.mesh_cost));
+          if (log.inputs.primer_cost !== undefined) setPfcPri(String(log.inputs.primer_cost));
+          if (log.inputs.topcoat_cost !== undefined) setPfcTop(String(log.inputs.topcoat_cost));
+          if (log.inputs.inspection_cost !== undefined) setPfcIns(String(log.inputs.inspection_cost));
+          if (log.inputs.overhead_pct !== undefined) setPfcOh(String(log.inputs.overhead_pct));
+        }
+        setHasPfcCalculated(true);
+      } else if (['pfp-rep', 'pfp_rep', 'pfp_repair', 'pfp-repair', 'pfp-repair-quantity'].includes(log.tool_id)) {
+        setCurrentTab('rep');
+        if (log.inputs) {
+          if (log.inputs.location !== undefined) setPfrLoc(log.inputs.location);
+          if (log.inputs.total_member_area_m2 !== undefined) setPfrTot(String(log.inputs.total_member_area_m2));
+          if (log.inputs.damaged_area_m2 !== undefined) setPfrDmg(String(log.inputs.damaged_area_m2));
+          if (log.inputs.repair_thickness_mm !== undefined) setPfrT(String(log.inputs.repair_thickness_mm));
+          if (log.inputs.material_density_kg_m3 !== undefined) setPfrDen(String(log.inputs.material_density_kg_m3));
+          if (log.inputs.application_wastage_pct !== undefined) setPfrWst(String(log.inputs.application_wastage_pct));
+          if (log.inputs.repair_cost_per_kg !== undefined) setPfrCost(String(log.inputs.repair_cost_per_kg));
+        }
+        setHasPfrCalculated(true);
+      }
+    };
+    window.addEventListener('bg_restore_calculation', handleRestore);
+    return () => window.removeEventListener('bg_restore_calculation', handleRestore);
+  }, []);
 
   return (
     <div className="space-y-4">
@@ -383,7 +631,7 @@ export default function PFPSuite({ activeSubTool, onSubToolChange }) {
             </div>
 
             <div className="btn-row">
-              <button className="btn" onClick={() => { setHasPfmCalculated(true); addToast('PFP Material Calculated', `${formatNum(pfmProc, 0)} kg required.`, 'success'); }}>
+              <button className="btn" onClick={handleCalcPfm}>
                 ▶ Calculate PFP Material
               </button>
               <button className="btn-reset" onClick={() => {
@@ -578,7 +826,7 @@ export default function PFPSuite({ activeSubTool, onSubToolChange }) {
             </div>
 
             <div className="btn-row">
-              <button className="btn" onClick={() => { setHasPftCalculated(true); addToast('Thickness Calculated', `Required: ${formatNum(pftReq, 1)} mm`, 'success'); }}>
+              <button className="btn" onClick={handleCalcPft}>
                 ▶ Determine Required Thickness
               </button>
               <button className="btn-reset" onClick={() => {
@@ -769,7 +1017,7 @@ export default function PFPSuite({ activeSubTool, onSubToolChange }) {
             </div>
 
             <div className="btn-row">
-              <button className="btn" onClick={() => { setHasPfdCalculated(true); addToast('Density Verified', `Density: ${formatNum(pfdAct, 0)} kg/m³ (${pfdOk})`, 'success'); }}>
+              <button className="btn" onClick={handleCalcPfd}>
                 ▶ Verify Density
               </button>
               <button className="btn-reset" onClick={() => { setPfdId(''); setPfdW(''); setPfdV(''); setPfdSpec('900'); setHasPfdCalculated(false); }}>↺ Reset</button>
@@ -965,7 +1213,7 @@ export default function PFPSuite({ activeSubTool, onSubToolChange }) {
             </div>
 
             <div className="btn-row">
-              <button className="btn" onClick={() => { setHasMshCalculated(true); addToast('Mesh Calculated', `${mshRolls} rolls required.`, 'success'); }}>
+              <button className="btn" onClick={handleCalcMsh}>
                 ▶ Calculate Mesh Quantity
               </button>
               <button className="btn-reset" onClick={() => { setMshArea(''); setMshW('1.0'); setMshL('50'); setMshOv('10'); setMshWst('10'); setMshCost(''); setHasMshCalculated(false); }}>↺ Reset</button>
@@ -1187,7 +1435,7 @@ export default function PFPSuite({ activeSubTool, onSubToolChange }) {
             </div>
 
             <div className="btn-row">
-              <button className="btn" onClick={() => { setHasPfcCalculated(true); addToast('Cost Calculated', `Total: ${formatCur(pfcTot)}`, 'success'); }}>
+              <button className="btn" onClick={handleCalcPfc}>
                 ▶ Calculate PFP Cost
               </button>
               <button className="btn-reset" onClick={() => {
@@ -1394,7 +1642,7 @@ export default function PFPSuite({ activeSubTool, onSubToolChange }) {
             </div>
 
             <div className="btn-row">
-              <button className="btn" onClick={() => { setHasPfrCalculated(true); addToast('Repair Calculated', `${formatNum(pfrProc, 0)} kg required.`, 'success'); }}>
+              <button className="btn" onClick={handleCalcPfr}>
                 ▶ Calculate Repair Quantity
               </button>
               <button className="btn-reset" onClick={() => {

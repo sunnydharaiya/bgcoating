@@ -41,6 +41,7 @@ import {
   BarChart3,
   CalendarDays
 } from 'lucide-react';
+import { clearAuth } from '../utils/api';
 
 export default function Sidebar({
   activePage,
@@ -936,8 +937,7 @@ export default function Sidebar({
               type="button"
               onClick={() => {
                 if (window.confirm('Sign out of your workspace?')) {
-                  localStorage.removeItem('bg_auth_logged_in');
-                  window.dispatchEvent(new CustomEvent('bg_logout'));
+                  clearAuth();
                 }
               }}
               className="p-1 text-slate-400 hover:text-rose-400 rounded cursor-pointer transition"

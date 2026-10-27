@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useToast } from '../../context/ToastContext';
 import { useGuideline } from '../../context/GuidelineContext';
 import { formatNum } from '../../utils/calculations';
+import { autoLogCalculation } from '../../services/calculatorService';
 
 export default function ISO19840Tool() {
   const { addToast } = useToast();
@@ -13,7 +14,7 @@ export default function ISO19840Tool() {
   const [cv, setCv] = useState('20');
   const [maxDft, setMaxDft] = useState('');
   const [readingsText, setReadingsText] = useState('295, 302, 310, 315, 298');
-  const [hasEvaluated, setHasEvaluated] = useState(true);
+  const [hasEvaluated, setHasEvaluated] = useState(false);
 
   // Parse readings
   const reads = readingsText
@@ -60,7 +61,49 @@ export default function ISO19840Tool() {
       isPass ? `Conforms to ISO 19840 (${formatNum(avg, 1)} µm avg).` : `Non-conforming: ${why.join(' · ')}`,
       isPass ? 'success' : 'warning'
     );
+
+    // Auto-save to calculation audit log
+    autoLogCalculation({
+      tool_id: 'qa-iso',
+      tool_name: 'DFT Acceptance Compliance — ISO 19840',
+      category: 'compliance',
+      inputs: {
+        project: proj,
+        client: cli,
+        nominal_dft_um: specVal,
+        correction_value_um: cvVal,
+        max_allowed_dft_um: maxIn > 0 ? maxIn : null,
+        individual_readings: readingsText
+      },
+      results: {
+        average_dft_um: avg,
+        minimum_reading_um: lo,
+        maximum_reading_um: hi,
+        readings_count: reads.length,
+        conformance: isPass ? 'PASS' : 'FAIL',
+        reasons: why
+      }
+    });
   };
+
+  useEffect(() => {
+    const handleRestore = (e) => {
+      const log = e?.detail;
+      if (log && (log.tool_id === 'qa-iso' || log.tool_id === 'qa_iso' || log.tool_id === 'dft_iso_19840' || log.tool_id === 'iso_19840')) {
+        if (log.inputs) {
+          if (log.inputs.project !== undefined) setProj(log.inputs.project);
+          if (log.inputs.client !== undefined) setCli(log.inputs.client);
+          if (log.inputs.nominal_dft_um !== undefined) setSpec(String(log.inputs.nominal_dft_um));
+          if (log.inputs.correction_value_um !== undefined) setCv(String(log.inputs.correction_value_um));
+          if (log.inputs.max_allowed_dft_um !== undefined && log.inputs.max_allowed_dft_um !== null) setMaxDft(String(log.inputs.max_allowed_dft_um));
+          if (log.inputs.individual_readings !== undefined) setReadingsText(String(log.inputs.individual_readings));
+        }
+        setHasEvaluated(true);
+      }
+    };
+    window.addEventListener('bg_restore_calculation', handleRestore);
+    return () => window.removeEventListener('bg_restore_calculation', handleRestore);
+  }, []);
 
   const handleReset = () => {
     setProj('');

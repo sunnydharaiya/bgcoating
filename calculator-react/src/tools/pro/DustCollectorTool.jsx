@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useToast } from '../../context/ToastContext';
 import { useGuideline } from '../../context/GuidelineContext';
 import { formatNum } from '../../utils/calculations';
+import { autoLogCalculation } from '../../services/calculatorService';
 
 const CFM2M3H = 1.699;
 const NOZZLE_AIR_DB = {
@@ -121,7 +122,85 @@ export default function DustCollectorTool() {
       spVal
     });
     addToast('Sizing Complete', 'Dust collector capacity and motor power calculated.', 'success');
+
+    // Auto-save to calculation audit log
+    autoLogCalculation({
+      tool_id: 'pro-dcc',
+      tool_name: 'Dust Collector Capacity',
+      category: 'pro',
+      inputs: {
+        project: proj,
+        client: cli,
+        room,
+        room_length_m: L,
+        room_width_m: W,
+        room_height_m: H,
+        nozzles_count: n,
+        nozzle_size_mm: nozKey,
+        pressure_bar: parseFloat(pressure) || 0,
+        cross_ventilation_fpm: parseFloat(fv) || 0,
+        air_changes_per_hr: parseFloat(ach) || 0,
+        filter_type: filterType,
+        safety_factor_pct: sfVal,
+        static_pressure_mm_wg: spVal
+      },
+      results: {
+        room_volume_m3: vol,
+        governing_criterion: gov,
+        final_design_airflow_cfm: finC,
+        final_design_airflow_m3_hr: finM3,
+        filter_cloth_area_m2: fa,
+        calculated_fan_power_kw: pKw,
+        recommended_motor_hp: mot ? mot[0] : null,
+        recommended_motor_kw: mot ? mot[1] : null
+      }
+    });
   };
+
+  useEffect(() => {
+    const handleRestore = (e) => {
+      const log = e?.detail;
+      if (log && (log.tool_id === 'pro-dcc' || log.tool_id === 'dust_collector' || log.tool_id === 'pro_dcc' || log.tool_id === 'dehumidification_pro')) {
+        if (log.inputs) {
+          if (log.inputs.project !== undefined) setProj(log.inputs.project);
+          if (log.inputs.client !== undefined) setCli(log.inputs.client);
+          if (log.inputs.room !== undefined) setRoom(log.inputs.room);
+          if (log.inputs.room_length_m !== undefined) setLen(String(log.inputs.room_length_m));
+          if (log.inputs.room_width_m !== undefined) setWid(String(log.inputs.room_width_m));
+          if (log.inputs.room_height_m !== undefined) setHt(String(log.inputs.room_height_m));
+          if (log.inputs.nozzles_count !== undefined) setNozzles(String(log.inputs.nozzles_count));
+          if (log.inputs.nozzle_size_mm !== undefined) setNozKey(String(log.inputs.nozzle_size_mm));
+          if (log.inputs.pressure_bar !== undefined) setPressure(String(log.inputs.pressure_bar));
+          if (log.inputs.cross_ventilation_fpm !== undefined) setFv(String(log.inputs.cross_ventilation_fpm));
+          if (log.inputs.air_changes_per_hr !== undefined) setAch(String(log.inputs.air_changes_per_hr));
+          if (log.inputs.filter_type !== undefined) setFilterType(log.inputs.filter_type);
+          if (log.inputs.safety_factor_pct !== undefined) setSf(String(log.inputs.safety_factor_pct));
+          if (log.inputs.static_pressure_mm_wg !== undefined) setStaticPress(String(log.inputs.static_pressure_mm_wg));
+        }
+        if (log.results) {
+          setRes({
+            vol: log.results.room_volume_m3,
+            reqC: 0,
+            finC: log.results.final_design_airflow_cfm,
+            finM3: log.results.final_design_airflow_m3_hr,
+            gov: log.results.governing_criterion,
+            fa: log.results.filter_cloth_area_m2,
+            pKw: log.results.calculated_fan_power_kw,
+            mot: [log.results.recommended_motor_hp || 15, log.results.recommended_motor_kw || 11],
+            L: log.inputs?.room_length_m,
+            W: log.inputs?.room_width_m,
+            H: log.inputs?.room_height_m,
+            n: log.inputs?.nozzles_count || 1,
+            nozKey: log.inputs?.nozzle_size_mm || '9.5',
+            sfVal: log.inputs?.safety_factor_pct || 15,
+            spVal: log.inputs?.static_pressure_mm_wg || 150
+          });
+        }
+      }
+    };
+    window.addEventListener('bg_restore_calculation', handleRestore);
+    return () => window.removeEventListener('bg_restore_calculation', handleRestore);
+  }, []);
 
   const handleReset = () => {
     setProj('');

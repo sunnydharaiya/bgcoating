@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useToast } from '../../context/ToastContext';
 import { formatNum } from '../../utils/calculations';
+import { autoLogCalculation } from '../../services/calculatorService';
 
 export default function StructureWeightTool() {
   const { addToast } = useToast();
@@ -33,6 +34,25 @@ export default function StructureWeightTool() {
     }
     setHasCalculated(true);
     addToast('Calculated Area from Weight', 'Structural area take-off computed successfully.', 'success');
+
+    autoLogCalculation({
+      tool_id: 'sa-wws',
+      tool_name: 'Structural Steel Weight-Wise Area',
+      category: 'area',
+      inputs: {
+        totalTonnage: `${totalTonnage} t`,
+        ultraLight: ulT ? `${ulT} t @ ${ulR} m²/t` : '0 t',
+        light: lT ? `${lT} t @ ${lR} m²/t` : '0 t',
+        medium: mT ? `${mT} t @ ${mR} m²/t` : '0 t',
+        heavy: hT ? `${hT} t @ ${hR} m²/t` : '0 t',
+        ultraHeavy: uhT ? `${uhT} t @ ${uhR} m²/t` : '0 t',
+      },
+      results: {
+        totalArea: `${formatNum(totalArea, 2)} m²`,
+        averageAreaRate: `${formatNum(avgRate, 2)} m²/t`,
+      },
+      notes: 'Auto-logged on calculation'
+    });
   };
 
   const handleReset = () => {

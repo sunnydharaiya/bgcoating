@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useToast } from '../../context/ToastContext';
 import { useGuideline } from '../../context/GuidelineContext';
 import { formatNum } from '../../utils/calculations';
+import { autoLogCalculation } from '../../services/calculatorService';
 
 const HOL_TABLE = [
   [250, 1.5],
@@ -39,7 +40,7 @@ export default function HolidayVoltageTool() {
   const [coatingType, setCoatingType] = useState('Epoxy');
   const [dft, setDft] = useState('1500');
   const [method, setMethod] = useState('ASTM G62 — Formula (V = 525 × √t mils)');
-  const [hasCalculated, setHasCalculated] = useState(true);
+  const [hasCalculated, setHasCalculated] = useState(false);
 
   const dftVal = parseFloat(dft) || 0;
   const useG62 = method.includes('G62');
@@ -57,7 +58,43 @@ export default function HolidayVoltageTool() {
     }
     setHasCalculated(true);
     addToast('Calculated Test Voltage', `Recommended: ${formatNum(kvSel, 1)} kV`, 'success');
+
+    // Auto-save to calculation audit log
+    autoLogCalculation({
+      tool_id: 'qa-hol',
+      tool_name: 'Holiday Test Voltage (ASTM G62 / NACE SP0188)',
+      category: 'compliance',
+      inputs: {
+        project: proj,
+        coating_type: coatingType,
+        dft_um: dftVal,
+        method
+      },
+      results: {
+        recommended_kv: kvSel,
+        astm_g62_kv: kvG62,
+        table_lookup_kv: kvTab,
+        is_low_voltage_wet_sponge: lowV
+      }
+    });
   };
+
+  useEffect(() => {
+    const handleRestore = (e) => {
+      const log = e?.detail;
+      if (log && (log.tool_id === 'qa-hol' || log.tool_id === 'qa_hol' || log.tool_id === 'holiday_voltage' || log.tool_id === 'holiday')) {
+        if (log.inputs) {
+          if (log.inputs.project !== undefined) setProj(log.inputs.project);
+          if (log.inputs.coating_type !== undefined) setCoatingType(log.inputs.coating_type);
+          if (log.inputs.dft_um !== undefined) setDft(String(log.inputs.dft_um));
+          if (log.inputs.method !== undefined) setMethod(log.inputs.method);
+        }
+        setHasCalculated(true);
+      }
+    };
+    window.addEventListener('bg_restore_calculation', handleRestore);
+    return () => window.removeEventListener('bg_restore_calculation', handleRestore);
+  }, []);
 
   const handleReset = () => {
     setProj('');

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useToast } from '../../context/ToastContext';
 import { formatNum } from '../../utils/calculations';
+import { autoLogCalculation } from '../../services/calculatorService';
 
 export default function PlateAreaTool() {
   const { addToast } = useToast();
@@ -28,6 +29,26 @@ export default function PlateAreaTool() {
     }
     setHasCalculated(true);
     addToast('Calculated Plate Area', 'Single, both sides, and edge areas computed successfully.', 'success');
+
+    autoLogCalculation({
+      tool_id: 'sa-plate',
+      tool_name: 'Flat Plate Surface Area',
+      category: 'area',
+      inputs: {
+        itemName: itemName || 'Plate',
+        lengthM: `${lengthM} m`,
+        widthM: `${widthM} m`,
+        thicknessMm: `${thicknessMm || 0} mm`,
+        qty: `${qty} nos`,
+      },
+      results: {
+        totalArea: `${formatNum(totalArea, 2)} m²`,
+        oneSide: `${formatNum(oneSide, 2)} m²`,
+        bothSides: `${formatNum(bothSides, 2)} m²`,
+        edgeFaces: `${formatNum(edgesArea, 3)} m²`,
+      },
+      notes: 'Auto-logged on calculation'
+    });
   };
 
   const handleReset = () => {
