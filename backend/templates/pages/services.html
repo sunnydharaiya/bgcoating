@@ -100,7 +100,7 @@
           <div class="svc-frame {% if svc.meta_layer_frame %}layer-visual{% endif %}" {% if svc.meta_layer_frame %}id="layerFrame"{% endif %}>
             <img class="{% if svc.meta_layer_frame %}layer-photo{% endif %}" loading="lazy" decoding="async"
                  src="{% if svc.thumbnail_url %}{{ svc.thumbnail_url }}{% elif svc.image_url %}{{ svc.image_url }}{% elif svc.fallback_img %}{% static svc.fallback_img %}{% else %}{% static 'assets/images/services-4layer-system.webp' %}{% endif %}"
-                 onerror="this.onerror=null;this.src='{% if svc.fallback_img %}{% static svc.fallback_img %}{% else %}{% static 'assets/images/services-4layer-system.webp' %}{% endif %}';"
+                 onerror="this.onerror=null;this.src='{% static 'assets/images/services-4layer-system.webp' %}';"
                  alt="{{ svc.title }}" style="width:100% !important; height:100% !important; object-fit:cover !important; display:block !important;">
           </div>
           {% if svc.meta_badge %}

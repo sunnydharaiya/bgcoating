@@ -41,14 +41,31 @@ if [ -f "backend/db.sqlite3.preserve" ]; then
     mv -f "backend/db.sqlite3.preserve" "backend/db.sqlite3"
 fi
 
-# 4. Run deployment script
+# 4. Run backend deployment script (migrations, staticfiles, react calculator, gunicorn restart)
 chmod +x backend/deploy/deploy.sh
 bash backend/deploy/deploy.sh
 
-# 5. Check service status
-echo "=== Systemd Service Status ==="
+# 5. Build and restart Admin Panel
+if [ -d "${VPS_PROJECT_DIR}/admin-panel" ]; then
+    echo "🛠️ Updating and building Admin Panel..."
+    cd "${VPS_PROJECT_DIR}/admin-panel"
+    npm install --no-audit || true
+    npm run build || true
+    pm2 restart bgcoating-admin || pm2 restart all || true
+    cd "${VPS_PROJECT_DIR}"
+fi
+
+# 6. Check service status
+echo "=== Systemd & PM2 Service Status ==="
 systemctl is-active bgcoating-backend
+pm2 list || true
 systemctl reload nginx || true
+
+echo "=== Health check endpoints ==="
+sleep 2
+curl -s -o /dev/null -w "Django Backend Home: %{http_code}\n" http://127.0.0.1:8011/
+curl -s -o /dev/null -w "Django Backend Services: %{http_code}\n" http://127.0.0.1:8011/services/
+curl -s -o /dev/null -w "Admin Panel: %{http_code}\n" http://127.0.0.1:3001/admin/services/items || true
 """
 
 print("Running deployment on VPS...")
