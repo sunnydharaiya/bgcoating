@@ -22,6 +22,11 @@ class SiteSettings(models.Model):
     linkedin_url = models.URLField(blank=True, default="https://www.linkedin.com/company/bggroupofpaintandcoatingconsultant/")
     pinterest_url = models.URLField(blank=True, default="https://www.pinterest.com/bgcoatingconsultant/")
     career_form_url = models.URLField(default="https://forms.gle/v6kCBLKYeeUtMPky8")
+    google_review_url = models.URLField(
+        default="https://www.google.com/search?q=BG+Group+of+Paint+and+Coating+Consultant+Surat+reviews",
+        blank=True,
+        help_text="Direct link for clients to write/read Google Reviews"
+    )
     footer_description = models.TextField(
         default="BG Group of Paint & Coating Consultant is a Surat, Gujarat based surface treatment and protective coating consultancy serving refinery, oil & gas, petrochemical and heavy-engineering clients. From surface preparation, abrasive blasting and industrial painting to corrosion assessment, coating inspection, coating training and digital coating solutions — we protect the assets that power industry."
     )

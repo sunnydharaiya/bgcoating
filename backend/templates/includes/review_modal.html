@@ -1,0 +1,168 @@
+{% load static %}
+<!-- ======================= CLIENT REVIEW MODAL ======================= -->
+<div id="clientReviewModal" class="review-modal-backdrop" onclick="if(event.target===this) closeReviewModal()" role="dialog" aria-modal="true" aria-labelledby="reviewModalTitle">
+  <div class="review-modal-card">
+    <button type="button" class="review-modal-close" onclick="closeReviewModal()" aria-label="Close review modal">&times;</button>
+    
+    <div style="text-align: center; margin-bottom: 1.25rem;">
+      <h3 id="reviewModalTitle" style="font-family: var(--font-display, 'Sora', sans-serif); font-size: 1.35rem; font-weight: 700; color: #202124; margin: 0 0 0.35rem;">Leave a Review</h3>
+      <p style="font-size: 0.85rem; color: #5f6368; margin: 0;">Share your experience with BG Group of Paint &amp; Coatings Consultant</p>
+    </div>
+
+    <!-- Option 1: Direct Google Review Banner -->
+    <div style="background: #f8fafd; border: 1.5px solid #d2e3fc; border-radius: 14px; padding: 1.2rem; text-align: center; margin-bottom: 1.35rem;">
+      <div style="display:flex; align-items:center; justify-content:center; gap:0.55rem; margin-bottom:0.35rem;">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+        </svg>
+        <span style="font-weight: 700; color: #1a73e8; font-size: 0.98rem;">Review Us on Google (Recommended)</span>
+      </div>
+      <p style="font-size: 0.82rem; color: #5f6368; margin: 0 0 0.85rem; line-height: 1.45;">Help refinery and engineering clients find verified technical coating intelligence.</p>
+      <a href="{{ site_settings.google_review_url|default:'https://www.google.com/search?q=BG+Group+of+Paint+and+Coating+Consultant+Surat+reviews' }}" target="_blank" rel="noopener noreferrer" class="btn-write-google-review" style="width: 100%; justify-content: center; font-size: 0.92rem; padding: 0.75rem;">
+        <span>Write a Google Review</span>
+        <span class="arr-icon">↗</span>
+      </a>
+    </div>
+
+    <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1.15rem;">
+      <span style="flex:1; height:1px; background:#e8eaed;"></span>
+      <span style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.12em; color:#80868b; font-weight:700;">Or Leave Direct Feedback</span>
+      <span style="flex:1; height:1px; background:#e8eaed;"></span>
+    </div>
+
+    <!-- Option 2: Direct Website Review Form -->
+    <form id="directReviewForm" onsubmit="submitClientReview(event)">
+      <div style="margin-bottom: 0.8rem;">
+        <label style="display:block; font-size:0.8rem; font-weight:600; color:#202124; margin-bottom:0.25rem;">Your Full Name <span style="color:#d93025">*</span></label>
+        <input type="text" id="revName" required placeholder="e.g. Rajesh Sharma" style="width:100%; padding:0.6rem 0.85rem; border:1px solid #dadce0; border-radius:8px; font-size:0.88rem; outline:none; transition:border 0.2s;" onfocus="this.style.borderColor='#1a73e8'" onblur="this.style.borderColor='#dadce0'">
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; margin-bottom:0.8rem;">
+        <div>
+          <label style="display:block; font-size:0.8rem; font-weight:600; color:#202124; margin-bottom:0.25rem;">Job Title / Designation</label>
+          <input type="text" id="revRole" placeholder="e.g. Lead Coating Inspector" style="width:100%; padding:0.6rem 0.85rem; border:1px solid #dadce0; border-radius:8px; font-size:0.88rem; outline:none; transition:border 0.2s;" onfocus="this.style.borderColor='#1a73e8'" onblur="this.style.borderColor='#dadce0'">
+        </div>
+        <div>
+          <label style="display:block; font-size:0.8rem; font-weight:600; color:#202124; margin-bottom:0.25rem;">Company / Organization</label>
+          <input type="text" id="revCompany" placeholder="e.g. Technip / L&amp;T" style="width:100%; padding:0.6rem 0.85rem; border:1px solid #dadce0; border-radius:8px; font-size:0.88rem; outline:none; transition:border 0.2s;" onfocus="this.style.borderColor='#1a73e8'" onblur="this.style.borderColor='#dadce0'">
+        </div>
+      </div>
+      <div style="margin-bottom: 0.8rem;">
+        <label style="display:block; font-size:0.8rem; font-weight:600; color:#202124; margin-bottom:0.25rem;">Rating <span style="color:#d93025">*</span></label>
+        <div class="star-rating-select" id="starRatingSelect">
+          <button type="button" class="star-select-btn active" data-val="1" aria-label="1 star">★</button>
+          <button type="button" class="star-select-btn active" data-val="2" aria-label="2 stars">★</button>
+          <button type="button" class="star-select-btn active" data-val="3" aria-label="3 stars">★</button>
+          <button type="button" class="star-select-btn active" data-val="4" aria-label="4 stars">★</button>
+          <button type="button" class="star-select-btn active" data-val="5" aria-label="5 stars">★</button>
+        </div>
+        <input type="hidden" id="revRating" value="5">
+      </div>
+      <div style="margin-bottom: 1.15rem;">
+        <label style="display:block; font-size:0.8rem; font-weight:600; color:#202124; margin-bottom:0.25rem;">Your Feedback / Review <span style="color:#d93025">*</span></label>
+        <textarea id="revText" required rows="3" placeholder="Share your experience with BG Group's consulting, surface treatment, or QA/QC inspection..." style="width:100%; padding:0.6rem 0.85rem; border:1px solid #dadce0; border-radius:8px; font-size:0.88rem; outline:none; transition:border 0.2s; resize:vertical;" onfocus="this.style.borderColor='#1a73e8'" onblur="this.style.borderColor='#dadce0'"></textarea>
+      </div>
+      <div id="revMsg" style="display:none; padding:0.65rem 0.9rem; border-radius:8px; margin-bottom:0.9rem; font-size:0.82rem;"></div>
+      <div style="display:flex; gap:0.75rem; justify-content:flex-end;">
+        <button type="button" class="btn-add-review-modal" onclick="closeReviewModal()">Cancel</button>
+        <button type="submit" id="revSubmitBtn" class="btn-write-google-review" style="border-radius:8px; padding:0.65rem 1.4rem;">Submit Feedback</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openReviewModal() {
+  const m = document.getElementById('clientReviewModal');
+  if (m) {
+    m.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    const firstInput = document.getElementById('revName');
+    if (firstInput) setTimeout(() => firstInput.focus(), 150);
+  }
+}
+
+function closeReviewModal() {
+  const m = document.getElementById('clientReviewModal');
+  if (m) {
+    m.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeReviewModal();
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+  const stars = document.querySelectorAll('#starRatingSelect .star-select-btn');
+  const ratingInput = document.getElementById('revRating');
+  stars.forEach((btn, idx) => {
+    btn.addEventListener('click', function() {
+      const val = idx + 1;
+      if (ratingInput) ratingInput.value = val;
+      stars.forEach((s, sIdx) => {
+        if (sIdx <= idx) s.classList.add('active');
+        else s.classList.remove('active');
+      });
+    });
+  });
+});
+
+async function submitClientReview(e) {
+  e.preventDefault();
+  const btn = document.getElementById('revSubmitBtn');
+  const msg = document.getElementById('revMsg');
+  const name = document.getElementById('revName').value.trim();
+  const role = document.getElementById('revRole').value.trim() || 'Verified Client';
+  const company = document.getElementById('revCompany').value.trim() || 'Industrial Client';
+  const rating = parseInt(document.getElementById('revRating').value) || 5;
+  const text = document.getElementById('revText').value.trim();
+
+  if (!name || !text) return;
+
+  btn.disabled = true;
+  btn.innerText = 'Submitting...';
+
+  try {
+    const res = await fetch('/api/v1/testimonials/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || ''
+      },
+      body: JSON.stringify({
+        client_name: name,
+        client_role: role,
+        company_name: company,
+        rating: rating,
+        testimonial_text: text,
+        order: 99
+      })
+    });
+
+    if (res.ok) {
+      msg.style.display = 'block';
+      msg.style.background = '#e6f4ea';
+      msg.style.color = '#137333';
+      msg.innerText = '✓ Thank you! Your review has been submitted successfully.';
+      setTimeout(() => {
+        closeReviewModal();
+        window.location.hash = '#testimonials';
+        window.location.reload();
+      }, 1400);
+    } else {
+      throw new Error('API failed');
+    }
+  } catch (err) {
+    msg.style.display = 'block';
+    msg.style.background = '#fce8e6';
+    msg.style.color = '#c5221f';
+    msg.innerText = 'Notice: Please submit via the Google Review button above.';
+    btn.disabled = false;
+    btn.innerText = 'Submit Feedback';
+  }
+}
+</script>

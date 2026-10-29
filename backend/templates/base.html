@@ -23,7 +23,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com/">
 <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{% static 'css/styles.css' %}?v=3.1">
+<link rel="stylesheet" href="{% static 'css/styles.css' %}?v=3.2">
 
 {% block extra_css %}{% endblock %}
 </head>
@@ -39,6 +39,8 @@
 {% include 'includes/sidebar.html' %}
 
 {% block content %}{% endblock %}
+
+{% include 'includes/review_modal.html' %}
 
 {% include 'includes/footer.html' %}
 
