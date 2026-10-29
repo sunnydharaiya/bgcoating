@@ -4,6 +4,8 @@ from .models import CalculatorLog
 
 class CalculatorLogSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username', read_only=True)
+    created_at = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S', read_only=True)
+    updated_at = serializers.DateTimeField(format='%Y-%m-%d %H:%M:%S', read_only=True)
 
     class Meta:
         model = CalculatorLog

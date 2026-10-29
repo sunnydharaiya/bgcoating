@@ -1,7 +1,8 @@
 // src/pages/PainterQualificationPage.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useToast } from '../context/ToastContext';
 import { useGuideline } from '../context/GuidelineContext';
+import { painterService } from '../services/painterService';
 import { 
   INITIAL_PAINTER_STATE, 
   calculatePainterQualification,
@@ -115,18 +116,58 @@ export default function PainterQualificationPage({
   const [isCompanyModalOpen, setIsCompanyModalOpen] = useState(false);
   const [isWatermarkModalOpen, setIsWatermarkModalOpen] = useState(false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [previewRecord, setPreviewRecord] = useState(null);
+
+  // Dynamic preview evaluation for read-only preview modal
+  const previewEvaluation = useMemo(() => {
+    return calculatePainterQualification(previewRecord || state);
+  }, [previewRecord, state]);
 
   // Evaluate current state
   const evaluation = calculatePainterQualification(state);
 
-  // Auto-save working draft to localStorage
+  // Initial remote hydration for working draft and register
   useEffect(() => {
-    try {
-      localStorage.setItem(DRAFT_KEY, JSON.stringify(state));
-    } catch (err) {
-      console.warn('Failed to save painter draft to localStorage:', err);
+    let isMounted = true;
+
+    // 1. Hydrate active draft
+    painterService.getDraft().then(remoteDraft => {
+      if (isMounted && remoteDraft && Object.keys(remoteDraft).length > 0) {
+        setState(remoteDraft);
+      }
+    }).catch(err => {
+      console.warn('[PainterPage] Remote draft fetch error:', err);
+    });
+
+    // 2. Hydrate saved reports register
+    painterService.getReports().then(remoteReports => {
+      if (isMounted && Array.isArray(remoteReports) && remoteReports.length > 0) {
+        setReports(remoteReports);
+      }
+    }).catch(err => {
+      console.warn('[PainterPage] Remote reports fetch error:', err);
+    });
+
+    return () => { isMounted = false; };
+  }, []);
+
+  // Debounced auto-save (800ms) to backend draft endpoint
+  const debounceTimerRef = useRef(null);
+  useEffect(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
     }
-  }, [state]);
+
+    debounceTimerRef.current = setTimeout(() => {
+      painterService.saveDraft(state, evaluation).catch(() => {});
+    }, 800);
+
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [state, evaluation]);
 
   // Persist reports
   useEffect(() => {
@@ -179,11 +220,12 @@ export default function PainterQualificationPage({
     }));
   };
 
-  // Reset working state
-  const handleResetState = () => {
+  // Reset working state and clear active draft
+  const handleResetState = async () => {
     if (window.confirm('Are you sure you want to reset the current Spray Painter Qualification report to a blank template? All unsaved data will be cleared.')) {
       setState(INITIAL_PAINTER_STATE);
-      addToast('Draft Reset', 'Working draft has been cleared.', 'info');
+      await painterService.clearDraft();
+      addToast('Draft Reset', 'Working draft has been cleared from local storage and server.', 'info');
     }
   };
 
@@ -318,57 +360,31 @@ export default function PainterQualificationPage({
     setIsTestCatalogOpen(true);
   };
 
-  // Save report to master register
-  const handleSaveDraft = () => {
-    const repNo = state['f-rep-no'] || `SP-QR-${Date.now().toString().slice(-6)}`;
-    const newRecord = {
-      id: Date.now().toString(),
-      repNo,
-      repDate: state['f-rep-date'] || new Date().toISOString().split('T')[0],
-      name: state['f-name'] || 'Operator',
-      civil: state['f-civil'] || '—',
-      proj: state['f-proj'] || 'Project',
-      projNo: state['f-proj-no'] || '—',
-      client: state['f-client'] || '—',
-      contractor: state['f-contractor'] || '—',
-      preparedBy: state['sig2-name'] || 'QA/QC Inspector',
-      overall: evaluation.overall,
-      verdict: evaluation.verdict,
-      status: 'Draft',
-      savedAt: new Date().toISOString(),
-      data: state
-    };
-
-    setReports(prev => [newRecord, ...prev.filter(r => r.repNo !== repNo)]);
-    addToast('Draft Saved', `Qualification report "${repNo}" saved to register.`, 'success');
+  // Save report to master register and remote database
+  const handleSaveDraft = async () => {
+    try {
+      const saved = await painterService.saveReport(state, 'Draft', evaluation);
+      setReports(prev => [saved, ...prev.filter(r => r.repNo !== saved.repNo)]);
+      addToast('Draft Saved', `Qualification report "${saved.repNo}" saved to master register.`, 'success');
+    } catch (err) {
+      console.warn('Failed to save painter draft to backend:', err);
+      addToast('Save Failed', 'Saved locally, but server sync failed.', 'warning');
+    }
   };
 
   const handleValidateAndApprove = () => {
     setIsApprovalModalOpen(true);
   };
 
-  const handleApproveReport = (status = 'Approved') => {
-    const repNo = state['f-rep-no'] || `SP-QR-${Date.now().toString().slice(-6)}`;
-    const approvedRecord = {
-      id: Date.now().toString(),
-      repNo,
-      repDate: state['f-rep-date'] || new Date().toISOString().split('T')[0],
-      name: state['f-name'] || 'Operator',
-      civil: state['f-civil'] || '—',
-      proj: state['f-proj'] || 'Project',
-      projNo: state['f-proj-no'] || '—',
-      client: state['f-client'] || '—',
-      contractor: state['f-contractor'] || '—',
-      preparedBy: state['sig2-name'] || 'QA/QC Inspector',
-      overall: evaluation.overall,
-      verdict: evaluation.verdict,
-      status,
-      savedAt: new Date().toISOString(),
-      data: state
-    };
-
-    setReports(prev => [approvedRecord, ...prev.filter(r => r.repNo !== repNo)]);
-    addToast('Report Issued', `Report "${repNo}" officially marked as ${status}.`, 'success');
+  const handleApproveReport = async (status = 'Approved') => {
+    try {
+      const approved = await painterService.saveReport(state, status, evaluation);
+      setReports(prev => [approved, ...prev.filter(r => r.repNo !== approved.repNo)]);
+      addToast('Report Issued', `Report "${approved.repNo}" officially marked as ${status}.`, 'success');
+    } catch (err) {
+      console.warn('Failed to approve report on backend:', err);
+      addToast('Approval Failed', 'Marked locally, but server sync failed.', 'warning');
+    }
   };
 
   const handleLoadReport = (record) => {
@@ -391,10 +407,43 @@ export default function PainterQualificationPage({
     handleNavigateSub('info');
   };
 
-  const handleDeleteReport = (id) => {
+  const handleDeleteReport = async (id) => {
     if (window.confirm('Delete this qualification report record from register?')) {
+      await painterService.deleteReport(id);
       setReports(prev => prev.filter(r => r.id !== id));
       addToast('Record Deleted', 'Qualification report removed from register.', 'info');
+    }
+  };
+
+  // 1-Click Benchmark Sample Dossier Loader
+  const handleLoadSampleRecord = async () => {
+    try {
+      const existing = await painterService.getReports({ search: 'SP-QR-2026-TARIQ-001' });
+      let sample = existing.find(r => r.repNo === 'SP-QR-2026-TARIQ-001');
+      if (!sample) {
+        sample = await painterService.saveReport({
+          'f-rep-no': 'SP-QR-2026-TARIQ-001',
+          'f-name': 'Mohammad Tariq',
+          'f-category': 'Airless Spray Painter',
+          'f-civil': 'CID-8829471',
+          'f-proj': 'Offshore Topsides Gas Flare Platform',
+          'f-proj-no': 'PRJ-2026-FLARE-09',
+          'f-client': 'Aramco / Offshore Energy Corp',
+          'f-contractor': 'BG Engineering & Contracting Ltd',
+          'f-location': 'Fabrication Yard 4 · Blast & Paint Bay',
+          'f-qual-date': '2026-10-28',
+          'f-next-date': '2027-10-28',
+          overall: 95.5,
+          verdict: 'PASS',
+          status: 'Approved',
+          data: INITIAL_PAINTER_STATE
+        }, 'Approved', { overall: 95.5, verdict: 'PASS' });
+      }
+      setReports(prev => [sample, ...prev.filter(r => r.repNo !== sample.repNo)]);
+      addToast('Sample Loaded', 'Loaded benchmark qualification dossier SP-QR-2026-TARIQ-001 into register.', 'success');
+    } catch (err) {
+      console.warn('Failed to load sample painter record:', err);
+      addToast('Load Failed', 'Could not load benchmark record.', 'error');
     }
   };
 
@@ -521,6 +570,8 @@ export default function PainterQualificationPage({
       case 'info':
       case 'project-info':
       case 'project_info':
+      case 'project-operator':
+      case 'project_operator':
         return (
           <PainterProjectInfo
             {...commonProps}
@@ -625,14 +676,22 @@ export default function PainterQualificationPage({
 
       case 'reports':
       case 'register':
+      case 'report-register':
+      case 'report_register':
+      case 'saved-reports':
+      case 'saved_reports':
         return (
           <PainterRegister
             reports={reports}
             onLoadReport={handleLoadReport}
+            onViewReport={(r) => {
+              setPreviewRecord(r.data || r);
+              setIsPreviewModalOpen(true);
+            }}
             onDuplicateReport={handleDuplicateReport}
             onDeleteReport={handleDeleteReport}
             onPrintReport={(r) => {
-              setState(r.data);
+              setPreviewRecord(r.data || r);
               setIsPreviewModalOpen(true);
             }}
             onExportCSV={handleExportCSV}
@@ -640,6 +699,8 @@ export default function PainterQualificationPage({
               setState(INITIAL_PAINTER_STATE);
               handleNavigateSub('info');
             }}
+            onSaveActiveReport={handleSaveDraft}
+            onLoadSampleRecord={handleLoadSampleRecord}
             onClearAll={handleClearAllReports}
           />
         );
@@ -669,6 +730,7 @@ export default function PainterQualificationPage({
         );
 
       case 'print':
+      case 'report':
         // Show summary and trigger print
         return (
           <PainterSummary
@@ -812,9 +874,12 @@ export default function PainterQualificationPage({
 
       <PainterPreviewModal
         isOpen={isPreviewModalOpen}
-        onClose={() => setIsPreviewModalOpen(false)}
-        formData={state}
-        evaluation={evaluation}
+        onClose={() => {
+          setIsPreviewModalOpen(false);
+          setPreviewRecord(null);
+        }}
+        formData={previewRecord || state}
+        evaluation={previewEvaluation}
         company={company}
         watermark={watermark}
         onPrint={handlePrint}

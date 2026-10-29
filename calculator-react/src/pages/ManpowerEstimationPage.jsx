@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
   Building2,
   Flame,
@@ -25,6 +25,7 @@ import {
   INITIAL_MANPOWER_STATE,
   calculateManpowerEstimation
 } from '../data/manpowerDatabase';
+import { manpowerService } from '../services/manpowerService';
 
 // Sub-tool components
 import ManpowerFreezeBar from '../tools/manpower/ManpowerFreezeBar';
@@ -156,31 +157,91 @@ export default function ManpowerEstimationPage({ activePage = 'manpower-estimati
     };
   });
 
-  // Modals
+  // Modals & Preview Record state
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [previewRecord, setPreviewRecord] = useState(null);
   const [isCompanyModalOpen, setIsCompanyModalOpen] = useState(false);
   const [isWatermarkModalOpen, setIsWatermarkModalOpen] = useState(false);
   const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
 
-  // Auto-save draft
+  const hasLoadedInitialDraftRef = useRef(false);
+  const saveDraftTimeoutRef = useRef(null);
+
+  // Load remote working draft or fallback to localStorage on mount
   useEffect(() => {
+    let isMounted = true;
+    const loadDraft = async () => {
+      try {
+        const draft = await manpowerService.getActiveDraft();
+        if (draft && isMounted) {
+          setState(draft);
+        }
+      } catch (e) {
+        console.warn('[ManpowerEstimationPage] Error fetching remote draft:', e);
+      } finally {
+        if (isMounted) {
+          hasLoadedInitialDraftRef.current = true;
+        }
+      }
+    };
+    loadDraft();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Fetch registered records from backend API
+  const fetchReports = useCallback(async () => {
     try {
-      localStorage.setItem('bg_os_manpower_draft', JSON.stringify(state));
+      const list = await manpowerService.getReports();
+      setReports(list);
     } catch (e) {
-      console.error('Failed to save manpower draft', e);
+      console.warn('[ManpowerEstimationPage] Failed to fetch records:', e);
     }
+  }, []);
+
+  useEffect(() => {
+    fetchReports();
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        fetchReports();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, [fetchReports]);
+
+  // Compute reactive engineering metrics for active form
+  const metrics = useMemo(() => {
+    return calculateManpowerEstimation(state);
   }, [state]);
 
-  // Save records
-  useEffect(() => {
-    try {
-      localStorage.setItem('bg_os_manpower_records', JSON.stringify(reports));
-    } catch (e) {
-      console.error('Failed to save manpower records', e);
-    }
-  }, [reports]);
+  // Compute reactive engineering metrics for preview modal / print dossier
+  const previewMetrics = useMemo(() => {
+    return calculateManpowerEstimation(previewRecord || state);
+  }, [previewRecord, state]);
 
-  // Save company
+  // Debounced auto-save working draft (800ms) to backend + localStorage
+  useEffect(() => {
+    if (!hasLoadedInitialDraftRef.current) return;
+
+    if (saveDraftTimeoutRef.current) {
+      clearTimeout(saveDraftTimeoutRef.current);
+    }
+
+    saveDraftTimeoutRef.current = setTimeout(() => {
+      manpowerService.saveActiveDraft(state, metrics);
+    }, 800);
+
+    return () => {
+      if (saveDraftTimeoutRef.current) {
+        clearTimeout(saveDraftTimeoutRef.current);
+      }
+    };
+  }, [state, metrics]);
+
+  // Save company profile locally
   useEffect(() => {
     try {
       localStorage.setItem('bg_os_company_profile', JSON.stringify(company));
@@ -189,7 +250,7 @@ export default function ManpowerEstimationPage({ activePage = 'manpower-estimati
     }
   }, [company]);
 
-  // Save watermark
+  // Save watermark settings locally
   useEffect(() => {
     try {
       localStorage.setItem('bg_os_watermark_settings', JSON.stringify(watermark));
@@ -197,11 +258,6 @@ export default function ManpowerEstimationPage({ activePage = 'manpower-estimati
       console.error('Failed to save watermark settings', e);
     }
   }, [watermark]);
-
-  // Compute reactive engineering metrics
-  const metrics = useMemo(() => {
-    return calculateManpowerEstimation(state);
-  }, [state]);
 
   // Navigation Handler
   const handleTabChange = (tabId) => {
@@ -226,8 +282,8 @@ export default function ManpowerEstimationPage({ activePage = 'manpower-estimati
   };
 
   // Reset entire form
-  const handleReset = () => {
-    if (window.confirm('Reset all estimation fields back to blank?')) {
+  const handleReset = async () => {
+    if (window.confirm('Reset all estimation fields back to defaults? This will clear the active working draft.')) {
       setState({
         ...INITIAL_MANPOWER_STATE,
         estNo: '',
@@ -240,42 +296,25 @@ export default function ManpowerEstimationPage({ activePage = 'manpower-estimati
           { name: '', dft: 0, vs: 0, thinner: 0, loss: 0, paintPrice: 0, thinnerPrice: 0 }
         ]
       });
+      await manpowerService.clearActiveDraft();
       addToast('Estimation reset complete', 'info');
     }
   };
 
-  // Save Report Record
-  const handleSaveReport = (status = 'Draft') => {
-    const reportId = state.id || `pe_${Date.now()}`;
-    const newRecord = {
-      id: reportId,
-      estNo: state.estNo || 'EST-DRAFT',
-      proj: state.projectName || 'Untitled Project',
-      cust: state.customer || 'Untitled Customer',
-      area: metrics.area,
-      blast: metrics.blastTotal,
-      paint: metrics.paintTotal,
-      raw: metrics.rawTotal,
-      grand: metrics.grandTotal,
-      pm2: metrics.costPerM2,
-      currency: state.currency || 'INR',
-      status: status,
-      savedAt: new Date().toISOString(),
-      snap: state
-    };
-
-    setReports(prev => {
-      const idx = prev.findIndex(r => r.id === reportId);
-      if (idx >= 0) {
-        const updated = [...prev];
-        updated[idx] = newRecord;
-        return updated;
-      }
-      return [newRecord, ...prev];
-    });
-
-    setState(prev => ({ ...prev, id: reportId }));
-    addToast(status === 'Approved' ? '✓ Estimation marked as Approved & saved!' : '💾 Draft saved to Report Register', 'success');
+  // Save Report Record to Database
+  const handleSaveReport = async (status = 'Draft') => {
+    try {
+      await manpowerService.saveReport(state, status, metrics);
+      await fetchReports();
+      addToast(
+        status === 'Approved'
+          ? '✓ Estimation marked as Approved & saved to database!'
+          : '💾 Draft saved to database register',
+        'success'
+      );
+    } catch (e) {
+      addToast('Failed to save to database', 'error');
+    }
   };
 
   // Handle header actions from top bar (Preview, Save Draft, Validate, Register, Reset)
@@ -285,6 +324,7 @@ export default function ManpowerEstimationPage({ activePage = 'manpower-estimati
       if (action === 'save-draft') {
         handleSaveReport('Draft');
       } else if (action === 'preview') {
+        setPreviewRecord(null);
         setIsPreviewModalOpen(true);
       } else if (action === 'validate') {
         setIsApprovalModalOpen(true);
@@ -302,37 +342,87 @@ export default function ManpowerEstimationPage({ activePage = 'manpower-estimati
     };
     window.addEventListener('bg_header_action', handleHeaderAction);
     return () => window.removeEventListener('bg_header_action', handleHeaderAction);
-  }, [state, metrics]);
+  }, [state, metrics, fetchReports]);
 
   // Load Report Record
   const handleLoadReport = (record) => {
-    if (record.snap) {
-      setState(record.snap);
-      setActiveTab('summary');
-      addToast(`Loaded estimation: ${record.estNo || record.proj}`, 'success');
-    }
+    const data = record.snap || record.data || record;
+    setState(data);
+    setActiveTab('summary');
+    addToast(`Loaded estimation: ${record.estNo || record.projectName || record.proj}`, 'success');
+  };
+
+  // View Record in Preview Modal
+  const handlePreviewReport = (record) => {
+    setPreviewRecord(record.snap || record.data || record);
+    setIsPreviewModalOpen(true);
+  };
+
+  // Print Record directly
+  const handlePrintReport = (record) => {
+    setPreviewRecord(record.snap || record.data || record);
+    setTimeout(() => window.print(), 200);
   };
 
   // Duplicate Report
-  const handleCopyReport = (record) => {
-    if (record.snap) {
-      const cloned = {
-        ...record.snap,
-        id: `pe_${Date.now()}`,
-        estNo: `${record.estNo || 'EST'} - COPY`,
-        projectName: `${record.proj || 'Project'} (Copy)`
-      };
-      setState(cloned);
-      handleSaveReport('Draft');
+  const handleCopyReport = async (record) => {
+    const data = record.snap || record.data || record;
+    const cloned = {
+      ...data,
+      id: undefined,
+      estNo: `${record.estNo || 'EST'}-COPY`,
+      projectName: `${record.proj || record.projectName || 'Project'} (Copy)`,
+      status: 'Draft'
+    };
+    try {
+      await manpowerService.saveReport(cloned, 'Draft');
+      await fetchReports();
       addToast('Estimation duplicated as new draft', 'info');
+    } catch (e) {
+      addToast('Failed to duplicate estimation', 'error');
     }
   };
 
   // Delete Report
-  const handleDeleteReport = (id) => {
+  const handleDeleteReport = async (id) => {
     if (window.confirm('Delete this estimation record from register?')) {
-      setReports(prev => prev.filter(r => r.id !== id));
-      addToast('Record deleted from register', 'info');
+      try {
+        await manpowerService.deleteReport(id);
+        await fetchReports();
+        addToast('Record permanently deleted from register', 'info');
+      } catch (e) {
+        addToast('Delete failed', 'error');
+      }
+    }
+  };
+
+  // 1-Click Load Sample Refinery Record
+  const handleLoadSampleRecord = async () => {
+    try {
+      const sampleRecord = {
+        ...INITIAL_MANPOWER_STATE,
+        estNo: 'EST-MP-2026-001',
+        projectName: 'Petrochemical Expansion Phase-II Process Equipment & Piping',
+        customer: 'National Refining & Petrochemicals Corp.',
+        location: 'Coastal Industrial Complex, Hazira',
+        area: 20000,
+        months: 6,
+        wdays: 26,
+        shifts: 2,
+        blastOutput: 65,
+        paintOutput: 45,
+        currency: 'INR',
+        status: 'Approved',
+        revisions: [
+          { no: 'R0', date: new Date().toISOString().split('T')[0], details: 'Tender Baseline Estimation', prep: 'Lead Estimator', rev: 'Engineering Head', appr: 'Commercial Director' }
+        ]
+      };
+      const sampleMetrics = calculateManpowerEstimation(sampleRecord);
+      await manpowerService.saveReport(sampleRecord, 'Approved', sampleMetrics);
+      await fetchReports();
+      addToast('✓ 20,000 m² Standard Refinery Estimation loaded into register!', 'success');
+    } catch (e) {
+      addToast('Failed to load sample record', 'error');
     }
   };
 
@@ -499,20 +589,16 @@ export default function ManpowerEstimationPage({ activePage = 'manpower-estimati
             <ManpowerRegister
               reports={reports}
               onLoadReport={handleLoadReport}
-              onPrintReport={(r) => {
-                handleLoadReport(r);
-                setTimeout(() => window.print(), 200);
-              }}
-              onPreviewReport={(r) => {
-                handleLoadReport(r);
-                setIsPreviewModalOpen(true);
-              }}
+              onPrintReport={handlePrintReport}
+              onPreviewReport={handlePreviewReport}
               onCopyReport={handleCopyReport}
               onDeleteReport={handleDeleteReport}
               onNewEstimation={() => {
                 handleReset();
                 setActiveTab('project-info');
               }}
+              onSaveActiveEstimation={() => handleSaveReport('Draft')}
+              onLoadSampleRecord={handleLoadSampleRecord}
             />
           )}
         </div>
@@ -523,9 +609,12 @@ export default function ManpowerEstimationPage({ activePage = 'manpower-estimati
       {/* 1. Preview Modal */}
       <ManpowerPreviewModal
         isOpen={isPreviewModalOpen}
-        onClose={() => setIsPreviewModalOpen(false)}
-        state={state}
-        metrics={metrics}
+        onClose={() => {
+          setIsPreviewModalOpen(false);
+          setPreviewRecord(null);
+        }}
+        state={previewRecord || state}
+        metrics={previewMetrics}
         company={company}
         watermark={watermark}
         onPrint={handleDirectPrint}
@@ -567,8 +656,8 @@ export default function ManpowerEstimationPage({ activePage = 'manpower-estimati
 
       {/* Hidden Print Dossier for @media print */}
       <ManpowerPrintDossier
-        state={state}
-        metrics={metrics}
+        state={previewRecord || state}
+        metrics={previewMetrics}
         company={company}
         watermark={watermark}
       />

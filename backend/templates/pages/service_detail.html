@@ -28,12 +28,12 @@
   </section>
 
   <!-- ======================= MAIN BODY CONTENT & SIDEBAR ======================= -->
-  <section class="grid-bg hex-bg" id="specifications" style="background:#FFFFFF; color:#16202F; padding:4rem 0">
+  <section class="grid-bg hex-bg" id="specifications" style="background:#FFFFFF; color:#16202F; padding:clamp(2rem, 4vw, 4rem) 0">
     <div class="wrap">
-      <div style="display:grid; grid-template-columns:1fr 340px; gap:3rem; align-items:start">
+      <div class="svc-detail-layout">
         
         <!-- Main Content Area -->
-        <div style="background:#FFFFFF; border:1px solid var(--line-lt); border-radius:18px; padding:2.5rem; box-shadow:var(--shadow-1)">
+        <div class="svc-detail-card">
           
           {% if service.cover_image %}
           <div style="border-radius:14px; overflow:hidden; margin-bottom:2.5rem; max-height:440px; border:1px solid var(--line-lt); box-shadow:var(--shadow-1)">
@@ -51,10 +51,10 @@
           </div>
 
           <!-- Key Deliverables Protocol Box -->
-          <div style="margin-top:3rem; background:var(--mist); border:1px solid var(--line-lt); border-radius:16px; padding:2rem">
+          <div class="svc-detail-deliverables-box">
             <h3 style="font-family:var(--font-display); font-size:1.2rem; color:#0E1726; margin-bottom:1.2rem; font-weight:700">Key Deliverables &amp; Quality Inspection Protocols</h3>
             
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.2rem">
+            <div class="svc-detail-deliverables-grid">
               <div style="background:#FFFFFF; padding:1.2rem; border-radius:12px; border:1px solid var(--line-lt)">
                 <strong style="display:block; color:#0E1726; font-size:.92rem; margin-bottom:.3rem">Surface Preparation QA/QC</strong>
                 <p style="font-size:.82rem; color:var(--txt-mut); margin:0">Blast profile and cleanliness verification per SSPC-VIS 1 / ISO 8501-1 standards.</p>
@@ -78,7 +78,7 @@
           </div>
 
           <!-- CTA Banner -->
-          <div style="margin-top:3rem; background:linear-gradient(135deg,#0A111F 0%,#101A2E 100%); border-radius:18px; padding:2.5rem; color:#EDF2FA; display:flex; flex-direction:column; gap:1.2rem; box-shadow:var(--shadow-2)">
+          <div style="margin-top:3rem; background:linear-gradient(135deg,#0A111F 0%,#101A2E 100%); border-radius:18px; padding:clamp(1.4rem, 3.5vw, 2.5rem); color:#EDF2FA; display:flex; flex-direction:column; gap:1.2rem; box-shadow:var(--shadow-2)">
             <p class="eyebrow" style="margin:0">NACE / AMPP Level 3 Consultancy</p>
             <h3 style="font-family:var(--font-display); font-size:1.5rem; color:#FFFFFF; margin:0">Require an On-Site Audit or Quality Verification?</h3>
             <p style="font-size:.92rem; color:#9AA7BD; margin:0">Connect directly with BG Group's certified protective coating inspectors for failure analysis, third-party QA/QC, or specification drafting.</p>
@@ -90,10 +90,10 @@
         </div>
 
         <!-- Sidebar Summary & Related Offerings -->
-        <div style="display:flex; flex-direction:column; gap:2rem">
+        <div style="display:flex; flex-direction:column; gap:2rem; min-width:0; max-width:100%">
           
           <!-- Technical Summary Card -->
-          <div style="background:#0A111F; border:1px solid rgba(255,255,255,.1); border-radius:18px; padding:2rem; color:#EDF2FA">
+          <div style="background:#0A111F; border:1px solid rgba(255,255,255,.1); border-radius:18px; padding:clamp(1.4rem, 3vw, 2rem); color:#EDF2FA; box-sizing:border-box; max-width:100%">
             <p class="eyebrow" style="margin-bottom:1rem">Technical Summary</p>
             
             <div style="display:flex; flex-direction:column; gap:1.2rem; font-size:.88rem">
@@ -127,7 +127,7 @@
 
           <!-- Related Offerings Column -->
           {% if related_services %}
-          <div style="background:#FFFFFF; border:1px solid var(--line-lt); border-radius:18px; padding:1.8rem; box-shadow:var(--shadow-1)">
+          <div style="background:#FFFFFF; border:1px solid var(--line-lt); border-radius:18px; padding:clamp(1.2rem, 2.5vw, 1.8rem); box-shadow:var(--shadow-1); box-sizing:border-box; max-width:100%">
             <p class="eyebrow" style="color:var(--txt-ink); margin-bottom:1rem">Related Services</p>
             <div style="display:flex; flex-direction:column; gap:.9rem">
               {% for rel in related_services %}

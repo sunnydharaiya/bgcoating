@@ -7,7 +7,9 @@ export default function BlasterRegister({
   onDeleteReport,
   onNewReport,
   onOpenPreview,
-  onOpenPrint
+  onOpenPrint,
+  onSaveActiveReport,
+  onLoadSampleRecord
 }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -199,6 +201,28 @@ export default function BlasterRegister({
           <div className="rep-action-bar-l-s">Search, filter, sort, review, retrieve and export your saved Operator Qualification Reports. Start a new report with NEW GENERATION.</div>
         </div>
         <div className="rep-action-btn-grp">
+          {onSaveActiveReport && (
+            <button
+              type="button"
+              className="btn"
+              style={{ background: '#E8700A', color: '#fff', fontWeight: 'bold' }}
+              onClick={onSaveActiveReport}
+              title="Save current active working draft as record in register"
+            >
+              💾 SAVE ACTIVE REPORT
+            </button>
+          )}
+          {onLoadSampleRecord && (
+            <button
+              type="button"
+              className="btn"
+              style={{ background: '#B83216', color: '#fff', fontWeight: 'bold' }}
+              onClick={onLoadSampleRecord}
+              title="Load standard QatarEnergy / CTJV qualification dossier sample"
+            >
+              💡 SAMPLE DOSSIER
+            </button>
+          )}
           <button
             type="button"
             className="btn-new-generation"
@@ -412,8 +436,32 @@ export default function BlasterRegister({
           <tbody id="rep-tbody">
             {sortedReports.length === 0 ? (
               <tr>
-                <td colSpan="15" style={{ textAlign: 'center', padding: '36px', color: 'var(--txt3)' }}>
-                  No qualification reports found in register. Click <b>🚀 NEW GENERATION</b> to start your first report.
+                <td colSpan="15" style={{ textAlign: 'center', padding: '40px', color: 'var(--txt3)' }}>
+                  <div style={{ maxWidth: '420px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center' }}>
+                    <div style={{ fontWeight: 'bold', color: 'var(--txt2)', fontSize: '13px' }}>
+                      No qualification reports found in database register.
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                      {onLoadSampleRecord && (
+                        <button
+                          type="button"
+                          className="btn"
+                          style={{ background: '#B83216', color: '#fff', fontSize: '11px', padding: '6px 12px', borderRadius: '6px', cursor: 'pointer' }}
+                          onClick={onLoadSampleRecord}
+                        >
+                          💡 Load Sample Qualification Dossier
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        className="btn-new-generation"
+                        style={{ fontSize: '11px', padding: '6px 12px', cursor: 'pointer' }}
+                        onClick={onNewReport}
+                      >
+                        🚀 Start New Qualification Report
+                      </button>
+                    </div>
+                  </div>
                 </td>
               </tr>
             ) : (
@@ -469,8 +517,8 @@ export default function BlasterRegister({
                         className="rep-act view"
                         title="View Report Preview"
                         onClick={() => {
-                          onLoadReport(r);
-                          if (onOpenPreview) onOpenPreview();
+                          if (onOpenPreview) onOpenPreview(r);
+                          else onLoadReport(r);
                         }}
                       >
                         👁
@@ -482,8 +530,9 @@ export default function BlasterRegister({
                         className="rep-act"
                         title="Print Report"
                         onClick={() => {
-                          onLoadReport(r);
-                          if (onOpenPrint) onOpenPrint();
+                          if (onOpenPrint) onOpenPrint(r);
+                          else if (onOpenPreview) onOpenPreview(r);
+                          else onLoadReport(r);
                         }}
                       >
                         📄

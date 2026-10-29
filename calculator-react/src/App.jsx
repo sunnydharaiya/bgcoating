@@ -20,6 +20,12 @@ import LoginPage from './pages/LoginPage';
 import AuthModal from './components/AuthModal';
 import ErrorBoundary from './components/ErrorBoundary';
 import { calculatorService } from './services/calculatorService';
+import { specificationService } from './services/specificationService';
+import { procedureService } from './services/procedureService';
+import { unitRateService } from './services/unitRateService';
+import { manpowerService } from './services/manpowerService';
+import { blasterService } from './services/blasterService';
+import { painterService } from './services/painterService';
 
 // Context Providers
 import { ToastProvider } from './context/ToastContext';
@@ -124,6 +130,12 @@ export default function App() {
       sessionStorage.removeItem('bg_guest_timer_done');
     }
     calculatorService.syncGuestLogsAfterLogin().catch(() => {});
+    specificationService.syncGuestSpecsAfterLogin().catch(() => {});
+    procedureService.syncGuestProceduresAfterLogin().catch(() => {});
+    unitRateService.syncGuestEstimatesAfterLogin().catch(() => {});
+    manpowerService.syncGuestPlansAfterLogin().catch(() => {});
+    blasterService.syncGuestReportsAfterLogin().catch(() => {});
+    painterService.syncGuestReportsAfterLogin().catch(() => {});
     if (activePage === 'login') {
       navigate('dashboard', 'hub');
     }
@@ -349,7 +361,7 @@ export default function App() {
               onOpenAuthModal={() => setAuthModalOpen(true)}
             />
             <main className="flex-1 w-full min-w-0 p-3 sm:p-4 md:p-6">
-              <ErrorBoundary title="Page View">
+              <ErrorBoundary title="Page View" key={activePage} resetKey={`${activePage}-${activeSubTool}`}>
                 {renderPage()}
               </ErrorBoundary>
             </main>

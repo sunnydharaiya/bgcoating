@@ -14,6 +14,12 @@ import {
 import { useToast } from '../context/ToastContext';
 import { loginWithEmail, registerWithEmail, loginWithGoogle } from '../utils/api';
 import { calculatorService } from '../services/calculatorService';
+import { specificationService } from '../services/specificationService';
+import { procedureService } from '../services/procedureService';
+import { unitRateService } from '../services/unitRateService';
+import { manpowerService } from '../services/manpowerService';
+import { blasterService } from '../services/blasterService';
+import { painterService } from '../services/painterService';
 
 export default function AuthModal({ 
   isOpen, 
@@ -96,8 +102,14 @@ export default function AuthModal({
               try {
                 const res = await loginWithGoogle({ credential: response.credential });
                 addToast('Google Sign-In Successful', `Welcome back, ${res.formattedUser.name}!`, 'success');
-                // Sync any guest calculations created prior to sign in
+                // Sync any guest calculations and specifications created prior to sign in
                 await calculatorService.syncGuestLogsAfterLogin();
+                await specificationService.syncGuestSpecsAfterLogin();
+                await procedureService.syncGuestProceduresAfterLogin();
+                await unitRateService.syncGuestEstimatesAfterLogin();
+                await manpowerService.syncGuestPlansAfterLogin();
+                await blasterService.syncGuestReportsAfterLogin();
+                await painterService.syncGuestReportsAfterLogin();
                 window.dispatchEvent(new CustomEvent('bg_user_updated', { detail: res.formattedUser }));
                 if (onLoginSuccess) {
                   onLoginSuccess(res.formattedUser);
@@ -159,8 +171,14 @@ export default function AuthModal({
     try {
       const res = await loginWithEmail(loginEmail.trim(), loginPassword);
       addToast('Signed In', `Welcome back, ${res.formattedUser.name}!`, 'success');
-      // Sync any guest calculations created prior to sign in
+      // Sync any guest calculations, specifications, procedures, and unit rates created prior to sign in
       await calculatorService.syncGuestLogsAfterLogin();
+      await specificationService.syncGuestSpecsAfterLogin();
+      await procedureService.syncGuestProceduresAfterLogin();
+      await unitRateService.syncGuestEstimatesAfterLogin();
+      await manpowerService.syncGuestPlansAfterLogin();
+      await blasterService.syncGuestReportsAfterLogin();
+      await painterService.syncGuestReportsAfterLogin();
       window.dispatchEvent(new CustomEvent('bg_user_updated', { detail: res.formattedUser }));
       if (onLoginSuccess) {
         onLoginSuccess(res.formattedUser);
@@ -191,8 +209,14 @@ export default function AuthModal({
         company: 'BG Coating & Inspection Services',
       });
       addToast('Account Created', `Welcome to BG CoatingOS, ${res.formattedUser.name}!`, 'success');
-      // Sync any guest calculations created prior to registration
+      // Sync any guest calculations, specifications, procedures, and unit rates created prior to registration
       await calculatorService.syncGuestLogsAfterLogin();
+      await specificationService.syncGuestSpecsAfterLogin();
+      await procedureService.syncGuestProceduresAfterLogin();
+      await unitRateService.syncGuestEstimatesAfterLogin();
+      await manpowerService.syncGuestPlansAfterLogin();
+      await blasterService.syncGuestReportsAfterLogin();
+      await painterService.syncGuestReportsAfterLogin();
       window.dispatchEvent(new CustomEvent('bg_user_updated', { detail: res.formattedUser }));
       if (onLoginSuccess) {
         onLoginSuccess(res.formattedUser);
@@ -558,19 +582,6 @@ export default function AuthModal({
           )}
 
         </div>
-
-        {/* Guest Skip Option */}
-        {onClose && (
-          <div className="mt-4 pt-3 border-t border-slate-100 text-center">
-            <button
-              type="button"
-              onClick={onClose}
-              className="text-[11px] font-medium text-slate-500 hover:text-slate-800 transition cursor-pointer"
-            >
-              Continue browsing as Guest &rarr;
-            </button>
-          </div>
-        )}
 
       </div>
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
   Award,
   BookOpen,
@@ -22,6 +22,7 @@ import {
   INITIAL_BLASTER_STATE,
   calculateBlasterQualification
 } from '../data/blasterDatabase';
+import { blasterService } from '../services/blasterService';
 
 // Sub-Tool Components
 import BlasterFreezeBar from '../tools/blaster/BlasterFreezeBar';
@@ -119,16 +120,94 @@ export default function BlasterQualificationPage({
     }
   });
 
-  // Modal visibility states
+  // Modal visibility states & Preview Record
   const [isCatalogOpen, setIsCatalogOpen] = useState(false);
   const [isApprovalOpen, setIsApprovalOpen] = useState(false);
   const [isCompanyOpen, setIsCompanyOpen] = useState(false);
   const [isWatermarkOpen, setIsWatermarkOpen] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [previewRecord, setPreviewRecord] = useState(null);
+
+  const hasLoadedInitialDraftRef = useRef(false);
+  const saveDraftTimeoutRef = useRef(null);
+
+  // Load remote working draft or fallback to localStorage on mount
+  useEffect(() => {
+    let isMounted = true;
+    const loadDraft = async () => {
+      try {
+        const draft = await blasterService.getActiveDraft();
+        if (draft && isMounted) {
+          setState(draft);
+        }
+      } catch (e) {
+        console.warn('[BlasterQualificationPage] Error fetching remote draft:', e);
+      } finally {
+        if (isMounted) {
+          hasLoadedInitialDraftRef.current = true;
+        }
+      }
+    };
+    loadDraft();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Fetch registered qualification reports from backend API
+  const fetchReports = useCallback(async () => {
+    try {
+      const list = await blasterService.getReports();
+      setReports(list);
+    } catch (e) {
+      console.warn('[BlasterQualificationPage] Failed to fetch records:', e);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchReports();
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        fetchReports();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, [fetchReports]);
+
+  // Core Math & Metrics Evaluator for active form
+  const metrics = useMemo(() => {
+    return calculateBlasterQualification(state);
+  }, [state]);
+
+  // Metrics for Preview Modal / Dossier (supports viewing register records)
+  const previewMetrics = useMemo(() => {
+    return calculateBlasterQualification(previewRecord || state);
+  }, [previewRecord, state]);
+
+  // Debounced auto-save working draft (800ms) to backend + localStorage
+  useEffect(() => {
+    if (!hasLoadedInitialDraftRef.current) return;
+
+    if (saveDraftTimeoutRef.current) {
+      clearTimeout(saveDraftTimeoutRef.current);
+    }
+
+    saveDraftTimeoutRef.current = setTimeout(() => {
+      blasterService.saveActiveDraft(state, metrics);
+    }, 800);
+
+    return () => {
+      if (saveDraftTimeoutRef.current) {
+        clearTimeout(saveDraftTimeoutRef.current);
+      }
+    };
+  }, [state, metrics]);
 
   // Sync modal routing when navigated from sidebar or direct URL
   useEffect(() => {
-    if (currentSubTool === 'company-details' || currentSubTool === 'company_details') {
+    if (currentSubTool === 'company-details' || currentSubTool === 'company_details' || currentSubTool === 'company') {
       setIsCompanyOpen(true);
       setIsWatermarkOpen(false);
       setIsPreviewOpen(false);
@@ -136,7 +215,7 @@ export default function BlasterQualificationPage({
       setIsWatermarkOpen(true);
       setIsCompanyOpen(false);
       setIsPreviewOpen(false);
-    } else if (currentSubTool === 'preview' || currentSubTool === 'report') {
+    } else if (currentSubTool === 'preview' || currentSubTool === 'report' || currentSubTool === 'print') {
       setIsPreviewOpen(true);
       setIsCompanyOpen(false);
       setIsWatermarkOpen(false);
@@ -146,24 +225,6 @@ export default function BlasterQualificationPage({
       setIsPreviewOpen(false);
     }
   }, [currentSubTool]);
-
-  // Auto-save draft to localStorage
-  useEffect(() => {
-    try {
-      localStorage.setItem(DRAFT_KEY, JSON.stringify(state));
-    } catch (e) {
-      console.error('Failed to save draft:', e);
-    }
-  }, [state]);
-
-  // Save register to localStorage
-  useEffect(() => {
-    try {
-      localStorage.setItem(REGISTER_KEY, JSON.stringify(reports));
-    } catch (e) {
-      console.error('Failed to save register:', e);
-    }
-  }, [reports]);
 
   // Save company settings
   useEffect(() => {
@@ -182,9 +243,6 @@ export default function BlasterQualificationPage({
       console.error('Failed to save watermark:', e);
     }
   }, [watermark]);
-
-  // Core Math & Metrics Evaluator
-  const metrics = calculateBlasterQualification(state);
 
   // State update handler
   const handleStateChange = (field, value) => {
@@ -211,9 +269,10 @@ export default function BlasterQualificationPage({
   };
 
   // Reset Qualification
-  const handleReset = () => {
-    if (window.confirm('Reset all qualification fields back to clean initial state?')) {
+  const handleReset = async () => {
+    if (window.confirm('Reset all qualification fields back to clean initial state? This will clear the active working draft.')) {
       setState(INITIAL_BLASTER_STATE);
+      await blasterService.clearActiveDraft();
       addToast('Reset qualification record to default template.', 'info');
     }
   };
@@ -227,94 +286,125 @@ export default function BlasterQualificationPage({
   };
 
   // Save Draft to Register
-  const handleSaveDraft = () => {
+  const handleSaveDraft = async () => {
     const repNo = state.repNo || generateReportNo();
-    const newRecord = {
+    const draftPayload = {
       ...state,
-      id: state.id || `rep_${Date.now()}`,
       repNo,
       status: 'Draft',
       verdict: metrics.verdict,
-      overallScore: metrics.overallScore,
-      prePct: metrics.prePct,
-      postPct: metrics.postPct,
-      chkPct: metrics.chkPct,
-      inspPct: metrics.inspPct,
-      savedAt: new Date().toISOString()
+      overallScore: metrics.overallScore
     };
 
-    setState((prev) => ({ ...prev, id: newRecord.id, repNo }));
-
-    setReports((prev) => {
-      const idx = prev.findIndex((r) => r.id === newRecord.id);
-      if (idx >= 0) {
-        const updated = [...prev];
-        updated[idx] = newRecord;
-        return updated;
-      }
-      return [newRecord, ...prev];
-    });
-
-    addToast(`Saved draft qualification report (${repNo})!`, 'success');
+    try {
+      await blasterService.saveReport(draftPayload, 'Draft', metrics);
+      setState((prev) => ({ ...prev, repNo }));
+      await fetchReports();
+      addToast(`Saved draft qualification report (${repNo}) to database!`, 'success');
+    } catch (e) {
+      addToast('Failed to save report to database.', 'error');
+    }
   };
 
   // Approve and Lock Qualification Record
-  const handleConfirmApprove = () => {
+  const handleConfirmApprove = async () => {
     const repNo = state.repNo || generateReportNo();
-    const approvedRecord = {
+    const approvedPayload = {
       ...state,
-      id: state.id || `rep_${Date.now()}`,
       repNo,
       status: 'Approved',
       verdict: metrics.verdict,
-      overallScore: metrics.overallScore,
-      prePct: metrics.prePct,
-      postPct: metrics.postPct,
-      chkPct: metrics.chkPct,
-      inspPct: metrics.inspPct,
-      savedAt: new Date().toISOString()
+      overallScore: metrics.overallScore
     };
 
-    setState((prev) => ({ ...prev, id: approvedRecord.id, repNo }));
-
-    setReports((prev) => {
-      const idx = prev.findIndex((r) => r.id === approvedRecord.id);
-      if (idx >= 0) {
-        const updated = [...prev];
-        updated[idx] = approvedRecord;
-        return updated;
-      }
-      return [approvedRecord, ...prev];
-    });
-
-    addToast(`Validated and approved qualification dossier (${repNo})!`, 'success');
+    try {
+      await blasterService.saveReport(approvedPayload, 'Approved', metrics);
+      setState((prev) => ({ ...prev, repNo, status: 'Approved' }));
+      await fetchReports();
+      addToast(`Validated and approved qualification dossier (${repNo})!`, 'success');
+    } catch (e) {
+      addToast('Failed to save approved dossier to database.', 'error');
+    }
   };
 
   // Load report from register
   const handleLoadReport = (rep) => {
-    setState(rep);
+    const data = rep.data || rep;
+    setState(data);
     addToast(`Loaded qualification report ${rep.repNo}!`, 'info');
     if (onNavigate) onNavigate('blaster', 'info');
   };
 
+  // Preview report from register
+  const handlePreviewReport = (rep) => {
+    const data = rep.data || rep;
+    setPreviewRecord(data);
+    setIsPreviewOpen(true);
+  };
+
+  // Print report from register
+  const handlePrintReport = (rep) => {
+    const data = rep.data || rep;
+    setPreviewRecord(data);
+    setTimeout(() => window.print(), 200);
+  };
+
   // Duplicate report
-  const handleDuplicateReport = (rep) => {
+  const handleDuplicateReport = async (rep) => {
+    const data = rep.data || rep;
     const dup = {
-      ...rep,
-      id: `rep_${Date.now()}`,
-      repNo: '',
-      status: 'Draft',
-      savedAt: new Date().toISOString()
+      ...data,
+      id: undefined,
+      repNo: `${rep.repNo || 'BL-QR'}-COPY`,
+      status: 'Draft'
     };
-    setReports((prev) => [dup, ...prev]);
-    addToast(`Duplicated report ${rep.repNo} as new draft.`, 'success');
+    try {
+      await blasterService.saveReport(dup, 'Draft');
+      await fetchReports();
+      addToast(`Duplicated report ${rep.repNo} as new draft.`, 'success');
+    } catch (e) {
+      addToast('Failed to duplicate report.', 'error');
+    }
   };
 
   // Delete report
-  const handleDeleteReport = (id) => {
+  const handleDeleteReport = async (id) => {
     if (window.confirm('Delete this qualification report from master register?')) {
-      setReports((prev) => prev.filter((r) => r.id !== id));
-      addToast('Report deleted from register.', 'info');
+      try {
+        await blasterService.deleteReport(id);
+        await fetchReports();
+        addToast('Report deleted from register.', 'info');
+      } catch (e) {
+        addToast('Failed to delete report.', 'error');
+      }
+    }
+  };
+
+  // 1-Click Load Sample Qualification Record
+  const handleLoadSampleRecord = async () => {
+    try {
+      const sampleRecord = {
+        ...INITIAL_BLASTER_STATE,
+        repNo: 'BL-QR-2026-RAJESH-001',
+        projectName: 'NFS Qatar Gas Complex Expansion',
+        projectNo: 'NFS-Q-2026',
+        client: 'QatarEnergy LNG',
+        epcContractor: 'Chiyoda Technip Joint Venture (CTJV)',
+        contractor: 'BG Industrial Coatings & Corrosion Protection W.L.L.',
+        operatorName: 'Rajesh M. Patel',
+        civilId: '284051209341',
+        category: 'Blaster',
+        qualificationCardNo: 'BG-QC-BL-2026-084',
+        status: 'Approved',
+        verdict: 'PASS',
+        overallScore: 94.5
+      };
+      const sampleMetrics = calculateBlasterQualification(sampleRecord);
+      await blasterService.saveReport(sampleRecord, 'Approved', sampleMetrics);
+      await fetchReports();
+      addToast('✓ Standard QatarEnergy / CTJV Qualification Dossier loaded into register!', 'success');
+    } catch (e) {
+      addToast('Failed to load sample qualification record.', 'error');
     }
   };
 
@@ -380,7 +470,7 @@ export default function BlasterQualificationPage({
 
     window.addEventListener('bg_header_action', handleHeaderAction);
     return () => window.removeEventListener('bg_header_action', handleHeaderAction);
-  }, [reports, state, metrics]);
+  }, [reports, state, metrics, fetchReports]);
 
   const navTabs = [
     { id: 'hub', label: 'Hub & Overview', icon: Sparkles },
@@ -494,7 +584,7 @@ export default function BlasterQualificationPage({
             />
           )}
 
-          {currentSubTool === 'info' && (
+          {['info', 'project-operator', 'project_operator', 'project-info', 'project_info'].includes(currentSubTool) && (
             <BlasterProjectInfo
               state={state}
               onChange={handleStateChange}
@@ -503,7 +593,7 @@ export default function BlasterQualificationPage({
             />
           )}
 
-          {currentSubTool === 'train' && (
+          {['train', 'training-test', 'training_test'].includes(currentSubTool) && (
             <BlasterTrainingTest
               state={state}
               onChange={handleStateChange}
@@ -521,7 +611,7 @@ export default function BlasterQualificationPage({
             />
           )}
 
-          {currentSubTool === 'blasting' && (
+          {['blasting', 'blasting-process', 'blasting_process', 'process'].includes(currentSubTool) && (
             <BlasterProcess
               state={state}
               onChange={handleStateChange}
@@ -531,7 +621,7 @@ export default function BlasterQualificationPage({
             />
           )}
 
-          {currentSubTool === 'photo' && (
+          {['photo', 'photo-report', 'photo_report'].includes(currentSubTool) && (
             <BlasterPhotoReport
               state={state}
               onChange={handleStateChange}
@@ -540,7 +630,7 @@ export default function BlasterQualificationPage({
             />
           )}
 
-          {currentSubTool === 'verdict' && (
+          {['verdict', 'verdict-approval', 'verdict_approval'].includes(currentSubTool) && (
             <BlasterVerdictApproval
               state={state}
               onChange={handleStateChange}
@@ -552,7 +642,7 @@ export default function BlasterQualificationPage({
             />
           )}
 
-          {currentSubTool === 'summary' && (
+          {['summary', 'preview'].includes(currentSubTool) && (
             <BlasterSummary
               state={state}
               onChange={handleStateChange}
@@ -562,7 +652,7 @@ export default function BlasterQualificationPage({
             />
           )}
 
-          {currentSubTool === 'register' && (
+          {['register', 'report-register', 'report_register', 'saved-reports', 'reports'].includes(currentSubTool) && (
             <BlasterRegister
               reports={reports}
               onLoadReport={handleLoadReport}
@@ -572,7 +662,10 @@ export default function BlasterQualificationPage({
                 setState(INITIAL_BLASTER_STATE);
                 if (onNavigate) onNavigate('blaster', 'info');
               }}
-              onOpenPreview={() => setIsPreviewOpen(true)}
+              onOpenPreview={handlePreviewReport}
+              onOpenPrint={handlePrintReport}
+              onSaveActiveReport={handleSaveDraft}
+              onLoadSampleRecord={handleLoadSampleRecord}
             />
           )}
         </main>
@@ -622,12 +715,13 @@ export default function BlasterQualificationPage({
         isOpen={isPreviewOpen}
         onClose={() => {
           setIsPreviewOpen(false);
+          setPreviewRecord(null);
           if (currentSubTool === 'preview' || currentSubTool === 'report') {
             if (onNavigate) onNavigate('blaster', 'hub');
           }
         }}
-        state={state}
-        metrics={metrics}
+        state={previewRecord || state}
+        metrics={previewMetrics}
         company={company}
         watermark={watermark}
         onOpenCompany={() => setIsCompanyOpen(true)}

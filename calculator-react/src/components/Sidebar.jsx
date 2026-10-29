@@ -39,7 +39,9 @@ import {
   Lock,
   Clock,
   BarChart3,
-  CalendarDays
+  CalendarDays,
+  SlidersHorizontal,
+  BookOpen
 } from 'lucide-react';
 import { clearAuth } from '../utils/api';
 
@@ -87,6 +89,14 @@ export default function Sidebar({
   const [docExpanded, setDocExpanded] = useState(() => isDocGroup);
   const [proSuiteExpanded, setProSuiteExpanded] = useState(true);
 
+  // Inspection Adhesion Sub-menu toggle
+  const isAdhesionSubActive = ['pull-off', 'pull-off-adhesion', 'pull', 'cross-cut', 'cross-cut-adhesion', 'cross'].includes(activeSubTool);
+  const [adhesionExpanded, setAdhesionExpanded] = useState(true);
+
+  useEffect(() => {
+    if (isAdhesionSubActive) setAdhesionExpanded(true);
+  }, [isAdhesionSubActive]);
+
   useEffect(() => {
     if (isEstimationGroup) setEstimationExpanded(true);
     if (isDocGroup) setDocExpanded(true);
@@ -132,6 +142,7 @@ export default function Sidebar({
   // Reusable Sub-Item Button Component
   const NavSubButton = ({ id, label, icon: Icon, aliases = [], badge, isProLocked = false }) => {
     const active = isSubActive(id, aliases);
+    const isProBadge = badge === 'PRO';
     return (
       <button
         type="button"
@@ -153,7 +164,11 @@ export default function Sidebar({
             <span className="text-[10px] text-amber-400">🔒</span>
           )}
           {badge && (
-            <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-white/[0.06] text-slate-400">
+            <span className={`text-[9px] font-mono px-1.5 py-0.5 rounded ${
+              isProBadge 
+                ? 'bg-amber-500/20 text-[#F7941D] font-bold' 
+                : 'bg-white/[0.06] text-slate-400'
+            }`}>
               {badge}
             </span>
           )}
@@ -462,7 +477,7 @@ export default function Sidebar({
   );
 
   // ========================================================
-  // 6. INSPECTION REPORTING (CIR) SIDEBAR
+  // 6. INSPECTION REPORTING (CIR) SIDEBAR (Matches Screenshot 3)
   // ========================================================
   const renderInspectionSidebar = () => (
     <div className="space-y-1">
@@ -474,89 +489,482 @@ export default function Sidebar({
         hubId="hub"
       />
 
-      <NavSubButton id="hub" label="Daily Inspection Hub" icon={Layers} />
-      <NavSubButton id="project-operator" label="Project & Operator Info" icon={Building2} aliases={['info']} />
-      <NavSubButton id="stage" label="Multi-Stage Inspection" icon={CheckCircle2} />
-      <NavSubButton id="pull-off" label="Pull-off Adhesion (ASTM D4541)" icon={Scale} />
-      <NavSubButton id="cross-cut" label="Cross-Cut Adhesion (ASTM D3359)" icon={Layers} />
-      <NavSubButton id="photo-report" label="Inspection Photographic Evidence" icon={Camera} />
-      <NavSubButton id="rework" label="NCR & Rework Register" icon={AlertTriangle} />
+      {/* Header Home button */}
+      <NavSubButton 
+        id="hub" 
+        label="Inspection — Home" 
+        icon={Home} 
+        aliases={['home', 'dashboard']} 
+      />
 
-      <SectionHeader label="Outputs & Records" />
-      <NavSubButton id="register" label="Saved Reports Register" icon={FolderKanban} />
-      <NavSubButton id="preview" label="Dossier Preview" icon={Eye} />
-      <NavSubButton id="report" label="Certified Inspection Dossier" icon={Printer} aliases={['print']} />
-      <NavSubButton id="watermark" label="Watermark Controls" icon={Stamp} />
-      <NavSubButton id="company-details" label="Company Profile" icon={Building2} aliases={['company_details']} />
+      {/* COATING / PAINTING REPORT */}
+      <SectionHeader label="COATING / PAINTING REPORT" />
+      <NavSubButton 
+        id="coating-report" 
+        label="Coating Report" 
+        icon={FileCheck} 
+        aliases={['stage', 's1', 'stage-s1', 'stage_s1', 's2', 'stage-s2', 's3', 'stage-s3', 's4', 'stage-s4']} 
+      />
+
+      {/* ADHESION TEST Collapsible Group */}
+      <div className="pt-2">
+        <button
+          type="button"
+          onClick={() => setAdhesionExpanded(prev => !prev)}
+          className="w-full flex items-center justify-between px-2 py-1 text-[9px] font-mono font-bold text-slate-400 uppercase tracking-widest hover:text-white transition cursor-pointer"
+        >
+          <span>ADHESION TEST</span>
+          {adhesionExpanded ? (
+            <ChevronDown className="w-3 h-3 text-slate-400" />
+          ) : (
+            <ChevronRight className="w-3 h-3 text-slate-400" />
+          )}
+        </button>
+        {adhesionExpanded && (
+          <div className="space-y-1 pl-1 pt-1">
+            <NavSubButton 
+              id="pull-off-adhesion" 
+              label="Pull-Off Report" 
+              icon={Scale} 
+              aliases={['pull-off', 'pull', 'pull_off_adhesion']} 
+            />
+            <NavSubButton 
+              id="cross-cut-adhesion" 
+              label="Cross-Cut Report" 
+              icon={SlidersHorizontal} 
+              aliases={['cross-cut', 'cross', 'cross_cut_adhesion']} 
+            />
+          </div>
+        )}
+      </div>
+
+      {/* REFERENCES & STANDARDS */}
+      <SectionHeader label="REFERENCES & STANDARDS" />
+      <NavSubButton 
+        id="standards" 
+        label="References" 
+        icon={BookOpen} 
+        aliases={['reference-standards', 'reference_standards', 'std', 'refp', 'refc']} 
+      />
+
+      {/* REGISTERS */}
+      <SectionHeader label="REGISTERS" />
+      <NavSubButton 
+        id="report-register" 
+        label="Report Register" 
+        icon={FolderKanban} 
+        aliases={['register', 'reports', 'report_register']} 
+      />
+      <NavSubButton 
+        id="rework-register" 
+        label="Rework Register" 
+        icon={AlertTriangle} 
+        aliases={['rework', 'rework_register', 'rwkreg']} 
+        badge="PRO" 
+        isProLocked={true} 
+      />
+
+      {/* OUTPUT */}
+      <SectionHeader label="OUTPUT" />
+      <NavSubButton 
+        id="preview" 
+        label="Preview" 
+        icon={Eye} 
+        aliases={['summary']} 
+      />
+      <NavSubButton 
+        id="print" 
+        label="Print" 
+        icon={Printer} 
+        aliases={['report', 'xlprint']} 
+        badge="PRO" 
+        isProLocked={true} 
+      />
+      <NavSubButton 
+        id="dashboard" 
+        label="Dashboard" 
+        icon={BarChart3} 
+        badge="PRO" 
+        isProLocked={true} 
+      />
+
+      {/* BRANDING */}
+      <SectionHeader label="BRANDING" />
+      <NavSubButton 
+        id="company-details" 
+        label="Company Details" 
+        icon={Building2} 
+        aliases={['company', 'company_details']} 
+        badge="PRO" 
+        isProLocked={true} 
+      />
+      <NavSubButton 
+        id="master-list" 
+        label="Master List" 
+        icon={Layers} 
+        aliases={['master', 'master-systems', 'master_systems', 'master_list']} 
+        badge="PRO" 
+        isProLocked={true} 
+      />
+      <NavSubButton 
+        id="watermark" 
+        label="Watermark Removal" 
+        icon={Stamp} 
+        badge="PRO" 
+        isProLocked={true} 
+      />
     </div>
   );
 
   // ========================================================
-  // 7. OPERATOR QUALIFICATION SIDEBAR (PAINTER / BLASTER / TSA)
+  // 7. SPRAY PAINTER QUALIFICATION SIDEBAR (Matches Screenshot 1)
   // ========================================================
-  const renderQualificationSidebar = () => {
-    let title = 'Painter Qualification';
-    let subtitle = 'Spray Painter PQR';
-    let Icon = Award;
-    let badge = 'PQR';
+  const renderPainterSidebar = () => (
+    <div className="space-y-1">
+      <ModuleHeader 
+        title="Painter Qualification" 
+        subtitle="Spray Painter PQR" 
+        icon={Award} 
+        badge="PQR" 
+        hubId="hub"
+      />
 
-    if (isBlaster) {
-      title = 'Blaster Qualification';
-      subtitle = 'Blaster Operator BQR';
-      Icon = Flame;
-      badge = 'BQR';
-    } else if (isTsa) {
-      title = 'TSA Qualification';
-      subtitle = 'Thermal Spray Operator';
-      Icon = Sparkles;
-      badge = 'TSA';
-    }
+      {/* Header Home button */}
+      <NavSubButton 
+        id="hub" 
+        label="Home" 
+        icon={Home} 
+        aliases={['home', 'dashboard']} 
+      />
 
-    return (
-      <div className="space-y-1">
-        <ModuleHeader 
-          title={title} 
-          subtitle={subtitle} 
-          icon={Icon} 
-          badge={badge} 
-          hubId="dashboard"
-        />
+      {/* SPRAY PAINTER QUALIFICATION */}
+      <SectionHeader label="SPRAY PAINTER QUALIFICATION" />
+      <NavSubButton 
+        id="project-operator" 
+        label="Project & Painter" 
+        icon={Users} 
+        aliases={['info', 'project-info', 'project_info', 'project_operator']} 
+      />
+      <NavSubButton 
+        id="training-test" 
+        label="Training" 
+        icon={FileText} 
+        aliases={['train', 'training_test']} 
+      />
+      <NavSubButton 
+        id="checklist" 
+        label="Assessment Checklist" 
+        icon={CheckCircle2} 
+        badge="0%" 
+      />
+      <NavSubButton 
+        id="coat-stage-s1" 
+        label="Blasting & Priming" 
+        icon={Droplets} 
+        aliases={['s1', 'coat_stage_s1']} 
+      />
+      <NavSubButton 
+        id="coat-stage-s2" 
+        label="1st Coat" 
+        icon={Layers} 
+        aliases={['s2', 'coat_stage_s2']} 
+      />
+      <NavSubButton 
+        id="coat-stage-s3" 
+        label="2nd Coat" 
+        icon={Layers} 
+        aliases={['s3', 'coat_stage_s3']} 
+      />
+      <NavSubButton 
+        id="coat-stage-s4" 
+        label="3rd Coat" 
+        icon={Layers} 
+        aliases={['s4', 'coat_stage_s4']} 
+      />
+      <NavSubButton 
+        id="photo-report" 
+        label="Photographic Report" 
+        icon={Camera} 
+        badge="0%" 
+        aliases={['photo', 'photo_report']} 
+      />
+      <NavSubButton 
+        id="verdict-approval" 
+        label="Verdict & Approval" 
+        icon={Award} 
+        aliases={['verdict', 'verdict_approval']} 
+      />
 
-        <NavSubButton id="dashboard" label="Qualification Dashboard" icon={Layers} aliases={['hub']} />
-        <NavSubButton id="project-operator" label="Candidate Information & Bio" icon={Users} aliases={['info', 'project-info']} />
+      {/* REGISTERS */}
+      <SectionHeader label="REGISTERS" />
+      <NavSubButton 
+        id="report-register" 
+        label="Report Register" 
+        icon={FolderKanban} 
+        aliases={['register', 'reports', 'saved-reports', 'saved_reports']} 
+      />
 
-        {isPainter && (
-          <>
-            <NavSubButton id="training-test" label="Theoretical Exam" icon={FileText} aliases={['train']} />
-            <NavSubButton id="test-coupon" label="Test Coupon Spraying & DFT" icon={CheckCircle2} aliases={['coat']} />
-          </>
-        )}
+      {/* OUTPUT */}
+      <SectionHeader label="OUTPUT" />
+      <NavSubButton 
+        id="preview" 
+        label="Preview" 
+        icon={Eye} 
+        aliases={['summary']} 
+      />
+      <NavSubButton 
+        id="print" 
+        label="Print Report" 
+        icon={Printer} 
+        aliases={['report']} 
+        badge="PRO" 
+        isProLocked={true} 
+      />
 
-        {isBlaster && (
-          <>
-            <NavSubButton id="training-test" label="Safety & Helmet Air Exam" icon={FileText} aliases={['train']} />
-            <NavSubButton id="process" label="Practical Blasting Test" icon={Flame} />
-          </>
-        )}
+      {/* BRANDING */}
+      <SectionHeader label="BRANDING" />
+      <NavSubButton 
+        id="company-details" 
+        label="Company Details" 
+        icon={Building2} 
+        aliases={['company', 'company_details']} 
+        badge="PRO" 
+        isProLocked={true} 
+      />
+      <NavSubButton 
+        id="watermark" 
+        label="Watermark Removal" 
+        icon={Stamp} 
+        badge="PRO" 
+        isProLocked={true} 
+      />
+    </div>
+  );
 
-        {isTsa && (
-          <>
-            <NavSubButton id="coat-stage" label="Arc Spray Application" icon={Droplets} aliases={['coat']} />
-            <NavSubButton id="checklist" label="Mandrel 180° Bend Test" icon={CheckCircle2} />
-            <NavSubButton id="summary" label="Pull-off Adhesion & Tensile" icon={Scale} />
-          </>
-        )}
+  // ========================================================
+  // 8. TSA OPERATOR QUALIFICATION SIDEBAR (Matches Screenshot 2)
+  // ========================================================
+  const renderTsaSidebar = () => (
+    <div className="space-y-1">
+      <ModuleHeader 
+        title="TSA Qualification" 
+        subtitle="Thermal Spray Operator" 
+        icon={Sparkles} 
+        badge="TSA" 
+        hubId="hub"
+      />
 
-        <NavSubButton id="verdict-approval" label="Verdict Sign-Off & Approval" icon={Award} aliases={['verdict']} />
+      {/* Header Home button */}
+      <NavSubButton 
+        id="hub" 
+        label="Home" 
+        icon={Home} 
+        aliases={['home', 'dashboard']} 
+      />
 
-        <SectionHeader label="Records & Cards" />
-        <NavSubButton id="register" label="Saved Qualification Register" icon={FolderKanban} />
-        <NavSubButton id="preview" label="Card Print Preview" icon={Eye} />
-        <NavSubButton id="report" label="Official Qualification Card & Dossier" icon={Printer} aliases={['print']} />
-        <NavSubButton id="watermark" label="Watermark Controls" icon={Stamp} />
-      </div>
-    );
-  };
+      {/* TSA OPERATOR QUALIFICATION */}
+      <SectionHeader label="TSA OPERATOR QUALIFICATION" />
+      <NavSubButton 
+        id="project-operator" 
+        label="Project & TSA Operator" 
+        icon={Users} 
+        aliases={['info', 'project-info', 'project_info', 'project_operator']} 
+      />
+      <NavSubButton 
+        id="checklist" 
+        label="Assessment Checklist" 
+        icon={CheckCircle2} 
+        badge="0%" 
+      />
+      <NavSubButton 
+        id="coat-stage-s1" 
+        label="Blasting + Thermal Spray" 
+        icon={Droplets} 
+        aliases={['s1', 'coat_stage_s1']} 
+      />
+      <NavSubButton 
+        id="coat-stage-s2" 
+        label="1st Coat" 
+        icon={Layers} 
+        aliases={['s2', 'coat_stage_s2']} 
+      />
+      <NavSubButton 
+        id="coat-stage-s3" 
+        label="2nd Coat" 
+        icon={Layers} 
+        aliases={['s3', 'coat_stage_s3']} 
+      />
+      <NavSubButton 
+        id="coat-stage-s4" 
+        label="3rd Coat" 
+        icon={Layers} 
+        aliases={['s4', 'coat_stage_s4']} 
+      />
+      <NavSubButton 
+        id="photo-report" 
+        label="Photographic Report" 
+        icon={Camera} 
+        aliases={['photo', 'photo_report']} 
+      />
+      <NavSubButton 
+        id="verdict-approval" 
+        label="Verdict & Approval" 
+        icon={Award} 
+        aliases={['verdict', 'verdict_approval']} 
+      />
+
+      {/* REGISTERS */}
+      <SectionHeader label="REGISTERS" />
+      <NavSubButton 
+        id="report-register" 
+        label="Report Register" 
+        icon={FolderKanban} 
+        aliases={['register', 'reports', 'saved-reports', 'saved_reports']} 
+      />
+
+      {/* OUTPUT */}
+      <SectionHeader label="OUTPUT" />
+      <NavSubButton 
+        id="preview" 
+        label="Preview" 
+        icon={Eye} 
+        aliases={['summary']} 
+      />
+      <NavSubButton 
+        id="print" 
+        label="Print Report" 
+        icon={Printer} 
+        aliases={['report']} 
+        badge="PRO" 
+        isProLocked={true} 
+      />
+
+      {/* BRANDING */}
+      <SectionHeader label="BRANDING" />
+      <NavSubButton 
+        id="company-details" 
+        label="Company Details" 
+        icon={Building2} 
+        aliases={['company', 'company_details']} 
+        badge="PRO" 
+        isProLocked={true} 
+      />
+      <NavSubButton 
+        id="watermark" 
+        label="Watermark Removal" 
+        icon={Stamp} 
+        badge="PRO" 
+        isProLocked={true} 
+      />
+    </div>
+  );
+
+  // ========================================================
+  // 9. BLASTER / OPERATOR QUALIFICATION SIDEBAR (Matches Screenshot 4)
+  // ========================================================
+  const renderBlasterSidebar = () => (
+    <div className="space-y-1">
+      <ModuleHeader 
+        title="Blaster Qualification" 
+        subtitle="Blaster Operator BQR" 
+        icon={Flame} 
+        badge="BQR" 
+        hubId="hub"
+      />
+
+      {/* Header Home button */}
+      <NavSubButton 
+        id="hub" 
+        label="Home" 
+        icon={Home} 
+        aliases={['home', 'dashboard']} 
+      />
+
+      {/* BLASTER / OPERATOR QUALIFICATION */}
+      <SectionHeader label="BLASTER / OPERATOR QUALIFICATION" />
+      <NavSubButton 
+        id="project-operator" 
+        label="Project & Operator" 
+        icon={Users} 
+        aliases={['info', 'project-info', 'project_info', 'project_operator']} 
+      />
+      <NavSubButton 
+        id="training-test" 
+        label="Training & Test" 
+        icon={FileText} 
+        aliases={['train', 'training_test']} 
+      />
+      <NavSubButton 
+        id="checklist" 
+        label="Assessment Checklist" 
+        icon={CheckCircle2} 
+        badge="0%" 
+      />
+      <NavSubButton 
+        id="blasting-process" 
+        label="Blasting Process" 
+        icon={Flame} 
+        aliases={['blasting', 'process', 'blasting_process']} 
+      />
+      <NavSubButton 
+        id="photo-report" 
+        label="Photographic Report" 
+        icon={Camera} 
+        badge="0%" 
+        aliases={['photo', 'photo_report']} 
+      />
+      <NavSubButton 
+        id="verdict-approval" 
+        label="Verdict & Approval" 
+        icon={Award} 
+        aliases={['verdict', 'verdict_approval']} 
+      />
+
+      {/* REGISTERS */}
+      <SectionHeader label="REGISTERS" />
+      <NavSubButton 
+        id="report-register" 
+        label="Report Register" 
+        icon={FolderKanban} 
+        aliases={['register', 'reports', 'saved-reports', 'saved_reports']} 
+      />
+
+      {/* OUTPUT */}
+      <SectionHeader label="OUTPUT" />
+      <NavSubButton 
+        id="preview" 
+        label="Preview" 
+        icon={Eye} 
+        aliases={['summary']} 
+      />
+      <NavSubButton 
+        id="print" 
+        label="Print Report" 
+        icon={Printer} 
+        aliases={['report']} 
+        badge="PRO" 
+        isProLocked={true} 
+      />
+
+      {/* BRANDING */}
+      <SectionHeader label="BRANDING" />
+      <NavSubButton 
+        id="company-details" 
+        label="Company Details" 
+        icon={Building2} 
+        aliases={['company', 'company_details']} 
+        badge="PRO" 
+        isProLocked={true} 
+      />
+      <NavSubButton 
+        id="watermark" 
+        label="Watermark Removal" 
+        icon={Stamp} 
+        badge="PRO" 
+        isProLocked={true} 
+      />
+    </div>
+  );
 
   // ========================================================
   // 8. CONTRACTOR MANAGEMENT SIDEBAR
@@ -849,7 +1257,9 @@ export default function Sidebar({
     if (isUnitRate) return renderUnitRateSidebar();
     if (isManpower) return renderManpowerSidebar();
     if (isInspection) return renderInspectionSidebar();
-    if (isPainter || isBlaster || isTsa) return renderQualificationSidebar();
+    if (isPainter) return renderPainterSidebar();
+    if (isTsa) return renderTsaSidebar();
+    if (isBlaster) return renderBlasterSidebar();
     if (isContractor) return renderContractorSidebar();
     return renderGlobalNav();
   };

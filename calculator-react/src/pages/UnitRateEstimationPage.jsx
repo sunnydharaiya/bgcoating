@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { 
   Calculator, 
   Coins, 
@@ -21,8 +21,10 @@ import {
 import { 
   CURRENCY_CONFIG, 
   DEFAULT_EST_ROWS, 
-  INITIAL_UNITRATE_STATE 
+  INITIAL_UNITRATE_STATE,
+  UNIT_RATE_PRESETS
 } from '../data/unitRateDatabase';
+import { unitRateService } from '../services/unitRateService';
 
 import UnitRateHub from '../tools/unitrate/UnitRateHub';
 import UnitRateProjectInfo from '../tools/unitrate/UnitRateProjectInfo';
@@ -100,11 +102,60 @@ export default function UnitRateEstimationPage({ currentSubTool = 'hub', onNavig
 
   // Modals state
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewRecord, setPreviewRecord] = useState(null);
   const [companyOpen, setCompanyOpen] = useState(false);
   const [watermarkOpen, setWatermarkOpen] = useState(false);
   const [paintModalOpen, setPaintModalOpen] = useState(false);
   const [abrModalOpen, setAbrModalOpen] = useState(false);
   const [saveToast, setSaveToast] = useState('');
+
+  const hasLoadedInitialDraftRef = useRef(false);
+  const saveDraftTimeoutRef = useRef(null);
+
+  // Load remote working draft or fallback to localStorage on mount
+  useEffect(() => {
+    let isMounted = true;
+    const loadDraft = async () => {
+      try {
+        const draft = await unitRateService.getActiveDraft();
+        if (draft && isMounted) {
+          setFormData(draft);
+        }
+      } catch (e) {
+        console.warn('[UnitRateEstimationPage] Error fetching remote draft:', e);
+      } finally {
+        if (isMounted) {
+          hasLoadedInitialDraftRef.current = true;
+        }
+      }
+    };
+    loadDraft();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Fetch registered quotations from backend API
+  const fetchRecords = useCallback(async () => {
+    try {
+      const list = await unitRateService.getReports();
+      setRecords(list);
+    } catch (e) {
+      console.warn('[UnitRateEstimationPage] Failed to fetch records:', e);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchRecords();
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        fetchRecords();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, [fetchRecords]);
 
   // Active sub-tool handling
   const activeSubTool = currentSubTool || 'hub';
@@ -136,32 +187,14 @@ export default function UnitRateEstimationPage({ currentSubTool = 'hub', onNavig
     }
   }, [onNavigate]);
 
-  // Persist form draft
-  useEffect(() => {
-    try {
-      localStorage.setItem(DRAFT_KEY, JSON.stringify(formData));
-    } catch (e) {
-      console.error('Failed to save draft:', e);
-    }
-  }, [formData]);
-
-  // Persist records
-  useEffect(() => {
-    try {
-      localStorage.setItem(RECORDS_KEY, JSON.stringify(records));
-    } catch (e) {
-      console.error('Failed to save records:', e);
-    }
-  }, [records]);
-
   // Calculations Engine
   const metrics = useMemo(() => {
-    const currencyObj = CURRENCY_CONFIG[formData.currency] || CURRENCY_CONFIG.INR;
+    const currencyObj = CURRENCY_CONFIG[formData?.currency] || CURRENCY_CONFIG.INR;
 
     // Total Area
     let totalArea = 0;
-    (formData.fRows || []).forEach(r => {
-      totalArea += parseFloat(r.area) || 0;
+    (formData?.fRows || []).forEach(r => {
+      totalArea += parseFloat(r?.area) || 0;
     });
 
     // Subtotals per category
@@ -176,8 +209,8 @@ export default function UnitRateEstimationPage({ currentSubTool = 'hub', onNavig
 
     let directCostTotal = 0;
 
-    (formData.estRows || []).forEach(row => {
-      if (row.type === 'row') {
+    (formData?.estRows || []).forEach(row => {
+      if (row?.type === 'row') {
         const rate = parseFloat(row.rate) || 0;
         const area = parseFloat(row.area) || 0;
         const cost = rate * area;
@@ -190,8 +223,8 @@ export default function UnitRateEstimationPage({ currentSubTool = 'hub', onNavig
 
     // Markups calculation (Overhead, Contingency, Profit on direct costs)
     let markupsTotal = 0;
-    (formData.estRows || []).forEach(row => {
-      if (row.type === 'markup') {
+    (formData?.estRows || []).forEach(row => {
+      if (row?.type === 'markup') {
         const pct = parseFloat(row.pct) || 0;
         const markupAmt = directCostTotal * (pct / 100);
         markupsTotal += markupAmt;
@@ -213,6 +246,97 @@ export default function UnitRateEstimationPage({ currentSubTool = 'hub', onNavig
       costPerM2Formatted: costPerM2.toLocaleString(currencyObj.loc, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     };
   }, [formData]);
+
+  // Dynamic Metrics for active preview
+  const previewMetrics = useMemo(() => {
+    const target = previewRecord || formData;
+    const currencyObj = CURRENCY_CONFIG[target?.currency] || CURRENCY_CONFIG.INR;
+
+    let totalArea = 0;
+    (target?.fRows || []).forEach(r => {
+      totalArea += parseFloat(r?.area) || 0;
+    });
+
+    const subtotals = {
+      blast: 0,
+      rawpaint: 0,
+      rawabr: 0,
+      app: 0,
+      misc: 0,
+      markup: 0
+    };
+
+    let directCostTotal = 0;
+
+    (target?.estRows || []).forEach(row => {
+      if (row?.type === 'row') {
+        const rate = parseFloat(row.rate) || 0;
+        const area = parseFloat(row.area) || 0;
+        const cost = rate * area;
+        if (row.cat && subtotals[row.cat] !== undefined) {
+          subtotals[row.cat] += cost;
+        }
+        directCostTotal += cost;
+      }
+    });
+
+    let markupsTotal = 0;
+    (target?.estRows || []).forEach(row => {
+      if (row?.type === 'markup') {
+        const pct = parseFloat(row.pct) || 0;
+        const markupAmt = directCostTotal * (pct / 100);
+        markupsTotal += markupAmt;
+      }
+    });
+    subtotals.markup = markupsTotal;
+
+    const grandTotal = directCostTotal + markupsTotal;
+    const costPerM2 = totalArea > 0 ? grandTotal / totalArea : 0;
+
+    return {
+      totalArea,
+      directCostTotal,
+      markupsTotal,
+      subtotals,
+      grandTotal,
+      costPerM2,
+      grandTotalFormatted: grandTotal.toLocaleString(currencyObj.loc, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+      costPerM2Formatted: costPerM2.toLocaleString(currencyObj.loc, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    };
+  }, [previewRecord, formData]);
+
+  // Auto-persist working draft to backend (debounced 800ms) and local storage
+  useEffect(() => {
+    if (!hasLoadedInitialDraftRef.current) return;
+
+    if (saveDraftTimeoutRef.current) {
+      clearTimeout(saveDraftTimeoutRef.current);
+    }
+
+    saveDraftTimeoutRef.current = setTimeout(() => {
+      unitRateService.saveActiveDraft({
+        ...formData,
+        totalArea: metrics.totalArea,
+        grandTotal: metrics.grandTotal,
+        costPerM2: metrics.costPerM2
+      });
+    }, 800);
+
+    return () => {
+      if (saveDraftTimeoutRef.current) {
+        clearTimeout(saveDraftTimeoutRef.current);
+      }
+    };
+  }, [formData, metrics]);
+
+  // Persist records
+  useEffect(() => {
+    try {
+      localStorage.setItem(RECORDS_KEY, JSON.stringify(records));
+    } catch (e) {
+      console.error('Failed to save records:', e);
+    }
+  }, [records]);
 
   // Completion Progress %
   const completionPct = useMemo(() => {
@@ -340,75 +464,113 @@ export default function UnitRateEstimationPage({ currentSubTool = 'hub', onNavig
   };
 
   // Save current to Register
-  const handleSaveToRegister = (status = 'Draft') => {
-    const id = formData.draftId || `est_${Date.now()}`;
-    const newEntry = {
+  const handleSaveToRegister = async (status = 'Draft') => {
+    const toSave = {
       ...formData,
-      id,
       status,
       totalArea: metrics.totalArea,
       grandTotal: metrics.grandTotal,
       costPerM2: metrics.costPerM2,
-      savedAt: new Date().toISOString()
+      data: formData
     };
 
-    setRecords(prev => {
-      const idx = prev.findIndex(r => r.id === id);
-      if (idx >= 0) {
-        const updated = [...prev];
-        updated[idx] = newEntry;
-        return updated;
-      }
-      return [newEntry, ...prev];
-    });
-
-    setFormData(prev => ({ ...prev, draftId: id, status }));
-    setSaveToast(`✓ Saved to Register as ${status}`);
+    try {
+      const saved = await unitRateService.saveReport(toSave);
+      await unitRateService.saveActiveDraft(toSave);
+      setFormData(prev => ({ ...prev, draftId: saved.id, status }));
+      setSaveToast(`✓ Saved to Register as ${status}`);
+      await fetchRecords();
+    } catch (e) {
+      setSaveToast('Saved locally.');
+    }
     setTimeout(() => setSaveToast(''), 3000);
   };
 
   // Register callbacks
   const handleLoadRecord = (rec) => {
-    setFormData(JSON.parse(JSON.stringify(rec)));
+    const loadedData = rec.data || rec;
+    setFormData(JSON.parse(JSON.stringify(loadedData)));
+    unitRateService.saveActiveDraft(loadedData);
     navigateTo('project-info');
-    setSaveToast(`Loaded: ${rec.estNo || 'Estimation'}`);
+    setSaveToast(`Loaded: ${rec.estNo || loadedData.estNo || 'Estimation'}`);
     setTimeout(() => setSaveToast(''), 3000);
   };
 
-  const handleDuplicateRecord = (rec) => {
+  const handleDuplicateRecord = async (rec) => {
+    const rawData = rec.data || rec;
     const dup = {
-      ...JSON.parse(JSON.stringify(rec)),
-      id: `est_${Date.now()}`,
+      ...rawData,
+      id: undefined,
       estNo: `${rec.estNo || 'EST'}-COPY`,
-      status: 'Draft',
-      savedAt: new Date().toISOString()
+      status: 'Draft'
     };
-    setRecords(prev => [dup, ...prev]);
-    setSaveToast(`Duplicated: ${dup.estNo}`);
+    try {
+      await unitRateService.saveReport(dup);
+      setSaveToast(`Duplicated: ${dup.estNo}`);
+      await fetchRecords();
+    } catch (e) {
+      setSaveToast('Duplicated locally');
+    }
     setTimeout(() => setSaveToast(''), 3000);
   };
 
-  const handleDeleteRecord = (id) => {
-    if (window.confirm('Permanently delete this quotation record?')) {
-      setRecords(prev => prev.filter(r => r.id !== id));
-      setSaveToast('Record deleted');
+  const handleDeleteRecord = async (id) => {
+    if (window.confirm('Permanently delete this quotation record from register?')) {
+      try {
+        await unitRateService.deleteReport(id);
+        setSaveToast('Record deleted');
+        await fetchRecords();
+      } catch (e) {
+        setSaveToast('Delete failed');
+      }
       setTimeout(() => setSaveToast(''), 3000);
     }
   };
 
-  const handleNewEstimation = () => {
+  const handleNewEstimation = async () => {
     setFormData(JSON.parse(JSON.stringify(INITIAL_UNITRATE_STATE)));
+    await unitRateService.clearActiveDraft();
     navigateTo('project-info');
     setSaveToast('New estimation take-off started');
     setTimeout(() => setSaveToast(''), 3000);
   };
 
-  const handleResetCurrent = () => {
-    if (window.confirm('Reset current fields to defaults?')) {
+  const handleResetCurrent = async () => {
+    if (window.confirm('Reset current fields to defaults? This will clear the active working draft.')) {
       setFormData(JSON.parse(JSON.stringify(INITIAL_UNITRATE_STATE)));
+      await unitRateService.clearActiveDraft();
       setSaveToast('Fields reset to defaults');
       setTimeout(() => setSaveToast(''), 3000);
     }
+  };
+
+  const handleLoadSampleRecord = async () => {
+    try {
+      const preset = UNIT_RATE_PRESETS[0];
+      const sampleEst = {
+        ...INITIAL_UNITRATE_STATE,
+        ...preset,
+        totalArea: 7500,
+        grandTotal: 3850000,
+        costPerM2: 513.33,
+        status: 'Approved',
+        date: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date()),
+        data: {
+          ...INITIAL_UNITRATE_STATE,
+          ...preset,
+          totalArea: 7500,
+          grandTotal: 3850000,
+          costPerM2: 513.33,
+          status: 'Approved'
+        }
+      };
+      await unitRateService.saveReport(sampleEst);
+      setSaveToast('✓ Standard refinery unit-rate sample loaded into register!');
+      await fetchRecords();
+    } catch (e) {
+      setSaveToast('Failed to load sample record');
+    }
+    setTimeout(() => setSaveToast(''), 3000);
   };
 
   // Handle header actions from top bar (Preview, Save Draft, Validate, Register, Reset)
@@ -708,16 +870,21 @@ export default function UnitRateEstimationPage({ currentSubTool = 'hub', onNavig
 
         {activeSubTool === 'register' && (
           <UnitRateRegister
+            formData={formData}
             records={records}
+            onRefreshRecords={fetchRecords}
+            onSaveCurrentToRegister={() => handleSaveToRegister(formData.status || 'Draft')}
+            onLoadSampleRecord={handleLoadSampleRecord}
             onLoadRecord={handleLoadRecord}
             onDuplicateRecord={handleDuplicateRecord}
             onDeleteRecord={handleDeleteRecord}
             onOpenPreviewRecord={(rec) => {
-              setFormData(rec);
+              setPreviewRecord(rec.data || rec);
               setPreviewOpen(true);
             }}
             onOpenPrintRecord={(rec) => {
-              setFormData(rec);
+              const loaded = rec.data || rec;
+              setFormData(loaded);
               navigateTo('xlprint');
             }}
             onNewEstimation={handleNewEstimation}
@@ -743,14 +910,19 @@ export default function UnitRateEstimationPage({ currentSubTool = 'hub', onNavig
         isOpen={previewOpen}
         onClose={() => {
           setPreviewOpen(false);
+          setPreviewRecord(null);
           if (activeSubTool === 'preview') navigateTo('hub');
         }}
-        formData={formData}
-        metrics={metrics}
+        formData={previewRecord || formData}
+        metrics={previewMetrics}
         companyInfo={companyInfo}
         watermark={watermark}
         onOpenPrint={() => {
           setPreviewOpen(false);
+          if (previewRecord) {
+            setFormData(previewRecord);
+            setPreviewRecord(null);
+          }
           navigateTo('xlprint');
         }}
       />

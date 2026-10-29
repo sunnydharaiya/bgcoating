@@ -184,6 +184,7 @@ class Service(models.Model):
     excerpt = models.TextField()
     description = models.TextField(blank=True)
     cover_image = models.ImageField(upload_to='services/', blank=True, null=True, help_text="Cover hero image for service exploration")
+    thumbnail_image = models.ImageField(upload_to='services/thumbnails/', blank=True, null=True, help_text="Card thumbnail image for homepage & services listing (any size)")
     full_content = models.TextField(blank=True, help_text="Detailed rich HTML content for explore service page")
     standard_code = models.CharField(max_length=100, blank=True, help_text="Associated standard, e.g. ISO 12944, NACE, AMPP")
     icon_svg = models.TextField(blank=True, help_text="Inline SVG or icon CSS class")
@@ -213,6 +214,22 @@ class Service(models.Model):
             except Exception:
                 pass
         return None
+
+    @property
+    def thumbnail_url(self):
+        """Dynamic URL for the card thumbnail image, with fallback to image_url (cover_image)."""
+        if self.thumbnail_image:
+            try:
+                name = self.thumbnail_image.name
+                if name.startswith('http://') or name.startswith('https://'):
+                    return name
+                if 'assets/images' in name:
+                    from django.templatetags.static import static
+                    return static(name)
+                return self.thumbnail_image.url
+            except Exception:
+                pass
+        return self.image_url
 
 
 class BlogPost(models.Model):

@@ -28,18 +28,58 @@ import SpecCompanyDetailsModal, { DEFAULT_BG_COMPANY } from '../tools/spec/SpecC
 import SpecWatermarkControl, { DEFAULT_WATERMARK } from '../tools/spec/SpecWatermarkControl';
 import SpecPreviewModal from '../tools/spec/SpecPreviewModal';
 import SpecReportView from '../tools/spec/SpecReportView';
+import { specificationService } from '../services/specificationService';
 
 const STORAGE_KEY = 'bg_os_spec_reading_draft';
 const REGISTER_STORAGE_KEY = 'bg_os_spec_reports_register';
 const COMPANY_STORAGE_KEY = 'bg_company_profile';
 const WATERMARK_STORAGE_KEY = 'bg_watermark_settings';
 
+// Returns current date in Indian Standard Time (YYYY-MM-DD)
+const getIndianDateString = () => {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date());
+};
+
 export default function SpecificationReadingPage({ activeSubSection, onNavigateSubSection }) {
   const { addToast } = useToast();
   const { openGuideline } = useGuideline();
 
   // Mode: 'form' (all-in-one accordion), 'report_register', 'report', 'watermark'
-  const [currentSection, setCurrentSection] = useState('form');
+  const [currentSection, setCurrentSection] = useState(() => {
+    if (
+      activeSubSection === 'report_register' || 
+      activeSubSection === 'report-register' || 
+      activeSubSection === 'register' || 
+      activeSubSection === 'saved-reports' ||
+      activeSubSection === 'saved_reports'
+    ) {
+      return 'report_register';
+    }
+    if (activeSubSection === 'report' || activeSubSection === 'print') {
+      return 'report';
+    }
+    if (activeSubSection === 'watermark') {
+      return 'watermark';
+    }
+    return 'form';
+  });
+
+  // Navigate section helper that synchronizes internal view and browser URL via onNavigateSubSection
+  const handleNavigateSection = (sec, subSec = 'hub') => {
+    setCurrentSection(sec);
+    if (onNavigateSubSection) {
+      if (sec === 'report_register') {
+        onNavigateSubSection('register');
+      } else if (sec === 'report') {
+        onNavigateSubSection('report');
+      } else if (sec === 'watermark') {
+        onNavigateSubSection('watermark');
+      } else if (sec === 'form') {
+        onNavigateSubSection(subSec || 'hub');
+      }
+    }
+  };
+  const [selectedReportForView, setSelectedReportForView] = useState(null);
 
   // Accordion collapsed state for sections
   const [collapsed, setCollapsed] = useState({
@@ -111,7 +151,19 @@ export default function SpecificationReadingPage({ activeSubSection, onNavigateS
   });
 
   // 3. Operating & Design Temperature Rows (Section D)
-  const [dRows, setDRows] = useState([]);
+  const [dRows, setDRows] = useState([
+    {
+      component: '',
+      opTemp: '',
+      designTemp: '',
+      painting: 'YES',
+      galv: 'NO',
+      tsa: 'NA',
+      insulation: 'NO',
+      fireproof: 'NO',
+      surface: 'External'
+    }
+  ]);
 
   // 4. Special Details State (Section E)
   const [specialData, setSpecialData] = useState({
@@ -167,6 +219,12 @@ export default function SpecificationReadingPage({ activeSubSection, onNavigateS
     status: ''
   });
 
+  // Debounce & Auto-Save Tracking Refs
+  const isInitialLoadedRef = useRef(false);
+  const isResettingRef = useRef(false);
+  const debounceTimerRef = useRef(null);
+  const [autoSaveState, setAutoSaveState] = useState('idle'); // 'idle' | 'saving' | 'saved' | 'error'
+
   // Sync external sub-route if provided
   useEffect(() => {
     if (activeSubSection) {
@@ -174,12 +232,18 @@ export default function SpecificationReadingPage({ activeSubSection, onNavigateS
         setCompanyModalOpen(true);
       } else if (activeSubSection === 'preview') {
         setPreviewModalOpen(true);
-      } else if (activeSubSection === 'report_register' || activeSubSection === 'register') {
-        setCurrentSection('report_register');
+      } else if (
+        activeSubSection === 'report_register' || 
+        activeSubSection === 'report-register' || 
+        activeSubSection === 'register' ||
+        activeSubSection === 'saved-reports' ||
+        activeSubSection === 'saved_reports'
+      ) {
+        handleNavigateSection('report_register');
       } else if (activeSubSection === 'report' || activeSubSection === 'print') {
-        setCurrentSection('report');
+        handleNavigateSection('report');
       } else if (activeSubSection === 'watermark') {
-        setCurrentSection('watermark');
+        handleNavigateSection('watermark');
       } else {
         // Sections in accordion form
         setCurrentSection('form');
@@ -221,45 +285,220 @@ export default function SpecificationReadingPage({ activeSubSection, onNavigateS
     }
   }, [activeSubSection]);
 
-  // Load draft & register from localStorage
+  // 1-Minute Guest Preview Timer: If user is not logged in after 1 minute on Specification Reading,
+  // trigger static backdrop login modal to preserve and claim their specification dossier.
   useEffect(() => {
-    try {
-      const savedDraft = localStorage.getItem(STORAGE_KEY);
-      if (savedDraft) {
-        const parsed = JSON.parse(savedDraft);
-        if (parsed.projectData) setProjectData(parsed.projectData);
-        if (parsed.scope) setScope(parsed.scope);
-        if (parsed.specs) setSpecs(parsed.specs);
-        if (parsed.envData) setEnvData(parsed.envData);
-        if (parsed.dRows) setDRows(parsed.dRows);
-        if (parsed.specialData) setSpecialData(parsed.specialData);
-        if (parsed.fRows) setFRows(parsed.fRows);
-        if (parsed.qcData) setQcData(parsed.qcData);
-        if (parsed.hRows) setHRows(parsed.hRows);
-        if (parsed.otherColName) setOtherColName(parsed.otherColName);
-        if (parsed.other2ColName) setOther2ColName(parsed.other2ColName);
-        if (parsed.specialComment) setSpecialComment(parsed.specialComment);
-        if (parsed.iRows) setIRows(parsed.iRows);
-        if (parsed.genNotes) setGenNotes(parsed.genNotes);
+    const isLogged = Boolean(
+      localStorage.getItem('bg_auth_logged_in') === 'true'
+    );
+    if (isLogged) {
+      if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.removeItem('bg_guest_calc_start');
+        sessionStorage.removeItem('bg_guest_timer_done');
       }
-
-      const savedReports = localStorage.getItem(REGISTER_STORAGE_KEY);
-      if (savedReports) {
-        setReports(JSON.parse(savedReports));
-      }
-
-      const savedCompany = localStorage.getItem(COMPANY_STORAGE_KEY);
-      if (savedCompany) setCompanyProfile(JSON.parse(savedCompany));
-
-      const savedWm = localStorage.getItem(WATERMARK_STORAGE_KEY);
-      if (savedWm) setWatermarkSettings(JSON.parse(savedWm));
-    } catch (e) {
-      console.warn('Failed to load spec data:', e);
+      return;
     }
+
+    if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem('bg_guest_timer_done') === 'true') {
+      window.dispatchEvent(new CustomEvent('bg_open_auth_modal', { 
+        detail: { isCompulsory: true } 
+      }));
+      return;
+    }
+
+    let startTime = 0;
+    if (typeof sessionStorage !== 'undefined') {
+      const storedStart = sessionStorage.getItem('bg_guest_calc_start');
+      if (storedStart) {
+        startTime = parseInt(storedStart, 10);
+      }
+      if (!startTime || isNaN(startTime)) {
+        startTime = Date.now();
+        sessionStorage.setItem('bg_guest_calc_start', startTime.toString());
+      }
+    } else {
+      startTime = Date.now();
+    }
+
+    const ONE_MINUTE_MS = 60 * 1000;
+    const elapsed = Date.now() - startTime;
+    const remainingMs = Math.max(0, ONE_MINUTE_MS - elapsed);
+
+    const timer = setTimeout(() => {
+      const stillLogged = Boolean(
+        localStorage.getItem('bg_auth_logged_in') === 'true'
+      );
+      if (!stillLogged) {
+        if (typeof sessionStorage !== 'undefined') {
+          sessionStorage.setItem('bg_guest_timer_done', 'true');
+        }
+        window.dispatchEvent(new CustomEvent('bg_open_auth_modal', { 
+          detail: { isCompulsory: true } 
+        }));
+      }
+    }, remainingMs);
+
+    return () => clearTimeout(timer);
   }, []);
 
-  // Save Draft
-  const handleSaveDraft = () => {
+  // Load draft & register from backend service with localStorage fallback
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadInitialData = async () => {
+      // 1. Load active working draft from database/service
+      try {
+        const draft = await specificationService.getActiveDraft();
+        if (draft && isMounted) {
+          if (draft.projectData) setProjectData(draft.projectData);
+          if (draft.scope) setScope(draft.scope);
+          if (draft.specs) setSpecs(draft.specs);
+          if (draft.envData) setEnvData(draft.envData);
+          if (draft.dRows) setDRows(draft.dRows);
+          if (draft.specialData) setSpecialData(draft.specialData);
+          if (draft.fRows) setFRows(draft.fRows);
+          if (draft.qcData) setQcData(draft.qcData);
+          if (draft.hRows) setHRows(draft.hRows);
+          if (draft.otherColName) setOtherColName(draft.otherColName);
+          if (draft.other2ColName) setOther2ColName(draft.other2ColName);
+          if (draft.specialComment) setSpecialComment(draft.specialComment);
+          if (draft.iRows) setIRows(draft.iRows);
+          if (draft.genNotes) setGenNotes(draft.genNotes);
+          if (draft.companyProfile) setCompanyProfile(draft.companyProfile);
+          if (draft.watermarkSettings) setWatermarkSettings(draft.watermarkSettings);
+        }
+      } catch (e) {
+        console.warn('Failed to load spec draft:', e);
+      }
+
+      // 2. Load reports register from database/service
+      try {
+        const fetchedReports = await specificationService.getReports();
+        if (fetchedReports && isMounted && fetchedReports.length > 0) {
+          setReports(fetchedReports);
+        } else {
+          const savedReports = localStorage.getItem(REGISTER_STORAGE_KEY);
+          if (savedReports && isMounted) {
+            setReports(JSON.parse(savedReports));
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to load reports register:', e);
+      }
+
+      // 3. Load company profile & watermark settings
+      try {
+        const savedCompany = localStorage.getItem(COMPANY_STORAGE_KEY);
+        if (savedCompany && isMounted) setCompanyProfile(JSON.parse(savedCompany));
+
+        const savedWm = localStorage.getItem(WATERMARK_STORAGE_KEY);
+        if (savedWm && isMounted) setWatermarkSettings(JSON.parse(savedWm));
+      } catch (e) {}
+
+      // Enable debounced auto-saving after initial data has hydrated into React state
+      setTimeout(() => {
+        if (isMounted) {
+          isInitialLoadedRef.current = true;
+        }
+      }, 250);
+    };
+
+    loadInitialData();
+
+    // Listen for background user auth state updates (e.g. login/logout)
+    const handleUserUpdated = () => {
+      specificationService.getReports().then(fetchedReports => {
+        if (fetchedReports && isMounted) setReports(fetchedReports);
+      }).catch(() => {});
+    };
+    window.addEventListener('bg_user_updated', handleUserUpdated);
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener('bg_user_updated', handleUserUpdated);
+    };
+  }, []);
+
+  // Auto-refresh reports whenever opening the report register view
+  useEffect(() => {
+    if (currentSection === 'report_register') {
+      specificationService.getReports().then(fetchedReports => {
+        if (fetchedReports && fetchedReports.length > 0) {
+          setReports(fetchedReports);
+        }
+      }).catch(() => {});
+    }
+  }, [currentSection]);
+
+  // Debounced Auto-Save: Automatically persists any section input to database and storage
+  useEffect(() => {
+    // Avoid saving during hydration or active reset
+    if (!isInitialLoadedRef.current || isResettingRef.current) return;
+
+    setAutoSaveState('saving');
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    debounceTimerRef.current = setTimeout(async () => {
+      try {
+        const draftObj = {
+          projectData,
+          scope,
+          specs,
+          envData,
+          dRows,
+          specialData,
+          fRows,
+          qcData,
+          hRows,
+          otherColName,
+          other2ColName,
+          specialComment,
+          iRows,
+          genNotes,
+          companyProfile,
+          watermarkSettings,
+          lastSaved: new Date().toISOString()
+        };
+
+        await specificationService.saveActiveDraft(draftObj);
+        setAutoSaveState('saved');
+        setTimeout(() => {
+          setAutoSaveState(prev => prev === 'saved' ? 'idle' : prev);
+        }, 2500);
+      } catch (err) {
+        console.warn('[AutoSave] Debounced save failed:', err);
+        setAutoSaveState('error');
+      }
+    }, 700);
+
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [
+    projectData,
+    scope,
+    specs,
+    envData,
+    dRows,
+    specialData,
+    fRows,
+    qcData,
+    hRows,
+    otherColName,
+    other2ColName,
+    specialComment,
+    iRows,
+    genNotes,
+    companyProfile,
+    watermarkSettings
+  ]);
+
+  // Save Draft (Manual trigger fallback + Register Upsert)
+  const handleSaveDraft = async () => {
     try {
       const draftObj = {
         projectData,
@@ -276,19 +515,168 @@ export default function SpecificationReadingPage({ activeSubSection, onNavigateS
         specialComment,
         iRows,
         genNotes,
+        companyProfile,
+        watermarkSettings,
         lastSaved: new Date().toISOString()
       };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(draftObj));
-      addToast('Draft Saved', 'Specification reading draft saved locally.', 'success');
+      // 1. Save active working draft
+      await specificationService.saveActiveDraft(draftObj);
+
+      // 2. Also register/upsert this draft in the Reports Register
+      const draftProjNo = projectData.projNo || 'DRAFT-PROJECT';
+      const draftRecord = {
+        spec_id: projectData.projNo ? `DRAFT-${projectData.projNo}` : `DRAFT-${Date.now().toString().slice(-6)}`,
+        dinNo: projectData.dinNo || 'DIN-DRAFT',
+        projNo: draftProjNo,
+        projDesc: projectData.projDesc || 'Coating Specification Draft',
+        custName: projectData.custName || 'Confidential Client',
+        preparedBy: projectData.preparedBy || 'Coating Specialist',
+        date: getIndianDateString(),
+        status: 'Draft',
+        revision: projectData.revNo || 'Rev. 0',
+        data: draftObj
+      };
+
+      try {
+        const saved = await specificationService.saveReport(draftRecord);
+        const updated = [saved, ...reports.filter(r => r.projNo !== saved.projNo && r.id !== saved.id)];
+        setReports(updated);
+        localStorage.setItem(REGISTER_STORAGE_KEY, JSON.stringify(updated));
+      } catch (err) {
+        const updated = [draftRecord, ...reports.filter(r => r.projNo !== draftRecord.projNo)];
+        setReports(updated);
+        localStorage.setItem(REGISTER_STORAGE_KEY, JSON.stringify(updated));
+      }
+
+      setAutoSaveState('saved');
+      addToast('Draft Saved', `Draft "${draftProjNo}" saved to database and added to Report Register.`, 'success');
     } catch (e) {
       addToast('Save Error', 'Could not save draft.', 'error');
     }
   };
 
-  // Reset All Data
-  const handleGlobalReset = () => {
+  // Load Demonstration Sample Record
+  const handleLoadSampleRecord = async () => {
+    const sampleRecord = {
+      id: 'SAMPLE-01',
+      spec_id: 'SPEC-994821',
+      dinNo: 'DIN-2026-ARAMCO-09',
+      projNo: 'PRJ-4029-REFINERY',
+      projDesc: 'Ras Tanura Clean Fuels Project — Package 4 Piping & Columns',
+      custName: 'Saudi Aramco / Saipem EPC',
+      preparedBy: 'M. Dharaiya (NACE Level 3 #41920)',
+      date: getIndianDateString(),
+      status: 'Approved',
+      revision: 'Rev. 1',
+      data: {
+        projectData: {
+          dinNo: 'DIN-2026-ARAMCO-09',
+          projNo: 'PRJ-4029-REFINERY',
+          projDesc: 'Ras Tanura Clean Fuels Project — Package 4 Piping & Columns',
+          custName: 'Saudi Aramco / Saipem EPC',
+          preparedBy: 'M. Dharaiya (NACE Level 3 #41920)',
+          revNo: 'Rev. 1',
+          status: 'Approved'
+        },
+        scope: {
+          blasting: 'YES',
+          painting: 'YES',
+          galv: 'NO',
+          tsa: 'YES',
+          insulation: 'YES',
+          fireproof: 'NO',
+          pickling: 'NA'
+        },
+        specs: ['SAES-H-001', 'SAES-H-101V System APCS-1B', 'ISO 12944-5 C5-Very High'],
+        envData: {
+          envCategory: 'C5-M (Marine & Offshore Industrial Heavy)',
+          transport: 'Marine Freight & Coastal Storage',
+          moc: 'Carbon Steel CS-A106 Gr. B & Stainless Steel SS316L'
+        },
+        dRows: [
+          { component: 'Process Piping Header', opTemp: '160', designTemp: '220', painting: 'YES', galv: 'NO', tsa: 'NA', insulation: 'YES', fireproof: 'NO', surface: 'External' },
+          { component: 'Atmospheric Distillation Column', opTemp: '280', designTemp: '340', painting: 'YES', galv: 'NO', tsa: 'YES', insulation: 'YES', fireproof: 'NO', surface: 'External' },
+          { component: 'Cooling Water Return Lines', opTemp: '45', designTemp: '85', painting: 'YES', galv: 'NO', tsa: 'NA', insulation: 'NO', fireproof: 'NO', surface: 'Both' }
+        ],
+        specialData: {
+          insThk: '50mm Mineral Wool + SS304 Jacketing',
+          insType: 'Thermal Insulation under Cladding',
+          fpThk: 'NA',
+          fpType: 'None',
+          tsaThk: '250 µm Thermal Spray Aluminium (99.5% Al) + Silicone Sealer',
+          tsaType: 'Flame Spray TSA per SAES-H-004',
+          galvThk: 'NA',
+          galvType: 'None',
+          pickThk: 'Pickling & Passivation ASTM A380',
+          pickType: 'Stainless Steel Lines'
+        },
+        fRows: [
+          {
+            coatingType: 'High Temp Silicone Aluminum',
+            primer: 'Inorganic Zinc Silicate (IOZ)',
+            primerBrand: 'Carbozinc 11',
+            primerDft: '75',
+            mid: 'High Heat Silicone Intermediate',
+            midBrand: 'Therma-Sote 400',
+            midDft: '50',
+            top: 'Silicone Topcoat Silver',
+            topBrand: 'Carboline Thermaline 400',
+            topDft: '30',
+            totalDft: '155',
+            area: '4850',
+            lossFactor: '30',
+            paintVol: '1240',
+            unitRate: '18.50',
+            totalCost: '89725'
+          }
+        ],
+        qcData: {
+          appStd: 'SSPC-SP 10 / NACE No. 2 Near-White Blast Cleaning (Profile 50-75 µm)',
+          testRem: 'Pull-off adhesion ASTM D4541 > 7 MPa; Holiday testing NACE SP0188 100% on TSA lines',
+          files: []
+        },
+        hRows: [
+          { primer: 'Carboline India Pvt Ltd', intermediate: 'AkzoNobel Protective Coatings', topcoat: 'Jotun Paints', thinnner: 'Thinner #21 / #33' },
+          { primer: 'Hempel Paints', intermediate: 'Hempel Paints', topcoat: 'Hempel Silicone Acrylic', thinnner: 'Hempel Thinner 08080' }
+        ],
+        iRows: [
+          { revNo: 'Rev. 0', date: '2026-09-15', desc: 'Initial Tender Submission', prepBy: 'M. Dharaiya', appBy: 'Eng. Director' },
+          { revNo: 'Rev. 1', date: '2026-10-28', desc: 'Updated with client comments on TSA & CUI insulation', prepBy: 'M. Dharaiya', appBy: 'Saudi Aramco Insp.' }
+        ],
+        genNotes: '1. All surface preparation to SSPC-SP 10 before primer application.\n2. Ambient temperature must be >= 5°C and relative humidity <= 85% during coating application.\n3. Dew point delta must be >= 3°C throughout blast and curing cycles.'
+      }
+    };
+
+    try {
+      const saved = await specificationService.saveReport(sampleRecord);
+      const updated = [saved, ...reports.filter(r => r.projNo !== saved.projNo)];
+      setReports(updated);
+      localStorage.setItem(REGISTER_STORAGE_KEY, JSON.stringify(updated));
+      addToast('Sample Record Loaded', 'Demonstration record loaded into register.', 'success');
+    } catch (e) {
+      const updated = [sampleRecord, ...reports.filter(r => r.projNo !== sampleRecord.projNo)];
+      setReports(updated);
+      localStorage.setItem(REGISTER_STORAGE_KEY, JSON.stringify(updated));
+      addToast('Sample Record Loaded', 'Demonstration record loaded locally.', 'success');
+    }
+  };
+
+  // Reset All Data & Purge from Database and Storage
+  const handleGlobalReset = async () => {
     if (window.confirm('Clear all input data across the specification reading form?')) {
+      isResettingRef.current = true;
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+
+      try {
+        await specificationService.clearActiveDraft();
+      } catch (e) {
+        console.warn('Failed to clear remote draft:', e);
+      }
+
       localStorage.removeItem(STORAGE_KEY);
+
       setProjectData({
         projNo: '',
         dinNo: '',
@@ -318,7 +706,19 @@ export default function SpecificationReadingPage({ activeSubSection, onNavigateS
         cyclic: 'NA',
         cyclicDesc: ''
       });
-      setDRows([]);
+      setDRows([
+        {
+          component: '',
+          opTemp: '',
+          designTemp: '',
+          painting: 'YES',
+          galv: 'NO',
+          tsa: 'NA',
+          insulation: 'NO',
+          fireproof: 'NO',
+          surface: 'External'
+        }
+      ]);
       setSpecialData({
         insThk: '',
         insType: '',
@@ -351,7 +751,14 @@ export default function SpecificationReadingPage({ activeSubSection, onNavigateS
       setSpecialComment('');
       setIRows([]);
       setGenNotes('');
-      addToast('Specification Cleared', 'All input fields reset to 0%.', 'info');
+      setAutoSaveState('idle');
+
+      setTimeout(() => {
+        isResettingRef.current = false;
+        isInitialLoadedRef.current = true;
+      }, 300);
+
+      addToast('Specification Cleared', 'All input fields cleared from database and storage.', 'info');
     }
   };
 
@@ -487,23 +894,23 @@ export default function SpecificationReadingPage({ activeSubSection, onNavigateS
     return { pct, secStatus };
   }, [projectData, specs, envData, dRows, specialData, fRows, qcData, hRows, iRows]);
 
-  // Register an entry
-  const handleSaveToRegister = () => {
+  // Register an entry to the database register
+  const handleSaveToRegister = async () => {
     if (!projectData.projNo && !projectData.projDesc) {
       addToast('Missing Required Details', 'Please enter Project No. and Description before saving to register.', 'warning');
       return;
     }
 
     const newReport = {
-      id: `SPEC-${Date.now().toString().slice(-6)}`,
+      spec_id: `SPEC-${Date.now().toString().slice(-6)}`,
       dinNo: projectData.dinNo || 'DIN-2026-001',
       projNo: projectData.projNo || 'PRJ-UNNAMED',
       projDesc: projectData.projDesc || 'Coating Specification Sheet',
       custName: projectData.custName || 'Confidential Client',
       preparedBy: projectData.preparedBy || 'Coating Specialist',
-      date: new Date().toISOString().split('T')[0],
+      date: getIndianDateString(),
       status: 'Approved',
-      revision: 'Rev. 0',
+      revision: projectData.revNo || 'Rev. 0',
       data: {
         projectData,
         scope,
@@ -522,10 +929,18 @@ export default function SpecificationReadingPage({ activeSubSection, onNavigateS
       }
     };
 
-    const updated = [newReport, ...reports.filter(r => r.projNo !== newReport.projNo)];
-    setReports(updated);
-    localStorage.setItem(REGISTER_STORAGE_KEY, JSON.stringify(updated));
-    addToast('Record Saved to Register', `Saved ${newReport.projNo} successfully.`, 'success');
+    try {
+      const saved = await specificationService.saveReport(newReport);
+      const updated = [saved, ...reports.filter(r => r.projNo !== saved.projNo)];
+      setReports(updated);
+      addToast('Record Saved to Register', `Saved ${newReport.projNo} to database register.`, 'success');
+    } catch (e) {
+      // Local fallback
+      const updated = [newReport, ...reports.filter(r => r.projNo !== newReport.projNo)];
+      setReports(updated);
+      localStorage.setItem(REGISTER_STORAGE_KEY, JSON.stringify(updated));
+      addToast('Record Saved Locally', `Saved ${newReport.projNo} to local register.`, 'info');
+    }
   };
 
   // Full payload object for Dossier / Preview / Register
@@ -543,11 +958,14 @@ export default function SpecificationReadingPage({ activeSubSection, onNavigateS
     other2ColName,
     specialComment,
     iRows,
-    genNotes
+    genNotes,
+    companyProfile,
+    watermarkSettings
   };
 
-  // RENDER REPORT REGISTER VIEW (Screenshot 10)
-  if (currentSection === 'report_register') {
+  // ════════════════════════════════════════════════════════════════════════════
+  // REPORT REGISTER CALCULATIONS & FILTERS
+  // ════════════════════════════════════════════════════════════════════════════
     const totalRecords = reports.length;
     const draftRecords = reports.filter(r => (r.status || '').toLowerCase() === 'draft').length;
     const approvedRecords = reports.filter(r => (r.status || '').toLowerCase() === 'approved').length;
@@ -573,62 +991,160 @@ export default function SpecificationReadingPage({ activeSubSection, onNavigateS
       return matchSearch && matchCol;
     });
 
-    return (
-      <div className="tab-page act animate-in fade-in duration-200" id="tab-report" style={{ display: 'block' }}>
+
+
+  return (
+    <div className="wrap space-y-4 font-sans animate-in fade-in duration-200">
+      {/* 1. REPORT REGISTER VIEW */}
+      {currentSection === 'report_register' && (
+              <div className="tab-page act animate-in fade-in duration-200" id="tab-report" style={{ display: 'block' }}>
         
-        {/* Navigation Breadcrumb Bar */}
-        <div className="flex items-center justify-between bg-white px-4 py-2.5 rounded-xl border border-[#D8DEE5] shadow-[0_2px_8px_rgba(20,24,32,0.06)] mb-4">
-          <button
-            onClick={() => setCurrentSection('form')}
-            className="text-xs font-bold font-rajdhani uppercase tracking-wider text-[#E87B1E] hover:text-[#9E1B1E] flex items-center gap-1.5 transition cursor-pointer"
-          >
-            <span>← Back to Specification Reading Form</span>
-          </button>
-          <span className="text-xs font-mono font-bold text-[#4E5B6A] bg-[#F7F8FA] border border-[#D8DEE5] px-2.5 py-0.5 rounded-md">
-            Report Register
-          </span>
+        {/* Navigation Breadcrumb Bar (Matches Image 1) */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white border border-[#D8DEE5] rounded-xl px-4 py-2.5 shadow-[0_2px_8px_rgba(20,24,32,0.06)] mb-4">
+          <div className="flex items-center gap-2 text-xs font-mono text-[#7E8B99]">
+            <button 
+              type="button"
+              onClick={() => handleNavigateSection('form')}
+              className="font-bold text-[#E87B1E] hover:text-[#9E1B1E] font-rajdhani uppercase text-xs flex items-center gap-1 cursor-pointer"
+            >
+              <span>‹ Home</span>
+            </button>
+            <span>›</span>
+            <span className="text-[#4E5B6A] font-bold font-rajdhani uppercase">Coating Specification Reading</span>
+            <span>›</span>
+            <span className="text-[#9E1B1E] font-bold font-rajdhani uppercase bg-[#FFF4E3] border border-[#F3D2A0] px-2.5 py-0.5 rounded-md">
+              + Report Register
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="px-2.5 py-1 bg-amber-50 border border-amber-200 text-amber-700 rounded-lg text-[10px] font-bold font-mono uppercase tracking-wider">
+              • LIVE SYSTEM
+            </span>
+            <button
+              type="button"
+              onClick={() => { setSelectedReportForView(null); setPreviewModalOpen(true); }}
+              className="px-3 py-1.5 bg-white hover:bg-slate-50 text-[#1B222C] border border-[#D8DEE5] rounded-lg text-xs font-bold font-rajdhani uppercase tracking-wider flex items-center gap-1.5 cursor-pointer shadow-2xs"
+            >
+              <Eye className="w-3.5 h-3.5 text-[#E87B1E]" />
+              <span>Preview</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleSaveDraft}
+              className="px-3 py-1.5 bg-white hover:bg-slate-50 text-[#1B222C] border border-[#D8DEE5] rounded-lg text-xs font-bold font-rajdhani uppercase tracking-wider flex items-center gap-1.5 cursor-pointer shadow-2xs"
+            >
+              <Save className="w-3.5 h-3.5 text-[#E87B1E]" />
+              <span>Save Draft</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                handleSaveToRegister();
+                setValidationModalOpen(true);
+              }}
+              className="px-3 py-1.5 bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-300 rounded-lg text-xs font-bold font-rajdhani uppercase tracking-wider flex items-center gap-1.5 cursor-pointer shadow-2xs"
+            >
+              <Check className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Validate</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleSaveToRegister}
+              className="px-3 py-1.5 bg-white hover:bg-blue-50 text-[#1565C0] border border-blue-200 rounded-lg text-xs font-bold font-rajdhani uppercase tracking-wider flex items-center gap-1.5 cursor-pointer shadow-2xs"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5" />
+              <span>Register</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleGlobalReset}
+              className="px-3 py-1.5 bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 rounded-lg text-xs font-bold font-rajdhani uppercase tracking-wider flex items-center gap-1.5 cursor-pointer shadow-2xs"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Reset</span>
+            </button>
+          </div>
         </div>
 
-        {/* 5 KPI Summary Cards */}
-        <div className="reg-dash">
-          <div className="reg-card">
-            <div className="rc-ic">📋</div>
-            <div className="rc-num">{totalRecords}</div>
-            <div className="rc-lbl">Total Records</div>
+        {/* 5 KPI Summary Cards (Matches Image 1) */}
+        <div className="reg-dash grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-4">
+          <div className="reg-card bg-white p-4 rounded-xl border border-[#D8DEE5] border-t-3 border-t-[#E87B1E] shadow-2xs">
+            <div className="rc-ic w-8 h-8 rounded-lg bg-[#F7F8FA] border border-[#D8DEE5] flex items-center justify-center text-sm mb-2 text-[#4E5B6A]">
+              📋
+            </div>
+            <div className="rc-num font-rajdhani text-2xl font-bold text-[#1B222C] leading-none">
+              {totalRecords}
+            </div>
+            <div className="rc-lbl text-[10px] font-bold font-rajdhani uppercase tracking-wider text-[#7E8B99] mt-1">
+              TOTAL RECORDS
+            </div>
           </div>
-          <div className="reg-card draft">
-            <div className="rc-ic">✎</div>
-            <div className="rc-num">{draftRecords}</div>
-            <div className="rc-lbl">Draft Records</div>
+
+          <div className="reg-card draft bg-white p-4 rounded-xl border border-[#D8DEE5] border-t-3 border-t-[#E87B1E] shadow-2xs">
+            <div className="rc-ic w-8 h-8 rounded-lg bg-[#FFF4E3] border border-[#F3D2A0] flex items-center justify-center text-sm mb-2 text-[#E87B1E]">
+              ✎
+            </div>
+            <div className="rc-num font-rajdhani text-2xl font-bold text-[#E87B1E] leading-none">
+              {draftRecords}
+            </div>
+            <div className="rc-lbl text-[10px] font-bold font-rajdhani uppercase tracking-wider text-[#7E8B99] mt-1">
+              DRAFT RECORDS
+            </div>
           </div>
-          <div className="reg-card approved">
-            <div className="rc-ic">✓</div>
-            <div className="rc-num">{approvedRecords}</div>
-            <div className="rc-lbl">Approved Records</div>
+
+          <div className="reg-card approved bg-white p-4 rounded-xl border border-[#D8DEE5] border-t-3 border-t-emerald-600 shadow-2xs">
+            <div className="rc-ic w-8 h-8 rounded-lg bg-emerald-50 border border-emerald-200 flex items-center justify-center text-sm mb-2 text-emerald-600">
+              ✓
+            </div>
+            <div className="rc-num font-rajdhani text-2xl font-bold text-emerald-600 leading-none">
+              {approvedRecords}
+            </div>
+            <div className="rc-lbl text-[10px] font-bold font-rajdhani uppercase tracking-wider text-[#7E8B99] mt-1">
+              APPROVED RECORDS
+            </div>
           </div>
-          <div className="reg-card rejected">
-            <div className="rc-ic">✕</div>
-            <div className="rc-num">{rejectedRecords}</div>
-            <div className="rc-lbl">Rejected Records</div>
+
+          <div className="reg-card rejected bg-white p-4 rounded-xl border border-[#D8DEE5] border-t-3 border-t-rose-600 shadow-2xs">
+            <div className="rc-ic w-8 h-8 rounded-lg bg-rose-50 border border-rose-200 flex items-center justify-center text-sm mb-2 text-rose-600">
+              ✕
+            </div>
+            <div className="rc-num font-rajdhani text-2xl font-bold text-rose-600 leading-none">
+              {rejectedRecords}
+            </div>
+            <div className="rc-lbl text-[10px] font-bold font-rajdhani uppercase tracking-wider text-[#7E8B99] mt-1">
+              REJECTED RECORDS
+            </div>
           </div>
-          <div className="reg-card sheets">
-            <div className="rc-ic">📑</div>
-            <div className="rc-num">{totalSheets}</div>
-            <div className="rc-lbl">Total Design Sheets</div>
+
+          <div className="reg-card sheets bg-white p-4 rounded-xl border border-[#D8DEE5] border-t-3 border-t-[#9E1B1E] shadow-2xs">
+            <div className="rc-ic w-8 h-8 rounded-lg bg-[#FFF0F0] border border-[#FFCDD2] flex items-center justify-center text-sm mb-2 text-[#9E1B1E]">
+              📑
+            </div>
+            <div className="rc-num font-rajdhani text-2xl font-bold text-[#9E1B1E] leading-none">
+              {totalSheets}
+            </div>
+            <div className="rc-lbl text-[10px] font-bold font-rajdhani uppercase tracking-wider text-[#7E8B99] mt-1">
+              TOTAL DESIGN SHEETS
+            </div>
           </div>
         </div>
 
-        {/* Action Bar */}
-        <div className="reg-actionbar">
+        {/* Action Bar (Matches Image 1) */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-4">
           <button 
-            className="btn-new-generation" 
-            onClick={() => { handleGlobalReset(); setCurrentSection('form'); }} 
+            type="button"
+            className="px-4 py-2.5 bg-gradient-to-r from-[#E87B1E] to-[#9E1B1E] hover:opacity-95 text-white rounded-xl text-xs font-bold font-rajdhani uppercase tracking-wider shadow-sm flex items-center gap-2 cursor-pointer"
+            onClick={() => { handleGlobalReset(); handleNavigateSection('form'); }} 
             title="Start a fresh Coating Specification Reading"
           >
-            ✨ New Generation
+            <span>✨</span>
+            <span>NEW GENERATION</span>
           </button>
+          
           <button 
-            className="btn-export-xls" 
+            type="button"
+            className="px-4 py-2.5 bg-[#1B5E20] hover:bg-[#2E7D32] text-white rounded-xl text-xs font-bold font-rajdhani uppercase tracking-wider shadow-sm flex items-center gap-2 cursor-pointer"
             onClick={() => {
               if (reports.length === 0) {
                 addToast('No Records', 'Report register is empty.', 'info');
@@ -640,149 +1156,324 @@ export default function SpecificationReadingPage({ activeSubSection, onNavigateS
               const url = URL.createObjectURL(blob);
               const a = document.createElement('a');
               a.href = url;
-              a.download = `Spec_Register_${new Date().toISOString().slice(0,10)}.csv`;
+              a.download = `Spec_Register_${getIndianDateString()}.csv`;
               a.click();
               addToast('Exported CSV', 'Register exported successfully.', 'success');
             }} 
             title="Export the entire register to Excel/CSV"
           >
-            ⬇ Export Excel
+            <span>📊</span>
+            <span>EXPORT EXCEL</span>
           </button>
-          <div className="reg-search">
-            <span className="si">🔍</span>
+
+          <button 
+            type="button"
+            className="px-4 py-2.5 bg-[#0284C7] hover:bg-[#0369A1] text-white rounded-xl text-xs font-bold font-rajdhani uppercase tracking-wider shadow-sm flex items-center gap-2 cursor-pointer"
+            onClick={handleLoadSampleRecord} 
+            title="Load demonstration coating specification record into the register"
+          >
+            <span>💡</span>
+            <span>SAMPLE RECORD</span>
+          </button>
+
+          <div className="relative flex-1">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#7E8B99] text-xs">🔍</span>
             <input 
               type="text" 
               value={repSearch} 
               onChange={e => setRepSearch(e.target.value)} 
               placeholder="Search project, client, equipment, design no., status, prepared by…" 
+              className="w-full pl-9 pr-3 py-2 text-xs text-[#1B222C] placeholder-[#9CA3AF] bg-white border border-[#D8DEE5] rounded-xl focus:outline-none focus:border-[#E87B1E] focus:ring-1 focus:ring-[#E87B1E] transition"
             />
           </div>
         </div>
 
-        {/* Report Table Wrap */}
-        <div className="report-wrap">
-          <div className="report-h">
-            <div className="report-h-t">📊 Saved Coating Specification Readings — Report Register</div>
+        {/* Report Table Wrap (Matches Image 1 Exact Headers & Filter Row) */}
+        <div className="bg-white border border-[#D8DEE5] rounded-xl shadow-xs overflow-hidden">
+          <div className="bg-[#FFF9F3] border-b border-[#F0E6DD] px-4 py-2.5">
+            <div className="text-xs font-bold font-rajdhani text-[#1B222C] uppercase tracking-wide flex items-center gap-2">
+              <span>📊</span>
+              <span>SAVED COATING SPECIFICATION READINGS — REPORT REGISTER</span>
+            </div>
           </div>
-          <div className="report-tbl-wrap">
-            <table className="report-tbl">
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs border-collapse min-w-[1180px]">
               <thead>
-                <tr>
-                  <th className="sr">Sr.</th>
-                  <th>Design Input No.</th>
-                  <th>Project No.</th>
-                  <th>Project Description</th>
-                  <th>Customer Details</th>
-                  <th>Prepared By</th>
-                  <th>Date</th>
-                  <th>Status</th>
-                  <th>Revision</th>
-                  <th className="center">Print</th>
-                  <th className="center">Edit</th>
-                  <th className="center">View</th>
-                  <th className="center">Copy</th>
-                  <th className="center">Delete</th>
+                <tr className="bg-[#FFFDF9] border-b border-[#E8DDD3] text-[10px] font-bold font-rajdhani uppercase tracking-wider text-[#5D4037]">
+                  <th className="py-2 px-2 text-center border-r border-[#E8DDD3] w-10">SR</th>
+                  <th className="py-2 px-2.5 text-left border-r border-[#E8DDD3]">DESIGN INPUT NO.</th>
+                  <th className="py-2 px-2.5 text-left border-r border-[#E8DDD3]">PROJECT NO.</th>
+                  <th className="py-2 px-3 text-left border-r border-[#E8DDD3]">PROJECT DESCRIPTION</th>
+                  <th className="py-2 px-2.5 text-left border-r border-[#E8DDD3]">CUSTOMER DETAILS</th>
+                  <th className="py-2 px-2.5 text-left border-r border-[#E8DDD3]">PREPARED BY</th>
+                  <th className="py-2 px-2 text-center border-r border-[#E8DDD3] w-24">DATE</th>
+                  <th className="py-2 px-2 text-center border-r border-[#E8DDD3] w-24">STATUS</th>
+                  <th className="py-2 px-2 text-center border-r border-[#E8DDD3] w-20">REVISION</th>
+                  <th className="py-2 px-1 text-center border-r border-[#E8DDD3] w-12">PRINT</th>
+                  <th className="py-2 px-1 text-center border-r border-[#E8DDD3] w-12">EDIT</th>
+                  <th className="py-2 px-1 text-center border-r border-[#E8DDD3] w-12">VIEW</th>
+                  <th className="py-2 px-1 text-center border-r border-[#E8DDD3] w-12">COPY</th>
+                  <th className="py-2 px-1 text-center w-12">DELETE</th>
                 </tr>
-                <tr className="reg-filter-row">
-                  <th></th>
-                  <th><input className="reg-col-filter" placeholder="Filter" value={colFilters.dinNo} onChange={e => setColFilters(p => ({...p, dinNo: e.target.value}))} /></th>
-                  <th><input className="reg-col-filter" placeholder="Filter" value={colFilters.projNo} onChange={e => setColFilters(p => ({...p, projNo: e.target.value}))} /></th>
-                  <th><input className="reg-col-filter" placeholder="Filter" value={colFilters.projDesc} onChange={e => setColFilters(p => ({...p, projDesc: e.target.value}))} /></th>
-                  <th><input className="reg-col-filter" placeholder="Filter" value={colFilters.cust} onChange={e => setColFilters(p => ({...p, cust: e.target.value}))} /></th>
-                  <th><input className="reg-col-filter" placeholder="Filter" value={colFilters.prep} onChange={e => setColFilters(p => ({...p, prep: e.target.value}))} /></th>
-                  <th></th>
-                  <th><input className="reg-col-filter" placeholder="Filter" value={colFilters.status} onChange={e => setColFilters(p => ({...p, status: e.target.value}))} /></th>
-                  <th colSpan="6"></th>
+                {/* Per-Column Filter Input Row */}
+                <tr className="bg-[#F8FAFC] border-b border-[#E8DDD3]">
+                  <th className="p-1 border-r border-[#E8DDD3]"></th>
+                  <th className="p-1 border-r border-[#E8DDD3]">
+                    <input 
+                      className="w-full px-2 py-1 text-[10px] bg-white border border-[#CBD5E1] rounded text-[#1E293B] placeholder-[#94A3B8] outline-none focus:border-[#E87B1E]" 
+                      placeholder="Filter" 
+                      value={colFilters.dinNo} 
+                      onChange={e => setColFilters(p => ({...p, dinNo: e.target.value}))} 
+                    />
+                  </th>
+                  <th className="p-1 border-r border-[#E8DDD3]">
+                    <input 
+                      className="w-full px-2 py-1 text-[10px] bg-white border border-[#CBD5E1] rounded text-[#1E293B] placeholder-[#94A3B8] outline-none focus:border-[#E87B1E]" 
+                      placeholder="Filter" 
+                      value={colFilters.projNo} 
+                      onChange={e => setColFilters(p => ({...p, projNo: e.target.value}))} 
+                    />
+                  </th>
+                  <th className="p-1 border-r border-[#E8DDD3]">
+                    <input 
+                      className="w-full px-2 py-1 text-[10px] bg-white border border-[#CBD5E1] rounded text-[#1E293B] placeholder-[#94A3B8] outline-none focus:border-[#E87B1E]" 
+                      placeholder="Filter" 
+                      value={colFilters.projDesc} 
+                      onChange={e => setColFilters(p => ({...p, projDesc: e.target.value}))} 
+                    />
+                  </th>
+                  <th className="p-1 border-r border-[#E8DDD3]">
+                    <input 
+                      className="w-full px-2 py-1 text-[10px] bg-white border border-[#CBD5E1] rounded text-[#1E293B] placeholder-[#94A3B8] outline-none focus:border-[#E87B1E]" 
+                      placeholder="Filter" 
+                      value={colFilters.cust} 
+                      onChange={e => setColFilters(p => ({...p, cust: e.target.value}))} 
+                    />
+                  </th>
+                  <th className="p-1 border-r border-[#E8DDD3]">
+                    <input 
+                      className="w-full px-2 py-1 text-[10px] bg-white border border-[#CBD5E1] rounded text-[#1E293B] placeholder-[#94A3B8] outline-none focus:border-[#E87B1E]" 
+                      placeholder="Filter" 
+                      value={colFilters.prep} 
+                      onChange={e => setColFilters(p => ({...p, prep: e.target.value}))} 
+                    />
+                  </th>
+                  <th className="p-1 border-r border-[#E8DDD3]"></th>
+                  <th className="p-1 border-r border-[#E8DDD3]">
+                    <input 
+                      className="w-full px-2 py-1 text-[10px] bg-white border border-[#CBD5E1] rounded text-[#1E293B] placeholder-[#94A3B8] outline-none focus:border-[#E87B1E]" 
+                      placeholder="Filter" 
+                      value={colFilters.status} 
+                      onChange={e => setColFilters(p => ({...p, status: e.target.value}))} 
+                    />
+                  </th>
+                  <th colSpan="6" className="p-1"></th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-[#E8DDD3]">
                 {filteredReports.length === 0 ? (
                   <tr>
-                    <td colSpan="14" className="report-empty">
-                      No records found in the specification register.
+                    <td colSpan="14" className="py-12 text-center text-xs">
+                      <div className="flex flex-col items-center justify-center space-y-3">
+                        <div className="w-12 h-12 rounded-full bg-[#FFF4E3] border border-[#F3D2A0] flex items-center justify-center text-xl text-[#E87B1E]">
+                          📋
+                        </div>
+                        <div className="text-sm font-bold font-rajdhani uppercase text-[#1B222C]">
+                          No saved Coating Specification Readings yet
+                        </div>
+                        <p className="text-xs text-[#7E8B99] max-w-md">
+                          Save a draft from the input form, or click below to load a demonstration sample record to test editing, viewing, printing, and duplicating.
+                        </p>
+                        <div className="flex items-center gap-2 pt-2">
+                          <button
+                            type="button"
+                            onClick={handleLoadSampleRecord}
+                            className="px-4 py-2 bg-gradient-to-r from-[#E87B1E] to-[#9E1B1E] hover:opacity-95 text-white rounded-xl text-xs font-bold font-rajdhani uppercase tracking-wider shadow-sm flex items-center gap-1.5 cursor-pointer"
+                          >
+                            <span>✨</span>
+                            <span>Load Sample Demonstration Record</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleNavigateSection('form')}
+                            className="px-4 py-2 bg-white hover:bg-slate-50 text-[#1B222C] border border-[#D8DEE5] rounded-xl text-xs font-bold font-rajdhani uppercase tracking-wider flex items-center gap-1.5 cursor-pointer"
+                          >
+                            <span>✎</span>
+                            <span>Create New Specification</span>
+                          </button>
+                        </div>
+                      </div>
                     </td>
                   </tr>
                 ) : (
                   filteredReports.map((r, idx) => (
-                    <tr key={r.id}>
-                      <td className="sr">{idx + 1}</td>
-                      <td className="font-mono text-xs">{r.dinNo}</td>
-                      <td className="font-bold text-xs">{r.projNo}</td>
-                      <td>{r.projDesc}</td>
-                      <td>{r.custName}</td>
-                      <td>{r.preparedBy}</td>
-                      <td className="font-mono text-xs">{r.date}</td>
-                      <td>
-                        <span className={`badge ${r.status?.toLowerCase() === 'approved' ? 'approved' : 'draft'}`}>
-                          {r.status}
+                    <tr key={r.id || r.spec_id || idx} className="hover:bg-[#FFFDF9] transition-colors">
+                      <td className="py-2.5 px-2 text-center font-bold font-mono text-[#9E1B1E] border-r border-[#E8DDD3]">
+                        {idx + 1}
+                      </td>
+                      <td className="py-2.5 px-2.5 font-mono text-xs border-r border-[#E8DDD3] text-[#334155]">
+                        {r.dinNo || r.data?.projectData?.dinNo || '—'}
+                      </td>
+                      <td className="py-2.5 px-2.5 font-bold text-xs border-r border-[#E8DDD3] text-[#1B222C]">
+                        {r.projNo || r.data?.projectData?.projNo || 'DRAFT-PROJECT'}
+                      </td>
+                      <td className="py-2.5 px-3 border-r border-[#E8DDD3] text-[#334155]">
+                        {r.projDesc || r.data?.projectData?.projDesc || 'Specification Reading Dossier'}
+                      </td>
+                      <td className="py-2.5 px-2.5 border-r border-[#E8DDD3] text-[#334155]">
+                        {r.custName || r.data?.projectData?.custName || 'Confidential Client'}
+                      </td>
+                      <td className="py-2.5 px-2.5 border-r border-[#E8DDD3] text-[#334155]">
+                        {r.preparedBy || r.data?.projectData?.preparedBy || 'Coating Specialist'}
+                      </td>
+                      <td className="py-2.5 px-2 text-center font-mono text-xs border-r border-[#E8DDD3] text-[#64748B]">
+                        {r.date || '—'}
+                      </td>
+                      <td className="py-2.5 px-2 text-center border-r border-[#E8DDD3]">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase font-mono ${
+                          (r.status || '').toLowerCase() === 'approved' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+                        }`}>
+                          {r.status || 'Draft'}
                         </span>
                       </td>
-                      <td className="rev">{r.revision}</td>
-                      <td className="center">
-                        <button className="report-act-btn" onClick={() => setCurrentSection('report')} title="Print Dossier">
+                      <td className="py-2.5 px-2 text-center font-mono font-bold text-xs border-r border-[#E8DDD3] text-[#1565C0]">
+                        {r.revision || 'R0'}
+                      </td>
+                      {/* Print Action */}
+                      <td className="py-2 px-1 text-center border-r border-[#E8DDD3]">
+                        <button 
+                          className="w-7 h-7 inline-flex items-center justify-center rounded-lg border border-[#D8DEE5] hover:border-[#2E7D32] hover:bg-emerald-50 text-[#2E7D32] transition cursor-pointer" 
+                          onClick={() => {
+                            const payload = r.data ? {
+                              ...r.data,
+                              projectData: {
+                                ...(r.data.projectData || {}),
+                                projNo: r.projNo || r.data.projectData?.projNo || '—',
+                                dinNo: r.dinNo || r.data.projectData?.dinNo || '—',
+                                projDesc: r.projDesc || r.data.projectData?.projDesc || '—',
+                                custName: r.custName || r.data.projectData?.custName || '—',
+                                preparedBy: r.preparedBy || r.data.projectData?.preparedBy || '—',
+                                status: r.status || 'Draft',
+                                revision: r.revision || 'Rev. 0'
+                              }
+                            } : r;
+                            setSelectedReportForView(payload);
+                            handleNavigateSection('report');
+                          }} 
+                          title="Print Dossier"
+                        >
                           🖨
                         </button>
                       </td>
-                      <td className="center">
+                      {/* Edit Action */}
+                      <td className="py-2 px-1 text-center border-r border-[#E8DDD3]">
                         <button 
-                          className="report-act-btn" 
+                          className="w-7 h-7 inline-flex items-center justify-center rounded-lg border border-[#D8DEE5] hover:border-[#E87B1E] hover:bg-amber-50 text-[#E87B1E] transition cursor-pointer" 
                           onClick={() => {
-                            if (r.data) {
-                              if (r.data.projectData) setProjectData(r.data.projectData);
-                              if (r.data.scope) setScope(r.data.scope);
-                              if (r.data.specs) setSpecs(r.data.specs);
-                              if (r.data.envData) setEnvData(r.data.envData);
-                              if (r.data.dRows) setDRows(r.data.dRows);
-                              if (r.data.specialData) setSpecialData(r.data.specialData);
-                              if (r.data.fRows) setFRows(r.data.fRows);
-                              if (r.data.qcData) setQcData(r.data.qcData);
-                              if (r.data.hRows) setHRows(r.data.hRows);
-                              if (r.data.iRows) setIRows(r.data.iRows);
-                              if (r.data.genNotes) setGenNotes(r.data.genNotes);
-                            }
-                            setCurrentSection('form');
-                            addToast('Loaded', `Loaded ${r.projNo} into form for editing.`, 'info');
+                            const data = r.data || {};
+                            const pData = data.projectData || {};
+                            setProjectData({
+                              dinNo: r.dinNo || pData.dinNo || '',
+                              projNo: r.projNo || pData.projNo || '',
+                              projDesc: r.projDesc || pData.projDesc || '',
+                              custName: r.custName || pData.custName || '',
+                              preparedBy: r.preparedBy || pData.preparedBy || '',
+                              revNo: r.revision || pData.revNo || 'Rev. 0',
+                              date: r.date || pData.date || getIndianDateString(),
+                              status: r.status || pData.status || 'Draft'
+                            });
+                            if (data.scope) setScope(data.scope);
+                            if (data.specs) setSpecs(data.specs);
+                            if (data.envData) setEnvData(data.envData);
+                            if (data.dRows) setDRows(data.dRows);
+                            if (data.specialData) setSpecialData(data.specialData);
+                            if (data.fRows) setFRows(data.fRows);
+                            if (data.qcData) setQcData(data.qcData);
+                            if (data.hRows) setHRows(data.hRows);
+                            if (data.otherColName) setOtherColName(data.otherColName);
+                            if (data.other2ColName) setOther2ColName(data.other2ColName);
+                            if (data.specialComment) setSpecialComment(data.specialComment);
+                            if (data.iRows) setIRows(data.iRows);
+                            if (data.genNotes) setGenNotes(data.genNotes);
+                            if (data.companyProfile) setCompanyProfile(data.companyProfile);
+                            if (data.watermarkSettings) setWatermarkSettings(data.watermarkSettings);
+
+                            handleNavigateSection('form');
+                            addToast('Loaded for Editing', `Loaded ${r.projNo || r.dinNo || 'specification'} into form.`, 'info');
                           }} 
-                          title="Edit"
+                          title="Edit in Form"
                         >
                           ✎
                         </button>
                       </td>
-                      <td className="center">
-                        <button className="report-act-btn" onClick={() => setPreviewModalOpen(true)} title="View Preview">
+                      {/* View Action */}
+                      <td className="py-2 px-1 text-center border-r border-[#E8DDD3]">
+                        <button 
+                          className="w-7 h-7 inline-flex items-center justify-center rounded-lg border border-[#D8DEE5] hover:border-[#1565C0] hover:bg-blue-50 text-[#1565C0] transition cursor-pointer" 
+                          onClick={() => {
+                            const payload = r.data ? {
+                              ...r.data,
+                              projectData: {
+                                ...(r.data.projectData || {}),
+                                projNo: r.projNo || r.data.projectData?.projNo || '—',
+                                dinNo: r.dinNo || r.data.projectData?.dinNo || '—',
+                                projDesc: r.projDesc || r.data.projectData?.projDesc || '—',
+                                custName: r.custName || r.data.projectData?.custName || '—',
+                                preparedBy: r.preparedBy || r.data.projectData?.preparedBy || '—',
+                                status: r.status || 'Draft',
+                                revision: r.revision || 'Rev. 0'
+                              }
+                            } : r;
+                            setSelectedReportForView(payload);
+                            setPreviewModalOpen(true);
+                          }} 
+                          title="View Dossier Preview"
+                        >
                           👁
                         </button>
                       </td>
-                      <td className="center">
+                      {/* Copy Action */}
+                      <td className="py-2 px-1 text-center border-r border-[#E8DDD3]">
                         <button 
-                          className="report-act-btn" 
-                          onClick={() => {
+                          className="w-7 h-7 inline-flex items-center justify-center rounded-lg border border-[#D8DEE5] hover:border-slate-400 hover:bg-slate-50 text-slate-700 transition cursor-pointer" 
+                          onClick={async () => {
                             const cloned = JSON.parse(JSON.stringify(r));
-                            cloned.id = `SPEC-${Date.now().toString().slice(-6)}`;
+                            delete cloned.id;
+                            cloned.spec_id = `SPEC-${Date.now().toString().slice(-6)}`;
                             cloned.projNo = `${cloned.projNo}_COPY`;
                             cloned.status = 'Draft';
-                            const updated = [cloned, ...reports];
-                            setReports(updated);
-                            localStorage.setItem(REGISTER_STORAGE_KEY, JSON.stringify(updated));
-                            addToast('Duplicated', `Duplicated ${cloned.projNo}.`, 'success');
+                            try {
+                              const saved = await specificationService.saveReport(cloned);
+                              setReports(prev => [saved, ...prev]);
+                              addToast('Duplicated', `Duplicated ${cloned.projNo} to database.`, 'success');
+                            } catch (e) {
+                              const updated = [cloned, ...reports];
+                              setReports(updated);
+                              localStorage.setItem(REGISTER_STORAGE_KEY, JSON.stringify(updated));
+                              addToast('Duplicated', `Duplicated ${cloned.projNo} locally.`, 'success');
+                            }
                           }} 
-                          title="Copy"
+                          title="Duplicate Record"
                         >
                           📋
                         </button>
                       </td>
-                      <td className="center">
+                      {/* Delete Action */}
+                      <td className="py-2 px-1 text-center">
                         <button 
-                          className="report-act-btn del" 
-                          onClick={() => {
+                          className="w-7 h-7 inline-flex items-center justify-center rounded-lg border border-[#FFCDD2] hover:bg-rose-50 text-rose-600 transition cursor-pointer" 
+                          onClick={async () => {
                             if (window.confirm(`Delete ${r.projNo}?`)) {
+                              if (r.id) {
+                                await specificationService.deleteReport(r.id).catch(() => {});
+                              }
                               const updated = reports.filter(x => x.id !== r.id);
                               setReports(updated);
                               localStorage.setItem(REGISTER_STORAGE_KEY, JSON.stringify(updated));
                               addToast('Deleted', 'Record removed from register.', 'info');
                             }
                           }} 
-                          title="Delete"
+                          title="Delete Record"
                         >
                           ✕
                         </button>
@@ -795,16 +1486,14 @@ export default function SpecificationReadingPage({ activeSubSection, onNavigateS
           </div>
         </div>
       </div>
-    );
-  }
+    )}
 
-  // RENDER PRINT DOSSIER VIEW
-  if (currentSection === 'report') {
-    return (
+    {/* 2. PRINT DOSSIER VIEW */}
+    {currentSection === 'report' && (
       <div className="space-y-4 animate-in fade-in duration-200">
         <div className="flex items-center justify-between bg-white px-4 py-2.5 rounded-xl border border-[#D8DEE5] shadow-[0_2px_8px_rgba(20,24,32,0.06)] print:hidden">
           <button
-            onClick={() => setCurrentSection('form')}
+            onClick={() => handleNavigateSection('form')}
             className="text-xs font-bold font-rajdhani uppercase tracking-wider text-[#E87B1E] hover:text-[#9E1B1E] flex items-center gap-1.5 transition cursor-pointer"
           >
             <span>← Back to Specification Reading Form</span>
@@ -817,18 +1506,20 @@ export default function SpecificationReadingPage({ activeSubSection, onNavigateS
             <span>Print Dossier</span>
           </button>
         </div>
-        <SpecReportView {...currentSpecPayload} />
+        <SpecReportView 
+          {...(selectedReportForView || currentSpecPayload)} 
+          companyProfile={companyProfile} 
+          watermarkSettings={watermarkSettings} 
+        />
       </div>
-    );
-  }
+    )}
 
-  // RENDER WATERMARK TAB
-  if (currentSection === 'watermark') {
-    return (
+    {/* 3. WATERMARK CONTROL VIEW */}
+    {currentSection === 'watermark' && (
       <div className="space-y-4 animate-in fade-in duration-200">
         <div className="flex items-center justify-between bg-white px-4 py-2.5 rounded-xl border border-[#D8DEE5] shadow-[0_2px_8px_rgba(20,24,32,0.06)]">
           <button
-            onClick={() => setCurrentSection('form')}
+            onClick={() => handleNavigateSection('form')}
             className="text-xs font-bold font-rajdhani uppercase tracking-wider text-[#E87B1E] hover:text-[#9E1B1E] flex items-center gap-1.5 transition cursor-pointer"
           >
             <span>← Back to Specification Reading Form</span>
@@ -842,14 +1533,11 @@ export default function SpecificationReadingPage({ activeSubSection, onNavigateS
           setWatermarkSettings={setWatermarkSettings}
         />
       </div>
-    );
-  }
+    )}
 
-  // ════════════════════════════════════════════════════════════════════════════
-  // CORE ALL-IN-ONE ACCORDION FORM VIEW (Screenshots 1 through 9)
-  // ════════════════════════════════════════════════════════════════════════════
-  return (
-    <div className="wrap space-y-4 font-sans animate-in fade-in duration-200">
+      {/* 4. CORE ALL-IN-ONE ACCORDION FORM VIEW */}
+      {currentSection === 'form' && (
+        <>
       
       {/* Top Header Toolbar with Quick Action Buttons */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white border border-[#D8DEE5] rounded-xl px-4 py-3 shadow-[0_2px_8px_rgba(20,24,32,0.06)] print:hidden">
@@ -914,7 +1602,7 @@ export default function SpecificationReadingPage({ activeSubSection, onNavigateS
           {/* Report Register Button */}
           <button
             type="button"
-            onClick={() => setCurrentSection('report_register')}
+            onClick={() => handleNavigateSection('report_register')}
             className="px-3 py-1.5 bg-white hover:bg-[#F7F8FA] text-[#1B222C] border border-[#D8DEE5] rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
             title="View saved reports in Report Register"
           >
@@ -922,12 +1610,23 @@ export default function SpecificationReadingPage({ activeSubSection, onNavigateS
             <span>Report Register</span>
           </button>
 
+          {/* Watermark Control Button */}
+          <button
+            type="button"
+            onClick={() => handleNavigateSection('watermark')}
+            className="px-3 py-1.5 bg-white hover:bg-[#F7F8FA] text-[#1B222C] border border-[#D8DEE5] rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+            title="Configure dynamic watermark settings"
+          >
+            <Stamp className="w-3.5 h-3.5 text-[#E87B1E]" />
+            <span>Watermark</span>
+          </button>
+
           {/* Save Draft Button */}
           <button
             type="button"
             onClick={handleSaveDraft}
             className="px-3 py-1.5 bg-[#F7F8FA] hover:bg-[#FFF4E3] text-[#4E5B6A] hover:text-[#9E1B1E] border border-[#D8DEE5] rounded-lg text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
-            title="Save draft to local storage"
+            title="Save draft to database and local log"
           >
             <Save className="w-3.5 h-3.5 text-[#E87B1E]" />
             <span>Save Draft</span>
@@ -938,11 +1637,39 @@ export default function SpecificationReadingPage({ activeSubSection, onNavigateS
             type="button"
             onClick={handleGlobalReset}
             className="px-3 py-1.5 bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
-            title="Clear all fields across all sections"
+            title="Clear all fields across all sections and remove active draft"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             <span>Reset</span>
           </button>
+
+          {/* Live Debounced Auto-save Status Badge */}
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-mono font-medium border transition-all duration-300 shadow-2xs bg-[#F7F8FA] border-[#D8DEE5]">
+            {autoSaveState === 'saving' && (
+              <span className="flex items-center gap-1.5 text-amber-700">
+                <RefreshCw className="w-3 h-3 animate-spin text-amber-600" />
+                <span>Auto-saving...</span>
+              </span>
+            )}
+            {autoSaveState === 'saved' && (
+              <span className="flex items-center gap-1.5 text-emerald-700">
+                <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                <span>Synced to Log</span>
+              </span>
+            )}
+            {autoSaveState === 'idle' && (
+              <span className="flex items-center gap-1.5 text-slate-600">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse"></span>
+                <span>Log Saved</span>
+              </span>
+            )}
+            {autoSaveState === 'error' && (
+              <span className="flex items-center gap-1.5 text-amber-700" title="Saved to local storage draft">
+                <Clock className="w-3 h-3 text-amber-600" />
+                <span>Saved Locally</span>
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
@@ -1438,63 +2165,91 @@ export default function SpecificationReadingPage({ activeSubSection, onNavigateS
         )}
       </div>
 
-      {/* ════ SECTION D: OPERATING & DESIGN TEMPERATURE DATA (Screenshot 3) ════ */}
+      {/* ════ SECTION D: OPERATING & DESIGN TEMPERATURE DATA (Screenshot 3 / Actual Specification) ════ */}
       <div className={`sec ${collapsed.secD ? 'collapsed' : ''}`} id="secD">
-        <div className="sec-hd" onClick={() => toggleSec('secD')}>
-          <div className="sec-hd-icon">🌡️</div>
-          <div className="sec-hd-text">
-            <div className="sec-hd-t">Operating &amp; Design Temperature Data</div>
-            <div className="sec-hd-s">Component-wise temperatures + scope (Painting / Galvanizing / TSA-FRE-FRP / Insulation / Fireproofing) + Painting Surface</div>
-          </div>
-          <div className="sec-pill">Section D</div>
-          <div className="sec-tog">{collapsed.secD ? '▶' : '▼'}</div>
-        </div>
-        {!collapsed.secD && (
-          <div className="sec-body">
-            <div className="imp">
-              <div className="imp-ic">🔴</div>
-              <div className="imp-t">
-                <b>Important — Operating / Design Temperature</b>
-                <div className="imp-t-body">Both must be defined, as coating specifications may refer to either. Maintaining both in the table is essential for correct paint selection.</div>
+        <div className="sec-hd flex items-center justify-between" onClick={() => toggleSec('secD')}>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#FF5722] to-[#D84315] flex items-center justify-center text-white shadow-xs text-base flex-shrink-0">
+              🌡️
+            </div>
+            <div>
+              <div className="sec-hd-t text-sm font-bold font-rajdhani text-[#1B222C] uppercase tracking-wide">
+                Operating &amp; Design Temperature Data
+              </div>
+              <div className="sec-hd-s text-xs text-[#7E8B99]">
+                Component-wise temperatures + scope (Painting / Galvanizing / TSA-FRE-FRP / Insulation / Fireproofing) + Painting Surface
               </div>
             </div>
-            <div className="imp" style={{ background: 'linear-gradient(135deg,#FFF3E0,#FFE0B2)', borderColor: '#FB8C00', borderLeftColor: '#E65100' }}>
-              <div className="imp-ic">⚠️</div>
-              <div className="imp-t">
-                <b>Important — Refractory Lining</b>
-                <div className="imp-t-body">For refractory-lined equipment, metal skin temperature shall be entered in the Design Temperature column. Take special care while selecting the coating system from specification.</div>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <span className="text-[10px] font-bold font-rajdhani text-[#9E1B1E] bg-[#FFF5EE] border border-[#FFD0B8] px-2.5 py-1 rounded-md uppercase tracking-wider">
+              SECTION D
+            </span>
+            <span className="text-xs text-[#7E8B99]">{collapsed.secD ? '▶' : '▼'}</span>
+          </div>
+        </div>
+        {!collapsed.secD && (
+          <div className="sec-body p-4">
+            {/* Callout 1: Operating / Design Temperature */}
+            <div className="flex items-start gap-3 p-3.5 rounded-xl bg-[#FFF6F2] border border-[#FFCCBC] border-l-4 border-l-[#C62828] mb-3 shadow-2xs">
+              <div className="text-base flex-shrink-0 mt-0.5">🔴</div>
+              <div className="text-xs leading-relaxed">
+                <div className="font-bold text-[#C62828] font-rajdhani text-[12px] tracking-wider uppercase mb-0.5">
+                  IMPORTANT — OPERATING / DESIGN TEMPERATURE
+                </div>
+                <div className="text-[#4E5B6A] font-medium text-[11px]">
+                  Both must be defined, as coating specifications may refer to either. Maintaining both in the table is essential for correct paint selection.
+                </div>
               </div>
             </div>
 
-            <div className="tbl-wrap">
-              <table className="tbl">
+            {/* Callout 2: Refractory Lining */}
+            <div className="flex items-start gap-3 p-3.5 rounded-xl bg-[#FFF8E7] border border-[#FFE082] border-l-4 border-l-[#F57C00] mb-4 shadow-2xs">
+              <div className="text-base flex-shrink-0 mt-0.5">⚠️</div>
+              <div className="text-xs leading-relaxed">
+                <div className="font-bold text-[#C62828] font-rajdhani text-[12px] tracking-wider uppercase mb-0.5">
+                  IMPORTANT — REFRACTORY LINING
+                </div>
+                <div className="text-[#4E5B6A] font-medium text-[11px]">
+                  For refractory-lined equipment, metal skin temperature shall be entered in the Design Temperature column. Take special care while selecting the coating system from specification.
+                </div>
+              </div>
+            </div>
+
+            {/* Table Wrap */}
+            <div className="overflow-x-auto border border-[#E8DDD3] rounded-xl bg-white shadow-2xs">
+              <table className="w-full border-collapse text-xs min-w-[1080px]">
                 <thead>
-                  <tr>
-                    <th style={{ width: '46px' }} className="center">#</th>
-                    <th>Component / Surface</th>
-                    <th style={{ width: '108px' }}>Op. Temp. (°C)</th>
-                    <th style={{ width: '108px' }}>Design Temp. (°C)</th>
-                    <th style={{ width: '84px' }} className="center">Painting</th>
-                    <th style={{ width: '96px' }} className="center">Galvanizing</th>
-                    <th style={{ width: '106px' }} className="center">TSA / FRE / FRP</th>
-                    <th style={{ width: '90px' }} className="center">Insulation</th>
-                    <th style={{ width: '96px' }} className="center">Fire Proofing</th>
-                    <th style={{ width: '118px' }} className="center">Painting Surface</th>
-                    <th style={{ width: '46px' }} className="center">×</th>
+                  <tr className="bg-[#FFF9F3] border-b border-[#F0E6DD]">
+                    <th className="py-2.5 px-2 text-center text-[10px] font-bold font-rajdhani uppercase tracking-wider text-[#5D4037] border-r border-[#F0E6DD] w-[50px]">#</th>
+                    <th className="py-2.5 px-3 text-left text-[10px] font-bold font-rajdhani uppercase tracking-wider text-[#5D4037] border-r border-[#F0E6DD]">COMPONENT / SURFACE</th>
+                    <th className="py-2.5 px-2 text-center text-[10px] font-bold font-rajdhani uppercase tracking-wider text-[#5D4037] border-r border-[#F0E6DD] w-[120px]">OP. TEMP. (°C)</th>
+                    <th className="py-2.5 px-2 text-center text-[10px] font-bold font-rajdhani uppercase tracking-wider text-[#5D4037] border-r border-[#F0E6DD] w-[120px]">DESIGN TEMP. (°C)</th>
+                    <th className="py-2.5 px-2 text-center text-[10px] font-bold font-rajdhani uppercase tracking-wider text-[#5D4037] border-r border-[#F0E6DD] w-[95px]">PAINTING</th>
+                    <th className="py-2.5 px-2 text-center text-[10px] font-bold font-rajdhani uppercase tracking-wider text-[#5D4037] border-r border-[#F0E6DD] w-[95px]">GALVANIZING</th>
+                    <th className="py-2.5 px-2 text-center text-[10px] font-bold font-rajdhani uppercase tracking-wider text-[#5D4037] border-r border-[#F0E6DD] w-[110px]">TSA / FRE / FRP</th>
+                    <th className="py-2.5 px-2 text-center text-[10px] font-bold font-rajdhani uppercase tracking-wider text-[#5D4037] border-r border-[#F0E6DD] w-[95px]">INSULATION</th>
+                    <th className="py-2.5 px-2 text-center text-[10px] font-bold font-rajdhani uppercase tracking-wider text-[#5D4037] border-r border-[#F0E6DD] w-[95px]">FIRE PROOFING</th>
+                    <th className="py-2.5 px-2 text-center text-[10px] font-bold font-rajdhani uppercase tracking-wider text-[#5D4037] border-r border-[#F0E6DD] w-[125px]">PAINTING SURFACE</th>
+                    <th className="py-2.5 px-2 text-center text-[10px] font-bold font-rajdhani uppercase tracking-wider text-[#5D4037] w-[46px]">×</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-[#F0E6DD]">
                   {dRows.length === 0 ? (
                     <tr>
-                      <td colSpan="11" style={{ textAlign: 'center', padding: '18px', fontStyle: 'italic', color: 'var(--txt3)', fontSize: '11px' }}>
-                        No component rows. Click <strong style={{ color: 'var(--o1)' }}>+ Add Component Row</strong> below.
+                      <td colSpan="11" className="text-center py-6 text-xs italic text-[#7E8B99] bg-white">
+                        No component rows. Click <strong className="text-[#E87B1E]">+ ADD COMPONENT ROW</strong> below.
                       </td>
                     </tr>
                   ) : (
                     dRows.map((r, idx) => (
-                      <tr key={idx}>
-                        <td className="idx">{idx + 1}</td>
-                        <td>
+                      <tr key={idx} className="hover:bg-[#FFFDF9] transition-colors">
+                        {/* 4.1 Index format */}
+                        <td className="text-center py-2 px-2 text-xs font-bold font-mono text-[#5A6472] border-r border-[#F0E6DD] bg-[#FAFAFA]">
+                          {`4.${idx + 1}`}
+                        </td>
+                        {/* Component / Surface */}
+                        <td className="p-1.5 border-r border-[#F0E6DD]">
                           <input 
                             type="text" 
                             value={r.component || ''} 
@@ -1503,38 +2258,46 @@ export default function SpecificationReadingPage({ activeSubSection, onNavigateS
                               copy[idx].component = e.target.value;
                               setDRows(copy);
                             }} 
-                            placeholder="e.g. Shell / Channel / Nozzle" 
+                            placeholder="Component / Surface" 
+                            className="w-full px-2.5 py-1.5 text-xs text-[#1F2937] placeholder-[#9CA3AF] bg-white border border-[#D8DEE5] rounded-lg focus:outline-none focus:border-[#F7941D] focus:ring-1 focus:ring-[#F7941D] transition"
                           />
                         </td>
-                        <td>
+                        {/* Op Temp */}
+                        <td className="p-1.5 border-r border-[#F0E6DD]">
                           <input 
-                            type="number" 
-                            value={r.opTemp || ''} 
+                            type="text" 
+                            value={r.opTemp ?? ''} 
                             onChange={e => {
                               const copy = [...dRows];
                               copy[idx].opTemp = e.target.value;
                               setDRows(copy);
                             }} 
-                            placeholder="e.g. 180" 
+                            placeholder="e.g. 312.2°C" 
+                            className="w-full px-2 py-1.5 text-xs text-center text-[#1F2937] placeholder-[#9CA3AF] bg-white border border-[#D8DEE5] rounded-lg focus:outline-none focus:border-[#F7941D] focus:ring-1 focus:ring-[#F7941D] transition"
                           />
                         </td>
-                        <td>
+                        {/* Design Temp */}
+                        <td className="p-1.5 border-r border-[#F0E6DD]">
                           <input 
-                            type="number" 
-                            value={r.designTemp || ''} 
+                            type="text" 
+                            value={r.designTemp ?? ''} 
                             onChange={e => {
                               const copy = [...dRows];
                               copy[idx].designTemp = e.target.value;
                               setDRows(copy);
                             }} 
-                            placeholder="e.g. 250" 
+                            placeholder="e.g. 344.1°C" 
+                            className="w-full px-2 py-1.5 text-xs text-center text-[#1F2937] placeholder-[#9CA3AF] bg-white border border-[#D8DEE5] rounded-lg focus:outline-none focus:border-[#F7941D] focus:ring-1 focus:ring-[#F7941D] transition"
                           />
                         </td>
-                        <td className="yno-cell">
-                          <div className="yno-wrap">
+                        {/* Painting */}
+                        <td className="p-1 text-center border-r border-[#F0E6DD]">
+                          <div className="inline-flex items-center gap-0.5 p-0.5 bg-white border border-[#D8DEE5] rounded-md shadow-2xs">
                             <button
                               type="button"
-                              className={`yno-btn ${r.painting === 'YES' ? 'on-yes' : ''}`}
+                              className={`px-2 py-0.5 text-[10px] font-bold rounded transition cursor-pointer ${
+                                r.painting === 'YES' ? 'bg-[#2E7D32] text-white shadow-2xs' : 'text-[#6B7280] hover:bg-[#F3F4F6]'
+                              }`}
                               onClick={() => {
                                 const copy = [...dRows];
                                 copy[idx].painting = 'YES';
@@ -1545,7 +2308,9 @@ export default function SpecificationReadingPage({ activeSubSection, onNavigateS
                             </button>
                             <button
                               type="button"
-                              className={`yno-btn ${r.painting === 'NO' ? 'on-no' : ''}`}
+                              className={`px-2 py-0.5 text-[10px] font-bold rounded transition cursor-pointer ${
+                                r.painting === 'NO' ? 'bg-[#C62828] text-white shadow-2xs' : 'text-[#6B7280] hover:bg-[#F3F4F6]'
+                              }`}
                               onClick={() => {
                                 const copy = [...dRows];
                                 copy[idx].painting = 'NO';
@@ -1556,7 +2321,9 @@ export default function SpecificationReadingPage({ activeSubSection, onNavigateS
                             </button>
                             <button
                               type="button"
-                              className={`yno-btn ${r.painting === 'NA' ? 'on-na' : ''}`}
+                              className={`px-1.5 py-0.5 text-[10px] font-bold rounded transition cursor-pointer ${
+                                r.painting === 'NA' ? 'bg-[#C65102] text-white shadow-2xs' : 'text-[#6B7280] hover:bg-[#F3F4F6]'
+                              }`}
                               onClick={() => {
                                 const copy = [...dRows];
                                 copy[idx].painting = 'NA';
@@ -1567,11 +2334,14 @@ export default function SpecificationReadingPage({ activeSubSection, onNavigateS
                             </button>
                           </div>
                         </td>
-                        <td className="yno-cell">
-                          <div className="yno-wrap">
+                        {/* Galvanizing */}
+                        <td className="p-1 text-center border-r border-[#F0E6DD]">
+                          <div className="inline-flex items-center gap-0.5 p-0.5 bg-white border border-[#D8DEE5] rounded-md shadow-2xs">
                             <button
                               type="button"
-                              className={`yno-btn ${r.galv === 'YES' ? 'on-yes' : ''}`}
+                              className={`px-2 py-0.5 text-[10px] font-bold rounded transition cursor-pointer ${
+                                r.galv === 'YES' ? 'bg-[#2E7D32] text-white shadow-2xs' : 'text-[#6B7280] hover:bg-[#F3F4F6]'
+                              }`}
                               onClick={() => {
                                 const copy = [...dRows];
                                 copy[idx].galv = 'YES';
@@ -1582,7 +2352,9 @@ export default function SpecificationReadingPage({ activeSubSection, onNavigateS
                             </button>
                             <button
                               type="button"
-                              className={`yno-btn ${r.galv === 'NO' ? 'on-no' : ''}`}
+                              className={`px-2 py-0.5 text-[10px] font-bold rounded transition cursor-pointer ${
+                                r.galv === 'NO' ? 'bg-[#C62828] text-white shadow-2xs' : 'text-[#6B7280] hover:bg-[#F3F4F6]'
+                              }`}
                               onClick={() => {
                                 const copy = [...dRows];
                                 copy[idx].galv = 'NO';
@@ -1593,7 +2365,9 @@ export default function SpecificationReadingPage({ activeSubSection, onNavigateS
                             </button>
                             <button
                               type="button"
-                              className={`yno-btn ${r.galv === 'NA' ? 'on-na' : ''}`}
+                              className={`px-1.5 py-0.5 text-[10px] font-bold rounded transition cursor-pointer ${
+                                r.galv === 'NA' ? 'bg-[#C65102] text-white shadow-2xs' : 'text-[#6B7280] hover:bg-[#F3F4F6]'
+                              }`}
                               onClick={() => {
                                 const copy = [...dRows];
                                 copy[idx].galv = 'NA';
@@ -1604,11 +2378,14 @@ export default function SpecificationReadingPage({ activeSubSection, onNavigateS
                             </button>
                           </div>
                         </td>
-                        <td className="yno-cell">
-                          <div className="yno-wrap">
+                        {/* TSA / FRE / FRP */}
+                        <td className="p-1 text-center border-r border-[#F0E6DD]">
+                          <div className="inline-flex items-center gap-0.5 p-0.5 bg-white border border-[#D8DEE5] rounded-md shadow-2xs">
                             <button
                               type="button"
-                              className={`yno-btn ${r.tsa === 'YES' ? 'on-yes' : ''}`}
+                              className={`px-2 py-0.5 text-[10px] font-bold rounded transition cursor-pointer ${
+                                r.tsa === 'YES' ? 'bg-[#2E7D32] text-white shadow-2xs' : 'text-[#6B7280] hover:bg-[#F3F4F6]'
+                              }`}
                               onClick={() => {
                                 const copy = [...dRows];
                                 copy[idx].tsa = 'YES';
@@ -1619,7 +2396,9 @@ export default function SpecificationReadingPage({ activeSubSection, onNavigateS
                             </button>
                             <button
                               type="button"
-                              className={`yno-btn ${r.tsa === 'NO' ? 'on-no' : ''}`}
+                              className={`px-2 py-0.5 text-[10px] font-bold rounded transition cursor-pointer ${
+                                r.tsa === 'NO' ? 'bg-[#C62828] text-white shadow-2xs' : 'text-[#6B7280] hover:bg-[#F3F4F6]'
+                              }`}
                               onClick={() => {
                                 const copy = [...dRows];
                                 copy[idx].tsa = 'NO';
@@ -1630,7 +2409,9 @@ export default function SpecificationReadingPage({ activeSubSection, onNavigateS
                             </button>
                             <button
                               type="button"
-                              className={`yno-btn ${r.tsa === 'NA' ? 'on-na' : ''}`}
+                              className={`px-1.5 py-0.5 text-[10px] font-bold rounded transition cursor-pointer ${
+                                r.tsa === 'NA' ? 'bg-[#C65102] text-white shadow-2xs' : 'text-[#6B7280] hover:bg-[#F3F4F6]'
+                              }`}
                               onClick={() => {
                                 const copy = [...dRows];
                                 copy[idx].tsa = 'NA';
@@ -1641,11 +2422,14 @@ export default function SpecificationReadingPage({ activeSubSection, onNavigateS
                             </button>
                           </div>
                         </td>
-                        <td className="yno-cell">
-                          <div className="yno-wrap">
+                        {/* Insulation */}
+                        <td className="p-1 text-center border-r border-[#F0E6DD]">
+                          <div className="inline-flex items-center gap-0.5 p-0.5 bg-white border border-[#D8DEE5] rounded-md shadow-2xs">
                             <button
                               type="button"
-                              className={`yno-btn ${r.insulation === 'YES' ? 'on-yes' : ''}`}
+                              className={`px-2 py-0.5 text-[10px] font-bold rounded transition cursor-pointer ${
+                                r.insulation === 'YES' ? 'bg-[#2E7D32] text-white shadow-2xs' : 'text-[#6B7280] hover:bg-[#F3F4F6]'
+                              }`}
                               onClick={() => {
                                 const copy = [...dRows];
                                 copy[idx].insulation = 'YES';
@@ -1656,7 +2440,9 @@ export default function SpecificationReadingPage({ activeSubSection, onNavigateS
                             </button>
                             <button
                               type="button"
-                              className={`yno-btn ${r.insulation === 'NO' ? 'on-no' : ''}`}
+                              className={`px-2 py-0.5 text-[10px] font-bold rounded transition cursor-pointer ${
+                                r.insulation === 'NO' ? 'bg-[#C62828] text-white shadow-2xs' : 'text-[#6B7280] hover:bg-[#F3F4F6]'
+                              }`}
                               onClick={() => {
                                 const copy = [...dRows];
                                 copy[idx].insulation = 'NO';
@@ -1667,7 +2453,9 @@ export default function SpecificationReadingPage({ activeSubSection, onNavigateS
                             </button>
                             <button
                               type="button"
-                              className={`yno-btn ${r.insulation === 'NA' ? 'on-na' : ''}`}
+                              className={`px-1.5 py-0.5 text-[10px] font-bold rounded transition cursor-pointer ${
+                                r.insulation === 'NA' ? 'bg-[#C65102] text-white shadow-2xs' : 'text-[#6B7280] hover:bg-[#F3F4F6]'
+                              }`}
                               onClick={() => {
                                 const copy = [...dRows];
                                 copy[idx].insulation = 'NA';
@@ -1678,11 +2466,14 @@ export default function SpecificationReadingPage({ activeSubSection, onNavigateS
                             </button>
                           </div>
                         </td>
-                        <td className="yno-cell">
-                          <div className="yno-wrap">
+                        {/* Fire Proofing */}
+                        <td className="p-1 text-center border-r border-[#F0E6DD]">
+                          <div className="inline-flex items-center gap-0.5 p-0.5 bg-white border border-[#D8DEE5] rounded-md shadow-2xs">
                             <button
                               type="button"
-                              className={`yno-btn ${r.fireproof === 'YES' ? 'on-yes' : ''}`}
+                              className={`px-2 py-0.5 text-[10px] font-bold rounded transition cursor-pointer ${
+                                r.fireproof === 'YES' ? 'bg-[#2E7D32] text-white shadow-2xs' : 'text-[#6B7280] hover:bg-[#F3F4F6]'
+                              }`}
                               onClick={() => {
                                 const copy = [...dRows];
                                 copy[idx].fireproof = 'YES';
@@ -1693,7 +2484,9 @@ export default function SpecificationReadingPage({ activeSubSection, onNavigateS
                             </button>
                             <button
                               type="button"
-                              className={`yno-btn ${r.fireproof === 'NO' ? 'on-no' : ''}`}
+                              className={`px-2 py-0.5 text-[10px] font-bold rounded transition cursor-pointer ${
+                                r.fireproof === 'NO' ? 'bg-[#C62828] text-white shadow-2xs' : 'text-[#6B7280] hover:bg-[#F3F4F6]'
+                              }`}
                               onClick={() => {
                                 const copy = [...dRows];
                                 copy[idx].fireproof = 'NO';
@@ -1704,7 +2497,9 @@ export default function SpecificationReadingPage({ activeSubSection, onNavigateS
                             </button>
                             <button
                               type="button"
-                              className={`yno-btn ${r.fireproof === 'NA' ? 'on-na' : ''}`}
+                              className={`px-1.5 py-0.5 text-[10px] font-bold rounded transition cursor-pointer ${
+                                r.fireproof === 'NA' ? 'bg-[#C65102] text-white shadow-2xs' : 'text-[#6B7280] hover:bg-[#F3F4F6]'
+                              }`}
                               onClick={() => {
                                 const copy = [...dRows];
                                 copy[idx].fireproof = 'NA';
@@ -1715,7 +2510,8 @@ export default function SpecificationReadingPage({ activeSubSection, onNavigateS
                             </button>
                           </div>
                         </td>
-                        <td>
+                        {/* Painting Surface */}
+                        <td className="p-1.5 border-r border-[#F0E6DD]">
                           <select 
                             value={r.surface || r.paintSurface || 'External'} 
                             onChange={e => {
@@ -1723,19 +2519,21 @@ export default function SpecificationReadingPage({ activeSubSection, onNavigateS
                               copy[idx].surface = e.target.value;
                               copy[idx].paintSurface = e.target.value;
                               setDRows(copy);
-                            }}
+                            }} 
+                            className="w-full px-2 py-1.5 text-xs text-[#1F2937] bg-white border border-[#D8DEE5] rounded-lg focus:outline-none focus:border-[#F7941D] cursor-pointer"
                           >
-                            <option value="">—</option>
                             <option value="External">External</option>
                             <option value="Internal">Internal</option>
                             <option value="Both">Both</option>
                           </select>
                         </td>
-                        <td className="act-col">
+                        {/* Delete Row Button */}
+                        <td className="p-1 text-center">
                           <button 
                             type="button" 
-                            className="del-row" 
+                            className="w-7 h-7 inline-flex items-center justify-center border border-[#FECACA] bg-[#FEF2F2] hover:bg-[#FEE2E2] text-[#DC2626] rounded-md font-bold text-sm transition cursor-pointer"
                             onClick={() => setDRows(dRows.filter((_, i) => i !== idx))}
+                            title="Delete row"
                           >
                             ×
                           </button>
@@ -1747,9 +2545,10 @@ export default function SpecificationReadingPage({ activeSubSection, onNavigateS
               </table>
             </div>
 
+            {/* + ADD COMPONENT ROW Button */}
             <button 
               type="button" 
-              className="add-row-btn" 
+              className="mt-3.5 inline-flex items-center gap-1.5 px-4 py-2 bg-[#FFF8F3] hover:bg-white text-[#9E1B1E] hover:text-[#C62828] border-1.5 border-dashed border-[#FFCCBC] hover:border-[#F7941D] rounded-xl text-xs font-bold font-rajdhani uppercase tracking-wider shadow-2xs transition-all cursor-pointer" 
               onClick={() => {
                 setDRows([...dRows, {
                   component: '',
@@ -1757,14 +2556,15 @@ export default function SpecificationReadingPage({ activeSubSection, onNavigateS
                   designTemp: '',
                   painting: 'YES',
                   galv: 'NO',
-                  tsa: 'NO',
+                  tsa: 'NA',
                   insulation: 'NO',
                   fireproof: 'NO',
                   surface: 'External'
                 }]);
               }}
             >
-              + Add Component Row
+              <span>+</span>
+              <span>ADD COMPONENT ROW</span>
             </button>
           </div>
         )}
@@ -2674,7 +3474,7 @@ export default function SpecificationReadingPage({ activeSubSection, onNavigateS
               onClick={() => {
                 setIRows([...iRows, {
                   revNo: `Rev ${iRows.length}`,
-                  date: new Date().toISOString().split('T')[0],
+                  date: getIndianDateString(),
                   details: 'Issued for Review & Approval',
                   prep: projectData.preparedBy || '',
                   rev: '',
@@ -2714,33 +3514,67 @@ export default function SpecificationReadingPage({ activeSubSection, onNavigateS
       </div>
 
       {/* ════ BOTTOM STICKY ACTION ROW (Screenshot 9) ════ */}
-      <div className="btn-row" id="secValidate">
-        <button 
-          type="button" 
-          className="btn" 
-          onClick={() => {
-            handleSaveToRegister();
-            setValidationModalOpen(true);
-          }}
-        >
-          ▶ Generate &amp; Validate Summary
-        </button>
-        <button 
-          type="button" 
-          className="btn btw" 
-          onClick={handleSaveDraft}
-        >
-          💾 Save Draft
-        </button>
-        <button 
-          type="button" 
-          className="btn btr" 
-          onClick={handleGlobalReset}
-        >
-          ↺ Clear All
-        </button>
+      <div className="btn-row flex flex-wrap items-center justify-between gap-3" id="secValidate">
+        <div className="flex flex-wrap items-center gap-2">
+          <button 
+            type="button" 
+            className="btn" 
+            onClick={() => {
+              handleSaveToRegister();
+              setValidationModalOpen(true);
+            }}
+          >
+            ▶ Generate &amp; Validate Summary
+          </button>
+          <button 
+            type="button" 
+            className="btn btw" 
+            onClick={handleSaveDraft}
+          >
+            💾 Save Draft
+          </button>
+          <button 
+            type="button" 
+            className="btn btr" 
+            onClick={handleGlobalReset}
+          >
+            ↺ Clear All
+          </button>
+        </div>
+
+        {/* Live Debounced Auto-save Status Badge (Bottom) */}
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-mono font-medium bg-white/95 border border-[#D8DEE5] shadow-xs">
+          {autoSaveState === 'saving' && (
+            <span className="flex items-center gap-1.5 text-amber-700">
+              <RefreshCw className="w-3.5 h-3.5 animate-spin text-amber-600" />
+              <span>Auto-saving draft...</span>
+            </span>
+          )}
+          {autoSaveState === 'saved' && (
+            <span className="flex items-center gap-1.5 text-emerald-700">
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+              <span>All changes synced to database</span>
+            </span>
+          )}
+          {autoSaveState === 'idle' && (
+            <span className="flex items-center gap-1.5 text-slate-600">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse"></span>
+              <span>Draft active &amp; stored section-wise</span>
+            </span>
+          )}
+          {autoSaveState === 'error' && (
+            <span className="flex items-center gap-1.5 text-amber-700">
+              <Clock className="w-3.5 h-3.5 text-amber-600" />
+              <span>Saved locally (offline mode)</span>
+            </span>
+          )}
+        </div>
       </div>
 
+        </>
+      )}
+
+      {/* GLOBAL MODALS (Available across Form, Register, Print, and Watermark) */}
       {/* Validation Summary Modal */}
       {validationModalOpen && (
         <div className="summary-modal show" onClick={() => setValidationModalOpen(false)}>
@@ -2822,8 +3656,11 @@ export default function SpecificationReadingPage({ activeSubSection, onNavigateS
       {previewModalOpen && (
         <SpecPreviewModal
           isOpen={previewModalOpen}
-          onClose={() => setPreviewModalOpen(false)}
-          specData={currentSpecPayload}
+          onClose={() => {
+            setPreviewModalOpen(false);
+            setSelectedReportForView(null);
+          }}
+          specData={selectedReportForView || currentSpecPayload}
           companyProfile={companyProfile}
           watermarkSettings={watermarkSettings}
         />

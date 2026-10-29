@@ -5,11 +5,14 @@ import { validateStageSequence } from '../../data/painterDatabase';
 export default function PainterRegister({
   reports = [],
   onLoadReport,
+  onViewReport,
   onDuplicateReport,
   onDeleteReport,
   onPrintReport,
   onExportCSV,
   onNewGeneration,
+  onSaveActiveReport,
+  onLoadSampleRecord,
   onClearAll
 }) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -144,6 +147,28 @@ export default function PainterRegister({
           </div>
         </div>
         <div className="rep-action-btn-grp">
+          {onSaveActiveReport && (
+            <button
+              type="button"
+              className="btn btn-save-active"
+              style={{ background: '#2E7D32', color: '#fff', fontWeight: 600, padding: '7px 14px', borderRadius: '4px', border: 'none', cursor: 'pointer' }}
+              onClick={onSaveActiveReport}
+              title="Save current active form into the Master Register"
+            >
+              💾 SAVE ACTIVE REPORT
+            </button>
+          )}
+          {onLoadSampleRecord && (
+            <button
+              type="button"
+              className="btn btn-sample"
+              style={{ background: '#E65100', color: '#fff', fontWeight: 600, padding: '7px 14px', borderRadius: '4px', border: 'none', cursor: 'pointer' }}
+              onClick={onLoadSampleRecord}
+              title="Load standard benchmark Spray Painter qualification dossier"
+            >
+              💡 SAMPLE DOSSIER
+            </button>
+          )}
           <button
             type="button"
             className="btn-new-generation"
@@ -330,8 +355,33 @@ export default function PainterRegister({
           <tbody id="rep-tbody">
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan="15" style={{ textAlign: 'center', padding: '30px', color: 'var(--txt3)' }}>
-                  No qualification report records found matching filter criteria.
+                <td colSpan="15" style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--txt3)' }}>
+                  <div style={{ fontSize: '15px', fontWeight: 600, color: 'var(--txt)', marginBottom: '8px' }}>
+                    No qualification report records found matching filter criteria.
+                  </div>
+                  <div style={{ fontSize: '12px', color: 'var(--txt2)', marginBottom: '16px' }}>
+                    You can start a new qualification evaluation or load our verified benchmark dossier.
+                  </div>
+                  {onLoadSampleRecord && (
+                    <button
+                      type="button"
+                      className="btn btn-sample"
+                      style={{ background: '#E65100', color: '#fff', fontWeight: 600, padding: '7px 16px', borderRadius: '4px', border: 'none', cursor: 'pointer', marginRight: '10px' }}
+                      onClick={onLoadSampleRecord}
+                    >
+                      💡 Load Sample Qualification Dossier
+                    </button>
+                  )}
+                  {onNewGeneration && (
+                    <button
+                      type="button"
+                      className="btn-new-generation"
+                      style={{ padding: '7px 16px', borderRadius: '4px', cursor: 'pointer' }}
+                      onClick={onNewGeneration}
+                    >
+                      🚀 Start New Qualification
+                    </button>
+                  )}
                 </td>
               </tr>
             ) : (
@@ -393,8 +443,8 @@ export default function PainterRegister({
                       <button
                         type="button"
                         className="rep-act view"
-                        title="View Print"
-                        onClick={() => onPrintReport && onPrintReport(r)}
+                        title="View Read-Only Preview"
+                        onClick={() => (onViewReport ? onViewReport(r) : onPrintReport && onPrintReport(r))}
                       >
                         👁
                       </button>

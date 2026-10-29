@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { INITIAL_PROCEDURE_STATE } from '../data/procedureDatabase';
+import { procedureService } from '../services/procedureService';
 
 import ProcedureHub from '../tools/procedure/ProcedureHub';
 import ProcCoverRevision from '../tools/procedure/ProcCoverRevision';
@@ -104,9 +105,39 @@ export default function CoatingProcedurePage({ currentSubTool = 'hub', onNavigat
 
   const [showCompanyModal, setShowCompanyModal] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [previewRecord, setPreviewRecord] = useState(null);
   const [showProjectMasterModal, setShowProjectMasterModal] = useState(false);
   const [isApproved, setIsApproved] = useState(false);
   const [saveToast, setSaveToast] = useState({ show: false, message: '' });
+
+  const hasLoadedInitialDraftRef = useRef(false);
+  const saveDraftTimeoutRef = useRef(null);
+
+  // Load remote working draft or fallback to localStorage on mount
+  useEffect(() => {
+    let isMounted = true;
+    const loadDraft = async () => {
+      try {
+        const draft = await procedureService.getActiveDraft();
+        if (draft && isMounted) {
+          setState(draft);
+          if (draft.status === 'Approved') {
+            setIsApproved(true);
+          }
+        }
+      } catch (e) {
+        console.warn('[CoatingProcedurePage] Error fetching remote draft:', e);
+      } finally {
+        if (isMounted) {
+          hasLoadedInitialDraftRef.current = true;
+        }
+      }
+    };
+    loadDraft();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Sync route param with modals
   useEffect(() => {
@@ -162,77 +193,100 @@ export default function CoatingProcedurePage({ currentSubTool = 'hub', onNavigat
     return () => window.removeEventListener('bg_header_action', handleAction);
   }, [state, isApproved]);
 
-  // Auto-persist draft
+  // Auto-persist working draft to backend (debounced 800ms) and local storage
   useEffect(() => {
-    try {
-      localStorage.setItem(DRAFT_KEY, JSON.stringify(state));
-    } catch (e) {}
-  }, [state]);
+    if (!hasLoadedInitialDraftRef.current) return;
+
+    if (saveDraftTimeoutRef.current) {
+      clearTimeout(saveDraftTimeoutRef.current);
+    }
+
+    saveDraftTimeoutRef.current = setTimeout(() => {
+      procedureService.saveActiveDraft({
+        ...state,
+        status: isApproved ? 'Approved' : (state.docNo ? 'Draft' : 'Incomplete')
+      });
+    }, 800);
+
+    return () => {
+      if (saveDraftTimeoutRef.current) {
+        clearTimeout(saveDraftTimeoutRef.current);
+      }
+    };
+  }, [state, isApproved]);
 
   const handleStateChange = (updates) => {
     setState((prev) => ({ ...prev, ...updates }));
   };
 
   const handleApplyPreset = (preset) => {
-    setState((prev) => ({
-      ...prev,
+    const updated = {
+      ...state,
       ...preset,
       revisionHistory: [
         { rev: preset.revNo || '0', date: new Date().toISOString().slice(0, 10), desc: 'Issued for Client Review', prep: 'QA/QC Lead', chk: 'QC Manager', app: 'Client Rep' }
       ]
-    }));
+    };
+    setState(updated);
+    procedureService.saveActiveDraft(updated);
     triggerToast('Industry standard procedure preset applied!');
     navigateTo('cover-revision');
   };
 
-  const handleSaveDraft = () => {
+  const handleSaveDraft = async () => {
     try {
-      const existing = JSON.parse(localStorage.getItem(RECORDS_KEY) || '[]');
-      const newRec = {
+      const toSave = {
         ...state,
-        id: Date.now().toString(),
-        createdAt: new Date().toISOString(),
         status: isApproved ? 'Approved' : (state.docNo ? 'Draft' : 'Incomplete')
       };
-      localStorage.setItem(RECORDS_KEY, JSON.stringify([newRec, ...existing]));
-      triggerToast('Procedure saved to register successfully!');
-    } catch (e) {}
+      await procedureService.saveReport(toSave);
+      await procedureService.saveActiveDraft(toSave);
+      triggerToast('Procedure saved to register & working draft!');
+    } catch (e) {
+      triggerToast('Procedure saved locally.');
+    }
   };
 
   const handleLoadRecord = (rec) => {
-    setState(rec);
-    triggerToast(`Loaded procedure: ${rec.docNo || 'Record'}`);
+    const loadedData = rec.data || rec;
+    setState(loadedData);
+    setIsApproved((rec.status || loadedData.status) === 'Approved');
+    procedureService.saveActiveDraft(loadedData);
+    triggerToast(`Loaded procedure: ${rec.docNo || loadedData.docNo || 'Record'}`);
     navigateTo('cover-revision');
   };
 
-  const handleResetSection = () => {
-    if (window.confirm('Reset all procedure fields to initial blank state?')) {
+  const handleResetSection = async () => {
+    if (window.confirm('Reset all procedure fields to initial blank state? This will clear the active working draft.')) {
       setState(INITIAL_PROCEDURE_STATE);
       setIsApproved(false);
+      await procedureService.clearActiveDraft();
       triggerToast('Procedure reset to defaults.');
     }
   };
 
-  const handleNewGeneration = () => {
+  const handleNewGeneration = async () => {
     setState(INITIAL_PROCEDURE_STATE);
     setIsApproved(false);
+    await procedureService.clearActiveDraft();
     triggerToast('Started new procedure — enter cover & revision details.');
     navigateTo('cover-revision');
   };
 
-  const handleCopyProcedure = () => {
+  const handleCopyProcedure = async () => {
     try {
-      const existing = JSON.parse(localStorage.getItem(RECORDS_KEY) || '[]');
       const cloned = {
         ...state,
-        id: Date.now().toString(),
+        id: undefined,
         docNo: `${state.docNo || 'BG-PROC'}-COPY`,
-        createdAt: new Date().toISOString(),
-        status: 'Draft'
+        status: 'Draft',
+        revNo: 'A'
       };
-      localStorage.setItem(RECORDS_KEY, JSON.stringify([cloned, ...existing]));
+      await procedureService.saveReport(cloned);
       triggerToast('Procedure cloned and saved to register!');
-    } catch (e) {}
+    } catch (e) {
+      triggerToast('Procedure cloned locally.');
+    }
   };
 
   const handleSelectProjectFromMaster = (proj) => {
@@ -287,16 +341,18 @@ export default function CoatingProcedurePage({ currentSubTool = 'hub', onNavigat
     { id: 'register', label: 'Register', icon: '📂' }
   ];
 
-  const isEditorView = resolvedSubTool !== 'hub' && resolvedSubTool !== 'register' && resolvedSubTool !== 'report';
+  const isPrintOrPreview = resolvedSubTool === 'report' || resolvedSubTool === 'preview';
+  const showSubRail = !isPrintOrPreview;
+  const isSectionFormView = showSubRail && resolvedSubTool !== 'hub' && resolvedSubTool !== 'register';
 
   return (
     <div className="space-y-6 font-sans">
       
       {/* PROCEDURE EDITOR TOP BARS (When viewing a specific section) */}
-      {isEditorView && (
+      {showSubRail && (
         <div className="space-y-3">
           {/* Approved status banner */}
-          {isApproved && (
+          {isApproved && isSectionFormView && (
             <div className="bg-emerald-50 border border-emerald-300 rounded-xl p-3.5 flex items-center justify-between text-emerald-900 shadow-xs">
               <div className="flex items-center gap-3">
                 <div className="w-7 h-7 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shrink-0">
@@ -322,40 +378,42 @@ export default function CoatingProcedurePage({ currentSubTool = 'hub', onNavigat
           )}
 
           {/* Project Setup Action Bar (Matches ref-2.html) */}
-          <div className="bg-gradient-to-r from-[#FFFDF9] via-[#FAF6ED] to-[#F7EFE1] border border-[#E8D7BE] rounded-xl p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-700 flex items-center justify-center text-sm font-bold border border-amber-500/30">
-                🗂
-              </div>
-              <div>
-                <div className="text-xs font-bold text-[#8B0E16]">
-                  Project Setup · Master Integration
+          {isSectionFormView && (
+            <div className="bg-gradient-to-r from-[#FFFDF9] via-[#FAF6ED] to-[#F7EFE1] border border-[#E8D7BE] rounded-xl p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-700 flex items-center justify-center text-sm font-bold border border-amber-500/30">
+                  🗂
                 </div>
-                <div className="text-[11px] text-[#7E634F]">
-                  Create a project once in <strong>Project Creation</strong> to permanently register it. Open <strong>Project Master</strong> to auto-fill metadata.
+                <div>
+                  <div className="text-xs font-bold text-[#8B0E16]">
+                    Project Setup · Master Integration
+                  </div>
+                  <div className="text-[11px] text-[#7E634F]">
+                    Create a project once in <strong>Project Creation</strong> to permanently register it. Open <strong>Project Master</strong> to auto-fill metadata.
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={() => setShowProjectMasterModal(true)}
-                className="px-3 py-1.5 bg-[#8B0E16] hover:bg-[#6E0C12] text-white text-xs font-bold rounded-lg shadow-xs transition cursor-pointer flex items-center gap-1.5"
-              >
-                <span>➕</span>
-                <span>Project Creation</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowProjectMasterModal(true)}
-                className="px-3 py-1.5 bg-white hover:bg-amber-50 border border-[#D8C2A7] text-[#8B0E16] text-xs font-bold rounded-lg shadow-xs transition cursor-pointer flex items-center gap-1.5"
-              >
-                <span>🗂</span>
-                <span>Project Master</span>
-              </button>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setShowProjectMasterModal(true)}
+                  className="px-3 py-1.5 bg-[#8B0E16] hover:bg-[#6E0C12] text-white text-xs font-bold rounded-lg shadow-xs transition cursor-pointer flex items-center gap-1.5"
+                >
+                  <span>➕</span>
+                  <span>Project Creation</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowProjectMasterModal(true)}
+                  className="px-3 py-1.5 bg-white hover:bg-amber-50 border border-[#D8C2A7] text-[#8B0E16] text-xs font-bold rounded-lg shadow-xs transition cursor-pointer flex items-center gap-1.5"
+                >
+                  <span>🗂</span>
+                  <span>Project Master</span>
+                </button>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Horizontal Section Rail */}
           <div className="bg-white border border-[#E6E8EC] rounded-xl p-1.5 shadow-xs overflow-x-auto">
@@ -513,8 +571,18 @@ export default function CoatingProcedurePage({ currentSubTool = 'hub', onNavigat
         )}
         {resolvedSubTool === 'register' && (
           <ProcReportRegister
+            state={state}
             onLoadRecord={handleLoadRecord}
             onNewProcedure={handleNewGeneration}
+            onOpenPreview={(rec) => {
+              setPreviewRecord(rec.data || rec);
+              setShowPreviewModal(true);
+            }}
+            onPrint={(rec) => {
+              const loadedData = rec.data || rec;
+              setState(loadedData);
+              navigateTo('report');
+            }}
           />
         )}
         {resolvedSubTool === 'report' && (
@@ -566,12 +634,19 @@ export default function CoatingProcedurePage({ currentSubTool = 'hub', onNavigat
       {/* Dossier Preview Modal */}
       {showPreviewModal && (
         <ProcPreviewModal
-          state={state}
+          state={previewRecord || state}
           companyProfile={companyProfile}
           watermarkSettings={watermarkSettings}
-          onClose={() => setShowPreviewModal(false)}
+          onClose={() => {
+            setShowPreviewModal(false);
+            setPreviewRecord(null);
+          }}
           onPrint={() => {
             setShowPreviewModal(false);
+            if (previewRecord) {
+              setState(previewRecord);
+              setPreviewRecord(null);
+            }
             navigateTo('report');
           }}
         />

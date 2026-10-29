@@ -1,5 +1,5 @@
-import { Controller, Get, UseGuards, Render, Req, Query, Post, Body, Param, Res, UseInterceptors, UploadedFile } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { Controller, Get, UseGuards, Render, Req, Query, Post, Body, Param, Res, UseInterceptors, UploadedFile, UploadedFiles } from '@nestjs/common';
+import { FileInterceptor, FileFieldsInterceptor } from '@nestjs/platform-express';
 import { Request, Response } from 'express';
 import * as FormData from 'form-data';
 import { AuthGuard } from '../auth/auth.guard';
@@ -374,19 +374,26 @@ export class AdminController {
     return { ...ctx, services, categories, categoryFilter };
   }
 
-  @Post('services/items')
-  @UseInterceptors(FileInterceptor('cover_image'))
+    @Post('services/items')
+  @UseInterceptors(FileFieldsInterceptor([
+    { name: 'cover_image', maxCount: 1 },
+    { name: 'thumbnail_image', maxCount: 1 },
+  ]))
   async createService(
     @Req() req: Request,
     @Body() body: any,
-    @UploadedFile() file: Express.Multer.File | undefined,
+    @UploadedFiles() files: { cover_image?: Express.Multer.File[]; thumbnail_image?: Express.Multer.File[] } | undefined,
     @Res() res: Response,
   ) {
     const token = req.cookies?.admin_token;
     const slug = body.slug || body.title.toLowerCase().replace(/[^\w ]+/g, '').replace(/ +/g, '-');
     const coverImageVal = body.cover_image_url || body.cover_image || null;
+    const thumbImageVal = body.thumbnail_image_url || body.thumbnail_image || null;
 
-    if (file && file.buffer) {
+    const coverFile = files?.cover_image?.[0];
+    const thumbFile = files?.thumbnail_image?.[0];
+
+    if (coverFile || thumbFile) {
       const form = new FormData();
       form.append('title', body.title);
       form.append('slug', slug);
@@ -398,7 +405,16 @@ export class AdminController {
       form.append('icon_svg', body.icon_svg || '');
       form.append('is_featured', String(body.is_featured === 'on' || body.is_featured === 'true' || body.is_featured === true));
       form.append('order', body.order || '0');
-      form.append('cover_image', file.buffer, { filename: file.originalname, contentType: file.mimetype });
+      if (coverFile) {
+        form.append('cover_image', coverFile.buffer, { filename: coverFile.originalname, contentType: coverFile.mimetype });
+      } else if (coverImageVal) {
+        form.append('cover_image', coverImageVal);
+      }
+      if (thumbFile) {
+        form.append('thumbnail_image', thumbFile.buffer, { filename: thumbFile.originalname, contentType: thumbFile.mimetype });
+      } else if (thumbImageVal) {
+        form.append('thumbnail_image', thumbImageVal);
+      }
 
       try {
         await this.apiClient.postMultipart('/services/', form, token);
@@ -408,13 +424,14 @@ export class AdminController {
         return res.redirect(`/admin/services/items?error=${encodeURIComponent(formatted.message)}`);
       }
     } else {
-      const payload = {
+      const payload: Record<string, any> = {
         title: body.title,
         slug,
         category: parseInt(body.category, 10),
         excerpt: body.excerpt,
         description: body.description || '',
         cover_image: coverImageVal,
+        thumbnail_image: thumbImageVal,
         full_content: body.full_content || '',
         standard_code: body.standard_code || '',
         icon_svg: body.icon_svg || '',
@@ -433,19 +450,26 @@ export class AdminController {
   }
 
   @Post('services/items/:id/edit')
-  @UseInterceptors(FileInterceptor('cover_image'))
+  @UseInterceptors(FileFieldsInterceptor([
+    { name: 'cover_image', maxCount: 1 },
+    { name: 'thumbnail_image', maxCount: 1 },
+  ]))
   async updateService(
     @Param('id') id: string,
     @Req() req: Request,
     @Body() body: any,
-    @UploadedFile() file: Express.Multer.File | undefined,
+    @UploadedFiles() files: { cover_image?: Express.Multer.File[]; thumbnail_image?: Express.Multer.File[] } | undefined,
     @Res() res: Response,
   ) {
     const token = req.cookies?.admin_token;
     const slug = body.slug || body.title.toLowerCase().replace(/[^\w ]+/g, '').replace(/ +/g, '-');
     const coverImageVal = body.cover_image_url || body.cover_image;
+    const thumbImageVal = body.thumbnail_image_url || body.thumbnail_image;
 
-    if (file && file.buffer) {
+    const coverFile = files?.cover_image?.[0];
+    const thumbFile = files?.thumbnail_image?.[0];
+
+    if (coverFile || thumbFile) {
       const form = new FormData();
       form.append('title', body.title);
       form.append('slug', slug);
@@ -457,7 +481,16 @@ export class AdminController {
       form.append('icon_svg', body.icon_svg || '');
       form.append('is_featured', String(body.is_featured === 'on' || body.is_featured === 'true' || body.is_featured === true));
       form.append('order', body.order || '0');
-      form.append('cover_image', file.buffer, { filename: file.originalname, contentType: file.mimetype });
+      if (coverFile) {
+        form.append('cover_image', coverFile.buffer, { filename: coverFile.originalname, contentType: coverFile.mimetype });
+      } else if (coverImageVal) {
+        form.append('cover_image', coverImageVal);
+      }
+      if (thumbFile) {
+        form.append('thumbnail_image', thumbFile.buffer, { filename: thumbFile.originalname, contentType: thumbFile.mimetype });
+      } else if (thumbImageVal) {
+        form.append('thumbnail_image', thumbImageVal);
+      }
 
       try {
         await this.apiClient.patchMultipart(`/services/${id}/`, form, token);
@@ -479,9 +512,8 @@ export class AdminController {
         is_featured: body.is_featured === 'on' || body.is_featured === 'true' || body.is_featured === true,
         order: parseInt(body.order, 10) || 0,
       };
-      if (coverImageVal && !coverImageVal.startsWith('http://') && !coverImageVal.startsWith('https://') && !coverImageVal.startsWith('/media/')) {
-        payload.cover_image = coverImageVal;
-      }
+      if (coverImageVal !== undefined) payload.cover_image = coverImageVal;
+      if (thumbImageVal !== undefined) payload.thumbnail_image = thumbImageVal;
 
       try {
         await this.apiClient.patch(`/services/${id}/`, payload, token);
@@ -698,7 +730,10 @@ export class AdminController {
       form.append('location_name', body.location_name || 'Technical Reference');
       form.append('service_type', body.service_type || 'Surface Preparation');
       form.append('filter_tag', body.filter_tag || 'standards');
-      form.append('standard_code', body.standard_code || '');
+      form.append('standard', body.standard || body.standard_code || '');
+      form.append('standard_code', body.standard_code || body.standard || '');
+      form.append('order', body.order !== undefined ? String(body.order) : '0');
+      form.append('summary', body.summary || body.title || '');
       form.append('image', file.buffer, { filename: file.originalname, contentType: file.mimetype });
 
       try {
@@ -715,7 +750,10 @@ export class AdminController {
         location_name: body.location_name || 'Technical Reference',
         service_type: body.service_type || 'Surface Preparation',
         filter_tag: body.filter_tag || 'standards',
-        standard_code: body.standard_code || '',
+        standard: body.standard || body.standard_code || '',
+        standard_code: body.standard_code || body.standard || '',
+        order: body.order !== undefined ? (parseInt(body.order, 10) || 0) : 0,
+        summary: body.summary || body.title || '',
         image: imageVal,
       };
 
@@ -748,7 +786,10 @@ export class AdminController {
       form.append('location_name', body.location_name || 'Technical Reference');
       form.append('service_type', body.service_type || 'Surface Preparation');
       form.append('filter_tag', body.filter_tag || 'standards');
-      form.append('standard_code', body.standard_code || '');
+      form.append('standard', body.standard || body.standard_code || '');
+      form.append('standard_code', body.standard_code || body.standard || '');
+      if (body.order !== undefined) form.append('order', String(body.order));
+      if (body.summary) form.append('summary', body.summary);
       form.append('image', file.buffer, { filename: file.originalname, contentType: file.mimetype });
 
       try {
@@ -765,8 +806,11 @@ export class AdminController {
         location_name: body.location_name || 'Technical Reference',
         service_type: body.service_type || 'Surface Preparation',
         filter_tag: body.filter_tag || 'standards',
-        standard_code: body.standard_code || '',
+        standard: body.standard || body.standard_code || '',
+        standard_code: body.standard_code || body.standard || '',
       };
+      if (body.order !== undefined) payload.order = parseInt(body.order, 10) || 0;
+      if (body.summary) payload.summary = body.summary;
       if (imageVal) payload.image = imageVal;
 
       try {
@@ -776,6 +820,24 @@ export class AdminController {
         const formatted = this.apiClient.formatApiError(err);
         return res.redirect(`/admin/content/gallery?error=${encodeURIComponent(formatted.message)}`);
       }
+    }
+  }
+
+  @Post('content/gallery/:id/order')
+  async updateGalleryOrder(
+    @Param('id') id: string,
+    @Req() req: Request,
+    @Body() body: any,
+    @Res() res: Response,
+  ) {
+    const token = req.cookies?.admin_token;
+    const orderVal = parseInt(body.order, 10) || 0;
+    try {
+      await this.apiClient.patch(`/gallery/${id}/`, { order: orderVal }, token);
+      return res.redirect('/admin/content/gallery?success=Gallery+order+updated+successfully');
+    } catch (err: any) {
+      const formatted = this.apiClient.formatApiError(err);
+      return res.redirect(`/admin/content/gallery?error=${encodeURIComponent(formatted.message)}`);
     }
   }
 

@@ -10,7 +10,9 @@ import {
   Copy,
   Trash2,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Save,
+  Sparkles
 } from 'lucide-react';
 
 export default function ManpowerRegister({
@@ -20,7 +22,9 @@ export default function ManpowerRegister({
   onPreviewReport,
   onCopyReport,
   onDeleteReport,
-  onNewEstimation
+  onNewEstimation,
+  onSaveActiveEstimation,
+  onLoadSampleRecord
 }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
@@ -179,7 +183,31 @@ export default function ManpowerRegister({
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex flex-wrap items-center gap-2 shrink-0">
+                {onSaveActiveEstimation && (
+                  <button
+                    type="button"
+                    onClick={onSaveActiveEstimation}
+                    className="px-3.5 py-1.5 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold flex items-center gap-1.5 transition shadow-sm cursor-pointer uppercase font-mono"
+                    title="Save active estimation into register"
+                  >
+                    <Save className="w-3.5 h-3.5" />
+                    <span>SAVE ACTIVE ESTIMATION</span>
+                  </button>
+                )}
+
+                {onLoadSampleRecord && (
+                  <button
+                    type="button"
+                    onClick={onLoadSampleRecord}
+                    className="px-3.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold flex items-center gap-1.5 transition shadow-sm cursor-pointer uppercase font-mono"
+                    title="Load standard 20,000 m² refinery manpower estimation sample"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>SAMPLE REFINERY RECORD</span>
+                  </button>
+                )}
+
                 <button
                   type="button"
                   onClick={onNewEstimation}
@@ -314,8 +342,28 @@ export default function ManpowerRegister({
                 <tbody className="divide-y divide-orange-100 font-medium text-slate-800">
                   {filteredReports.length === 0 ? (
                     <tr>
-                      <td colSpan={14} className="py-8 text-center text-xs text-slate-400 italic">
-                        No saved estimations yet. Fill the estimation and click "Save to Report" on the Front Page Summary.
+                      <td colSpan={14} className="py-12 text-center text-xs text-slate-500 italic">
+                        <div className="max-w-md mx-auto space-y-3">
+                          <p className="font-semibold text-slate-600">No saved estimations found in database register.</p>
+                          <div className="flex items-center justify-center gap-3">
+                            {onLoadSampleRecord && (
+                              <button
+                                type="button"
+                                onClick={onLoadSampleRecord}
+                                className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition shadow-sm cursor-pointer font-mono"
+                              >
+                                💡 Load 20,000 m² Sample Refinery Record
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={onNewEstimation}
+                              className="px-3 py-1.5 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold transition shadow-sm cursor-pointer font-mono"
+                            >
+                              + Start New Estimation
+                            </button>
+                          </div>
+                        </div>
                       </td>
                     </tr>
                   ) : (

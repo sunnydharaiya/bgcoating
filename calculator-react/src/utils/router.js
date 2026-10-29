@@ -199,6 +199,7 @@ export const TOOL_URL_MAP = {
 
 export const SPEC_URL_MAP = {
   'hub': '/specification-reading',
+  'form': '/specification-reading',
   'scope': '/specification-reading/scope',
   'environment': '/specification-reading/environment',
   'temperatures': '/specification-reading/temperatures',
@@ -207,8 +208,11 @@ export const SPEC_URL_MAP = {
   'testing_qc': '/specification-reading/testing-qc',
   'manufacturers': '/specification-reading/manufacturers',
   'revisions_notes': '/specification-reading/revisions-notes',
+  'report-register': '/specification-reading/register',
   'report_register': '/specification-reading/register',
   'register': '/specification-reading/register',
+  'saved-reports': '/specification-reading/register',
+  'saved_reports': '/specification-reading/register',
   'report': '/specification-reading/report',
   'print': '/specification-reading/report',
   'preview': '/specification-reading/preview',
@@ -239,13 +243,21 @@ export const PROC_URL_MAP = {
   'annexure_coating': '/coating-procedure/annexure-coating',
   'annexure-inspection': '/coating-procedure/annexure-inspection',
   'annexure_inspection': '/coating-procedure/annexure-inspection',
+  'report-register': '/coating-procedure/register',
+  'report_register': '/coating-procedure/register',
   'register': '/coating-procedure/register',
+  'saved-procedures': '/coating-procedure/register',
+  'saved_procedures': '/coating-procedure/register',
+  'saved-reports': '/coating-procedure/register',
+  'saved_reports': '/coating-procedure/register',
   'report': '/coating-procedure/report',
   'print': '/coating-procedure/report',
   'preview': '/coating-procedure/preview',
   'watermark': '/coating-procedure/watermark',
   'company-details': '/coating-procedure/company-details',
   'company_details': '/coating-procedure/company-details',
+  'project-master': '/coating-procedure/project-master',
+  'project_master': '/coating-procedure/project-master',
 };
 
 export const UNITRATE_URL_MAP = {
@@ -268,8 +280,14 @@ export const UNITRATE_URL_MAP = {
   'revisions': '/unit-rate-estimation/revisions',
   'validate': '/unit-rate-estimation/cost-matrix',
   'report-view': '/unit-rate-estimation/report-view',
+  'report_view': '/unit-rate-estimation/report-view',
   'register': '/unit-rate-estimation/register',
   'report-register': '/unit-rate-estimation/register',
+  'report_register': '/unit-rate-estimation/register',
+  'saved-estimates': '/unit-rate-estimation/register',
+  'saved_estimates': '/unit-rate-estimation/register',
+  'saved-reports': '/unit-rate-estimation/register',
+  'saved_reports': '/unit-rate-estimation/register',
   'preview': '/unit-rate-estimation/preview',
   'report': '/unit-rate-estimation/report',
   'print': '/unit-rate-estimation/report',
@@ -301,6 +319,10 @@ export const MANPOWER_URL_MAP = {
   'front-page-summary': '/manpower-estimation/summary',
   'register': '/manpower-estimation/register',
   'report-register': '/manpower-estimation/register',
+  'saved-estimates': '/manpower-estimation/register',
+  'saved_estimates': '/manpower-estimation/register',
+  'saved-reports': '/manpower-estimation/register',
+  'saved_reports': '/manpower-estimation/register',
   'report': '/manpower-estimation/report',
   'print': '/manpower-estimation/report',
   'preview': '/manpower-estimation/preview',
@@ -311,10 +333,12 @@ export const MANPOWER_URL_MAP = {
 
 export const BLASTER_URL_MAP = {
   'hub': '/blaster-qualification',
+  'home': '/blaster-qualification',
   'dashboard': '/blaster-qualification/dashboard',
   'info': '/blaster-qualification/project-operator',
   'project-operator': '/blaster-qualification/project-operator',
   'project_operator': '/blaster-qualification/project-operator',
+  'project-info': '/blaster-qualification/project-operator',
   'train': '/blaster-qualification/training-test',
   'training-test': '/blaster-qualification/training-test',
   'training_test': '/blaster-qualification/training-test',
@@ -322,6 +346,7 @@ export const BLASTER_URL_MAP = {
   'blasting': '/blaster-qualification/blasting-process',
   'blasting-process': '/blaster-qualification/blasting-process',
   'blasting_process': '/blaster-qualification/blasting-process',
+  'process': '/blaster-qualification/blasting-process',
   'photo': '/blaster-qualification/photo-report',
   'photo-report': '/blaster-qualification/photo-report',
   'photo_report': '/blaster-qualification/photo-report',
@@ -330,18 +355,30 @@ export const BLASTER_URL_MAP = {
   'verdict_approval': '/blaster-qualification/verdict-approval',
   'summary': '/blaster-qualification/summary',
   'register': '/blaster-qualification/register',
+  'report-register': '/blaster-qualification/register',
+  'report_register': '/blaster-qualification/register',
+  'saved-reports': '/blaster-qualification/register',
+  'saved_reports': '/blaster-qualification/register',
+  'saved-dossiers': '/blaster-qualification/register',
+  'saved_dossiers': '/blaster-qualification/register',
   'preview': '/blaster-qualification/preview',
+  'print': '/blaster-qualification/preview',
+  'report': '/blaster-qualification/preview',
   'watermark': '/blaster-qualification/watermark',
+  'company': '/blaster-qualification/company-details',
   'company-details': '/blaster-qualification/company-details',
   'company_details': '/blaster-qualification/company-details',
 };
 
 export const PAINTER_URL_MAP = {
   'hub': '/painter-qualification',
+  'home': '/painter-qualification',
   'dashboard': '/painter-qualification/dashboard',
   'info': '/painter-qualification/project-operator',
   'project-info': '/painter-qualification/project-operator',
   'project_info': '/painter-qualification/project-operator',
+  'project-operator': '/painter-qualification/project-operator',
+  'project_operator': '/painter-qualification/project-operator',
   'train': '/painter-qualification/training-test',
   'training-test': '/painter-qualification/training-test',
   'training_test': '/painter-qualification/training-test',
@@ -366,17 +403,28 @@ export const PAINTER_URL_MAP = {
   'verdict_approval': '/painter-qualification/verdict-approval',
   'summary': '/painter-qualification/summary',
   'register': '/painter-qualification/register',
+  'report-register': '/painter-qualification/register',
+  'report_register': '/painter-qualification/register',
+  'saved-reports': '/painter-qualification/register',
+  'reports': '/painter-qualification/register',
+  'saved-dossiers': '/painter-qualification/register',
   'preview': '/painter-qualification/preview',
+  'print': '/painter-qualification/preview',
+  'report': '/painter-qualification/preview',
   'watermark': '/painter-qualification/watermark',
+  'company': '/painter-qualification/company-details',
   'company-details': '/painter-qualification/company-details',
   'company_details': '/painter-qualification/company-details',
 };
 
 export const TSA_URL_MAP = {
   'hub': '/tsa-qualification',
+  'home': '/tsa-qualification',
   'dashboard': '/tsa-qualification/dashboard',
   'project-info': '/tsa-qualification/project-info',
   'project_info': '/tsa-qualification/project-info',
+  'project-operator': '/tsa-qualification/project-info',
+  'project_operator': '/tsa-qualification/project-info',
   'info': '/tsa-qualification/project-info',
   'checklist': '/tsa-qualification/checklist',
   's1': '/tsa-qualification/coat-stage-s1',
@@ -399,42 +447,22 @@ export const TSA_URL_MAP = {
   'verdict_approval': '/tsa-qualification/verdict-approval',
   'summary': '/tsa-qualification/summary',
   'register': '/tsa-qualification/register',
+  'report-register': '/tsa-qualification/register',
+  'report_register': '/tsa-qualification/register',
   'preview': '/tsa-qualification/preview',
+  'print': '/tsa-qualification/preview',
+  'report': '/tsa-qualification/preview',
   'watermark': '/tsa-qualification/watermark',
+  'company': '/tsa-qualification/company-details',
   'company-details': '/tsa-qualification/company-details',
   'company_details': '/tsa-qualification/company-details',
 };
 
 export const INSPECTION_URL_MAP = {
   'hub': '/inspection-reporting',
-  'info': '/inspection-reporting/project-operator',
-  'project-operator': '/inspection-reporting/project-operator',
-  'project_operator': '/inspection-reporting/project-operator',
-  'train': '/inspection-reporting/training-test',
-  'training-test': '/inspection-reporting/training-test',
-  'training_test': '/inspection-reporting/training-test',
-  'checklist': '/inspection-reporting/checklist',
-  'blasting': '/inspection-reporting/blasting-process',
-  'blasting-process': '/inspection-reporting/blasting-process',
-  'blasting_process': '/inspection-reporting/blasting-process',
-  'photo': '/inspection-reporting/photo-report',
-  'photo-report': '/inspection-reporting/photo-report',
-  'photo_report': '/inspection-reporting/photo-report',
-  'verdict': '/inspection-reporting/verdict-approval',
-  'verdict-approval': '/inspection-reporting/verdict-approval',
-  'verdict_approval': '/inspection-reporting/verdict-approval',
-  'summary': '/inspection-reporting/summary',
-  'dashboard': '/inspection-reporting/dashboard',
-  'register': '/inspection-reporting/register',
-  'report_register': '/inspection-reporting/register',
-  'preview': '/inspection-reporting/preview',
-  'report': '/inspection-reporting/report',
-  'print': '/inspection-reporting/report',
-  'xlprint': '/inspection-reporting/report',
-  'watermark': '/inspection-reporting/watermark',
-  'company': '/inspection-reporting/company-details',
-  'company-details': '/inspection-reporting/company-details',
-  'company_details': '/inspection-reporting/company-details',
+  'home': '/inspection-reporting',
+  'coating-report': '/inspection-reporting/coating-report',
+  'stage': '/inspection-reporting/coating-report',
   's1': '/inspection-reporting/stage-s1',
   'stage-s1': '/inspection-reporting/stage-s1',
   'stage_s1': '/inspection-reporting/stage-s1',
@@ -448,21 +476,42 @@ export const INSPECTION_URL_MAP = {
   'stage-s4': '/inspection-reporting/stage-s4',
   'stage_s4': '/inspection-reporting/stage-s4',
   'pull': '/inspection-reporting/pull-off-adhesion',
+  'pull-off': '/inspection-reporting/pull-off-adhesion',
   'pull-off-adhesion': '/inspection-reporting/pull-off-adhesion',
   'pull_off_adhesion': '/inspection-reporting/pull-off-adhesion',
   'cross': '/inspection-reporting/cross-cut-adhesion',
+  'cross-cut': '/inspection-reporting/cross-cut-adhesion',
   'cross-cut-adhesion': '/inspection-reporting/cross-cut-adhesion',
   'cross_cut_adhesion': '/inspection-reporting/cross-cut-adhesion',
   'std': '/inspection-reporting/standards',
   'standards': '/inspection-reporting/standards',
+  'reference-standards': '/inspection-reporting/standards',
+  'reference_standards': '/inspection-reporting/standards',
   'refp': '/inspection-reporting/pull-off-reference',
   'refc': '/inspection-reporting/cross-cut-reference',
+  'photo': '/inspection-reporting/photo-report',
+  'photo-report': '/inspection-reporting/photo-report',
+  'photo_report': '/inspection-reporting/photo-report',
+  'register': '/inspection-reporting/register',
+  'report-register': '/inspection-reporting/register',
+  'report_register': '/inspection-reporting/register',
   'rwkreg': '/inspection-reporting/rework-register',
+  'rework': '/inspection-reporting/rework-register',
   'rework-register': '/inspection-reporting/rework-register',
   'rework_register': '/inspection-reporting/rework-register',
+  'preview': '/inspection-reporting/preview',
+  'report': '/inspection-reporting/report',
+  'print': '/inspection-reporting/report',
+  'xlprint': '/inspection-reporting/report',
+  'dashboard': '/inspection-reporting/dashboard',
+  'company': '/inspection-reporting/company-details',
+  'company-details': '/inspection-reporting/company-details',
+  'company_details': '/inspection-reporting/company-details',
   'master': '/inspection-reporting/master-systems',
+  'master-list': '/inspection-reporting/master-systems',
   'master-systems': '/inspection-reporting/master-systems',
   'master_systems': '/inspection-reporting/master-systems',
+  'watermark': '/inspection-reporting/watermark',
 };
 
 export const PAGE_URL_MAP = {
@@ -508,12 +557,22 @@ export function parseCurrentUrl() {
   }
 
   // 2. Specification Reading Routes & Sub-Routes
-  if (path === '/specification-reading' || path === '/design') {
+  if (path === '/specification-reading' || path === '/design' || path === '/calculator/specification-reading') {
     return { page: 'specification-reading', subTool: 'hub' };
   }
-  if (path.startsWith('/specification-reading/')) {
+  if (path.startsWith('/specification-reading/') || path.startsWith('/calculator/specification-reading/')) {
+    const cleanPath = path.replace(/^\/calculator/, '').replace(/\/+$/, '');
+    if (
+      cleanPath === '/specification-reading/register' || 
+      cleanPath === '/specification-reading/report-register' || 
+      cleanPath === '/specification-reading/report_register' ||
+      cleanPath === '/specification-reading/saved-reports' ||
+      cleanPath === '/specification-reading/saved_reports'
+    ) {
+      return { page: 'specification-reading', subTool: 'register' };
+    }
     for (const [secId, url] of Object.entries(SPEC_URL_MAP)) {
-      if (path === url.toLowerCase()) {
+      if (cleanPath === url.toLowerCase()) {
         return { page: 'specification-reading', subTool: secId };
       }
     }
@@ -521,12 +580,24 @@ export function parseCurrentUrl() {
   }
 
   // 3. Coating Procedure Routes & Sub-Routes
-  if (path === '/coating-procedure' || path === '/procedure') {
+  if (path === '/coating-procedure' || path === '/procedure' || path === '/calculator/coating-procedure') {
     return { page: 'coating-procedure', subTool: 'hub' };
   }
-  if (path.startsWith('/coating-procedure/')) {
+  if (path.startsWith('/coating-procedure/') || path.startsWith('/calculator/coating-procedure/')) {
+    const cleanPath = path.replace(/^\/calculator/, '').replace(/\/+$/, '');
+    if (
+      cleanPath === '/coating-procedure/register' || 
+      cleanPath === '/coating-procedure/report-register' || 
+      cleanPath === '/coating-procedure/report_register' ||
+      cleanPath === '/coating-procedure/saved-procedures' ||
+      cleanPath === '/coating-procedure/saved_procedures' ||
+      cleanPath === '/coating-procedure/saved-reports' ||
+      cleanPath === '/coating-procedure/saved_reports'
+    ) {
+      return { page: 'coating-procedure', subTool: 'register' };
+    }
     for (const [secId, url] of Object.entries(PROC_URL_MAP)) {
-      if (path === url.toLowerCase()) {
+      if (cleanPath === url.toLowerCase()) {
         return { page: 'coating-procedure', subTool: secId };
       }
     }
@@ -534,12 +605,24 @@ export function parseCurrentUrl() {
   }
 
   // 4. Quick Unit-Rate Estimation Routes & Sub-Routes
-  if (path === '/unit-rate-estimation' || path === '/cost-estimation') {
+  if (path === '/unit-rate-estimation' || path === '/cost-estimation' || path === '/calculator/unit-rate-estimation') {
     return { page: 'unit-rate-estimation', subTool: 'hub' };
   }
-  if (path.startsWith('/unit-rate-estimation/')) {
+  if (path.startsWith('/unit-rate-estimation/') || path.startsWith('/calculator/unit-rate-estimation/')) {
+    const cleanPath = path.replace(/^\/calculator/, '').replace(/\/+$/, '');
+    if (
+      cleanPath === '/unit-rate-estimation/register' || 
+      cleanPath === '/unit-rate-estimation/report-register' || 
+      cleanPath === '/unit-rate-estimation/report_register' ||
+      cleanPath === '/unit-rate-estimation/saved-estimates' ||
+      cleanPath === '/unit-rate-estimation/saved_estimates' ||
+      cleanPath === '/unit-rate-estimation/saved-reports' ||
+      cleanPath === '/unit-rate-estimation/saved_reports'
+    ) {
+      return { page: 'unit-rate-estimation', subTool: 'register' };
+    }
     for (const [secId, url] of Object.entries(UNITRATE_URL_MAP)) {
-      if (path === url.toLowerCase()) {
+      if (cleanPath === url.toLowerCase()) {
         return { page: 'unit-rate-estimation', subTool: secId };
       }
     }
@@ -547,12 +630,13 @@ export function parseCurrentUrl() {
   }
 
   // 5. Manpower-Based Painting Project Estimation Routes & Sub-Routes
-  if (path === '/manpower-estimation') {
+  if (path === '/manpower-estimation' || path === '/calculator/manpower-estimation') {
     return { page: 'manpower-estimation', subTool: 'hub' };
   }
-  if (path.startsWith('/manpower-estimation/')) {
+  if (path.startsWith('/manpower-estimation/') || path.startsWith('/calculator/manpower-estimation/')) {
+    const subPath = path.replace(/^\/calculator/, '');
     for (const [secId, url] of Object.entries(MANPOWER_URL_MAP)) {
-      if (path === url.toLowerCase()) {
+      if (subPath === url.toLowerCase()) {
         return { page: 'manpower-estimation', subTool: secId };
       }
     }
@@ -560,12 +644,13 @@ export function parseCurrentUrl() {
   }
 
   // 6. Blaster / Operator Qualification Routes & Sub-Routes
-  if (path === '/blaster-qualification' || path === '/blaster') {
+  if (path === '/blaster-qualification' || path === '/blaster' || path === '/calculator/blaster-qualification') {
     return { page: 'blaster-qualification', subTool: 'hub' };
   }
-  if (path.startsWith('/blaster-qualification/')) {
+  if (path.startsWith('/blaster-qualification/') || path.startsWith('/calculator/blaster-qualification/')) {
+    const subPath = path.replace(/^\/calculator/, '');
     for (const [secId, url] of Object.entries(BLASTER_URL_MAP)) {
-      if (path === url.toLowerCase()) {
+      if (subPath === url.toLowerCase()) {
         return { page: 'blaster-qualification', subTool: secId };
       }
     }
@@ -575,6 +660,7 @@ export function parseCurrentUrl() {
   // 7. Spray Painter Qualification Routes & Sub-Routes
   if (
     path === '/painter-qualification' || 
+    path === '/calculator/painter-qualification' || 
     path === '/painter' || 
     path === '/spray-painter-qualification' || 
     path === '/spray-painter'
@@ -583,10 +669,12 @@ export function parseCurrentUrl() {
   }
   if (
     path.startsWith('/painter-qualification/') || 
+    path.startsWith('/calculator/painter-qualification/') || 
     path.startsWith('/spray-painter-qualification/') || 
     path.startsWith('/spray-painter/')
   ) {
     const cleanSub = path
+      .replace('/calculator/painter-qualification/', '')
       .replace('/painter-qualification/', '')
       .replace('/spray-painter-qualification/', '')
       .replace('/spray-painter/', '');

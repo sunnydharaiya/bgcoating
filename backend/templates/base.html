@@ -23,11 +23,16 @@
 <link rel="preconnect" href="https://fonts.googleapis.com/">
 <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{% static 'css/styles.css' %}?v=2.5">
+<link rel="stylesheet" href="{% static 'css/styles.css' %}?v=3.1">
 
 {% block extra_css %}{% endblock %}
 </head>
-<body class="rail-push rail-open" data-page="{{ current_page }}">
+<body class="rail-push" data-page="{{ current_page }}">
+<script>
+  if (window.matchMedia && window.matchMedia('(min-width: 1400px)').matches) {
+    document.body.classList.add('rail-open');
+  }
+</script>
 
 {% include 'includes/header.html' %}
 

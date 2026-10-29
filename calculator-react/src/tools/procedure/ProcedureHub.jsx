@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PROC_PRESETS } from '../../data/procedureDatabase';
+import { procedureService } from '../../services/procedureService';
 
 export default function ProcedureHub({ 
   state, 
@@ -13,12 +14,15 @@ export default function ProcedureHub({
   const [showPresets, setShowPresets] = useState(false);
 
   useEffect(() => {
-    try {
-      const recs = JSON.parse(localStorage.getItem('bg_os_procedure_records') || '[]');
-      setSavedRecords(recs);
-    } catch (e) {
-      setSavedRecords([]);
-    }
+    let isMounted = true;
+    procedureService.getReports()
+      .then(recs => {
+        if (isMounted && recs && recs.length > 0) {
+          setSavedRecords(recs);
+        }
+      })
+      .catch(() => {});
+    return () => { isMounted = false; };
   }, []);
 
   // Stats calculation

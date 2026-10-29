@@ -49,11 +49,17 @@
           <tr class="hover:bg-slate-50 transition">
             <td class="px-4 py-3 font-mono text-slate-500 font-semibold">{{this.order}}</td>
             <td class="px-4 py-3 font-semibold text-slate-900 max-w-xs truncate">
-              <div class="flex items-center gap-2">
-                <div class="w-7 h-7 rounded-md bg-blue-50 text-blue-600 border border-blue-200 flex items-center justify-center shrink-0">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+              <div class="flex items-center gap-2.5">
+                {{#if this.thumbnail_image}}
+                <img src="{{this.thumbnail_image}}" alt="{{this.title}}" class="w-8 h-8 rounded-md object-cover border border-slate-200 shrink-0" onerror="this.style.display='none'">
+                {{else if this.cover_image}}
+                <img src="{{this.cover_image}}" alt="{{this.title}}" class="w-8 h-8 rounded-md object-cover border border-slate-200 shrink-0" onerror="this.style.display='none'">
+                {{else}}
+                <div class="w-8 h-8 rounded-md bg-blue-50 text-blue-600 border border-blue-200 flex items-center justify-center shrink-0">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
                 </div>
-                <div>
+                {{/if}}
+                <div class="min-w-0">
                   <div class="font-bold text-slate-900 truncate">{{this.title}}</div>
                   <div class="text-[10px] text-slate-500 font-mono truncate">/services/{{this.slug}}/</div>
                 </div>
@@ -173,7 +179,16 @@
         </div>
       </div>
 
-      {{> file_uploader fieldId="srvCover" fieldName="cover_image" label="Service Hero Cover Image"}}
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          {{> file_uploader fieldId="srvThumb" fieldName="thumbnail_image" label="Card Thumbnail Image (Any Size - Card Preview)"}}
+          <p class="text-[10px] text-slate-400 mt-1">Upload any image size. Displays on homepage &amp; services grid cards.</p>
+        </div>
+        <div>
+          {{> file_uploader fieldId="srvCover" fieldName="cover_image" label="Detail Cover Hero Image (Explore Service Page)"}}
+          <p class="text-[10px] text-slate-400 mt-1">Detailed banner / hero image shown on the Explore Service page.</p>
+        </div>
+      </div>
 
       <div>
         <label class="block font-medium text-slate-700 mb-1">Icon Preset / SVG Code</label>
@@ -243,6 +258,9 @@
     document.getElementById('srvCategory').value = '';
     document.getElementById('srvStandard').value = '';
     previewImageUrl('', 'srvCover_preview_img', 'srvCover_placeholder');
+    if (document.getElementById('srvCover_url')) document.getElementById('srvCover_url').value = '';
+    previewImageUrl('', 'srvThumb_preview_img', 'srvThumb_placeholder');
+    if (document.getElementById('srvThumb_url')) document.getElementById('srvThumb_url').value = '';
     document.getElementById('srvIcon').value = 'icon-shield';
     document.getElementById('srvExcerpt').value = '';
     setRichTextData('srvFullContent', '');
@@ -272,6 +290,8 @@
     document.getElementById('srvStandard').value = item.standard_code || '';
     previewImageUrl(item.cover_image || '', 'srvCover_preview_img', 'srvCover_placeholder');
     if (document.getElementById('srvCover_url')) document.getElementById('srvCover_url').value = item.cover_image || '';
+    previewImageUrl(item.thumbnail_image || '', 'srvThumb_preview_img', 'srvThumb_placeholder');
+    if (document.getElementById('srvThumb_url')) document.getElementById('srvThumb_url').value = item.thumbnail_image || '';
     document.getElementById('srvIcon').value = item.icon_svg || 'icon-shield';
     document.getElementById('srvExcerpt').value = item.excerpt || '';
     setRichTextData('srvFullContent', item.full_content || item.description || '');

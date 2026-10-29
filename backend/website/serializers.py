@@ -77,13 +77,15 @@ class ServiceSerializer(serializers.ModelSerializer):
     category_name = serializers.CharField(source='category.name', read_only=True)
     category_slug = serializers.CharField(source='category.slug', read_only=True)
     cover_image = FlexibleImageField(required=False, allow_null=True)
+    thumbnail_image = FlexibleImageField(required=False, allow_null=True)
+    thumbnail_url = serializers.CharField(read_only=True)
 
     class Meta:
         model = Service
         fields = [
             'id', 'title', 'slug', 'category', 'category_name', 'category_slug',
-            'excerpt', 'description', 'cover_image', 'full_content', 'standard_code',
-            'icon_svg', 'is_featured', 'order'
+            'excerpt', 'description', 'cover_image', 'thumbnail_image', 'thumbnail_url',
+            'full_content', 'standard_code', 'icon_svg', 'is_featured', 'order'
         ]
 
 
@@ -127,10 +129,24 @@ class BlogPostDetailSerializer(serializers.ModelSerializer):
 
 class ProjectGallerySerializer(serializers.ModelSerializer):
     image = FlexibleImageField(required=False, allow_null=True)
+    standard = serializers.CharField(required=False, allow_blank=True, default='')
 
     class Meta:
         model = ProjectGallery
         fields = '__all__'
+
+    def to_internal_value(self, data):
+        data = data.copy() if hasattr(data, 'copy') else dict(data)
+        if 'standard_code' in data and not data.get('standard'):
+            data['standard'] = data.get('standard_code')
+        if not data.get('summary') and data.get('title'):
+            data['summary'] = data.get('title')
+        return super().to_internal_value(data)
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        ret['standard_code'] = instance.standard
+        return ret
 
 
 class BoardMemberSerializer(serializers.ModelSerializer):

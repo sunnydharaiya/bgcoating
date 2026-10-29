@@ -106,7 +106,7 @@ export default function TsaQualificationPage({
 
   // Sync sub-tool route with modals
   useEffect(() => {
-    if (currentSubTool === 'company-details' || currentSubTool === 'company_details') {
+    if (currentSubTool === 'company-details' || currentSubTool === 'company_details' || currentSubTool === 'company') {
       setIsCompanyModalOpen(true);
       setIsWatermarkModalOpen(false);
       setIsPreviewModalOpen(false);
@@ -114,7 +114,7 @@ export default function TsaQualificationPage({
       setIsWatermarkModalOpen(true);
       setIsCompanyModalOpen(false);
       setIsPreviewModalOpen(false);
-    } else if (currentSubTool === 'preview' || currentSubTool === 'report') {
+    } else if (currentSubTool === 'preview' || currentSubTool === 'report' || currentSubTool === 'print') {
       setIsPreviewModalOpen(true);
       setIsCompanyModalOpen(false);
       setIsWatermarkModalOpen(false);
@@ -445,6 +445,10 @@ export default function TsaQualificationPage({
           />
         );
       case 'project-info':
+      case 'project-operator':
+      case 'project_operator':
+      case 'project_info':
+      case 'info':
         return (
           <TsaProjectInfo
             formData={formData}
@@ -461,26 +465,65 @@ export default function TsaQualificationPage({
           />
         );
       case 's1':
-      case 's2':
-      case 's3':
-      case 's4':
+      case 'coat-stage-s1':
+      case 'coat_stage_s1':
         return (
           <TsaCoatStage
-            sid={currentSubTool}
+            sid="s1"
             formData={formData}
             onChange={handleFieldChange}
             onOpenTestCatalog={handleOpenTestCatalog}
             onSyncCoatingSystem={handleSyncCoatingSystem}
           />
         );
+      case 's2':
+      case 'coat-stage-s2':
+      case 'coat_stage_s2':
+        return (
+          <TsaCoatStage
+            sid="s2"
+            formData={formData}
+            onChange={handleFieldChange}
+            onOpenTestCatalog={handleOpenTestCatalog}
+            onSyncCoatingSystem={handleSyncCoatingSystem}
+          />
+        );
+      case 's3':
+      case 'coat-stage-s3':
+      case 'coat_stage_s3':
+        return (
+          <TsaCoatStage
+            sid="s3"
+            formData={formData}
+            onChange={handleFieldChange}
+            onOpenTestCatalog={handleOpenTestCatalog}
+            onSyncCoatingSystem={handleSyncCoatingSystem}
+          />
+        );
+      case 's4':
+      case 'coat-stage-s4':
+      case 'coat_stage_s4':
+        return (
+          <TsaCoatStage
+            sid="s4"
+            formData={formData}
+            onChange={handleFieldChange}
+            onOpenTestCatalog={handleOpenTestCatalog}
+            onSyncCoatingSystem={handleSyncCoatingSystem}
+          />
+        );
+      case 'photo':
       case 'photo-report':
+      case 'photo_report':
         return (
           <TsaPhotoReport
             formData={formData}
             onChange={handleFieldChange}
           />
         );
+      case 'verdict':
       case 'verdict-approval':
+      case 'verdict_approval':
         return (
           <TsaVerdictApproval
             formData={formData}
@@ -492,6 +535,7 @@ export default function TsaQualificationPage({
           />
         );
       case 'summary':
+      case 'preview':
         return (
           <TsaSummary
             formData={formData}
@@ -500,6 +544,10 @@ export default function TsaQualificationPage({
           />
         );
       case 'register':
+      case 'report-register':
+      case 'report_register':
+      case 'saved-reports':
+      case 'reports':
         return (
           <TsaRegister
             reports={reports}
