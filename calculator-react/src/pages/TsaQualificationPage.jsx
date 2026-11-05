@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useToast } from '../context/ToastContext';
 import { useGuideline } from '../context/GuidelineContext';
 import { 
-  INITIAL_TSA_STATE, 
+  INITIAL_TSA_STATE,
+  SAMPLE_TSA_RECORD,
   calcTsaEvaluation, 
   calcCoatDFT, 
   TSA_COATING_SYSTEM_DEFAULTS, 
@@ -28,6 +29,7 @@ import TsaApprovalModal from '../tools/tsa/TsaApprovalModal';
 import TsaCompanyModal from '../tools/tsa/TsaCompanyModal';
 import TsaWatermarkControl from '../tools/tsa/TsaWatermarkControl';
 import TsaPreviewModal from '../tools/tsa/TsaPreviewModal';
+import { brandingService } from '../services/brandingService';
 
 const DRAFT_KEY = 'bg_tsa_draft';
 const REPORTS_KEY = 'bgcoating.tsa.reports.v1';
@@ -63,38 +65,27 @@ export default function TsaQualificationPage({
     return [];
   });
 
-  // 3. Company Branding State
-  const [company, setCompany] = useState(() => {
-    try {
-      const saved = localStorage.getItem(COMPANY_KEY);
-      if (saved) return JSON.parse(saved);
-    } catch (e) {
-      console.error('Error loading TSA company:', e);
-    }
-    return {
-      name: 'BG Group of Paint & Coating Consultant',
-      tagline: 'TSA Operator Qualification Report — Twin Wire Arc / Thermal Spray — Technical Dossier',
-      email: 'support@bgcoating.com',
-      web: 'www.bgcoating.com',
-      phone: '+91 99258 10408',
-      logo: null
-    };
-  });
+  // 3. Company Branding State (dynamically synchronized via brandingService)
+  const [company, setCompany] = useState(() => brandingService.getCompanyProfile());
 
-  // 4. Watermark State
-  const [watermark, setWatermark] = useState(() => {
-    try {
-      const saved = localStorage.getItem(WATERMARK_KEY);
-      if (saved) return JSON.parse(saved);
-    } catch (e) {
-      console.error('Error loading TSA watermark:', e);
-    }
-    return {
-      enabled: true,
-      text: 'BG Group of Paint and Coating Consultant',
-      opacity: 6
+  // 4. Watermark State (dynamically synchronized via brandingService)
+  const [watermark, setWatermark] = useState(() => brandingService.getWatermarkSettings());
+
+  // Cross-module live sync for branding and watermark
+  useEffect(() => {
+    const handleComp = (e) => {
+      if (e.detail) setCompany(e.detail);
     };
-  });
+    const handleWm = (e) => {
+      if (e.detail) setWatermark(e.detail);
+    };
+    window.addEventListener('bg_company_profile_updated', handleComp);
+    window.addEventListener('bg_watermark_updated', handleWm);
+    return () => {
+      window.removeEventListener('bg_company_profile_updated', handleComp);
+      window.removeEventListener('bg_watermark_updated', handleWm);
+    };
+  }, []);
 
   // Modals state
   const [isCatalogModalOpen, setIsCatalogModalOpen] = useState(false);
@@ -205,6 +196,14 @@ export default function TsaQualificationPage({
     if (window.confirm('Reset current qualification draft to blank default state? All unsaved edits will be lost.')) {
       setFormData(JSON.parse(JSON.stringify(INITIAL_TSA_STATE)));
       addToast('Draft Reset', 'Form reset to blank initial state.', 'info');
+    }
+  };
+
+  // Handler: Load Sample/Benchmark Record
+  const handleLoadSampleRecord = () => {
+    if (window.confirm('Load QatarEnergy benchmark sample qualification record? Current unsaved edits will be replaced.')) {
+      setFormData(JSON.parse(JSON.stringify(SAMPLE_TSA_RECORD)));
+      addToast('Benchmark Record Loaded', 'Loaded QatarEnergy benchmark TSA qualification record.', 'success');
     }
   };
 
@@ -426,6 +425,8 @@ export default function TsaQualificationPage({
         navigateSub('register');
       } else if (action === 'reset') {
         handleResetDraft();
+      } else if (action === 'load-sample') {
+        handleLoadSampleRecord();
       }
     };
 
@@ -572,6 +573,7 @@ export default function TsaQualificationPage({
               setFormData(JSON.parse(JSON.stringify(INITIAL_TSA_STATE)));
               navigateSub('project-info');
             }}
+            onLoadSampleRecord={handleLoadSampleRecord}
             onOpenPreview={() => setIsPreviewModalOpen(true)}
             onOpenPrint={() => window.print()}
           />
@@ -590,6 +592,7 @@ export default function TsaQualificationPage({
           currentSubTool={currentSubTool}
           onNavigate={navigateSub}
           onResetDraft={handleResetDraft}
+          onLoadSampleRecord={handleLoadSampleRecord}
           onOpenPreview={() => setIsPreviewModalOpen(true)}
           onOpenGuideline={handleOpenGuideline}
         />
@@ -625,7 +628,11 @@ export default function TsaQualificationPage({
           if (currentSubTool === 'company-details') navigateSub('hub');
         }}
         company={company}
-        onChange={(field, val) => setCompany(prev => ({ ...prev, [field]: val }))}
+        onChange={(field, val) => {
+          const updated = { ...company, [field]: val };
+          setCompany(updated);
+          brandingService.saveCompanyProfile(updated);
+        }}
       />
 
       {/* Watermark Control Modal */}
@@ -636,7 +643,11 @@ export default function TsaQualificationPage({
           if (currentSubTool === 'watermark') navigateSub('hub');
         }}
         watermark={watermark}
-        onChange={(field, val) => setWatermark(prev => ({ ...prev, [field]: val }))}
+        onChange={(field, val) => {
+          const updated = { ...watermark, [field]: val };
+          setWatermark(updated);
+          brandingService.saveWatermarkSettings(updated);
+        }}
       />
 
       {/* A4 Print Dossier Preview Modal */}

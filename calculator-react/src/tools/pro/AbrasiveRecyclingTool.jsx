@@ -30,22 +30,22 @@ export default function AbrasiveRecyclingTool() {
   const { openGuideline } = useGuideline();
 
   // A · Project Info
-  const [proj, setProj] = useState('Blast Room #2 Weekly Review');
-  const [cli, setCli] = useState('L&T Heavy Engineering');
-  const [str, setStr] = useState('Pressure Vessel V-301');
+  const [proj, setProj] = useState('');
+  const [cli, setCli] = useState('');
+  const [str, setStr] = useState('');
 
   // B · Abrasive Details
   const [type, setType] = useState('Steel Grit');
-  const [cycles, setCycles] = useState('25');
+  const [cycles, setCycles] = useState('');
 
   // C · Operating Inputs
-  const [fresh, setFresh] = useState('2000');
-  const [recov, setRecov] = useState('1850');
-  const [waste, setWaste] = useState('0');
-  const [dust, setDust] = useState('0');
-  const [rej, setRej] = useState('3');
-  const [cost, setCost] = useState('45');
-  const [area, setArea] = useState('500');
+  const [fresh, setFresh] = useState('');
+  const [recov, setRecov] = useState('');
+  const [waste, setWaste] = useState('');
+  const [dust, setDust] = useState('');
+  const [rej, setRej] = useState('');
+  const [cost, setCost] = useState('');
+  const [area, setArea] = useState('');
 
   const [res, setRes] = useState(null);
 
@@ -201,14 +201,14 @@ export default function AbrasiveRecyclingTool() {
     setCli('');
     setStr('');
     setType('Steel Grit');
-    setCycles('25');
-    setFresh('2000');
-    setRecov('1850');
-    setWaste('0');
-    setDust('0');
-    setRej('3');
-    setCost('45');
-    setArea('500');
+    setCycles('');
+    setFresh('');
+    setRecov('');
+    setWaste('');
+    setDust('');
+    setRej('');
+    setCost('');
+    setArea('');
     setRes(null);
     addToast('Form Reset', 'Parameters cleared.', 'info');
   };

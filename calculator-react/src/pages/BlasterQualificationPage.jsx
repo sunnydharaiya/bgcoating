@@ -20,9 +20,11 @@ import { useToast } from '../context/ToastContext';
 import { useGuideline } from '../context/GuidelineContext';
 import {
   INITIAL_BLASTER_STATE,
+  SAMPLE_BLASTER_RECORD,
   calculateBlasterQualification
 } from '../data/blasterDatabase';
 import { blasterService } from '../services/blasterService';
+import { brandingService } from '../services/brandingService';
 
 // Sub-Tool Components
 import BlasterFreezeBar from '../tools/blaster/BlasterFreezeBar';
@@ -76,49 +78,27 @@ export default function BlasterQualificationPage({
     }
   });
 
-  // Company Branding settings
-  const [company, setCompany] = useState(() => {
-    try {
-      const saved = localStorage.getItem(COMPANY_KEY);
-      return saved
-        ? JSON.parse(saved)
-        : {
-            name: 'BG INDUSTRIAL COATINGS W.L.L.',
-            division: 'Quality Assurance & Technical Services',
-            contact: 'ISO 9001:2015 · ISO 14001:2015 · ISO 45001:2018 Certified',
-            logo: ''
-          };
-    } catch {
-      return {
-        name: 'BG INDUSTRIAL COATINGS W.L.L.',
-        division: 'Quality Assurance & Technical Services',
-        contact: 'ISO 9001:2015 · ISO 14001:2015 · ISO 45001:2018 Certified',
-        logo: ''
-      };
-    }
-  });
+  // Company Branding settings (dynamically synchronized via brandingService)
+  const [company, setCompany] = useState(() => brandingService.getCompanyProfile());
 
-  // Watermark settings
-  const [watermark, setWatermark] = useState(() => {
-    try {
-      const saved = localStorage.getItem(WATERMARK_KEY);
-      return saved
-        ? JSON.parse(saved)
-        : {
-            enabled: true,
-            text: 'OFFICIAL QUALIFICATION DOSSIER',
-            opacity: 0.08,
-            angle: -30
-          };
-    } catch {
-      return {
-        enabled: true,
-        text: 'OFFICIAL QUALIFICATION DOSSIER',
-        opacity: 0.08,
-        angle: -30
-      };
-    }
-  });
+  // Watermark settings (dynamically synchronized via brandingService)
+  const [watermark, setWatermark] = useState(() => brandingService.getWatermarkSettings());
+
+  // Cross-module live sync for branding and watermark
+  useEffect(() => {
+    const handleComp = (e) => {
+      if (e.detail) setCompany(e.detail);
+    };
+    const handleWm = (e) => {
+      if (e.detail) setWatermark(e.detail);
+    };
+    window.addEventListener('bg_company_profile_updated', handleComp);
+    window.addEventListener('bg_watermark_updated', handleWm);
+    return () => {
+      window.removeEventListener('bg_company_profile_updated', handleComp);
+      window.removeEventListener('bg_watermark_updated', handleWm);
+    };
+  }, []);
 
   // Modal visibility states & Preview Record
   const [isCatalogOpen, setIsCatalogOpen] = useState(false);
@@ -384,25 +364,17 @@ export default function BlasterQualificationPage({
   const handleLoadSampleRecord = async () => {
     try {
       const sampleRecord = {
-        ...INITIAL_BLASTER_STATE,
+        ...SAMPLE_BLASTER_RECORD,
         repNo: 'BL-QR-2026-RAJESH-001',
-        projectName: 'NFS Qatar Gas Complex Expansion',
-        projectNo: 'NFS-Q-2026',
-        client: 'QatarEnergy LNG',
-        epcContractor: 'Chiyoda Technip Joint Venture (CTJV)',
-        contractor: 'BG Industrial Coatings & Corrosion Protection W.L.L.',
-        operatorName: 'Rajesh M. Patel',
-        civilId: '284051209341',
-        category: 'Blaster',
-        qualificationCardNo: 'BG-QC-BL-2026-084',
         status: 'Approved',
         verdict: 'PASS',
         overallScore: 94.5
       };
       const sampleMetrics = calculateBlasterQualification(sampleRecord);
       await blasterService.saveReport(sampleRecord, 'Approved', sampleMetrics);
+      setState(sampleRecord);
       await fetchReports();
-      addToast('✓ Standard QatarEnergy / CTJV Qualification Dossier loaded into register!', 'success');
+      addToast('✓ Standard QatarEnergy / CTJV Qualification Dossier loaded!', 'success');
     } catch (e) {
       addToast('Failed to load sample qualification record.', 'error');
     }
@@ -560,7 +532,15 @@ export default function BlasterQualificationPage({
 
         {/* Dynamic Tool Routing */}
         <main className="transition-all">
-          {currentSubTool === 'hub' && (
+          {(!currentSubTool || currentSubTool === 'hub' || ![
+            'dashboard', 'info', 'project-operator', 'project_operator', 'project-info', 'project_info',
+            'train', 'training-test', 'training_test',
+            'checklist', 'blasting', 'blasting-process', 'blasting_process', 'process',
+            'photo', 'photo-report', 'photo_report',
+            'verdict', 'verdict-approval', 'verdict_approval',
+            'summary', 'preview',
+            'register', 'report-register', 'report_register', 'saved-reports', 'reports'
+          ].includes(currentSubTool)) && (
             <BlasterHub
               state={state}
               metrics={metrics}
@@ -696,7 +676,11 @@ export default function BlasterQualificationPage({
           }
         }}
         company={company}
-        onChange={(field, val) => setCompany((prev) => ({ ...prev, [field]: val }))}
+        onChange={(field, val) => {
+          const updated = { ...company, [field]: val };
+          setCompany(updated);
+          brandingService.saveCompanyProfile(updated);
+        }}
       />
 
       <BlasterWatermarkControl
@@ -708,7 +692,11 @@ export default function BlasterQualificationPage({
           }
         }}
         watermark={watermark}
-        onChange={(field, val) => setWatermark((prev) => ({ ...prev, [field]: val }))}
+        onChange={(field, val) => {
+          const updated = { ...watermark, [field]: val };
+          setWatermark(updated);
+          brandingService.saveWatermarkSettings(updated);
+        }}
       />
 
       <BlasterPreviewModal

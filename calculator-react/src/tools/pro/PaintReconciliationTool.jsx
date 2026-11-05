@@ -25,25 +25,25 @@ export default function PaintReconciliationTool() {
   const { openGuideline } = useGuideline();
 
   // A · Project Info
-  const [proj, setProj] = useState('Tank Farm T-101 External');
-  const [client, setClient] = useState('IOCL');
-  const [contractor, setContractor] = useState('ABC Coatings Pvt Ltd');
-  const [mfr, setMfr] = useState('Jotun / AkzoNobel');
-  const [prod, setProd] = useState('Epoxy MIO Intermediate');
-  const [coatNo, setCoatNo] = useState('2nd Coat');
+  const [proj, setProj] = useState('');
+  const [client, setClient] = useState('');
+  const [contractor, setContractor] = useState('');
+  const [mfr, setMfr] = useState('');
+  const [prod, setProd] = useState('');
+  const [coatNo, setCoatNo] = useState('');
   const [reportDate, setReportDate] = useState(new Date().toISOString().split('T')[0]);
 
   // B · Surface & Specification
-  const [area, setArea] = useState('2500');
-  const [dft, setDft] = useState('125');
-  const [vs, setVs] = useState('70');
+  const [area, setArea] = useState('');
+  const [dft, setDft] = useState('');
+  const [vs, setVs] = useState('');
   const [loss, setLoss] = useState('15');
   const [coats, setCoats] = useState('1');
 
   // C · Material Issue Details
-  const [openStock, setOpenStock] = useState('100');
-  const [received, setReceived] = useState('400');
-  const [issued, setIssued] = useState('450');
+  const [openStock, setOpenStock] = useState('');
+  const [received, setReceived] = useState('');
+  const [issued, setIssued] = useState('');
   const [returned, setReturned] = useState('0');
   const [unused, setUnused] = useState('0');
   const [rejected, setRejected] = useState('0');
@@ -51,8 +51,8 @@ export default function PaintReconciliationTool() {
   const [thinner, setThinner] = useState('0');
 
   // D · Density & Cost
-  const [density, setDensity] = useState('1.45');
-  const [cost, setCost] = useState('650');
+  const [density, setDensity] = useState('');
+  const [cost, setCost] = useState('');
 
   const [res, setRes] = useState(null);
 

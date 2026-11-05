@@ -4049,7 +4049,7 @@ display:flex;gap:6px;flex-wrap:wrap;
   margin-bottom: 28px !important;
   font-family: 'Inter', sans-serif !important;
   box-sizing: border-box !important;
-  display: none;
+  display: block !important;
 }
 
 .sheet.act {

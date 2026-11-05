@@ -23,50 +23,41 @@ export const INSPECTION_STORAGE_KEY = 'bg_os_inspection_reports_register';
 
 export default function InspectionReportRegister({
   currentState,
+  reports: propReports,
   onLoadReport,
-  onOpenPreview
+  onOpenPreview,
+  onViewReport,
+  onSaveActiveReport,
+  onDeleteReport,
+  onDuplicateReport,
+  onExportCSV
 }) {
   const { addToast } = useToast();
-  const [reports, setReports] = useState([]);
+  const [localReports, setLocalReports] = useState(() => {
+    try {
+      const raw = localStorage.getItem(INSPECTION_STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const reports = propReports && propReports.length > 0 ? propReports : localReports;
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
 
-  // Load registered reports from localStorage on mount
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(INSPECTION_STORAGE_KEY);
-      if (raw) {
-        setReports(JSON.parse(raw));
-      } else {
-        // Seed with starter sample inspection if empty
-        const initial = [
-          {
-            id: 'CIR-BG-2026-0841',
-            date: '2026-08-29',
-            projectNo: 'PRJ-2026-MUNDRA-T104',
-            projectName: 'Mundra LNG Storage Tank T-104 External Protection',
-            customer: 'Adani Total LNG / IOCL',
-            inspector: 'Prakash Ramavat',
-            status: 'Approved',
-            savedAt: new Date().toISOString(),
-            data: currentState
-          }
-        ];
-        setReports(initial);
-        localStorage.setItem(INSPECTION_STORAGE_KEY, JSON.stringify(initial));
-      }
-    } catch (err) {
-      console.error('Error loading inspection register:', err);
-    }
-  }, []);
-
   const saveToStorage = (updated) => {
-    setReports(updated);
+    setLocalReports(updated);
     localStorage.setItem(INSPECTION_STORAGE_KEY, JSON.stringify(updated));
   };
 
   // Save current workspace as new report
   const handleSaveCurrentWorkspace = () => {
+    if (onSaveActiveReport) {
+      onSaveActiveReport();
+      return;
+    }
+
     const reportNo = currentState.reportNo || currentState.stages?.s1?.reportNo || `CIR-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
     const projectName = currentState.projectName || currentState.stages?.s1?.projectName || 'Industrial Coating Project';
     const customer = currentState.customer || currentState.stages?.s1?.customer || 'Client QC Department';
@@ -89,22 +80,32 @@ export default function InspectionReportRegister({
     addToast('Inspection Registered', `Report ${newEntry.id} saved to persistent register.`, 'success');
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = (r) => {
+    const id = r.id || r.reportNo;
+    if (onDeleteReport) {
+      onDeleteReport(id, r.backendId);
+      return;
+    }
     if (window.confirm(`Delete inspection record ${id} from register?`)) {
-      const next = reports.filter(r => r.id !== id);
+      const next = localReports.filter(item => (item.id || item.reportNo) !== id);
       saveToStorage(next);
       addToast('Report Deleted', `Record ${id} removed.`, 'info');
     }
   };
 
   const handleDuplicate = (report) => {
-    const dupId = `${report.id}-COPY`;
+    if (onDuplicateReport) {
+      onDuplicateReport(report);
+      return;
+    }
+    const dupId = `${report.id || report.reportNo}-COPY`;
     const dup = {
       ...report,
       id: dupId,
+      reportNo: dupId,
       savedAt: new Date().toISOString()
     };
-    const next = [dup, ...reports];
+    const next = [dup, ...localReports];
     saveToStorage(next);
     addToast('Report Duplicated', `Created duplicate record ${dupId}.`, 'success');
   };
@@ -305,8 +306,12 @@ export default function InspectionReportRegister({
                     </button>
                     <button
                       onClick={() => {
-                        handleLoad(r);
-                        onOpenPreview();
+                        if (onViewReport) {
+                          onViewReport(r);
+                        } else {
+                          handleLoad(r);
+                          onOpenPreview();
+                        }
                       }}
                       className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer"
                       title="Preview Dossier"
@@ -321,7 +326,7 @@ export default function InspectionReportRegister({
                       <Copy className="w-3.5 h-3.5" />
                     </button>
                     <button
-                      onClick={() => handleDelete(r.id)}
+                      onClick={() => handleDelete(r)}
                       className="p-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 transition cursor-pointer"
                       title="Delete"
                     >

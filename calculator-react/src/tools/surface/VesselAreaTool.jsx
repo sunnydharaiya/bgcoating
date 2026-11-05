@@ -5,17 +5,17 @@ import { autoLogCalculation } from '../../services/calculatorService';
 
 export default function VesselAreaTool() {
   const { addToast } = useToast();
-  const [shellLen, setShellLen] = useState('30');
-  const [shellDia, setShellDia] = useState('4.9');
-  const [shellThk, setShellThk] = useState('75');
+  const [shellLen, setShellLen] = useState('');
+  const [shellDia, setShellDia] = useState('');
+  const [shellThk, setShellThk] = useState('');
   const [qty, setQty] = useState('1');
-  const [skirtLen, setSkirtLen] = useState('10');
-  const [skirtDia, setSkirtDia] = useState('5');
-  const [skirtThk, setSkirtThk] = useState('25');
-  const [extraExt, setExtraExt] = useState('10');
-  const [extraInt, setExtraInt] = useState('15');
-  const [extraSkirt, setExtraSkirt] = useState('15');
-  const [itemName, setItemName] = useState('Reactor Vessel');
+  const [skirtLen, setSkirtLen] = useState('');
+  const [skirtDia, setSkirtDia] = useState('');
+  const [skirtThk, setSkirtThk] = useState('');
+  const [extraExt, setExtraExt] = useState('');
+  const [extraInt, setExtraInt] = useState('');
+  const [extraSkirt, setExtraSkirt] = useState('');
+  const [itemName, setItemName] = useState('');
 
   const [calculated, setCalculated] = useState(false);
   const [res, setRes] = useState(null);

@@ -46,7 +46,7 @@ export default function PainterChecklist({
   };
 
   return (
-    <div className="sheet" id="sh-checklist">
+    <div className="sheet act" id="sh-checklist">
       <div className="xl-corp">
         <div className="xl-corp-inner">
           <div className="xl-corp-l">BG Group of Paint &amp; Coating Consultant</div>

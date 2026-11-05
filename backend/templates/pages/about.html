@@ -122,16 +122,7 @@
 </section>
 
 <!-- ======================= STATS ======================= -->
-<section class="stats grid-bg">
-  <div class="wrap">
-    <div class="stats-grid">
-      <div class="stat glass rv"><div class="n"><span data-count="22">0</span><em>+</em></div><div class="l">Years Hands-On Experience</div></div>
-      <div class="stat glass rv rv-d1"><div class="n"><span data-count="5355">0</span><em>+</em></div><div class="l">Enquiries Served</div></div>
-      <div class="stat glass rv rv-d2"><div class="n"><span data-count="37617">0</span><em>+</em></div><div class="l">Unique Platform Visitors</div></div>
-      <div class="stat glass rv rv-d3"><div class="n"><span data-count="12">0</span></div><div class="l">Specialized Service Verticals</div></div>
-    </div>
-  </div>
-</section>
+{% include 'includes/stats_grid.html' %}
 
 <!-- ======================= WHY BG GROUP ======================= -->
 <section class="section-light grid-bg" id="why-bg">
@@ -150,7 +141,6 @@
             <path data-draw="" style="--len:34" d="M8.5 12.5 11 15l4.5-5"></path></svg></div>
           <h3>Industry <em>Experience</em></h3>
           <p><strong style="color:#0E1726">22+ years</strong> of hands-on refinery, oil &amp; gas and field coating work — we have stood exactly where your applicators stand.</p>
-          <span class="r-go">Proven In The Field <span class="arr">→</span></span>
         </div>
       </article>
 
@@ -163,7 +153,6 @@
             <circle data-pulse="" cx="17.5" cy="7" r="1.3" fill="currentColor" stroke="none"></circle></svg></div>
           <h3>Digital <em>Innovation</em></h3>
           <p>Coating calculators, digital business modules, dashboards and <strong style="color:#0E1726">IoT booths</strong> — a genuine industrial digital platform.</p>
-          <span class="r-go">Engineering + AI <span class="arr">→</span></span>
         </div>
       </article>
 
@@ -174,7 +163,6 @@
             <g data-spin=""><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"></path></g></svg></div>
           <h3>Global <em>Standards</em></h3>
           <p>Procedures and specifications aligned to <strong style="color:#0E1726">ISO 12944, NACE, AMPP, SSPC</strong> and ASTM international frameworks.</p>
-          <span class="r-go">Standards-Aligned <span class="arr">→</span></span>
         </div>
       </article>
 
@@ -187,7 +175,6 @@
             <path data-float="" d="m17 3 4 4"></path></svg></div>
           <h3>Engineering <em>Excellence</em></h3>
           <p>Coating procedures, SOPs and specifications engineered for <strong style="color:#0E1726">precision, repeatability</strong> and audit-ready documentation.</p>
-          <span class="r-go">Precision By Design <span class="arr">→</span></span>
         </div>
       </article>
 
@@ -200,7 +187,6 @@
             <circle cx="12" cy="18" r="1.6" fill="currentColor" stroke="none"></circle></svg></div>
           <h3>Productivity <em>Focus</em></h3>
           <p>Expedite-and-optimize consultancy that <strong style="color:#0E1726">compresses schedule and cost</strong> without compromising quality or safety.</p>
-          <span class="r-go">Faster, Not Riskier <span class="arr">→</span></span>
         </div>
       </article>
 
@@ -212,7 +198,6 @@
             <path d="M9 8V6a3 3 0 0 1 6 0v2"></path><path data-pulse="" d="M12 12v4M10 14h4"></path></svg></div>
           <h3>Practical <em>Knowledge</em></h3>
           <p>From <strong style="color:#0E1726">pickling &amp; passivation to TSA and PFP</strong> — knowledge proven on live assets, not just in manuals.</p>
-          <span class="r-go">Hands-On, Always <span class="arr">→</span></span>
         </div>
       </article>
 
@@ -248,7 +233,7 @@
     <div class="ind-split">
       <div class="ind-media media-glass rv">
         <!-- CANVA AI IMAGE — inspector visual; falls back to live-site photo -->
-        <img class="sectors-media" loading="lazy" src="{% static 'assets/images/about-industrial-sectors.webp' %}" onerror="this.style.display='none'" alt="Industrial sectors BG Group protects — oil &amp; gas, offshore, refinery, marine, power, bridges, renewables and fabrication">
+        <img class="sectors-media" loading="lazy" src="{% static 'assets/images/consultant-inspection-refinery.webp' %}" onerror="this.src='{% static 'assets/images/R2_1_Refinery_Vessel.jpg' %}';" alt="Industrial sectors BG Group protects ? refinery, oil &amp; gas, offshore, marine, power, bridges, renewables and heavy engineering">
         <span class="frame-ov"></span>
         <span class="anno"><i></i>DFT · Salt Test · Holiday Detection</span>
       </div>
@@ -400,104 +385,10 @@
   </div>
 </section>
 
-<!-- ======================= TESTIMONIALS ======================= -->
-<section class="testi grid-bg" id="testimonials">
-  <div class="wrap">
-    <div class="section-head rv">
-      <p class="eyebrow">Testimonials</p>
-      <h2 class="h-section">What Clients Say</h2>
-      <p class="lead">Verified feedback from inspectors, project managers and industry leaders who work with us.</p>
-    </div>
-    <div class="testi-viewport rv">
-      <div class="testi-track" id="testiTrack">
+<!-- ======================= TESTIMONIALS (GOOGLE REVIEWS) ======================= -->
+{% include 'includes/testimonials_section.html' with testimonials_eyebrow="Testimonials" testimonials_title="What Clients Say" testimonials_desc="Verified feedback from inspectors, project managers and industry leaders who work with us." %}
 
-        <article class="tcard glass">
-          <span class="stars" aria-label="5 star rating">★★★★★</span>
-          <p class="quote">Experienced team of professionals with an "On Time In Full" approach towards customers. Keep it up!</p>
-          <div class="who"><img loading="lazy" src="{% static 'assets/images/Nirav_Lad___Image.png' %}" alt=""><span><b>Nirav Lad</b><small>GM · Google Review</small></span></div>
-        </article>
-
-        <article class="tcard glass">
-          <span class="stars" aria-label="5 star rating">★★★★★</span>
-          <p class="quote">M/s BG Group of Paint and Coating Consultants excels in professionalism and efficiency. Their quick response and genuine commitment to resolving issues swiftly sets them apart. Without hesitation, I rate them 5/5.</p>
-          <div class="who"><img loading="lazy" src="{% static 'assets/images/Ankit_Solanki.png' %}" alt=""><span><b>Ankit Solanti</b><small>Coating Inspector</small></span></div>
-        </article>
-
-        <article class="tcard glass">
-          <span class="stars" aria-label="5 star rating">★★★★★</span>
-          <p class="quote">Good and informative team with widely experienced personnel. Problem solving with technical knowledge discussion and the right methods of industrial coating and application.</p>
-          <div class="who"><img loading="lazy" src="{% static 'assets/images/Vimal_Harley.png' %}" alt=""><span><b>Vimal Harley</b><small>Aramco Coating Inspector</small></span></div>
-        </article>
-
-        <article class="tcard glass">
-          <span class="stars" aria-label="5 star rating">★★★★★</span>
-          <p class="quote">Provide the best surface treatment, sandblasting, blasting and painting services. Their expert coating team guides us continuously — including pickling and passivation for stainless steel projects.</p>
-          <div class="who"><img loading="lazy" src="{% static 'assets/images/unnamed.png' %}" alt=""><span><b>Shailesh Patel</b><small>Technical Maintenance Expert</small></span></div>
-        </article>
-
-        <article class="tcard glass">
-          <span class="stars" aria-label="5 star rating">★★★★★</span>
-          <p class="quote">Excellent knowledge and vast experience is the advantage we get when working with BG Group. Thanks for your service.</p>
-          <div class="who"><img loading="lazy" src="{% static 'assets/images/Jotesh.jpeg' %}" alt=""><span><b>Jotesh Chakravarthy</b><small>Deputy Manager</small></span></div>
-        </article>
-
-        <article class="tcard glass">
-          <span class="stars" aria-label="5 star rating">★★★★★</span>
-          <p class="quote">Excellent service. Very knowledgeable in the subject and gives practical and cost-effective solutions.</p>
-          <div class="who"><img loading="lazy" src="{% static 'assets/images/Sandip_Ayachit.png' %}" alt=""><span><b>Sandip Ayachit</b><small>JGM</small></span></div>
-        </article>
-
-        <article class="tcard glass">
-          <span class="stars" aria-label="5 star rating">★★★★★</span>
-          <p class="quote">Excellent experience concluding our project painting activities smoothly, exactly according to the project-specific requirements.</p>
-          <div class="who"><img loading="lazy" src="{% static 'assets/images/Gopal_Krishna.png' %}" alt=""><span><b>Gopal Krishna</b><small>Project Manager</small></span></div>
-        </article>
-
-        <article class="tcard glass">
-          <span class="stars" aria-label="5 star rating">★★★★★</span>
-          <p class="quote">Excellent work, good service and smooth coordination. Adequate and excellent technical performance.</p>
-          <div class="who"><img loading="lazy" src="{% static 'assets/images/Prakash_Ramavat.jpeg' %}" alt=""><span><b>Prakash Ramawat</b><small>QA / QC Head</small></span></div>
-        </article>
-
-        <article class="tcard glass">
-          <span class="stars" aria-label="5 star rating">★★★★★</span>
-          <p class="quote">Honest and professional team, where you can trust that you will get proper service.</p>
-          <div class="who"><img loading="lazy" src="{% static 'assets/images/Swaroop___Image.png' %}" alt=""><span><b>Swaroop Daiya</b><small>Co-Founder · Google Review</small></span></div>
-        </article>
-
-      </div>
-    </div>
-    <div class="testi-nav">
-      <button class="tbtn" id="tPrev" aria-label="Previous testimonials">←</button>
-      <button class="tbtn" id="tNext" aria-label="Next testimonials">→</button>
-    </div>
-  </div>
-</section>
 <!-- ======================= CTA BAND ======================= -->
-<section class="cta-band">
-  <div class="wrap">
-    <div class="cta-inner rv">
-      <div>
-        <p class="eyebrow">Start a Conversation</p>
-        <h2 class="h-section" style="margin:1rem 0">Your Assets Deserve <span style="background:var(--grad-accent);-webkit-background-clip:text;background-clip:text;color:transparent">Expert Protection.</span></h2>
-        <p class="lead">From a single inspection to a full digital coating program — talk to a consultant with 22+ years of hands-on refinery and oil &amp; gas experience.</p>
-      </div>
-      <div class="cta-actions">
-        <a class="cta-phone" href="tel:{{ site_settings.phone_number|default:'+919925810408' }}">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-          +91-99258-10408
-        </a>
-        <a class="btn btn-primary" href="{% url 'contact' %}#enquiry" data-anchor="enquiry">Request a Consultation <span class="arr">→</span></a>
-        <a class="btn btn-ghost" href="https://wa.me/{{ site_settings.whatsapp_number|default:'919925810408' }}" target="_blank" rel="noopener">WhatsApp Us</a>
-      </div>
-    </div>
-  </div>
-</section>
+{% include 'includes/cta_band.html' %}
 
-
-
-</section>
-
-
-</main>
 {% endblock %}

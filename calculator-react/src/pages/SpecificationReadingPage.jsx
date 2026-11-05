@@ -29,6 +29,7 @@ import SpecWatermarkControl, { DEFAULT_WATERMARK } from '../tools/spec/SpecWater
 import SpecPreviewModal from '../tools/spec/SpecPreviewModal';
 import SpecReportView from '../tools/spec/SpecReportView';
 import { specificationService } from '../services/specificationService';
+import { brandingService } from '../services/brandingService';
 
 const STORAGE_KEY = 'bg_os_spec_reading_draft';
 const REGISTER_STORAGE_KEY = 'bg_os_spec_reports_register';
@@ -111,9 +112,25 @@ export default function SpecificationReadingPage({ activeSubSection, onNavigateS
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
   const [validationModalOpen, setValidationModalOpen] = useState(false);
 
-  // Configuration state
-  const [companyProfile, setCompanyProfile] = useState(DEFAULT_BG_COMPANY);
-  const [watermarkSettings, setWatermarkSettings] = useState(DEFAULT_WATERMARK);
+  // Configuration state (dynamically synchronized via brandingService)
+  const [companyProfile, setCompanyProfile] = useState(() => brandingService.getCompanyProfile());
+  const [watermarkSettings, setWatermarkSettings] = useState(() => brandingService.getWatermarkSettings());
+
+  // Cross-module live sync for branding and watermark
+  useEffect(() => {
+    const handleComp = (e) => {
+      if (e.detail) setCompanyProfile(e.detail);
+    };
+    const handleWm = (e) => {
+      if (e.detail) setWatermarkSettings(e.detail);
+    };
+    window.addEventListener('bg_company_profile_updated', handleComp);
+    window.addEventListener('bg_watermark_updated', handleWm);
+    return () => {
+      window.removeEventListener('bg_company_profile_updated', handleComp);
+      window.removeEventListener('bg_watermark_updated', handleWm);
+    };
+  }, []);
 
   // 1. Project Info & Scope State (Sections A & B)
   const [projectData, setProjectData] = useState({
@@ -1530,7 +1547,10 @@ export default function SpecificationReadingPage({ activeSubSection, onNavigateS
         </div>
         <SpecWatermarkControl
           watermarkSettings={watermarkSettings}
-          setWatermarkSettings={setWatermarkSettings}
+          setWatermarkSettings={(wm) => {
+            setWatermarkSettings(wm);
+            brandingService.saveWatermarkSettings(wm);
+          }}
         />
       </div>
     )}
@@ -3648,7 +3668,10 @@ export default function SpecificationReadingPage({ activeSubSection, onNavigateS
           isOpen={companyModalOpen}
           onClose={() => setCompanyModalOpen(false)}
           companyProfile={companyProfile}
-          setCompanyProfile={setCompanyProfile}
+          setCompanyProfile={(prof) => {
+            setCompanyProfile(prof);
+            brandingService.saveCompanyProfile(prof);
+          }}
         />
       )}
 

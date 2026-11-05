@@ -26,6 +26,7 @@ import { unitRateService } from './services/unitRateService';
 import { manpowerService } from './services/manpowerService';
 import { blasterService } from './services/blasterService';
 import { painterService } from './services/painterService';
+import { inspectionService } from './services/inspectionService';
 
 // Context Providers
 import { ToastProvider } from './context/ToastContext';
@@ -136,6 +137,7 @@ export default function App() {
     manpowerService.syncGuestPlansAfterLogin().catch(() => {});
     blasterService.syncGuestReportsAfterLogin().catch(() => {});
     painterService.syncGuestReportsAfterLogin().catch(() => {});
+    inspectionService.syncGuestReportsAfterLogin().catch(() => {});
     if (activePage === 'login') {
       navigate('dashboard', 'hub');
     }

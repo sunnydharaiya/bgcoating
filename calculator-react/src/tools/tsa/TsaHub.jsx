@@ -17,6 +17,7 @@ export default function TsaHub({
   onNavigate,
   onApplyPreset,
   onNewGeneration,
+  onLoadSampleRecord,
   onOpenPreview,
   onOpenPrint
 }) {
@@ -83,8 +84,8 @@ export default function TsaHub({
           </div>
         </div>
 
-        {/* CTA Button */}
-        <div className="mt-6 flex flex-col items-center">
+        {/* CTA Buttons */}
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
           <button
             onClick={handleStartNew}
             className="bg-gradient-to-r from-[#F7941D] to-[#E8700A] hover:from-[#E8700A] hover:to-[#D97706] text-white font-extrabold text-xs md:text-sm px-8 py-3 rounded-full shadow-[0_4px_16px_rgba(247,148,29,0.35)] flex items-center justify-center gap-2 transition hover:scale-[1.02] cursor-pointer"
@@ -92,10 +93,19 @@ export default function TsaHub({
             <Rocket className="w-4 h-4 fill-white text-white" />
             <span className="tracking-wide uppercase font-mono">NEW GENERATION</span>
           </button>
-          <span className="text-[11px] text-[#A37B69] mt-2.5">
-            Start a new qualification — all sheets open for guided data entry
-          </span>
+          {onLoadSampleRecord && (
+            <button
+              onClick={onLoadSampleRecord}
+              className="bg-white/10 hover:bg-white/20 text-white font-bold text-xs md:text-sm px-6 py-3 rounded-full border border-white/20 flex items-center justify-center gap-2 transition hover:scale-[1.02] cursor-pointer"
+            >
+              <Award className="w-4 h-4 text-[#F7941D]" />
+              <span className="tracking-wide uppercase font-mono">LOAD BENCHMARK</span>
+            </button>
+          )}
         </div>
+        <span className="text-[11px] text-[#A37B69] mt-2.5 block">
+          Start a new blank qualification or load QatarEnergy benchmark demo data
+        </span>
 
       </div>
 

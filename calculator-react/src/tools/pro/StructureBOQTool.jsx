@@ -10,33 +10,33 @@ export default function StructureBOQTool() {
   const { openGuideline } = useGuideline();
 
   // A · Project Info
-  const [proj, setProj] = useState('Boiler Structure Unit-2');
-  const [cli, setCli] = useState('Thermax');
-  const [str, setStr] = useState('Main Pipe Rack');
-  const [dwg, setDwg] = useState('STR-101 Rev 2');
+  const [proj, setProj] = useState('');
+  const [cli, setCli] = useState('');
+  const [str, setStr] = useState('');
+  const [dwg, setDwg] = useState('');
 
   // B · Section Selection
   const [secType, setSecType] = useState('SHS');
   const [secSize, setSecSize] = useState('100 × 100 × 5.0');
-  const [pipeOd, setPipeOd] = useState('168.3');
-  const [pipeWall, setPipeWall] = useState('6');
-  const [flatWid, setFlatWid] = useState('100');
-  const [flatThk, setFlatThk] = useState('10');
-  const [barDia, setBarDia] = useState('25');
-  const [plateWidth, setPlateWidth] = useState('1.5');
-  const [customSa, setCustomSa] = useState('0.85');
-  const [customWt, setCustomWt] = useState('45');
-  const [len, setLen] = useState('12');
+  const [pipeOd, setPipeOd] = useState('');
+  const [pipeWall, setPipeWall] = useState('');
+  const [flatWid, setFlatWid] = useState('');
+  const [flatThk, setFlatThk] = useState('');
+  const [barDia, setBarDia] = useState('');
+  const [plateWidth, setPlateWidth] = useState('');
+  const [customSa, setCustomSa] = useState('');
+  const [customWt, setCustomWt] = useState('');
+  const [len, setLen] = useState('');
   const [qty, setQty] = useState('1');
 
   // C · Paint System & Rates
-  const [sysName, setSysName] = useState('ZnSil 75 + Epoxy 125 + PU 50');
-  const [dft, setDft] = useState('250');
-  const [cov, setCov] = useState('4.5');
-  const [abr, setAbr] = useState('12');
-  const [pc, setPc] = useState('650');
-  const [br, setBr] = useState('120');
-  const [ptr, setPtr] = useState('90');
+  const [sysName, setSysName] = useState('');
+  const [dft, setDft] = useState('');
+  const [cov, setCov] = useState('');
+  const [abr, setAbr] = useState('');
+  const [pc, setPc] = useState('');
+  const [br, setBr] = useState('');
+  const [ptr, setPtr] = useState('');
 
   // BOQ Items
   const [boqList, setBoqList] = useState([]);
@@ -242,8 +242,23 @@ export default function StructureBOQTool() {
     setDwg('');
     setSecType('SHS');
     setSecSize('100 × 100 × 5.0');
-    setLen('12');
+    setPipeOd('');
+    setPipeWall('');
+    setFlatWid('');
+    setFlatThk('');
+    setBarDia('');
+    setPlateWidth('');
+    setCustomSa('');
+    setCustomWt('');
+    setLen('');
     setQty('1');
+    setSysName('');
+    setDft('');
+    setCov('');
+    setAbr('');
+    setPc('');
+    setBr('');
+    setPtr('');
     setRes(null);
     addToast('Form Reset', 'Parameters cleared.', 'info');
   };

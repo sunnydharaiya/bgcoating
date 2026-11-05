@@ -1,9 +1,10 @@
 // src/pages/InspectionReportingPage.jsx
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useToast } from '../context/ToastContext';
 import { useGuideline } from '../context/GuidelineContext';
 import {
   createInitialInspectionState,
+  createSampleInspectionRecord,
   INSPECTION_STAGES,
   INDUSTRY_PRESETS
 } from '../data/inspectionDatabase';
@@ -26,6 +27,9 @@ import InspectionPreviewModal from '../tools/inspection/InspectionPreviewModal';
 import InspectionCompanyDetailsModal from '../tools/inspection/InspectionCompanyDetailsModal';
 import InspectionWatermarkControl, { DEFAULT_WATERMARK } from '../tools/inspection/InspectionWatermarkControl';
 import ErrorBoundary from '../components/ErrorBoundary';
+import inspectionService from '../services/inspectionService';
+import { brandingService } from '../services/brandingService';
+
 
 // Icons
 import {
@@ -91,36 +95,52 @@ export default function InspectionReportingPage({
     return [];
   });
 
-  // Company Branding settings
-  const [company, setCompany] = useState(() => {
-    try {
-      const saved = localStorage.getItem(COMPANY_KEY) || localStorage.getItem('bg_company_profile');
-      if (saved) return JSON.parse(saved);
-    } catch (e) {}
-    return {
-      name: 'BG GROUP INDUSTRIAL COATINGS LTD.',
-      tagline: 'Surface Engineering, Protective Coating Inspection & QA/QC Digital Systems',
-      address: 'Plot No. 44, Industrial Area, Sector-4, Gujarat, India',
-      phone: '+91 98765 43210',
-      email: 'qc@bgcoating.com',
-      website: 'www.bgcoating.com',
-      logo: null
-    };
-  });
+  // Initial remote hydration for working draft and register
+  useEffect(() => {
+    let isMounted = true;
 
-  // Watermark settings
-  const [watermark, setWatermark] = useState(() => {
-    try {
-      const saved = localStorage.getItem(WATERMARK_KEY);
-      if (saved) return JSON.parse(saved);
-    } catch (e) {}
-    return DEFAULT_WATERMARK || {
-      enabled: false,
-      text: 'CONFIDENTIAL QA/QC DOSSIER',
-      opacity: 8,
-      angle: -30
+    // 1. Hydrate active draft
+    inspectionService.getDraft().then(remoteDraft => {
+      if (isMounted && remoteDraft && Object.keys(remoteDraft).length > 0) {
+        setState(remoteDraft);
+      }
+    }).catch(err => {
+      console.warn('[InspectionPage] Remote draft fetch error:', err);
+    });
+
+    // 2. Hydrate saved reports register
+    inspectionService.getReports().then(remoteReports => {
+      if (isMounted && Array.isArray(remoteReports) && remoteReports.length > 0) {
+        setReports(remoteReports);
+      }
+    }).catch(err => {
+      console.warn('[InspectionPage] Remote reports fetch error:', err);
+    });
+
+    return () => { isMounted = false; };
+  }, []);
+
+  // Company Branding settings (dynamically synchronized via brandingService)
+  const [company, setCompany] = useState(() => brandingService.getCompanyProfile());
+
+  // Watermark settings (dynamically synchronized via brandingService)
+  const [watermark, setWatermark] = useState(() => brandingService.getWatermarkSettings());
+
+  // Live broadcast listener for cross-module branding and watermark updates
+  useEffect(() => {
+    const handleComp = (e) => {
+      if (e.detail) setCompany(e.detail);
     };
-  });
+    const handleWm = (e) => {
+      if (e.detail) setWatermark(e.detail);
+    };
+    window.addEventListener('bg_company_profile_updated', handleComp);
+    window.addEventListener('bg_watermark_updated', handleWm);
+    return () => {
+      window.removeEventListener('bg_company_profile_updated', handleComp);
+      window.removeEventListener('bg_watermark_updated', handleWm);
+    };
+  }, []);
 
   // Active Stage ID (s1, s2, s3, s4)
   const [activeStageId, setActiveStageId] = useState(() => {
@@ -167,16 +187,22 @@ export default function InspectionReportingPage({
     }
   }, [activeSub]);
 
-  // Debounced auto-save draft to localStorage (800ms)
+  // Debounced auto-save (800ms) to backend draft endpoint and localStorage
+  const debounceTimerRef = useRef(null);
   useEffect(() => {
-    const timer = setTimeout(() => {
-      try {
-        localStorage.setItem(DRAFT_KEY, JSON.stringify(state));
-      } catch (e) {
-        console.error('Failed to auto-save inspection draft:', e);
-      }
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    debounceTimerRef.current = setTimeout(() => {
+      inspectionService.saveDraft(state).catch(() => {});
     }, 800);
-    return () => clearTimeout(timer);
+
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
   }, [state]);
 
   // Persist company profile
@@ -275,6 +301,40 @@ export default function InspectionReportingPage({
     }
   };
 
+  const handleSaveActiveReport = async () => {
+    try {
+      const saved = await inspectionService.saveReport(state, 'Approved');
+      const updatedReports = await inspectionService.getReports();
+      setReports(updatedReports);
+      addToast('Inspection Registered', `Report ${saved.id || saved.reportNo || 'CIR'} saved to persistent register.`, 'success');
+    } catch (err) {
+      addToast('Save Failed', 'Could not register inspection report.', 'error');
+    }
+  };
+
+  const handleDeleteReport = async (id, backendId) => {
+    if (window.confirm(`Delete inspection record ${id} from register?`)) {
+      await inspectionService.deleteReport(id, backendId);
+      const updatedReports = await inspectionService.getReports();
+      setReports(updatedReports);
+      addToast('Report Deleted', `Record ${id} removed.`, 'info');
+    }
+  };
+
+  const handleDuplicateReport = async (report) => {
+    const dupId = `${report.id || report.reportNo}-COPY`;
+    const dupData = {
+      ...(report.data || report),
+      reportNo: dupId,
+      id: dupId,
+      date: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date())
+    };
+    await inspectionService.saveReport(dupData, report.status || 'Approved');
+    const updated = await inspectionService.getReports();
+    setReports(updated);
+    addToast('Report Duplicated', `Created duplicate record ${dupId}.`, 'success');
+  };
+
   const handleReset = () => {
     if (window.confirm('Reset all current inspection form fields? This will clear un-registered data.')) {
       const fresh = createInitialInspectionState();
@@ -282,8 +342,16 @@ export default function InspectionReportingPage({
       try {
         localStorage.removeItem(DRAFT_KEY);
       } catch (e) {}
-      addToast('Reset Complete', 'Initialized new inspection draft.', 'info');
+      addToast('Reset Complete', 'Initialized new blank inspection draft.', 'info');
       nav('hub');
+    }
+  };
+
+  const handleLoadSampleRecord = () => {
+    if (window.confirm('Load benchmark sample inspection report (Jotun 3-coat system)? Current unsaved edits will be replaced.')) {
+      const sample = createSampleInspectionRecord();
+      setState(sample);
+      addToast('Benchmark Report Loaded', 'Loaded complete 3-coat QA/QC inspection report demo.', 'success');
     }
   };
 
@@ -377,6 +445,26 @@ export default function InspectionReportingPage({
 
               <button
                 type="button"
+                onClick={handleLoadSampleRecord}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 text-xs font-semibold transition cursor-pointer"
+                title="Load Jotun Benchmark Sample Record"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                <span className="hidden lg:inline">Benchmark</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleReset}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 text-xs font-semibold transition cursor-pointer"
+                title="Reset Inspection Form to Blank"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span className="hidden lg:inline">Reset</span>
+              </button>
+
+              <button
+                type="button"
                 onClick={() => {
                   setPreviewRecord(null);
                   setIsPreviewOpen(true);
@@ -406,7 +494,18 @@ export default function InspectionReportingPage({
         <div className={activeSub === 'hub' || activeSub === 'home' ? 'w-full px-4 sm:px-6 lg:px-8 pt-4' : 'w-full px-4 sm:px-6 lg:px-8 pt-4 space-y-6'}>
           <main className="transition-all">
             {/* 1. Hub Overview */}
-            {(activeSub === 'hub' || activeSub === 'home') && (
+            {(!activeSub || activeSub === 'hub' || activeSub === 'home' || ![
+              'coating-report', 'stage', 's1', 'stage-s1', 'stage_s1', 's2', 'stage-s2', 'stage_s2', 's3', 'stage-s3', 'stage_s3', 's4', 'stage-s4', 'stage_s4',
+              'pull-off-adhesion', 'pull-off', 'pull', 'pull_off_adhesion',
+              'cross-cut-adhesion', 'cross-cut', 'cross', 'cross_cut_adhesion',
+              'standards', 'reference-standards', 'reference_standards', 'std',
+              'photo-report', 'photo', 'photo_report',
+              'report-register', 'register', 'reports', 'report_register',
+              'rework-register', 'rework', 'rework_register', 'rwkreg',
+              'dashboard', 'print', 'report', 'xlprint',
+              'master-list', 'master', 'master-systems', 'master_systems', 'master_list',
+              'watermark'
+            ].includes(activeSub)) && (
               <InspectionHub
                 state={state}
                 reports={reports}
@@ -415,6 +514,7 @@ export default function InspectionReportingPage({
                   setState(createInitialInspectionState());
                   nav('coating-report');
                 }}
+                onLoadSampleRecord={handleLoadSampleRecord}
                 onOpenPreview={() => {
                   setPreviewRecord(null);
                   setIsPreviewOpen(true);
@@ -472,8 +572,13 @@ export default function InspectionReportingPage({
             {['report-register', 'register', 'reports', 'report_register'].includes(activeSub) && (
               <InspectionReportRegister
                 currentState={state}
+                reports={reports}
                 onLoadReport={handleLoadReport}
                 onOpenPreview={handlePreviewReport}
+                onViewReport={handlePreviewReport}
+                onSaveActiveReport={handleSaveActiveReport}
+                onDuplicateReport={handleDuplicateReport}
+                onDeleteReport={handleDeleteReport}
               />
             )}
 
@@ -529,6 +634,7 @@ export default function InspectionReportingPage({
                 watermarkSettings={watermark}
                 onUpdateWatermark={(wm) => {
                   setWatermark(wm);
+                  brandingService.saveWatermarkSettings(wm);
                   addToast('Watermark Updated', 'Document overlay security updated.', 'success');
                 }}
               />
@@ -549,6 +655,7 @@ export default function InspectionReportingPage({
           companyProfile={company}
           onSaveProfile={(prof) => {
             setCompany(prof);
+            brandingService.saveCompanyProfile(prof);
             setIsCompanyOpen(false);
             addToast('Company Profile Saved', 'Corporate branding details updated.', 'success');
             if (activeSub === 'company-details' || activeSub === 'company_details' || activeSub === 'company') {
@@ -566,6 +673,7 @@ export default function InspectionReportingPage({
                   watermarkSettings={watermark}
                   onUpdateWatermark={(wm) => {
                     setWatermark(wm);
+                    brandingService.saveWatermarkSettings(wm);
                     setIsWatermarkOpen(false);
                     addToast('Watermark Applied', 'Security stamp configuration saved.', 'success');
                     if (activeSub === 'watermark') nav('hub');

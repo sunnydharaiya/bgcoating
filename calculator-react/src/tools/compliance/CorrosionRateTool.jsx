@@ -20,21 +20,21 @@ export default function CorrosionRateTool() {
   const [method, setMethod] = useState('W'); // 'W' for weight loss, 'T' for thickness loss
 
   // Weight loss inputs
-  const [wi, setWi] = useState('152.500');
-  const [wf, setWf] = useState('150.000');
-  const [t, setT] = useState('1000');
+  const [wi, setWi] = useState('');
+  const [wf, setWf] = useState('');
+  const [t, setT] = useState('');
   const [tu, setTu] = useState('Hours');
-  const [area, setArea] = useState('100');
+  const [area, setArea] = useState('');
   const [density, setDensity] = useState('7.85');
 
   // Thickness loss inputs
-  const [ti, setTi] = useState('12');
-  const [tc, setTc] = useState('11');
-  const [ty, setTy] = useState('5');
+  const [ti, setTi] = useState('');
+  const [tc, setTc] = useState('');
+  const [ty, setTy] = useState('');
 
   // Remaining life inputs
-  const [curThk, setCurThk] = useState('11.0');
-  const [tmin, setTmin] = useState('8.5');
+  const [curThk, setCurThk] = useState('');
+  const [tmin, setTmin] = useState('');
 
   const [hasCalculated, setHasCalculated] = useState(false);
 
@@ -187,17 +187,17 @@ export default function CorrosionRateTool() {
   const handleReset = () => {
     setProj('');
     setMethod('W');
-    setWi('152.500');
-    setWf('150.000');
-    setT('1000');
+    setWi('');
+    setWf('');
+    setT('');
     setTu('Hours');
-    setArea('100');
+    setArea('');
     setDensity('7.85');
-    setTi('12');
-    setTc('11');
-    setTy('5');
-    setCurThk('11.0');
-    setTmin('8.5');
+    setTi('');
+    setTc('');
+    setTy('');
+    setCurThk('');
+    setTmin('');
     setHasCalculated(false);
     addToast('Reset', 'Form reset.', 'info');
   };

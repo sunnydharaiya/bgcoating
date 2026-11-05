@@ -3,8 +3,10 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useToast } from '../context/ToastContext';
 import { useGuideline } from '../context/GuidelineContext';
 import { painterService } from '../services/painterService';
+import { brandingService } from '../services/brandingService';
 import { 
   INITIAL_PAINTER_STATE, 
+  SAMPLE_PAINTER_RECORD,
   calculatePainterQualification,
   PAINTER_PRESETS,
   COAT_SIDS
@@ -13,6 +15,7 @@ import {
 // Sub-Tool Components
 import PainterFreezeBar from '../tools/painter/PainterFreezeBar';
 import PainterHub from '../tools/painter/PainterHub';
+import PainterDashboard from '../tools/painter/PainterDashboard';
 import PainterProjectInfo from '../tools/painter/PainterProjectInfo';
 import PainterTrainingTest from '../tools/painter/PainterTrainingTest';
 import PainterChecklist from '../tools/painter/PainterChecklist';
@@ -63,51 +66,27 @@ export default function PainterQualificationPage({
     }
   });
 
-  // Company branding
-  const [company, setCompany] = useState(() => {
-    try {
-      const saved = localStorage.getItem(COMPANY_KEY);
-      return saved
-        ? JSON.parse(saved)
-        : {
-            name: 'BG Group of Paint & Coating Consultant',
-            tagline: 'Corrosion Engineering & Protective Coating Qualification System',
-            email: 'support@bgcoating.com',
-            web: 'www.bgcoating.com',
-            phone: '+91 99258 10408',
-            logo: null
-          };
-    } catch {
-      return {
-        name: 'BG Group of Paint & Coating Consultant',
-        tagline: 'Corrosion Engineering & Protective Coating Qualification System',
-        email: 'support@bgcoating.com',
-        web: 'www.bgcoating.com',
-        phone: '+91 99258 10408',
-        logo: null
-      };
-    }
-  });
+  // Company branding (dynamically synchronized via brandingService)
+  const [company, setCompany] = useState(() => brandingService.getCompanyProfile());
 
-  // Watermark settings
-  const [watermark, setWatermark] = useState(() => {
-    try {
-      const saved = localStorage.getItem(WATERMARK_KEY);
-      return saved
-        ? JSON.parse(saved)
-        : {
-            enabled: true,
-            text: 'BG Group of Paint and Coating Consultant',
-            opacity: 6
-          };
-    } catch {
-      return {
-        enabled: true,
-        text: 'BG Group of Paint and Coating Consultant',
-        opacity: 6
-      };
-    }
-  });
+  // Watermark settings (dynamically synchronized via brandingService)
+  const [watermark, setWatermark] = useState(() => brandingService.getWatermarkSettings());
+
+  // Cross-module live sync for branding and watermark
+  useEffect(() => {
+    const handleComp = (e) => {
+      if (e.detail) setCompany(e.detail);
+    };
+    const handleWm = (e) => {
+      if (e.detail) setWatermark(e.detail);
+    };
+    window.addEventListener('bg_company_profile_updated', handleComp);
+    window.addEventListener('bg_watermark_updated', handleWm);
+    return () => {
+      window.removeEventListener('bg_company_profile_updated', handleComp);
+      window.removeEventListener('bg_watermark_updated', handleWm);
+    };
+  }, []);
 
   // Modals state
   const [isTestCatalogOpen, setIsTestCatalogOpen] = useState(false);
@@ -206,18 +185,20 @@ export default function PainterQualificationPage({
 
   // Company change handler
   const handleCompanyChange = (field, value) => {
-    setCompany(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setCompany(prev => {
+      const updated = { ...prev, [field]: value };
+      brandingService.saveCompanyProfile(updated);
+      return updated;
+    });
   };
 
   // Watermark change handler
   const handleWatermarkChange = (field, value) => {
-    setWatermark(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setWatermark(prev => {
+      const updated = { ...prev, [field]: value };
+      brandingService.saveWatermarkSettings(updated);
+      return updated;
+    });
   };
 
   // Reset working state and clear active draft
@@ -418,29 +399,17 @@ export default function PainterQualificationPage({
   // 1-Click Benchmark Sample Dossier Loader
   const handleLoadSampleRecord = async () => {
     try {
-      const existing = await painterService.getReports({ search: 'SP-QR-2026-TARIQ-001' });
-      let sample = existing.find(r => r.repNo === 'SP-QR-2026-TARIQ-001');
-      if (!sample) {
-        sample = await painterService.saveReport({
-          'f-rep-no': 'SP-QR-2026-TARIQ-001',
-          'f-name': 'Mohammad Tariq',
-          'f-category': 'Airless Spray Painter',
-          'f-civil': 'CID-8829471',
-          'f-proj': 'Offshore Topsides Gas Flare Platform',
-          'f-proj-no': 'PRJ-2026-FLARE-09',
-          'f-client': 'Aramco / Offshore Energy Corp',
-          'f-contractor': 'BG Engineering & Contracting Ltd',
-          'f-location': 'Fabrication Yard 4 · Blast & Paint Bay',
-          'f-qual-date': '2026-10-28',
-          'f-next-date': '2027-10-28',
-          overall: 95.5,
-          verdict: 'PASS',
-          status: 'Approved',
-          data: INITIAL_PAINTER_STATE
-        }, 'Approved', { overall: 95.5, verdict: 'PASS' });
-      }
+      const sample = await painterService.saveReport({
+        ...SAMPLE_PAINTER_RECORD,
+        'f-rep-no': 'SP-QR-2026-TARIQ-001',
+        overall: 95.5,
+        verdict: 'PASS',
+        status: 'Approved',
+        data: SAMPLE_PAINTER_RECORD
+      }, 'Approved', { overall: 95.5, verdict: 'PASS' });
+      setState(SAMPLE_PAINTER_RECORD);
       setReports(prev => [sample, ...prev.filter(r => r.repNo !== sample.repNo)]);
-      addToast('Sample Loaded', 'Loaded benchmark qualification dossier SP-QR-2026-TARIQ-001 into register.', 'success');
+      addToast('Sample Loaded', 'Loaded benchmark qualification dossier SP-QR-2026-TARIQ-001 into register and active form.', 'success');
     } catch (err) {
       console.warn('Failed to load sample painter record:', err);
       addToast('Load Failed', 'Could not load benchmark record.', 'error');
@@ -564,6 +533,15 @@ export default function PainterQualificationPage({
             }}
             onOpenPreview={() => setIsPreviewModalOpen(true)}
             onOpenPrint={() => window.print()}
+          />
+        );
+
+      case 'dashboard':
+        return (
+          <PainterDashboard
+            formData={state}
+            evaluation={evaluation}
+            onNavigate={handleNavigateSub}
           />
         );
 

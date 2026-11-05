@@ -273,7 +273,7 @@ export default function PainterCoatStage({
   };
 
   return (
-    <div className="sheet" id={`sh-${sid}`}>
+    <div className="sheet act" id={`sh-${sid}`}>
       {/* Corporate Header */}
       <div className="xl-corp">
         <div className="xl-corp-inner">

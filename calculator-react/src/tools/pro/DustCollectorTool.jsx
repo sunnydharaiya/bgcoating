@@ -28,14 +28,14 @@ export default function DustCollectorTool() {
   const { openGuideline } = useGuideline();
 
   // A · Project Info
-  const [proj, setProj] = useState('New Blast Facility Phase-1');
-  const [cli, setCli] = useState('Godrej Process Equipment');
-  const [room, setRoom] = useState('Blast Room BR-01');
+  const [proj, setProj] = useState('');
+  const [cli, setCli] = useState('');
+  const [room, setRoom] = useState('');
 
   // B · Blast Room Details
-  const [len, setLen] = useState('12');
-  const [wid, setWid] = useState('6');
-  const [ht, setHt] = useState('5');
+  const [len, setLen] = useState('');
+  const [wid, setWid] = useState('');
+  const [ht, setHt] = useState('');
 
   // C · Operating Parameters
   const [nozzles, setNozzles] = useState('1');
@@ -206,9 +206,9 @@ export default function DustCollectorTool() {
     setProj('');
     setCli('');
     setRoom('');
-    setLen('12');
-    setWid('6');
-    setHt('5');
+    setLen('');
+    setWid('');
+    setHt('');
     setNozzles('1');
     setNozKey('9.5');
     setComp('1100');

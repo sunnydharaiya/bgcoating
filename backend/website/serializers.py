@@ -20,6 +20,8 @@ from .models import (
     PaintProduct,
     UserProfile,
     VisitorCount,
+    UserCoatingSystem,
+    QualityTestItem,
 )
 
 
@@ -343,10 +345,16 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
             'emp_id',
             'role',
             'company',
+            'company_division',
+            'company_contact',
+            'company_logo',
             'bu',
             'office_location',
             'branch',
             'website',
+            'watermark_settings',
+            'inspector_stamp',
+            'inspector_signature',
             'alt_mobile',
             'alt_email',
             'address',
@@ -420,4 +428,66 @@ class VisitorCountSerializer(serializers.ModelSerializer):
             'updated_at',
         ]
         read_only_fields = fields
+
+
+class UserCoatingSystemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserCoatingSystem
+        fields = [
+            'id',
+            'user',
+            'system_id',
+            'name',
+            'environment',
+            'total_ndft',
+            'coats',
+            'is_standard',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['id', 'user', 'created_at', 'updated_at']
+
+    def to_internal_value(self, data):
+        data = data.copy() if hasattr(data, 'copy') else dict(data)
+        if 'system_code' in data and 'system_id' not in data:
+            data['system_id'] = data['system_code']
+        if 'system_name' in data and 'name' not in data:
+            data['name'] = data['system_name']
+        return super().to_internal_value(data)
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        ret['system_code'] = ret.get('system_id')
+        ret['system_name'] = ret.get('name')
+        return ret
+
+
+class QualityTestItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = QualityTestItem
+        fields = [
+            'id',
+            'user',
+            'category',
+            'test_name',
+            'standard',
+            'requirement',
+            'unit',
+            'is_standard',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['id', 'user', 'created_at', 'updated_at']
+
+    def to_internal_value(self, data):
+        data = data.copy() if hasattr(data, 'copy') else dict(data)
+        if 'title' in data and 'test_name' not in data:
+            data['test_name'] = data['title']
+        return super().to_internal_value(data)
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        ret['title'] = ret.get('test_name')
+        return ret
+
 

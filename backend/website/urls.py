@@ -21,6 +21,8 @@ router.register('contact-submissions', api_views.ContactSubmissionViewSet, basen
 router.register('calculator/projects', api_views.UserProjectViewSet, basename='userproject')
 router.register('calculator/logs', api_views.CalculationLogViewSet, basename='calculationlog')
 router.register('calculator/products', api_views.PaintProductViewSet, basename='paintproduct')
+router.register('calculator/systems', api_views.UserCoatingSystemViewSet, basename='usercoatingsystem')
+router.register('calculator/test-catalog', api_views.QualityTestItemViewSet, basename='qualitytestitem')
 router.register('users', api_views.UserViewSet, basename='user')
 router.register('visitor-logs', api_views.VisitorCountViewSet, basename='visitorcount')
 
@@ -76,6 +78,10 @@ urlpatterns = [
     path('calculator/blaster-qualification.html', views.calculator_blaster_qualification, name='calculator_blaster_qualification_html'),
     path('calculator/painter-qualification/', views.calculator_painter_qualification, name='calculator_painter_qualification'),
     path('calculator/painter-qualification.html', views.calculator_painter_qualification, name='calculator_painter_qualification_html'),
+    path('calculator/inspection-reporting/', views.calculator_inspection_reporting, name='calculator_inspection_reporting'),
+    path('calculator/inspection-reporting.html', views.calculator_inspection_reporting, name='calculator_inspection_reporting_html'),
+    path('calculator/qa-qc-inspection/', views.calculator_inspection_reporting, name='calculator_qa_qc_inspection'),
+    path('calculator/qa-qc-inspection.html', views.calculator_inspection_reporting, name='calculator_qa_qc_inspection_html'),
     path('calculator/knowledge/', views.calculator_knowledge, name='calculator_knowledge'),
     path('calculator/knowledge.html', views.calculator_knowledge, name='calculator_knowledge_html'),
     path('calculator/support/', views.calculator_support, name='calculator_support'),
@@ -102,6 +108,10 @@ urlpatterns = [
     re_path(r'^painter-qualification.*', views.calculator_painter_qualification),
     re_path(r'^(?:calculator/)?.*painter.*', views.calculator_painter_qualification),
     re_path(r'^painter.*', views.calculator_painter_qualification),
+    re_path(r'^(?:calculator/)?.*inspection-reporting.*', views.calculator_inspection_reporting),
+    re_path(r'^inspection-reporting.*', views.calculator_inspection_reporting),
+    re_path(r'^(?:calculator/)?.*qa-qc-inspection.*', views.calculator_inspection_reporting),
+    re_path(r'^qa-qc-inspection.*', views.calculator_inspection_reporting),
     re_path(r'^calculator/.*knowledge.*', views.calculator_knowledge),
     re_path(r'^calculator/.*support.*', views.calculator_support),
     re_path(r'^calculator/.*settings.*', views.calculator_settings),

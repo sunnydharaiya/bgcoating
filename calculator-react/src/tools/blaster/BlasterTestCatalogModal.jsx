@@ -1,13 +1,37 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Plus, Sparkles, TestTube } from 'lucide-react';
 import { INSP_CATALOG } from '../../data/blasterDatabase';
+import { brandingService } from '../../services/brandingService';
 
 export default function BlasterTestCatalogModal({
   isOpen,
   onClose,
   onSelectTest
 }) {
+  const [dynamicCatalog, setDynamicCatalog] = useState([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    brandingService.getQualityTestCatalog('blaster').then((list) => {
+      if (isMounted && Array.isArray(list)) {
+        setDynamicCatalog(
+          list.map((it) => ({
+            ic: it.icon || '🔬',
+            t: it.title,
+            std: it.standard,
+            req: it.requirement
+          }))
+        );
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
+
+  const combinedCatalog = [...dynamicCatalog, ...INSP_CATALOG];
 
   return (
     <div className="fixed inset-0 z-[2000] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
@@ -39,7 +63,7 @@ export default function BlasterTestCatalogModal({
 
         {/* Modal Body - Catalog Items */}
         <div className="p-6 max-h-[60vh] overflow-y-auto space-y-2.5">
-          {INSP_CATALOG.map((item, idx) => (
+          {combinedCatalog.map((item, idx) => (
             <div
               key={idx}
               onClick={() => {

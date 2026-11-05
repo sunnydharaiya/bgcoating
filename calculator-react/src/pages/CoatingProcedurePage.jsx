@@ -22,6 +22,7 @@ import ProcPreviewModal from '../tools/procedure/ProcPreviewModal';
 import ProcCompanyModal from '../tools/procedure/ProcCompanyModal';
 import ProcWatermarkControl from '../tools/procedure/ProcWatermarkControl';
 import ProcProjectMasterModal from '../tools/procedure/ProcProjectMasterModal';
+import { brandingService } from '../services/brandingService';
 
 const DRAFT_KEY = 'bg_os_procedure_draft';
 const RECORDS_KEY = 'bg_os_procedure_records';
@@ -87,21 +88,24 @@ export default function CoatingProcedurePage({ currentSubTool = 'hub', onNavigat
     }
   });
 
-  const [companyProfile, setCompanyProfile] = useState(() => {
-    try {
-      const saved = localStorage.getItem(COMPANY_KEY);
-      return saved ? JSON.parse(saved) : null;
-    } catch (e) {
-      return null;
-    }
-  });
+  const [companyProfile, setCompanyProfile] = useState(() => brandingService.getCompanyProfile());
+  const [watermarkSettings, setWatermarkSettings] = useState(() => brandingService.getWatermarkSettings());
 
-  const [watermarkSettings, setWatermarkSettings] = useState({
-    text: companyProfile?.name || 'BG COATING & CORROSION ENGINEERING',
-    opacity: 0.08,
-    rotation: -30,
-    enabled: true
-  });
+  // Live broadcast listener for cross-module branding and watermark updates
+  useEffect(() => {
+    const handleComp = (e) => {
+      if (e.detail) setCompanyProfile(e.detail);
+    };
+    const handleWm = (e) => {
+      if (e.detail) setWatermarkSettings(e.detail);
+    };
+    window.addEventListener('bg_company_profile_updated', handleComp);
+    window.addEventListener('bg_watermark_updated', handleWm);
+    return () => {
+      window.removeEventListener('bg_company_profile_updated', handleComp);
+      window.removeEventListener('bg_watermark_updated', handleWm);
+    };
+  }, []);
 
   const [showCompanyModal, setShowCompanyModal] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
@@ -304,10 +308,8 @@ export default function CoatingProcedurePage({ currentSubTool = 'hub', onNavigat
 
   const handleSaveCompany = (profile) => {
     setCompanyProfile(profile);
-    try {
-      localStorage.setItem(COMPANY_KEY, JSON.stringify(profile));
-      triggerToast('Company branding profile updated!');
-    } catch (e) {}
+    brandingService.saveCompanyProfile(profile);
+    triggerToast('Company branding profile updated!');
   };
 
   const triggerToast = (msg = 'Saved successfully!') => {
@@ -443,7 +445,12 @@ export default function CoatingProcedurePage({ currentSubTool = 'hub', onNavigat
 
       {/* ACTIVE SUB-TOOL ROUTER COMPONENT */}
       <div className="min-h-[500px]">
-        {resolvedSubTool === 'hub' && (
+        {(!resolvedSubTool || resolvedSubTool === 'hub' || ![
+          'cover-revision', 'scope', 'reference-docs', 'standards', 'exclusions',
+          'safety', 'surface-prep', 'coating-app', 'repair-plan', 'manufacturers',
+          'attachments', 'annexure-coating', 'annexure-inspection', 'register',
+          'report', 'preview', 'watermark', 'company-details'
+        ].includes(resolvedSubTool)) && (
           <ProcedureHub
             state={state}
             onNavigate={navigateTo}
@@ -602,15 +609,22 @@ export default function CoatingProcedurePage({ currentSubTool = 'hub', onNavigat
         {resolvedSubTool === 'watermark' && (
           <ProcWatermarkControl
             watermarkSettings={watermarkSettings}
-            onChange={setWatermarkSettings}
-            onReset={() => setWatermarkSettings({ text: companyProfile?.name || 'BG COATING', opacity: 0.08, rotation: -30, enabled: true })}
+            onChange={(wm) => {
+              setWatermarkSettings(wm);
+              brandingService.saveWatermarkSettings(wm);
+            }}
+            onReset={() => {
+              const def = brandingService.getWatermarkSettings();
+              setWatermarkSettings(def);
+              brandingService.saveWatermarkSettings(def);
+            }}
           />
         )}
         {resolvedSubTool === 'company-details' && (
-          <ProcWatermarkControl
-            watermarkSettings={watermarkSettings}
-            onChange={setWatermarkSettings}
-            onReset={() => setWatermarkSettings({ text: companyProfile?.name || 'BG COATING', opacity: 0.08, rotation: -30, enabled: true })}
+          <ProcCompanyModal
+            companyProfile={companyProfile}
+            onSave={handleSaveCompany}
+            onClose={() => navigateTo('hub')}
           />
         )}
       </div>

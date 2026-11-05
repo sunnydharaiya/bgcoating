@@ -38,13 +38,13 @@ export default function PFPSuite({ activeSubTool, onSubToolChange }) {
   // ----------------------------------------------------
   const [pfmProj, setPfmProj] = useState('');
   const [pfmStr, setPfmStr] = useState('');
-  const [pfmMat, setPfmMat] = useState('Epoxy Intumescent XYZ-100');
-  const [pfmArea, setPfmArea] = useState('500');
-  const [pfmT, setPfmT] = useState('8');
+  const [pfmMat, setPfmMat] = useState('');
+  const [pfmArea, setPfmArea] = useState('');
+  const [pfmT, setPfmT] = useState('');
   const [pfmDen, setPfmDen] = useState('1000');
   const [pfmYld, setPfmYld] = useState('');
   const [pfmWst, setPfmWst] = useState('10');
-  const [pfmCost, setPfmCost] = useState('350');
+  const [pfmCost, setPfmCost] = useState('');
   const [hasPfmCalculated, setHasPfmCalculated] = useState(false);
 
   const pfmAVal = parseFloat(pfmArea) || 0;
@@ -72,7 +72,7 @@ export default function PFPSuite({ activeSubTool, onSubToolChange }) {
   const [pftHpa, setPftHpa] = useState('180');
   const [pftTc, setPftTc] = useState('538');
   const [pftMt, setPftMt] = useState('0.5'); // Epoxy Intumescent default
-  const [pftApp, setPftApp] = useState('34');
+  const [pftApp, setPftApp] = useState('');
   const [hasPftCalculated, setHasPftCalculated] = useState(false);
 
   const pftFrVal = parseInt(pftFr) || 120;
@@ -92,9 +92,9 @@ export default function PFPSuite({ activeSubTool, onSubToolChange }) {
   // ----------------------------------------------------
   // PFP-3 : Density
   // ----------------------------------------------------
-  const [pfdId, setPfdId] = useState('Column C-12 East Face');
-  const [pfdW, setPfdW] = useState('285');
-  const [pfdV, setPfdV] = useState('300');
+  const [pfdId, setPfdId] = useState('');
+  const [pfdW, setPfdW] = useState('');
+  const [pfdV, setPfdV] = useState('');
   const [pfdSpec, setPfdSpec] = useState('900');
   const [hasPfdCalculated, setHasPfdCalculated] = useState(false);
 
@@ -111,12 +111,12 @@ export default function PFPSuite({ activeSubTool, onSubToolChange }) {
   // ----------------------------------------------------
   // PFP-4 : Mesh Quantity
   // ----------------------------------------------------
-  const [mshArea, setMshArea] = useState('500');
+  const [mshArea, setMshArea] = useState('');
   const [mshW, setMshW] = useState('1.0');
   const [mshL, setMshL] = useState('50');
   const [mshOv, setMshOv] = useState('10');
   const [mshWst, setMshWst] = useState('10');
-  const [mshCost, setMshCost] = useState('2500');
+  const [mshCost, setMshCost] = useState('');
   const [hasMshCalculated, setHasMshCalculated] = useState(false);
 
   const mshAVal = parseFloat(mshArea) || 0;
@@ -137,16 +137,16 @@ export default function PFPSuite({ activeSubTool, onSubToolChange }) {
   // ----------------------------------------------------
   // PFP-5 : Cost
   // ----------------------------------------------------
-  const [pfcArea, setPfcArea] = useState('500');
-  const [pfcMat, setPfcMat] = useState('1500000');
-  const [pfcLab, setPfcLab] = useState('450000');
-  const [pfcEqp, setPfcEqp] = useState('250000');
-  const [pfcScf, setPfcScf] = useState('180000');
-  const [pfcMsh, setPfcMsh] = useState('75000');
-  const [pfcPri, setPfcPri] = useState('120000');
-  const [pfcTop, setPfcTop] = useState('150000');
-  const [pfcIns, setPfcIns] = useState('80000');
-  const [pfcOh, setPfcOh] = useState('10');
+  const [pfcArea, setPfcArea] = useState('');
+  const [pfcMat, setPfcMat] = useState('0');
+  const [pfcLab, setPfcLab] = useState('0');
+  const [pfcEqp, setPfcEqp] = useState('0');
+  const [pfcScf, setPfcScf] = useState('0');
+  const [pfcMsh, setPfcMsh] = useState('0');
+  const [pfcPri, setPfcPri] = useState('0');
+  const [pfcTop, setPfcTop] = useState('0');
+  const [pfcIns, setPfcIns] = useState('0');
+  const [pfcOh, setPfcOh] = useState('0');
   const [hasPfcCalculated, setHasPfcCalculated] = useState(false);
 
   const pfcAVal = parseFloat(pfcArea) || 0;
@@ -181,14 +181,14 @@ export default function PFPSuite({ activeSubTool, onSubToolChange }) {
   // ----------------------------------------------------
   // PFP-6 : Repair Quantity
   // ----------------------------------------------------
-  const [pfrLoc, setPfrLoc] = useState('Pipe Rack Level 2 North');
-  const [pfrTot, setPfrTot] = useState('500');
-  const [pfrDmg, setPfrDmg] = useState('35');
-  const [pfrT, setPfrT] = useState('8');
+  const [pfrLoc, setPfrLoc] = useState('');
+  const [pfrTot, setPfrTot] = useState('');
+  const [pfrDmg, setPfrDmg] = useState('');
+  const [pfrT, setPfrT] = useState('');
   const [pfrDen, setPfrDen] = useState('1000');
   const [pfrYld, setPfrYld] = useState('');
   const [pfrWst, setPfrWst] = useState('15');
-  const [pfrCost, setPfrCost] = useState('350');
+  const [pfrCost, setPfrCost] = useState('');
   const [hasPfrCalculated, setHasPfrCalculated] = useState(false);
 
   const pfrTotVal = parseFloat(pfrTot) || 0;

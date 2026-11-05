@@ -12,10 +12,10 @@ export default function SSPCPA2Tool() {
   const [proj, setProj] = useState('');
   const [cli, setCli] = useState('');
   const [str, setStr] = useState('');
-  const [area, setArea] = useState('Area A');
-  const [spec, setSpec] = useState('250');
+  const [area, setArea] = useState('');
+  const [spec, setSpec] = useState('');
   const [maxp, setMaxp] = useState('120');
-  const [spotsText, setSpotsText] = useState('245, 260, 255, 270, 248');
+  const [spotsText, setSpotsText] = useState('');
 
   // Multi-area project state
   const [projectAreas, setProjectAreas] = useState([]);

@@ -520,8 +520,8 @@ export function validateStageSequence(projNo, reports) {
   return { text: parts.join(' + '), ok, empty: false };
 }
 
-// Initial Empty Working Draft State
-export function getInitialPainterState() {
+// Benchmark Sample Record
+export function getSamplePainterRecord() {
   const today = new Date().toISOString().split('T')[0];
   const nextYear = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
@@ -628,6 +628,123 @@ export function getInitialPainterState() {
       date: today,
       init: 'RP',
       cap: `Photographic evidence of ${preset.title.toLowerCase()} captured during qualification trial.`
+    })),
+    _opPhoto: null,
+    _sigStamps: { 1: null, 2: null, 3: null },
+    _coLogo: null
+  };
+}
+
+export const SAMPLE_PAINTER_RECORD = getSamplePainterRecord();
+
+// Initial Empty Working Draft State
+export function getInitialPainterState() {
+  const today = new Date().toISOString().split('T')[0];
+  const nextYear = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+  // Initialize Coat Sheets (empty inputs)
+  const initialCoatSheets = {};
+  COAT_SIDS.forEach(sid => {
+    initialCoatSheets[sid] = {
+      method: 'Airless Spray',
+      stripe: 'Yes · Brush applied on welds & edges',
+      rust: 'No',
+      start: '',
+      end: '',
+      date: today,
+      recoat: '',
+      mfr: '',
+      product: '',
+      shade: '',
+      generic: '',
+      batchA: '',
+      expA: '',
+      batchB: '',
+      expB: '',
+      batchC: '',
+      expC: '',
+      ratio: '',
+      dftspec: sid === 's1' ? '65 – 75 µm' : '105 – 125 µm',
+      db: '',
+      wb: '',
+      mt: '',
+      envtime: '',
+      tests: (COAT_DEFAULT_SETS[sid] || []).map(idx => {
+        const item = COAT_TEST_CATALOG[idx];
+        return {
+          t: item.t,
+          std: item.std,
+          req: item.req,
+          act: '',
+          res: ''
+        };
+      })
+    };
+  });
+
+  // Initialize Coat DFT mini matrices (blank spots)
+  const initialCoatDFT = {};
+  COAT_SIDS.forEach(sid => {
+    const byType = {};
+    DFT_MINI_TYPES.forEach(type => {
+      byType[type] = DFT_MINI_META[type].labels.map(lbl => ({
+        label: lbl,
+        spots: ['', '', '', '']
+      }));
+    });
+    initialCoatDFT[sid] = {
+      min: sid === 's1' ? '65' : '105',
+      max: sid === 's1' ? '75' : '125',
+      byType,
+      verdict: ''
+    };
+  });
+
+  return {
+    'f-rep-no': '',
+    'f-rep-date': today,
+    'f-name': '',
+    'f-category': 'Airless Spray Painter',
+    'f-civil': '',
+    'f-nationality': '',
+    'f-dob': '',
+    'f-exp': '',
+    'f-qual-date': today,
+    'f-next-date': nextYear,
+    'f-proj': '',
+    'f-proj-no': '',
+    'f-client': '',
+    'f-contractor': '',
+    'f-employer': '',
+    'f-location': '',
+    'f-ref': 'ASTM D 4228, SSPC PA-2, ASTM D 7091, ASTM D 3359, ASTM D 4541, NACE / AMPP',
+    'f-remarks-proj': '',
+    'cs-surf-prep': 'Abrasive Blast Cleaning Sa 2.5 (Near White Metal)',
+    'f-pre-date': today,
+    'f-pre-correct': '',
+    'f-post-date': today,
+    'f-post-correct': '',
+    'f-remark-train': '',
+    'f-remark-check': '',
+    'f-remark-final': '',
+    'sig1-name': '',
+    'sig1-date': today,
+    'sig2-name': '',
+    'sig2-date': today,
+    'sig3-name': '',
+    'sig3-date': today,
+    _check: CHECK_ELEMENTS.map(() => ({ r: '', c: '' })),
+    _coatingSystem: COATING_SYSTEM_DEFAULTS,
+    _coatSheets: initialCoatSheets,
+    _coatDFT: initialCoatDFT,
+    _photos: PHOTO_PRESETS.slice(0, 6).map((preset, idx) => ({
+      id: idx + 1,
+      b64: '',
+      title: preset.title,
+      loc: preset.loc,
+      date: today,
+      init: '',
+      cap: ''
     })),
     _opPhoto: null,
     _sigStamps: { 1: null, 2: null, 3: null },

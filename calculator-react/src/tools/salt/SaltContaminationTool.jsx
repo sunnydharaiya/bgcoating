@@ -11,11 +11,11 @@ const SALT_TEMP = {
 
 export default function SaltContaminationTool() {
   const { addToast } = useToast();
-  const [instrument, setInstrument] = useState('Horiba');
-  const [projectName, setProjectName] = useState('Tank Farm Project');
-  const [blank, setBlank] = useState('1');
+  const [instrument, setInstrument] = useState('');
+  const [projectName, setProjectName] = useState('');
+  const [blank, setBlank] = useState('');
   const [waterVol, setWaterVol] = useState('3');
-  const [surf, setSurf] = useState('25');
+  const [surf, setSurf] = useState('');
   const [limit, setLimit] = useState('20');
   const [temp, setTemp] = useState('25');
 

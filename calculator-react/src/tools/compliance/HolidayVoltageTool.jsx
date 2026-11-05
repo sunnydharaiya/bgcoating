@@ -38,7 +38,7 @@ export default function HolidayVoltageTool() {
 
   const [proj, setProj] = useState('');
   const [coatingType, setCoatingType] = useState('Epoxy');
-  const [dft, setDft] = useState('1500');
+  const [dft, setDft] = useState('');
   const [method, setMethod] = useState('ASTM G62 — Formula (V = 525 × √t mils)');
   const [hasCalculated, setHasCalculated] = useState(false);
 

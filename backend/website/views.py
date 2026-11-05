@@ -10,6 +10,7 @@ from .models import (
     BoardMember,
     EducationItem,
     CertificationItem,
+    AwardItem,
     ClientTestimonial,
     Industry,
     ContactSubmission,
@@ -68,6 +69,7 @@ def about(request):
     context.update({
         'board_members': BoardMember.objects.all(),
         'industries': Industry.objects.all(),
+        'testimonials': ClientTestimonial.objects.all().order_by('order', 'id')[:8],
     })
     return render(request, 'pages/about.html', context)
 
@@ -392,10 +394,15 @@ def board(request):
         'Technical Board & Leadership Team | BG Group',
         'Meet the leadership and technical board of BG Group of Paint & Coating Consultant — NACE/AMPP certified experts.',
     )
+    all_services = Service.objects.all().select_related('category').order_by('category__order', 'order', 'id')
     context.update({
         'board_members': BoardMember.objects.all(),
-        'education_items': EducationItem.objects.all(),
-        'certification_items': CertificationItem.objects.all(),
+        'education_items': EducationItem.objects.all().order_by('order', 'id'),
+        'certification_items': CertificationItem.objects.all().order_by('order', 'id'),
+        'awards': AwardItem.objects.all().order_by('order', 'id'),
+        'featured_services': all_services,
+        'testimonials': ClientTestimonial.objects.all().order_by('order', 'id')[:8],
+        'latest_blogs': BlogPost.objects.all().order_by('-publish_date')[:3],
     })
     return render(request, 'pages/board.html', context)
 
@@ -482,6 +489,16 @@ def calculator_painter_qualification(request):
         'Spray Painter & Applicator Qualification Dossier, Testing & Certification Engine.',
     )
     return render(request, 'pages/calculator/painter_qualification.html', context)
+
+
+def calculator_inspection_reporting(request):
+    context = _get_page_seo(
+        request,
+        'calculator',
+        'Coating Inspection & QA/QC Reporting | BG CoatingOS™',
+        'Daily Coating Inspection (CIR), Multi-stage QA/QC, Adhesion Testing & Photo Dossier Engine.',
+    )
+    return render(request, 'pages/calculator/inspection_reporting.html', context)
 
 
 def calculator_knowledge(request):

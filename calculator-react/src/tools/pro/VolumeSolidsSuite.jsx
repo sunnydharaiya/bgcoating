@@ -75,28 +75,28 @@ export default function VolumeSolidsSuite({ activeSubTool, onSubToolChange }) {
   }, [activeSubTool]);
 
   // Method 1: TDS Verification
-  const [vstDft, setVstDft] = useState('125');
-  const [vstCov, setVstCov] = useState('5.6');
-  const [vstPub, setVstPub] = useState('70');
-  const [vstNm, setVstNm] = useState('High-Build Epoxy');
+  const [vstDft, setVstDft] = useState('');
+  const [vstCov, setVstCov] = useState('');
+  const [vstPub, setVstPub] = useState('');
+  const [vstNm, setVstNm] = useState('');
   const [vstRes, setVstRes] = useState(null);
 
   // Method 2: Density Verification
-  const [vsdWs, setVsdWs] = useState('80');
-  const [vsdWd, setVsdWd] = useState('1.60');
-  const [vsdDd, setVsdDd] = useState('1.80');
-  const [vsdPub, setVsdPub] = useState('71');
-  const [vsdNm, setVsdNm] = useState('Solvent-Free Epoxy');
+  const [vsdWs, setVsdWs] = useState('');
+  const [vsdWd, setVsdWd] = useState('');
+  const [vsdDd, setVsdDd] = useState('');
+  const [vsdPub, setVsdPub] = useState('');
+  const [vsdNm, setVsdNm] = useState('');
   const [vsdRes, setVsdRes] = useState(null);
 
   // Method 3: Lab Verification
-  const [vslWe, setVslWe] = useState('25.000');
-  const [vslWw, setVslWw] = useState('30.000');
-  const [vslWd, setVslWd] = useState('29.000');
-  const [vslDen, setVslDen] = useState('1.60');
-  const [vslDv, setVslDv] = useState('2.200');
-  const [vslPub, setVslPub] = useState('70');
-  const [vslNm, setVslNm] = useState('Batch 4521 — Epoxy MIO');
+  const [vslWe, setVslWe] = useState('');
+  const [vslWw, setVslWw] = useState('');
+  const [vslWd, setVslWd] = useState('');
+  const [vslDen, setVslDen] = useState('');
+  const [vslDv, setVslDv] = useState('');
+  const [vslPub, setVslPub] = useState('');
+  const [vslNm, setVslNm] = useState('');
   const [vslRes, setVslRes] = useState(null);
 
   // Calculate TDS

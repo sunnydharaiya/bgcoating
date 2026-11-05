@@ -10,6 +10,7 @@ from .models import (
     BoardMember,
     EducationItem,
     CertificationItem,
+    AwardItem,
     ClientTestimonial,
     TechnicalStandard,
     Industry,
@@ -119,6 +120,12 @@ class CertificationItemAdmin(admin.ModelAdmin):
     list_display = ('title', 'issuing_org', 'category_badge', 'validity_date', 'order')
     list_editable = ('order',)
     search_fields = ('title', 'issuing_org', 'description', 'category_badge')
+
+@admin.register(AwardItem)
+class AwardItemAdmin(admin.ModelAdmin):
+    list_display = ('title', 'award_year', 'organization', 'order')
+    list_editable = ('order',)
+    search_fields = ('title', 'organization', 'description', 'award_year')
 
 
 

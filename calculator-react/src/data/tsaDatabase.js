@@ -144,7 +144,7 @@ export const TSA_PRESETS = [
   }
 ];
 
-export const INITIAL_TSA_STATE = {
+export const SAMPLE_TSA_RECORD = {
   // Section 01: Project & Client Details
   'f-rep-no': '',
   'f-rep-date': new Date().toISOString().split('T')[0],
@@ -397,6 +397,176 @@ export const INITIAL_TSA_STATE = {
 
   // Section 09: Summary Narrative
   'f-sum-custom-notes': 'The operator exhibited master-level dexterity with Twin-Wire Arc Thermal Spray Aluminium application. Bend coupon and 9.4 MPa pull-off adhesion verify robust metallurgical mechanical bonding.'
+};
+
+export const INITIAL_TSA_STATE = {
+  // Section 01: Project & Client Details
+  'f-rep-no': '',
+  'f-rep-date': new Date().toISOString().split('T')[0],
+  'f-proj': '',
+  'f-proj-no': '',
+  'f-client': '',
+  'f-epc': '',
+  'f-contractor': '',
+  'f-location': '',
+  'f-ref': '',
+
+  // Section 01: Operator Identification
+  'f-name': '',
+  'f-category': 'TSA Operator',
+  'f-civil': '',
+  'f-nationality': '',
+  'f-dob': '',
+  'f-exp': '',
+  'f-employer': '',
+  'f-qual-date': new Date().toISOString().split('T')[0],
+  'f-next-date': '',
+  'op-photo': '',
+
+  // Section 01: Surface Prep & Scope
+  'cs-surf-prep': '',
+  coatingSystem: [],
+  tsaMaterials: [],
+
+  // Section 02: Assessment Checklist (12 elements)
+  checklist: TSA_CHECKLIST_ELEMENTS.map(() => ({ result: '', comment: '' })),
+  'f-remark-check': '',
+
+  // Section 03 - 06: Coat Stages s1, s2, s3, s4
+  coatStages: {
+    s1: {
+      method: '',
+      stripe: '',
+      rust: '',
+      date: '',
+      start: '',
+      end: '',
+      recoat: '',
+      generic: '',
+      mfr: '',
+      product: '',
+      shade: '',
+      ratio: '',
+      dftSpecMin: '',
+      dftSpecMax: '',
+      batchA: '',
+      expA: '',
+      batchB: '',
+      expB: '',
+      batchC: '',
+      expC: '',
+      envReadings: [],
+      appParams: JSON.parse(JSON.stringify(TSA_APP_DEFAULTS)),
+      tests: [],
+      dftMini: { plane: [], pipe: [], tbeam: [], flange: [] },
+      userVerdict: ''
+    },
+    s2: {
+      method: '',
+      stripe: '',
+      rust: '',
+      date: '',
+      start: '',
+      end: '',
+      recoat: '',
+      generic: '',
+      mfr: '',
+      product: '',
+      shade: '',
+      ratio: '',
+      dftSpecMin: '',
+      dftSpecMax: '',
+      batchA: '',
+      expA: '',
+      batchB: '',
+      expB: '',
+      batchC: '',
+      expC: '',
+      envReadings: [],
+      appParams: JSON.parse(JSON.stringify(TSA_APP_DEFAULTS)),
+      tests: [],
+      dftMini: { plane: [], pipe: [], tbeam: [], flange: [] },
+      userVerdict: ''
+    },
+    s3: {
+      method: '',
+      stripe: '',
+      rust: '',
+      date: '',
+      start: '',
+      end: '',
+      recoat: '',
+      generic: '',
+      mfr: '',
+      product: '',
+      shade: '',
+      ratio: '',
+      dftSpecMin: '',
+      dftSpecMax: '',
+      batchA: '',
+      expA: '',
+      batchB: '',
+      expB: '',
+      batchC: '',
+      expC: '',
+      envReadings: [],
+      appParams: JSON.parse(JSON.stringify(TSA_APP_DEFAULTS)),
+      tests: [],
+      dftMini: { plane: [], pipe: [], tbeam: [], flange: [] },
+      userVerdict: ''
+    },
+    s4: {
+      method: '',
+      stripe: '',
+      rust: '',
+      date: '',
+      start: '',
+      end: '',
+      recoat: '',
+      generic: '',
+      mfr: '',
+      product: '',
+      shade: '',
+      ratio: '',
+      dftSpecMin: '',
+      dftSpecMax: '',
+      batchA: '',
+      expA: '',
+      batchB: '',
+      expB: '',
+      batchC: '',
+      expC: '',
+      envReadings: [],
+      appParams: JSON.parse(JSON.stringify(TSA_APP_DEFAULTS)),
+      tests: [],
+      dftMini: { plane: [], pipe: [], tbeam: [], flange: [] },
+      userVerdict: ''
+    }
+  },
+
+  // Section 07: Photo Report
+  photos: TSA_PHOTO_PRESETS.map((p, i) => ({
+    id: i + 1,
+    title: p.title,
+    loc: p.loc,
+    date: '',
+    init: '',
+    cap: '',
+    b64: ''
+  })),
+  'f-remark-photo': '',
+
+  // Section 08: Verdict & Approval Signatures
+  'sig1-name': '',
+  'sig1-date': '',
+  'sig2-name': '',
+  'sig2-date': '',
+  'sig3-name': '',
+  'sig3-date': '',
+  sigStamps: { 1: null, 2: null, 3: null },
+
+  // Section 09: Summary Narrative
+  'f-sum-custom-notes': ''
 };
 
 /**

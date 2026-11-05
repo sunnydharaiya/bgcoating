@@ -10,9 +10,9 @@ export default function BlastProfileTool() {
   const { openGuideline } = useGuideline();
 
   // A · Project Info
-  const [proj, setProj] = useState('Jetty Piping Package');
-  const [cli, setCli] = useState('Adani Ports');
-  const [str, setStr] = useState('Pipe Rack PR-03');
+  const [proj, setProj] = useState('');
+  const [cli, setCli] = useState('');
+  const [str, setStr] = useState('');
 
   // B · Abrasive Selection
   const [type, setType] = useState('Steel Grit');
@@ -30,8 +30,8 @@ export default function BlastProfileTool() {
   const [hardness, setHardness] = useState('Standard (< 200 HB)');
 
   // D · Target Profile
-  const [targetMin, setTargetMin] = useState('50');
-  const [targetMax, setTargetMax] = useState('75');
+  const [targetMin, setTargetMin] = useState('');
+  const [targetMax, setTargetMax] = useState('');
 
   const [res, setRes] = useState(null);
 
@@ -256,8 +256,8 @@ export default function BlastProfileTool() {
     setAngle('90');
     setSurface('New Steel');
     setHardness('Standard (< 200 HB)');
-    setTargetMin('50');
-    setTargetMax('75');
+    setTargetMin('');
+    setTargetMax('');
     setRes(null);
     addToast('Form Reset', 'Parameters have been cleared.', 'info');
   };

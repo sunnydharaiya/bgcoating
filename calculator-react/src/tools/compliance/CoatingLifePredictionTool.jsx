@@ -20,10 +20,10 @@ export default function CoatingLifePredictionTool() {
   const [proj, setProj] = useState('');
   const [str, setStr] = useState('');
   const [env, setEnv] = useState('C3');
-  const [sys, setSys] = useState('Zn Epoxy + MIO + PU');
-  const [dft, setDft] = useState('280');
-  const [yr, setYr] = useState('2018');
-  const [dl, setDl] = useState('20');
+  const [sys, setSys] = useState('');
+  const [dft, setDft] = useState('');
+  const [yr, setYr] = useState('');
+  const [dl, setDl] = useState('');
   const [ageInput, setAgeInput] = useState('');
 
   // Section B
@@ -163,10 +163,10 @@ export default function CoatingLifePredictionTool() {
     setProj('');
     setStr('');
     setEnv('C3');
-    setSys('Zn Epoxy + MIO + PU');
-    setDft('280');
-    setYr('2018');
-    setDl('20');
+    setSys('');
+    setDft('');
+    setYr('');
+    setDl('');
     setAgeInput('');
     setRust('0');
     setBli('0');

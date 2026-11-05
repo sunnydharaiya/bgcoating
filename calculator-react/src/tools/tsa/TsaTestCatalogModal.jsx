@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   X, 
   Search, 
@@ -12,6 +12,7 @@ import {
   TSA_TEST_CATALOG, 
   TSA_STAGE_NAMES 
 } from '../../data/tsaDatabase';
+import { brandingService } from '../../services/brandingService';
 
 export default function TsaTestCatalogModal({
   isOpen,
@@ -21,12 +22,33 @@ export default function TsaTestCatalogModal({
 }) {
   const [search, setSearch] = useState('');
   const [customTest, setCustomTest] = useState({ t: '', std: '', req: '', act: '' });
+  const [dynamicCatalog, setDynamicCatalog] = useState([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    brandingService.getQualityTestCatalog('tsa').then((list) => {
+      if (isMounted && Array.isArray(list)) {
+        setDynamicCatalog(
+          list.map((it) => ({
+            ic: it.icon || '🔬',
+            t: it.title,
+            std: it.standard,
+            req: it.requirement
+          }))
+        );
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
   const stageLabel = TSA_STAGE_NAMES[activeCoatSID] || activeCoatSID.toUpperCase();
 
-  const filteredTests = TSA_TEST_CATALOG.filter(it => 
+  const combinedCatalog = [...dynamicCatalog, ...TSA_TEST_CATALOG];
+  const filteredTests = combinedCatalog.filter(it => 
     it.t.toLowerCase().includes(search.toLowerCase()) ||
     it.std.toLowerCase().includes(search.toLowerCase()) ||
     it.req.toLowerCase().includes(search.toLowerCase())
@@ -37,12 +59,19 @@ export default function TsaTestCatalogModal({
       alert('Please enter a test parameter name.');
       return;
     }
-    onSelectTest?.({
+    const item = {
       t: customTest.t,
       std: customTest.std || 'Project Spec',
       req: customTest.req || 'As specified',
       act: customTest.act || '',
       res: 'Pass'
+    };
+    onSelectTest?.(item);
+    brandingService.addQualityTestItem({
+      category: 'tsa',
+      title: customTest.t,
+      standard: customTest.std || 'Project Spec',
+      requirement: customTest.req || 'As specified'
     });
     setCustomTest({ t: '', std: '', req: '', act: '' });
   };

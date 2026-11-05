@@ -101,7 +101,7 @@ export default function PainterPhotoReport({
   const captionedCount = photos.filter(p => !!p.cap).length;
 
   return (
-    <div className="sheet" id="sh-photo">
+    <div className="sheet act" id="sh-photo">
       {/* Corporate Header */}
       <div className="xl-corp">
         <div className="xl-corp-inner">

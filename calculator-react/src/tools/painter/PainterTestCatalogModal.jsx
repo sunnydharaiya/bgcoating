@@ -1,7 +1,8 @@
 // src/tools/painter/PainterTestCatalogModal.jsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, TestTube, Plus, Sparkles } from 'lucide-react';
 import { COAT_TEST_CATALOG, COAT_STAGE_NAMES } from '../../data/painterDatabase';
+import { brandingService } from '../../services/brandingService';
 
 export default function PainterTestCatalogModal({
   isOpen,
@@ -9,9 +10,31 @@ export default function PainterTestCatalogModal({
   onSelectTest,
   activeCoatSID = 's1'
 }) {
+  const [dynamicCatalog, setDynamicCatalog] = useState([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    brandingService.getQualityTestCatalog('painter').then((list) => {
+      if (isMounted && Array.isArray(list)) {
+        setDynamicCatalog(
+          list.map((it) => ({
+            ic: it.icon || '🔬',
+            t: it.title,
+            std: it.standard,
+            req: it.requirement
+          }))
+        );
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const stageName = COAT_STAGE_NAMES[activeCoatSID] || activeCoatSID;
+  const combinedCatalog = [...dynamicCatalog, ...COAT_TEST_CATALOG];
 
   return (
     <div className="fixed inset-0 z-[2000] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
@@ -40,7 +63,7 @@ export default function PainterTestCatalogModal({
 
         {/* Catalog Items List */}
         <div className="p-4 overflow-y-auto space-y-2 flex-1 divide-y divide-slate-100">
-          {COAT_TEST_CATALOG.map((item, idx) => (
+          {combinedCatalog.map((item, idx) => (
             <div
               key={idx}
               onClick={() => {

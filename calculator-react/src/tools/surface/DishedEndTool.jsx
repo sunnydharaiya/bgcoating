@@ -6,11 +6,11 @@ import { autoLogCalculation } from '../../services/calculatorService';
 export default function DishedEndTool() {
   const { addToast } = useToast();
   const [headType, setHeadType] = useState('semi');
-  const [diameter, setDiameter] = useState('6');
-  const [depth, setDepth] = useState('1');
-  const [thickness, setThickness] = useState('350');
+  const [diameter, setDiameter] = useState('');
+  const [depth, setDepth] = useState('');
+  const [thickness, setThickness] = useState('');
   const [qty, setQty] = useState('1');
-  const [itemName, setItemName] = useState('Vessel Head');
+  const [itemName, setItemName] = useState('');
   const [calculated, setCalculated] = useState(false);
   const [res, setRes] = useState(null);
 

@@ -94,7 +94,7 @@ export default function PainterRegister({
   const seqBadCount = seqChecks.filter(s => s && !s.valid).length;
 
   return (
-    <div className="sheet" id="sh-reports">
+    <div className="sheet act" id="sh-reports">
       {/* Corporate Header */}
       <div className="xl-corp">
         <div className="xl-corp-inner">

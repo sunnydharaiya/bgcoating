@@ -1,0 +1,12 @@
+<!-- ======================= STANDARDS MARQUEE COMPONENT ======================= -->
+<div class="standards" aria-label="Standards and frameworks we work with">
+  <div class="marquee" id="marquee">
+    {% if global_standards %}
+      {% for std in global_standards %}<span>{{ std.code }}</span>{% endfor %}
+    {% else %}
+      <span>ISO 12944</span><span>NACE</span><span>AMPP</span><span>SSPC</span><span>ASTM</span>
+    {% endif %}
+    <span>SA 2½ Surface Prep</span><span>DFT Verification</span><span>Holiday Testing</span>
+    <span>Adhesion Testing</span><span>Salt Contamination</span><span>Coating Survey</span><span>Corrosion Assessment</span>
+  </div>
+</div>

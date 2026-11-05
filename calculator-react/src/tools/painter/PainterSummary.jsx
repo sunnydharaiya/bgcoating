@@ -51,7 +51,7 @@ export default function PainterSummary({
   }.`;
 
   return (
-    <div className="sheet" id="sh-summary">
+    <div className="sheet act" id="sh-summary">
       {/* Corporate Header */}
       <div className="xl-corp">
         <div className="xl-corp-inner">

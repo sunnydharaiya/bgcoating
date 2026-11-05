@@ -4,6 +4,66 @@ import { useGuideline } from '../../context/GuidelineContext';
 import { formatNum, formatCur } from '../../utils/calculations';
 import { autoLogCalculation } from '../../services/calculatorService';
 
+const SAMPLE_BIDS = [
+  {
+    mfr: 'Jotun',
+    prod: 'Barrier + Penguard Pro + Hardtop XP',
+    dft: 250,
+    vs: 72,
+    pr: 680,
+    qty: 2040,
+    pk: 20,
+    packs: 102,
+    cost: 1387200,
+    costM2: 277.4,
+    life: 18,
+    lcYr: 77067,
+    voc: 230,
+    tc: 100,
+    war: 7,
+    dry: '4 h touch · 8 h recoat',
+    app: 'Airless spray'
+  },
+  {
+    mfr: 'Hempel',
+    prod: 'Hempadur Avantguard + Mastic + Polyenamel',
+    dft: 250,
+    vs: 68,
+    pr: 620,
+    qty: 2160,
+    pk: 20,
+    packs: 108,
+    cost: 1339200,
+    costM2: 267.8,
+    life: 16,
+    lcYr: 83700,
+    voc: 260,
+    tc: 98,
+    war: 5,
+    dry: '3 h touch · 6 h recoat',
+    app: 'Airless spray'
+  },
+  {
+    mfr: 'AkzoNobel',
+    prod: 'Interzinc 52 + Intergard 475 + Interthane 990',
+    dft: 250,
+    vs: 70,
+    pr: 710,
+    qty: 2100,
+    pk: 20,
+    packs: 105,
+    cost: 1491000,
+    costM2: 298.2,
+    life: 20,
+    lcYr: 74550,
+    voc: 210,
+    tc: 100,
+    war: 8,
+    dry: '3.5 h touch · 7 h recoat',
+    app: 'Airless spray'
+  }
+];
+
 export default function ProcurementSuite({ activeSubTool, onSubToolChange }) {
   const { addToast } = useToast();
   const { openGuideline } = useGuideline();
@@ -28,37 +88,37 @@ export default function ProcurementSuite({ activeSubTool, onSubToolChange }) {
   // ----------------------------------------------------
   const [ppqProj, setPpqProj] = useState('');
   const [ppqCli, setPpqCli] = useState('');
-  const [ppqArea, setPpqArea] = useState('5000');
+  const [ppqArea, setPpqArea] = useState('');
   const [ppqTe, setPpqTe] = useState('100');
   const [ppqLoss, setPpqLoss] = useState('15');
   const [ppqRes, setPpqRes] = useState('5');
 
   // Coat 1: Primer
   const [c1Nm, setC1Nm] = useState('Zinc Rich Epoxy Primer');
-  const [c1Dft, setC1Dft] = useState('75');
-  const [c1Vs, setC1Vs] = useState('65');
-  const [c1Pr, setC1Pr] = useState('650');
+  const [c1Dft, setC1Dft] = useState('');
+  const [c1Vs, setC1Vs] = useState('');
+  const [c1Pr, setC1Pr] = useState('');
   const [c1Pk, setC1Pk] = useState('20');
 
   // Coat 2: Intermediate
   const [c2Nm, setC2Nm] = useState('High Build Epoxy MIO');
-  const [c2Dft, setC2Dft] = useState('150');
-  const [c2Vs, setC2Vs] = useState('80');
-  const [c2Pr, setC2Pr] = useState('480');
+  const [c2Dft, setC2Dft] = useState('');
+  const [c2Vs, setC2Vs] = useState('');
+  const [c2Pr, setC2Pr] = useState('');
   const [c2Pk, setC2Pk] = useState('20');
 
   // Coat 3: Finish
   const [c3Nm, setC3Nm] = useState('Aliphatic Polyurethane');
-  const [c3Dft, setC3Dft] = useState('50');
-  const [c3Vs, setC3Vs] = useState('58');
-  const [c3Pr, setC3Pr] = useState('720');
+  const [c3Dft, setC3Dft] = useState('');
+  const [c3Vs, setC3Vs] = useState('');
+  const [c3Pr, setC3Pr] = useState('');
   const [c3Pk, setC3Pk] = useState('20');
 
   // Coat 4: Stripe Coat
   const [c4Nm, setC4Nm] = useState('Epoxy Stripe Coat');
-  const [c4Dft, setC4Dft] = useState('50');
-  const [c4Vs, setC4Vs] = useState('80');
-  const [c4Pr, setC4Pr] = useState('480');
+  const [c4Dft, setC4Dft] = useState('');
+  const [c4Vs, setC4Vs] = useState('');
+  const [c4Pr, setC4Pr] = useState('');
   const [c4Pk, setC4Pk] = useState('20');
   const [c4Sa, setC4Sa] = useState('15');
 
@@ -119,86 +179,28 @@ export default function ProcurementSuite({ activeSubTool, onSubToolChange }) {
   // ----------------------------------------------------
   // BID-2: Multi-Manufacturer Bid Comparison
   // ----------------------------------------------------
-  const [bidArea, setBidArea] = useState('5000');
+  const [bidArea, setBidArea] = useState('');
   const [bidLoss, setBidLoss] = useState('15');
   const [bidWt, setBidWt] = useState('60');
 
   // New Bid Form Inputs
   const [bidMfr, setBidMfr] = useState('Jotun');
   const [bidCust, setBidCust] = useState('');
-  const [bidProd, setBidProd] = useState('Zn Epoxy + MIO + PU');
-  const [bidDft, setBidDft] = useState('250');
-  const [bidVs, setBidVs] = useState('70');
-  const [bidPr, setBidPr] = useState('650');
+  const [bidProd, setBidProd] = useState('');
+  const [bidDft, setBidDft] = useState('');
+  const [bidVs, setBidVs] = useState('');
+  const [bidPr, setBidPr] = useState('');
   const [bidQty, setBidQty] = useState('');
-  const [bidVoc, setBidVoc] = useState('250');
-  const [bidLife, setBidLife] = useState('15');
-  const [bidTc, setBidTc] = useState('100');
-  const [bidWar, setBidWar] = useState('5');
+  const [bidVoc, setBidVoc] = useState('');
+  const [bidLife, setBidLife] = useState('');
+  const [bidTc, setBidTc] = useState('');
+  const [bidWar, setBidWar] = useState('');
   const [bidPk, setBidPk] = useState('20');
-  const [bidDry, setBidDry] = useState('4 h touch · 8 h recoat');
-  const [bidApp, setBidApp] = useState('Airless spray');
+  const [bidDry, setBidDry] = useState('');
+  const [bidApp, setBidApp] = useState('');
 
-  // Initial bids list preloaded for rich demonstration
-  const [bids, setBids] = useState([
-    {
-      mfr: 'Jotun',
-      prod: 'Barrier + Penguard Pro + Hardtop XP',
-      dft: 250,
-      vs: 72,
-      pr: 680,
-      qty: 2040,
-      pk: 20,
-      packs: 102,
-      cost: 1387200,
-      costM2: 277.4,
-      life: 18,
-      lcYr: 77067,
-      voc: 230,
-      tc: 100,
-      war: 7,
-      dry: '4 h touch · 8 h recoat',
-      app: 'Airless spray'
-    },
-    {
-      mfr: 'Hempel',
-      prod: 'Hempadur Avantguard + Mastic + Polyenamel',
-      dft: 250,
-      vs: 68,
-      pr: 620,
-      qty: 2160,
-      pk: 20,
-      packs: 108,
-      cost: 1339200,
-      costM2: 267.8,
-      life: 16,
-      lcYr: 83700,
-      voc: 260,
-      tc: 98,
-      war: 5,
-      dry: '3 h touch · 6 h recoat',
-      app: 'Airless spray'
-    },
-    {
-      mfr: 'AkzoNobel',
-      prod: 'Interzinc 52 + Intergard 475 + Interthane 990',
-      dft: 250,
-      vs: 70,
-      pr: 710,
-      qty: 2100,
-      pk: 20,
-      packs: 105,
-      cost: 1491000,
-      costM2: 298.2,
-      life: 20,
-      lcYr: 74550,
-      voc: 210,
-      tc: 100,
-      war: 8,
-      dry: '3.5 h touch · 7 h recoat',
-      app: 'Airless spray'
-    }
-  ]);
+  // Initial bids list (starts empty; benchmark comparison loadable on demand)
+  const [bids, setBids] = useState([]);
 
   const bAreaVal = parseFloat(bidArea) || 0;
   const bLossVal = parseFloat(bidLoss) || 15;
@@ -426,6 +428,11 @@ export default function ProcurementSuite({ activeSubTool, onSubToolChange }) {
   const handleClearBids = () => {
     setBids([]);
     addToast('Cleared', 'All bids cleared.', 'info');
+  };
+
+  const handleLoadSampleBids = () => {
+    setBids(SAMPLE_BIDS);
+    addToast('Benchmark Bids Loaded', '3 benchmark manufacturer bids loaded into comparison table.', 'success');
   };
 
   const handleExportCSV = () => {
@@ -1279,6 +1286,7 @@ export default function ProcurementSuite({ activeSubTool, onSubToolChange }) {
 
             <div className="btn-row">
               <button className="btn" onClick={handleAddBid}>➕ Add Bid to Comparison</button>
+              <button className="btn" style={{ background: '#455A64' }} onClick={handleLoadSampleBids}>📋 Load Benchmark Comparison</button>
               <button className="btn-reset" onClick={handleClearBids}>🗑 Clear All Bids</button>
               <button className="btn-print" style={{ padding: '8px 14px', fontSize: '12px' }} onClick={handleExportCSV}>⬇ Download Excel</button>
             </div>

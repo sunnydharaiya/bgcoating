@@ -20,6 +20,7 @@ import { unitRateService } from '../services/unitRateService';
 import { manpowerService } from '../services/manpowerService';
 import { blasterService } from '../services/blasterService';
 import { painterService } from '../services/painterService';
+import { inspectionService } from '../services/inspectionService';
 
 export default function AuthModal({ 
   isOpen, 
@@ -110,6 +111,7 @@ export default function AuthModal({
                 await manpowerService.syncGuestPlansAfterLogin();
                 await blasterService.syncGuestReportsAfterLogin();
                 await painterService.syncGuestReportsAfterLogin();
+                await inspectionService.syncGuestReportsAfterLogin();
                 window.dispatchEvent(new CustomEvent('bg_user_updated', { detail: res.formattedUser }));
                 if (onLoginSuccess) {
                   onLoginSuccess(res.formattedUser);
@@ -179,6 +181,7 @@ export default function AuthModal({
       await manpowerService.syncGuestPlansAfterLogin();
       await blasterService.syncGuestReportsAfterLogin();
       await painterService.syncGuestReportsAfterLogin();
+      await inspectionService.syncGuestReportsAfterLogin();
       window.dispatchEvent(new CustomEvent('bg_user_updated', { detail: res.formattedUser }));
       if (onLoginSuccess) {
         onLoginSuccess(res.formattedUser);
@@ -217,6 +220,7 @@ export default function AuthModal({
       await manpowerService.syncGuestPlansAfterLogin();
       await blasterService.syncGuestReportsAfterLogin();
       await painterService.syncGuestReportsAfterLogin();
+      await inspectionService.syncGuestReportsAfterLogin();
       window.dispatchEvent(new CustomEvent('bg_user_updated', { detail: res.formattedUser }));
       if (onLoginSuccess) {
         onLoginSuccess(res.formattedUser);

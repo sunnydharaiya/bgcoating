@@ -16,23 +16,23 @@ export default function LifeCycleCostTool() {
   const { openGuideline } = useGuideline();
 
   // A · Project Info
-  const [proj, setProj] = useState('Crude Tank Farm Phase-2');
-  const [asset, setAsset] = useState('Tank T-201 External Shell');
-  const [client, setClient] = useState('ONGC');
-  const [loc, setLoc] = useState('Hazira, Gujarat');
-  const [env, setEnv] = useState('C5 — Very High (Industrial / Marine)');
-  const [sys, setSys] = useState('Zn Silicate + Epoxy + PU');
+  const [proj, setProj] = useState('');
+  const [asset, setAsset] = useState('');
+  const [client, setClient] = useState('');
+  const [loc, setLoc] = useState('');
+  const [env, setEnv] = useState('');
+  const [sys, setSys] = useState('');
 
   // B · Asset Details
-  const [area, setArea] = useState('5000');
-  const [dl, setDl] = useState('25');
-  const [cl, setCl] = useState('15');
+  const [area, setArea] = useState('');
+  const [dl, setDl] = useState('');
+  const [cl, setCl] = useState('');
   const [rcyc, setRcyc] = useState('');
 
   // C · Initial Coating Cost
-  const [cPaint, setCPaint] = useState('400000');
-  const [cPrep, setCPrep] = useState('250000');
-  const [cLab, setCLab] = useState('200000');
+  const [cPaint, setCPaint] = useState('');
+  const [cPrep, setCPrep] = useState('');
+  const [cLab, setCLab] = useState('');
   const [cEqp, setCEqp] = useState('0');
   const [cScf, setCScf] = useState('0');
   const [cIns, setCIns] = useState('0');
@@ -40,12 +40,12 @@ export default function LifeCycleCostTool() {
 
   // D · Maintenance Details
   const [insi, setInsi] = useState('2');
-  const [insc, setInsc] = useState('25000');
+  const [insc, setInsc] = useState('');
   const [rmi, setRmi] = useState('5');
-  const [rmc, setRmc] = useState('150000');
+  const [rmc, setRmc] = useState('');
   const [rpi, setRpi] = useState('8');
-  const [rpc, setRpc] = useState('300000');
-  const [recc, setRecc] = useState('900000');
+  const [rpc, setRpc] = useState('');
+  const [recc, setRecc] = useState('');
 
   // E · Economic Factors
   const [inf, setInf] = useState('0');
@@ -266,8 +266,8 @@ export default function LifeCycleCostTool() {
     setEnv('');
     setSys('');
     setArea('');
-    setDl('25');
-    setCl('15');
+    setDl('');
+    setCl('');
     setRcyc('');
     setCPaint('');
     setCPrep('');
@@ -277,12 +277,12 @@ export default function LifeCycleCostTool() {
     setCIns('0');
     setCOth('0');
     setInsi('2');
-    setInsc('25000');
+    setInsc('');
     setRmi('5');
-    setRmc('150000');
+    setRmc('');
     setRpi('8');
-    setRpc('300000');
-    setRecc('900000');
+    setRpc('');
+    setRecc('');
     setInf('0');
     setDis('6');
     setEsc('0');

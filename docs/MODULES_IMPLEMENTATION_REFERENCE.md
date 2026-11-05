@@ -378,7 +378,82 @@ Clean frontend routes mapped bidirectionally:
 
 ---
 
-## 11. Template Checklist for Next Modules
+## 11. Module 8: QA/QC Inspection Reporting (`/inspection-reporting`)
+
+### A. Backend Architecture & REST API
+- **Django App:** `backend/inspection_reporting`
+- **Database Model:** `InspectionRecord` in `models.py`
+  - Fields: `user` (nullable for guests), `report_no` (e.g., `CIR-BG-2026-MUNDRA-001`), `project_name`, `project_no`, `customer`, `vendor`, `work_location`, `equipment`, `lead_inspector`, `lead_cert`, `tpi_inspector`, `tpi_agency`, `inspection_date`, `overall_compliance`, `verdict` (`PASS`, `FAIL`, `PENDING`), `status` (`Draft`, `Approved`, `Pending`, `Rejected`), `revision` (`R0`), `is_active_draft` (boolean), `data` (JSON: stages s1-s4, surface prep, coatings, weather slots, pull-off adhesion, cross-cut adhesion, photo report, rework log), `metrics` (JSON), `notes`, `ip_address`, `user_agent`, `created_at` (IST `Asia/Kolkata`), `updated_at`.
+- **REST Endpoints:**
+  - `GET /api/v1/modules/inspection-reporting/records/` (lists finalized inspection dossiers)
+  - `POST /api/v1/modules/inspection-reporting/records/` (saves new report into register)
+  - `GET /api/v1/modules/inspection-reporting/records/draft/` (fetches active working draft)
+  - `POST /api/v1/modules/inspection-reporting/records/draft/` (debounced auto-save)
+  - `DELETE /api/v1/modules/inspection-reporting/records/draft/` (purges draft on reset)
+  - `POST /api/v1/modules/inspection-reporting/records/claim-guest/` (claims guest reports upon login)
+
+### B. Client Service Layer (`inspectionService.js`)
+- Extends `BaseApiService` with `normalizePayload`, `formatRecord`, `getReports`, `saveReport`, `deleteReport`, `getDraft`, `saveDraft`, `clearDraft`, `claimGuestReports`, and `syncGuestReportsAfterLogin`.
+- Offline caching with `bg_os_inspection_draft` and `bg_os_inspection_reports_register`.
+- Wired into `App.jsx` and `AuthModal.jsx` for post-login sync.
+
+---
+
+## 12. Audit of Submodules (Dynamic Implementation Complete)
+
+The following submodules, previously stored in browser `localStorage` or isolated per module, are now **100% dynamic, centralized in the backend database, and live-synchronized across all CoatingOS modules**:
+
+1. **Watermark Removal & Document Security Overlays:**
+   - **Unified Service:** `brandingService.getWatermarkSettings()` & `brandingService.saveWatermarkSettings(wm)`.
+   - **Backend Persistence:** `UserProfile.watermark_settings` (`JSONField`) via `PATCH /api/v1/auth/profile/`.
+   - **Live Sync:** Broadcasts `bg_watermark_updated` window event. Every module updates its preview, print output, and control sliders simultaneously.
+   - **Connected Modules:** `Coating Procedure`, `Unit Rate Estimation`, `Manpower Estimation`, `Blaster Qualification`, `Painter Qualification`, `TSA Qualification`, `Inspection Reporting`, `Specification Reading`.
+
+2. **Corporate Profile & Company Branding Details:**
+   - **Unified Service:** `brandingService.getCompanyProfile()` & `brandingService.saveCompanyProfile(profile)`.
+   - **Backend Persistence:** `UserProfile` fields (`company`, `company_division`, `company_contact`, `company_logo`, `website`, `address`) via `PATCH /api/v1/auth/profile/`.
+   - **Live Sync:** Broadcasts `bg_company_profile_updated`. Any edit made in Settings or within any module's Company Details modal/sheet instantly updates all headers, footers, dossiers, and print views across all 8 modules.
+
+3. **Master Coating Systems & Systems Library:**
+   - **Backend Model:** `UserCoatingSystem` (`backend/website/models.py`) with fields `user`, `system_id`, `name`, `environment`, `total_ndft`, `coats` (JSON), `is_standard`.
+   - **REST Endpoints:** `GET /api/v1/calculator/systems/`, `POST /api/v1/calculator/systems/`.
+   - **Client Service:** `brandingService.getMasterCoatingSystems()` & `brandingService.saveMasterCoatingSystem(system)`.
+
+4. **Dynamic Quality Test Catalogs & Acceptance Criteria:**
+   - **Backend Model:** `QualityTestItem` (`backend/website/models.py`) with fields `user`, `category` (`blaster`, `painter`, `tsa`, `inspection`, `general`), `test_name`, `standard`, `requirement`, `unit`, `is_standard`.
+   - **REST Endpoints:** `GET /api/v1/calculator/test-catalog/?category=...`, `POST /api/v1/calculator/test-catalog/`.
+   - **Client Service:** `brandingService.getQualityTestCatalog(cat)` & `brandingService.addQualityTestItem(item)`.
+   - **Integrated Modals:** `BlasterTestCatalogModal`, `PainterTestCatalogModal`, `TsaTestCatalogModal`.
+
+5. **Signatures & Inspector Stamp Affixing:**
+   - **Backend Persistence:** `UserProfile.inspector_stamp` and `UserProfile.inspector_signature` (Base64/Image URLs).
+   - **Client Service:** `brandingService.getInspectorCredentials()` & `brandingService.saveInspectorCredentials(creds)`.
+   - **Live Sync:** `bg_inspector_credentials_updated` ensures inspector credentials persist across all qualification records and reports.
+
+---
+
+## 13. Dynamic Submodules Architecture & Sync Flow
+
+```
+[Any Module Page (e.g. Blaster / Painter / Inspection)]
+      │
+      ├── Changes Company Profile / Watermark / Credentials
+      │
+      ▼
+[brandingService.saveCompanyProfile() / saveWatermarkSettings()]
+      ├── 1. Persist to unified localStorage key ('bg_company_profile', 'bg_watermark_settings')
+      ├── 2. Persist to all legacy module keys ('bg_blaster_company', 'bg_painter_company', etc.)
+      ├── 3. Broadcast window event ('bg_company_profile_updated', 'bg_watermark_updated')
+      └── 4. Send authenticated PATCH /api/v1/auth/profile/ to Django REST backend
+            │
+            ▼
+[Cross-Module Event Listeners in All 8 Modules]
+      └── React state updates immediately across all tabs, sheets, preview modals, and print dossiers!
+```
+
+---
+
+## 14. Template Checklist for Next Modules
 
 When implementing the next module (e.g. `blaster-qualification`, `painter-qualification`, `ambient-conditions`, etc.), apply this exact pattern:
 

@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'manpower_estimation',
     'blaster_qualification',
     'painter_qualification',
+    'inspection_reporting',
 ]
 
 MIDDLEWARE = [

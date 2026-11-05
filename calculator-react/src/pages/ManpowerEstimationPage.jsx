@@ -26,6 +26,7 @@ import {
   calculateManpowerEstimation
 } from '../data/manpowerDatabase';
 import { manpowerService } from '../services/manpowerService';
+import { brandingService } from '../services/brandingService';
 
 // Sub-tool components
 import ManpowerFreezeBar from '../tools/manpower/ManpowerFreezeBar';
@@ -123,39 +124,25 @@ export default function ManpowerEstimationPage({ activePage = 'manpower-estimati
     return [];
   });
 
-  // Corporate Profile & Watermark
-  const [company, setCompany] = useState(() => {
-    try {
-      const saved = localStorage.getItem('bg_os_company_profile');
-      if (saved) return JSON.parse(saved);
-    } catch (e) {
-      console.error('Failed to load company profile', e);
-    }
-    return {
-      name: 'BG GROUP OF PAINT & COATINGS CONSULTANT',
-      tagline: 'ISO 9001:2015 Certified Corrosion Protection Specialists',
-      phone: '+91 98765 43210',
-      email: 'projects@bgcoating.com',
-      website: 'www.bgcoating.com',
-      address: 'Plot 42, Industrial Engineering Zone, Hazira, Gujarat',
-      logo: ''
-    };
-  });
+  // Corporate Profile & Watermark (dynamically synchronized via brandingService)
+  const [company, setCompany] = useState(() => brandingService.getCompanyProfile());
+  const [watermark, setWatermark] = useState(() => brandingService.getWatermarkSettings());
 
-  const [watermark, setWatermark] = useState(() => {
-    try {
-      const saved = localStorage.getItem('bg_os_watermark_settings');
-      if (saved) return JSON.parse(saved);
-    } catch (e) {
-      console.error('Failed to load watermark settings', e);
-    }
-    return {
-      enabled: false,
-      text: 'CONFIDENTIAL OFFER',
-      opacity: 0.08,
-      angle: -30
+  // Cross-module live sync for branding and watermark
+  useEffect(() => {
+    const handleComp = (e) => {
+      if (e.detail) setCompany(e.detail);
     };
-  });
+    const handleWm = (e) => {
+      if (e.detail) setWatermark(e.detail);
+    };
+    window.addEventListener('bg_company_profile_updated', handleComp);
+    window.addEventListener('bg_watermark_updated', handleWm);
+    return () => {
+      window.removeEventListener('bg_company_profile_updated', handleComp);
+      window.removeEventListener('bg_watermark_updated', handleWm);
+    };
+  }, []);
 
   // Modals & Preview Record state
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
@@ -486,7 +473,10 @@ export default function ManpowerEstimationPage({ activePage = 'manpower-estimati
         
         {/* Active Sub-Tool Rendering */}
         <div>
-          {activeTab === 'hub' && (
+          {(!activeTab || activeTab === 'hub' || ![
+            'dashboard', 'project-info', 'blasting', 'painting', 'raw-material',
+            'worker-ctc', 'abrasive-diesel', 'summary', 'register'
+          ].includes(activeTab)) && (
             <ManpowerHub
               state={state}
               metrics={metrics}
@@ -627,6 +617,7 @@ export default function ManpowerEstimationPage({ activePage = 'manpower-estimati
         company={company}
         onSave={(c) => {
           setCompany(c);
+          brandingService.saveCompanyProfile(c);
           addToast('Company details saved successfully', 'success');
         }}
       />
@@ -638,6 +629,7 @@ export default function ManpowerEstimationPage({ activePage = 'manpower-estimati
         watermark={watermark}
         onSave={(w) => {
           setWatermark(w);
+          brandingService.saveWatermarkSettings(w);
           addToast('Watermark preferences updated', 'success');
         }}
       />

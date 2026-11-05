@@ -1,0 +1,45 @@
+{% load static %}
+<!-- ======================= LATEST BLOGS COMPONENT ======================= -->
+<section class="section-light grid-bg" id="sec-blog">
+  <div class="wrap">
+    <div class="section-head rv in">
+      <p class="eyebrow">{{ blog_eyebrow|default:"Our Blog" }}</p>
+      <h2 class="h-section">{{ blog_title|default:"Coating Knowledge, Shared" }}</h2>
+      <p class="lead">{{ blog_lead|default:"Technical insight from the field — surface preparation science, coating economics and industry best practice." }}</p>
+    </div>
+    <div class="blog-grid">
+      {% if latest_blogs %}
+      {% for b in latest_blogs %}
+      <article class="post card-lift rv in">
+        <div class="pm">
+          {% if b.external_url %}
+          <a href="{{ b.external_url }}" target="_blank" rel="noopener" style="display:block;width:100%;height:100%;">
+          {% else %}
+          <a href="{% url 'blog_detail' b.slug %}" style="display:block;width:100%;height:100%;">
+          {% endif %}
+            {% if b.featured_image %}
+            <img loading="lazy" src="{% if 'assets/images' in b.featured_image.name or 'static/' in b.featured_image.name %}{% static b.featured_image.name %}{% else %}{{ b.featured_image.url }}{% endif %}" alt="{{ b.title }}">
+            {% else %}
+            <img loading="lazy" src="{% static 'assets/images/Main_Thumbnail_3.jpg' %}" alt="{{ b.title }}">
+            {% endif %}
+          </a>
+        </div>
+        <div class="pb">
+          <p class="meta"><span>{{ b.publish_date|date:"d M Y"|upper }}</span><span>BG GROUP</span></p>
+          {% if b.external_url %}
+          <h3><a href="{{ b.external_url }}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">{{ b.title }}</a></h3>
+          <a class="svc-link" href="{{ b.external_url }}" target="_blank" rel="noopener">Read Article <span class="arr">→</span></a>
+          {% else %}
+          <h3><a href="{% url 'blog_detail' b.slug %}" style="color:inherit;text-decoration:none;">{{ b.title }}</a></h3>
+          <a class="svc-link" href="{% url 'blog_detail' b.slug %}">Read Article <span class="arr">→</span></a>
+          {% endif %}
+        </div>
+      </article>
+      {% endfor %}
+      {% endif %}
+    </div>
+    <div class="blog-all-wrap rv in" style="text-align:center;margin-top:2.5rem;">
+      <a class="btn btn-primary" href="{% url 'blog' %}">All Articles <span class="arr">→</span></a>
+    </div>
+  </div>
+</section>

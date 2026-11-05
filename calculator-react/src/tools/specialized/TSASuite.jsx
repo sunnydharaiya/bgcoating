@@ -29,8 +29,8 @@ export default function TSASuite({ activeSubTool, onSubToolChange }) {
   // TSA-1: Wire Consumption
   // ----------------------------------------------------
   const [tswProj, setTswProj] = useState('');
-  const [tswArea, setTswArea] = useState('100');
-  const [tswT, setTswT] = useState('250');
+  const [tswArea, setTswArea] = useState('');
+  const [tswT, setTswT] = useState('');
   const [tswD, setTswD] = useState('2.3');
   const [tswDen, setTswDen] = useState('2.70');
   const [tswDe, setTswDe] = useState('65');
@@ -55,11 +55,11 @@ export default function TSASuite({ activeSubTool, onSubToolChange }) {
   // ----------------------------------------------------
   // TSA-2: Area Coverage
   // ----------------------------------------------------
-  const [tscW, setTscW] = useState('500');
-  const [tscT, setTscT] = useState('250');
+  const [tscW, setTscW] = useState('');
+  const [tscT, setTscT] = useState('');
   const [tscDe, setTscDe] = useState('65');
   const [tscDen, setTscDen] = useState('2.70');
-  const [tscReq, setTscReq] = useState('300');
+  const [tscReq, setTscReq] = useState('');
   const [hasTscCalculated, setHasTscCalculated] = useState(false);
 
   const tscWVal = parseFloat(tscW) || 0;
@@ -81,8 +81,8 @@ export default function TSASuite({ activeSubTool, onSubToolChange }) {
   // ----------------------------------------------------
   // TSA-3: Deposition Efficiency
   // ----------------------------------------------------
-  const [tseW, setTseW] = useState('120');
-  const [tseD, setTseD] = useState('78');
+  const [tseW, setTseW] = useState('');
+  const [tseD, setTseD] = useState('');
   const [hasTseCalculated, setHasTseCalculated] = useState(false);
 
   const tseWVal = parseFloat(tseW) || 0;
@@ -94,10 +94,10 @@ export default function TSASuite({ activeSubTool, onSubToolChange }) {
   // ----------------------------------------------------
   // TSA-4: Thickness
   // ----------------------------------------------------
-  const [tstA, setTstA] = useState('50');
-  const [tstW, setTstW] = useState('33.75');
+  const [tstA, setTstA] = useState('');
+  const [tstW, setTstW] = useState('');
   const [tstDen, setTstDen] = useState('2.70');
-  const [tstSpec, setTstSpec] = useState('250');
+  const [tstSpec, setTstSpec] = useState('');
   const [hasTstCalculated, setHasTstCalculated] = useState(false);
 
   const tstAVal = parseFloat(tstA) || 0;
@@ -116,10 +116,10 @@ export default function TSASuite({ activeSubTool, onSubToolChange }) {
   // ----------------------------------------------------
   // TSA-5: Productivity
   // ----------------------------------------------------
-  const [tspA, setTspA] = useState('120');
-  const [tspH, setTspH] = useState('8');
+  const [tspA, setTspA] = useState('');
+  const [tspH, setTspH] = useState('');
   const [tspN, setTspN] = useState('1');
-  const [tspW, setTspW] = useState('130');
+  const [tspW, setTspW] = useState('');
   const [tspSh, setTspSh] = useState('8');
   const [hasTspCalculated, setHasTspCalculated] = useState(false);
 
@@ -137,13 +137,13 @@ export default function TSASuite({ activeSubTool, onSubToolChange }) {
   // ----------------------------------------------------
   // TSA-6: Cost
   // ----------------------------------------------------
-  const [tskA, setTskA] = useState('100');
-  const [tskW, setTskW] = useState('100');
-  const [tskWc, setTskWc] = useState('850');
-  const [tskL, setTskL] = useState('30000');
-  const [tskE, setTskE] = useState('20000');
-  const [tskC, setTskC] = useState('10000');
-  const [tskS, setTskS] = useState('15000');
+  const [tskA, setTskA] = useState('');
+  const [tskW, setTskW] = useState('');
+  const [tskWc, setTskWc] = useState('');
+  const [tskL, setTskL] = useState('0');
+  const [tskE, setTskE] = useState('0');
+  const [tskC, setTskC] = useState('0');
+  const [tskS, setTskS] = useState('0');
   const [tskOh, setTskOh] = useState('0');
   const [hasTskCalculated, setHasTskCalculated] = useState(false);
 

@@ -22,6 +22,8 @@ urlpatterns = [
     path('api/v1/blaster-qualification/', include('blaster_qualification.urls')),
     path('api/v1/modules/painter-qualification/', include('painter_qualification.urls')),
     path('api/v1/painter-qualification/', include('painter_qualification.urls')),
+    path('api/v1/modules/inspection-reporting/', include('inspection_reporting.urls')),
+    path('api/v1/inspection-reporting/', include('inspection_reporting.urls')),
     path('', include('website.urls')),
 ]
 

@@ -100,6 +100,20 @@ class SiteSettings(models.Model):
     def feedback_count(self):
         return f"{self.customer_feedback:,}"
 
+    @property
+    def years_experience(self):
+        from datetime import datetime
+        return max(22, datetime.now().year - 2004)
+
+    @property
+    def specialized_verticals_count(self):
+        try:
+            from .models import Service
+            c = Service.objects.count()
+            return c if c > 0 else 12
+        except Exception:
+            return 12
+
     class Meta:
         verbose_name = "Site Settings"
         verbose_name_plural = "Site Settings"
@@ -337,6 +351,26 @@ class CertificationItem(models.Model):
 
     def __str__(self):
         return f"{self.title} ({self.issuing_org})"
+
+
+class AwardItem(models.Model):
+    """Awards & recognition item for board timeline."""
+    title = models.CharField(max_length=255, help_text="e.g. 15 Years of Service ? Larsen & Toubro")
+    award_year = models.CharField(max_length=150, help_text="e.g. July 31, 2021 ? L&T Heavy Engineering")
+    organization = models.CharField(max_length=255, help_text="e.g. Larsen & Toubro Limited ? Heavy Engineering IC")
+    description = models.TextField(blank=True, help_text="Executive citation or impact summary")
+    date_display = models.CharField(max_length=150, blank=True, help_text="For lightbox viewer data-date (e.g. July 31, 2021)")
+    certificate_image = models.ImageField(upload_to='awards/', blank=True, null=True, help_text="Certificate scan/image")
+    img_key = models.CharField(max_length=50, blank=True, help_text="Unique key for lightbox viewer (e.g. award_15yr)")
+    order = models.IntegerField(default=0, help_text="Display order (lower number = appears first)")
+
+    class Meta:
+        ordering = ['order', 'id']
+        verbose_name = "Award & Recognition Item"
+        verbose_name_plural = "Awards & Recognition Items"
+
+    def __str__(self):
+        return f"{self.title} ({self.award_year})"
 
 
 
@@ -589,10 +623,18 @@ class UserProfile(models.Model):
     
     # Organization Details
     company = models.CharField(max_length=255, blank=True, default='BG Coating & Inspection Services')
+    company_division = models.CharField(max_length=255, blank=True, default='Quality Assurance & Technical Services')
+    company_contact = models.CharField(max_length=255, blank=True, default='ISO 9001:2015 · ISO 14001:2015 · ISO 45001:2018 Certified')
+    company_logo = models.TextField(blank=True, null=True, help_text="Company brand logo data URI or URL")
     bu = models.CharField(max_length=255, blank=True, help_text="Business Unit")
     office_location = models.CharField(max_length=255, blank=True)
     branch = models.CharField(max_length=100, blank=True)
     website = models.CharField(max_length=255, blank=True)
+
+    # Document Branding & Credentials
+    watermark_settings = models.JSONField(default=dict, blank=True, help_text="Watermark config: {enabled, text, opacity, angle}")
+    inspector_stamp = models.TextField(blank=True, null=True, help_text="Inspector certification stamp data URI or URL")
+    inspector_signature = models.TextField(blank=True, null=True, help_text="Inspector digital signature data URI or URL")
     
     # Alternate Contact & Address
     alt_mobile = models.CharField(max_length=30, blank=True)
@@ -651,5 +693,55 @@ def create_or_update_user_profile(sender, instance, created, **kwargs):
                 user=instance,
                 full_name=full_name or instance.username,
             )
+
+
+class UserCoatingSystem(models.Model):
+    """Custom or standard master coating systems library item."""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='coating_systems')
+    system_id = models.CharField(max_length=100, db_index=True)
+    name = models.CharField(max_length=255)
+    environment = models.CharField(max_length=255, blank=True)
+    total_ndft = models.FloatField(default=0.0)
+    coats = models.JSONField(default=list, blank=True)
+    is_standard = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "User Coating System"
+        verbose_name_plural = "User Coating Systems"
+
+    def __str__(self):
+        return f"[{self.system_id}] {self.name} ({self.total_ndft} µm)"
+
+
+class QualityTestItem(models.Model):
+    """Catalog of qualification and inspection testing standards and acceptance criteria."""
+    CATEGORY_CHOICES = [
+        ('blaster', 'Blaster Qualification'),
+        ('painter', 'Painter Qualification'),
+        ('tsa', 'TSA Qualification'),
+        ('inspection', 'Coating Inspection'),
+        ('general', 'General QA/QC'),
+    ]
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='test_catalog_items')
+    category = models.CharField(max_length=50, choices=CATEGORY_CHOICES, default='general')
+    test_name = models.CharField(max_length=255)
+    standard = models.CharField(max_length=255, blank=True)
+    requirement = models.TextField(blank=True)
+    unit = models.CharField(max_length=50, blank=True)
+    is_standard = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['category', 'test_name']
+        verbose_name = "Quality Test Item"
+        verbose_name_plural = "Quality Test Items"
+
+    def __str__(self):
+        return f"[{self.category}] {self.test_name} ({self.standard})"
+
 
 

@@ -25,6 +25,7 @@ import {
   UNIT_RATE_PRESETS
 } from '../data/unitRateDatabase';
 import { unitRateService } from '../services/unitRateService';
+import { brandingService } from '../services/brandingService';
 
 import UnitRateHub from '../tools/unitrate/UnitRateHub';
 import UnitRateProjectInfo from '../tools/unitrate/UnitRateProjectInfo';
@@ -70,35 +71,27 @@ export default function UnitRateEstimationPage({ currentSubTool = 'hub', onNavig
     return [];
   });
 
-  // Company Information
-  const [companyInfo, setCompanyInfo] = useState(() => {
-    try {
-      const saved = localStorage.getItem(COMPANY_KEY);
-      if (saved) return JSON.parse(saved);
-    } catch (e) {}
-    return {
-      companyName: 'BG COATING & CORROSION ENGINEERING',
-      address: 'Industrial Zone, Marine & Offshore Division',
-      email: 'commercial@bgcoating.com',
-      phone: '+91 22 8899 0011',
-      website: 'www.bgcoating.com',
-      taxId: 'GSTIN / VAT: 27AABCB1234F1Z9'
-    };
-  });
+  // Company Information (dynamically synchronized via brandingService)
+  const [companyInfo, setCompanyInfo] = useState(() => brandingService.getCompanyProfile());
 
-  // Watermark Settings
-  const [watermark, setWatermark] = useState(() => {
-    try {
-      const saved = localStorage.getItem(WATERMARK_KEY);
-      if (saved) return JSON.parse(saved);
-    } catch (e) {}
-    return {
-      enabled: true,
-      text: 'CONFIDENTIAL COMMERCIAL QUOTATION',
-      opacity: 0.08,
-      rotation: -30
+  // Watermark Settings (dynamically synchronized via brandingService)
+  const [watermark, setWatermark] = useState(() => brandingService.getWatermarkSettings());
+
+  // Cross-module live sync for branding and watermark
+  useEffect(() => {
+    const handleComp = (e) => {
+      if (e.detail) setCompanyInfo(e.detail);
     };
-  });
+    const handleWm = (e) => {
+      if (e.detail) setWatermark(e.detail);
+    };
+    window.addEventListener('bg_company_profile_updated', handleComp);
+    window.addEventListener('bg_watermark_updated', handleWm);
+    return () => {
+      window.removeEventListener('bg_company_profile_updated', handleComp);
+      window.removeEventListener('bg_watermark_updated', handleWm);
+    };
+  }, []);
 
   // Modals state
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -936,9 +929,7 @@ export default function UnitRateEstimationPage({ currentSubTool = 'hub', onNavig
         companyInfo={companyInfo}
         onSaveCompanyInfo={(info) => {
           setCompanyInfo(info);
-          try {
-            localStorage.setItem(COMPANY_KEY, JSON.stringify(info));
-          } catch (e) {}
+          brandingService.saveCompanyProfile(info);
           setSaveToast('✓ Company Profile Updated');
           setTimeout(() => setSaveToast(''), 3000);
         }}
@@ -953,9 +944,7 @@ export default function UnitRateEstimationPage({ currentSubTool = 'hub', onNavig
         watermark={watermark}
         onSaveWatermark={(wm) => {
           setWatermark(wm);
-          try {
-            localStorage.setItem(WATERMARK_KEY, JSON.stringify(wm));
-          } catch (e) {}
+          brandingService.saveWatermarkSettings(wm);
           setSaveToast('✓ Watermark Settings Updated');
           setTimeout(() => setSaveToast(''), 3000);
         }}

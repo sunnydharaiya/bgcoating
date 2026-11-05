@@ -59,7 +59,7 @@ export default function PainterVerdictApproval({
   const stampSub = verdict === 'PASS' ? 'QUALIFIED' : verdict === 'FAIL' ? 'REJECTED' : 'IN PROGRESS';
 
   return (
-    <div className="sheet" id="sh-verdict">
+    <div className="sheet act" id="sh-verdict">
       {/* Corporate Header */}
       <div className="xl-corp">
         <div className="xl-corp-inner">

@@ -33,6 +33,8 @@ from .models import (
     PaintProduct,
     UserProfile,
     VisitorCount,
+    UserCoatingSystem,
+    QualityTestItem,
 )
 from .serializers import (
     SiteSettingsSerializer,
@@ -58,6 +60,8 @@ from .serializers import (
     UserRegistrationSerializer,
     UserProfileUpdateSerializer,
     VisitorCountSerializer,
+    UserCoatingSystemSerializer,
+    QualityTestItemSerializer,
 )
 from . import calculator_engine
 
@@ -905,6 +909,42 @@ class PaintProductViewSet(viewsets.ModelViewSet):
     queryset = PaintProduct.objects.all()
     serializer_class = PaintProductSerializer
     permission_classes = [AllowAny]
+
+
+class UserCoatingSystemViewSet(viewsets.ModelViewSet):
+    """API endpoint for managing coating systems in user library."""
+    serializer_class = UserCoatingSystemSerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        user = self.request.user if hasattr(self.request, 'user') and self.request.user and self.request.user.is_authenticated else None
+        if user:
+            return UserCoatingSystem.objects.filter(models.Q(user=user) | models.Q(is_standard=True))
+        return UserCoatingSystem.objects.filter(models.Q(user__isnull=True) | models.Q(is_standard=True))
+
+    def perform_create(self, serializer):
+        user = self.request.user if hasattr(self.request, 'user') and self.request.user and self.request.user.is_authenticated else None
+        serializer.save(user=user)
+
+
+class QualityTestItemViewSet(viewsets.ModelViewSet):
+    """API endpoint for managing qualification & inspection quality test items."""
+    serializer_class = QualityTestItemSerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        user = self.request.user if hasattr(self.request, 'user') and self.request.user and self.request.user.is_authenticated else None
+        qs = QualityTestItem.objects.all()
+        category = self.request.query_params.get('category')
+        if category:
+            qs = qs.filter(category=category)
+        if user:
+            return qs.filter(models.Q(user=user) | models.Q(is_standard=True))
+        return qs.filter(models.Q(user__isnull=True) | models.Q(is_standard=True))
+
+    def perform_create(self, serializer):
+        user = self.request.user if hasattr(self.request, 'user') and self.request.user and self.request.user.is_authenticated else None
+        serializer.save(user=user)
 
 
 @csrf_exempt

@@ -15,8 +15,11 @@ export default function TsaFreezeBar({
   evaluation,
   formData,
   onNavigate,
-  onReset
+  onReset,
+  onResetDraft,
+  onLoadSampleRecord
 }) {
+  const handleReset = onResetDraft || onReset;
   const completion = Math.min(100, Math.max(0, Math.round(evaluation?.completionPct || 0)));
   const verdict = evaluation?.verdict || 'PENDING';
   const overall = (evaluation?.overall || 0).toFixed(1);
@@ -151,11 +154,23 @@ export default function TsaFreezeBar({
             </span>
           </div>
 
+          {/* Load Sample Benchmark */}
+          {onLoadSampleRecord && (
+            <button
+              onClick={onLoadSampleRecord}
+              className="px-2.5 py-1.5 rounded-xl text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:hover:bg-amber-900/50 transition-colors flex items-center gap-1.5 border border-amber-200/60 dark:border-amber-800/40"
+              title="Load QatarEnergy Benchmark Qualification Record"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+              <span className="hidden sm:inline">Benchmark</span>
+            </button>
+          )}
+
           {/* Reset Button */}
           <button
-            onClick={onReset}
+            onClick={handleReset}
             className="p-2 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
-            title="Reset All Qualification Fields"
+            title="Reset All Qualification Fields to Blank"
           >
             <RotateCcw className="w-4 h-4" />
           </button>

@@ -403,8 +403,8 @@ export function createDefaultWeatherSlots(baseDry = 28, baseWet = 22, baseMetal 
   });
 }
 
-// 6. Default Clean Inspection State Initializer
-export function createInitialInspectionState() {
+// 6. Benchmark Sample Inspection State Initializer (Jotun 3-Coat Specification)
+export function createSampleInspectionRecord() {
   return {
     reportNo: '',
     date: '',
@@ -893,5 +893,136 @@ export function createInitialInspectionState() {
         inspector: 'Prakash Ramavat'
       }
     ]
+  };
+}
+
+// 7. Empty 24-Hour Weather Table Slots
+export function createEmptyWeatherSlots() {
+  return Array.from({ length: 24 }, (_, i) => ({
+    hour: `${String(i).padStart(2, '0')}:00`,
+    dryC: '',
+    wetC: '',
+    metalC: ''
+  }));
+}
+
+// 8. Default Clean Blank Inspection State Initializer
+export function createInitialInspectionState() {
+  const createBlankStage = (id, name, title) => {
+    const stageObj = {
+      stageId: id,
+      stageName: name,
+      reportNo: '',
+      date: '',
+      projectNo: '',
+      itemDetails: '',
+      workLocation: '',
+      projectName: '',
+      refDoc: '',
+      customer: '',
+      vendor: '',
+      woNo: '',
+      equipment: '',
+      stageTitle: title,
+      weatherSlots: createEmptyWeatherSlots(),
+      coatingApp: {
+        method: '',
+        stripeCoat: '',
+        visibleRust: '',
+        coatingStartTime: '',
+        coatingEndTime: '',
+        appDate: ''
+      },
+      paintDetails: {
+        manufacturer: '',
+        productName: '',
+        shadeRal: '',
+        batchA: '',
+        expA: '',
+        statusA: '',
+        batchB: '',
+        expB: '',
+        statusB: '',
+        batchC: '',
+        expC: '',
+        statusC: '',
+        consumedLitres: ''
+      },
+      coatingTests: [],
+      coatingPhotos: [],
+      dftRecord: {
+        minDft: '',
+        maxDft: '',
+        inspectionAreaM2: '',
+        locations: []
+      },
+      remarks: '',
+      signApplicator: { name: '', date: '', sign: '' },
+      signTpi: { name: '', date: '', sign: '' }
+    };
+
+    if (id === 's1') {
+      stageObj.surfacePrep = {
+        abrasiveType: '',
+        meshSize: '',
+        nozzlePressurePsi: '',
+        compressorCfm: '',
+        blastingTimeSlot: '',
+        surfaceAreaM2: ''
+      };
+      stageObj.surfacePrepTests = [];
+      stageObj.prepPhotos = [];
+    }
+
+    return stageObj;
+  };
+
+  return {
+    reportNo: '',
+    date: '',
+    projectNo: '',
+    itemDetails: '',
+    workLocation: '',
+    projectName: '',
+    refDoc: '',
+    customer: '',
+    vendor: '',
+    woNo: '',
+    equipment: '',
+    leadInspector: '',
+    leadCert: '',
+    tpiInspector: '',
+    tpiAgency: '',
+
+    stages: {
+      s1: createBlankStage('s1', 'Blasting & Priming (B&P)', 'Blasting & Priming'),
+      s2: createBlankStage('s2', '1st Intermediate / Finish Coat', '1st Intermediate Coat'),
+      s3: createBlankStage('s3', '2nd Intermediate / Finish Coat', '2nd Intermediate / Topcoat'),
+      s4: createBlankStage('s4', '3rd Finish / Topcoat', '3rd Finish / Topcoat')
+    },
+
+    photoReport: [],
+
+    pullOffAdhesion: {
+      gaugeModel: '',
+      dollySizeMm: '',
+      specifiedTargetMpa: '',
+      glueType: '',
+      cureTimeHrs: '',
+      substrateMoc: '',
+      dollies: [],
+      photos: []
+    },
+
+    crossCutAdhesion: {
+      cutterType: '',
+      bladeSpacingMm: '',
+      tapeType: '',
+      specifiedMinRating: '',
+      cuts: [],
+      photos: []
+    },
+
+    reworkLog: []
   };
 }

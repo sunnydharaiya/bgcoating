@@ -62,9 +62,9 @@ export const INSP_CATALOG = [
 
 export const INSP_STANDARD_SET = [0, 1, 2, 10, 8];
 
-export const INITIAL_BLASTER_STATE = {
+export const SAMPLE_BLASTER_RECORD = {
   id: '',
-  repNo: '',
+  repNo: 'BL-QR-2026-RAJESH-001',
   repDate: new Date().toISOString().split('T')[0],
   repRev: 'R0',
   projectName: 'NFS Qatar Gas Complex Expansion',
@@ -185,6 +185,116 @@ export const INITIAL_BLASTER_STATE = {
   sig3Stamp: '',
 
   remarkFinal: 'Operator Rajesh M. Patel has achieved full compliance across theoretical, practical, HSE, and inspection domains.'
+};
+
+export const INITIAL_BLASTER_STATE = {
+  id: '',
+  repNo: '',
+  repDate: new Date().toISOString().split('T')[0],
+  repRev: 'R0',
+  projectName: '',
+  projectNo: '',
+  client: '',
+  epcContractor: '',
+  contractor: '',
+  location: '',
+  referenceStandard: 'ASTM D 4228, SSPC, NACE, ISO 8501',
+  coatingSystem: '',
+
+  // Operator Particulars
+  operatorName: '',
+  category: 'Blaster',
+  civilId: '',
+  nationality: '',
+  dob: '',
+  experienceYears: '',
+  employer: '',
+  qualificationCardNo: '',
+  qualificationDate: new Date().toISOString().split('T')[0],
+  nextAssessmentDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+  operatorPhoto: '',
+
+  // Training & Assessment Test
+  preTestDate: new Date().toISOString().split('T')[0],
+  preCorrect: 0,
+  postTestDate: new Date().toISOString().split('T')[0],
+  postCorrect: 0,
+  remarkTrain: '',
+
+  // 12 Checklist Elements
+  checklist: CHECK_ELEMENTS.map(() => ({ result: '', comment: '' })),
+  remarkCheck: '',
+
+  // Blasting Process - Environmental
+  envItemNo: '1',
+  envItem: '',
+  envCond: '',
+  envRhLimit: 85,
+  envRows: [
+    { time: '', db: '', wb: '', mt: '' }
+  ],
+
+  // Blasting Process - Surface Prep
+  spMethod: 'Abrasive Blasting',
+  spRef: '',
+  spCond: '',
+  spStart: '',
+  spEnd: '',
+  spStdReq: 'SA 2.5',
+  spStdAct: '',
+  spProfReq: '50-75 µm',
+  profileSpots: [],
+
+  // Blasting Process - Abrasive Media
+  abType: 'Garnet',
+  abClass: 'Mineral Abrasive',
+  abSspc: 'SSPC-AB 1',
+  abIso: 'ISO 11126-10',
+  abMesh: '',
+  abMfr: '',
+  abBatch: '',
+  abTc: '',
+  abDate: new Date().toISOString().split('T')[0],
+
+  // Inspection Process Tests
+  inspRows: [
+    { p: 'Visual Surface Cleanliness Inspection', std: 'ISO 8501-1 (Sa 2½)', req: 'Near-White Blast Cleaning', obs: '', res: '' },
+    { p: 'Surface Profile (Anchor Pattern) Measurement', std: 'ASTM D4417 Method A/C', req: '50–75 µm', obs: '', res: '' },
+    { p: 'Dust Contamination Test (Tape Test)', std: 'ISO 8502-3', req: 'Rating 2 max · Class 1 or better', obs: '', res: '' },
+    { p: 'Blasting Visual Inspection', std: 'SSPC VIS 1', req: 'Sa 2½ — Near White Metal Finish', obs: '', res: '' },
+    { p: 'Compressed Air Cleanliness (Blotter Test)', std: 'ASTM D4285', req: 'No visible oil / moisture / water', obs: '', res: '' }
+  ],
+  remarkInsp: '',
+
+  // Photos Evidence
+  photos: [
+    { id: 1, title: 'Pre-Blast Surface Condition', loc: '', date: new Date().toISOString().split('T')[0], init: '', cap: '', b64: '' },
+    { id: 2, title: 'Blasting in Progress', loc: '', date: new Date().toISOString().split('T')[0], init: '', cap: '', b64: '' },
+    { id: 3, title: 'Post-Blast Cleanliness (Sa 2½)', loc: '', date: new Date().toISOString().split('T')[0], init: '', cap: '', b64: '' },
+    { id: 4, title: 'Surface Profile Measurement', loc: '', date: new Date().toISOString().split('T')[0], init: '', cap: '', b64: '' }
+  ],
+  remarkPhoto: '',
+
+  // Executive Summary Narratives
+  sumExecManual: '',
+  sumScope: '',
+  sumMethod: '',
+  sumStrengths: '',
+  sumImprove: '',
+  sumRecommend: '',
+
+  // Signatures
+  sig1Name: '',
+  sig1Date: new Date().toISOString().split('T')[0],
+  sig1Stamp: '',
+  sig2Name: '',
+  sig2Date: new Date().toISOString().split('T')[0],
+  sig2Stamp: '',
+  sig3Name: '',
+  sig3Date: new Date().toISOString().split('T')[0],
+  sig3Stamp: '',
+
+  remarkFinal: ''
 };
 
 /**

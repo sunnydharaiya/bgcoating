@@ -10,10 +10,10 @@ export default function ISO19840Tool() {
 
   const [proj, setProj] = useState('');
   const [cli, setCli] = useState('');
-  const [spec, setSpec] = useState('300');
-  const [cv, setCv] = useState('20');
+  const [spec, setSpec] = useState('');
+  const [cv, setCv] = useState('25');
   const [maxDft, setMaxDft] = useState('');
-  const [readingsText, setReadingsText] = useState('295, 302, 310, 315, 298');
+  const [readingsText, setReadingsText] = useState('');
   const [hasEvaluated, setHasEvaluated] = useState(false);
 
   // Parse readings

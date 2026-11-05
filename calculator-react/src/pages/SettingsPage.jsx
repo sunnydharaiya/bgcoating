@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { fetchUserProfile, updateUserProfile, getStoredUser, uploadAvatar, clearAuth } from '../utils/api';
+import { brandingService } from '../services/brandingService';
 
 const AVATAR_PRESETS = [
   { label: 'QA Inspector', url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150' },
@@ -280,6 +281,15 @@ export default function SettingsPage() {
       };
 
       await updateUserProfile(payload);
+      brandingService.saveCompanyProfile({
+        name: profile.company,
+        division: profile.department || profile.bu,
+        contact: profile.altMobile || profile.mobile,
+        address: profile.address,
+        phone: profile.mobile,
+        email: profile.email,
+        website: profile.website
+      });
       setSaved(true);
       addToast('Profile Updated', 'All workspace settings and preferences saved to the database.', 'success');
       setTimeout(() => setSaved(false), 3000);

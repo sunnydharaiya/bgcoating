@@ -1,0 +1,32 @@
+{% load static %}
+<!-- ======================= SERVICE PORTFOLIO COMPONENT ======================= -->
+<section id="bg-services" class="section-light">
+  <div class="wrap">
+    <span class="eyebrow reveal"><span class="layer-tick"><span></span><span></span><span></span></span> {{ portfolio_eyebrow|default:"Complete Service Portfolio" }}</span>
+    <h2 class="h-xl reveal d1">{{ portfolio_title|default:"Twelve ways BG Group protects your assets." }}</h2>
+    <p class="lead reveal d2">{{ portfolio_lead|default:"Every service below is a live BG Group offering — each one solving a specific business problem for refinery, oil &amp; gas and heavy-industry clients." }}</p>
+
+    <div class="svc-grid">
+      {% if featured_services %}
+      {% for svc in featured_services %}
+      <a class="svc-card reveal" href="{% url 'service_detail' slug=svc.slug %}" target="_blank" rel="noopener">
+        <div class="svc-card-header" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div class="svc-icon" style="margin-bottom:0;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          {% if svc.category %}
+          <span class="svc-cat-badge" style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;background:rgba(247,148,30,.12);color:#b35900;padding:4px 10px;border-radius:999px;">{{ svc.category.name }}</span>
+          {% endif %}
+        </div>
+        <h3>{{ svc.title }}</h3>
+        {% if svc.problem_statement %}
+        <p class="svc-prob"><strong>Problem:</strong> {{ svc.problem_statement }}</p>
+        {% endif %}
+        <p class="svc-sol">{{ svc.excerpt|default:svc.description|truncatewords:24 }}</p>
+        <span class="svc-open">Explore service <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h10v10"></path><path d="M7 17 17 7"></path></svg></span>
+      </a>
+      {% endfor %}
+      {% endif %}
+    </div>
+  </div>
+</section>
